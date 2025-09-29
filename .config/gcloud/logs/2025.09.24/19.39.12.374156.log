@@ -1,0 +1,56 @@
+2025-09-24 19:39:12,379 DEBUG    root            Loaded Command Group: ['gcloud', 'projects']
+2025-09-24 19:39:12,382 DEBUG    root            Loaded Command Group: ['gcloud', 'projects', 'list']
+2025-09-24 19:39:12,382 DEBUG    root            Running [gcloud.projects.list] with arguments: []
+2025-09-24 19:39:12,382 INFO     root            client_filter="None" server_filter="None"
+2025-09-24 19:39:12,391 DEBUG    root            Chosen display Format:
+    table(
+      projectId:sort=1,
+      name,
+      projectNumber
+    )
+
+2025-09-24 19:39:12,392 INFO     root            Display format: "
+    table(
+      projectId:sort=1,
+      name,
+      projectNumber
+    )
+"
+2025-09-24 19:39:12,396 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): cloudresourcemanager.googleapis.com:443
+2025-09-24 19:39:12,705 DEBUG    urllib3.connectionpool https://cloudresourcemanager.googleapis.com:443 "GET /v1/projects?alt=json&filter=lifecycleState%3AACTIVE&pageSize=500 HTTP/11" 200 None
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ PROJECT_ID
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___                 
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ NAME
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___     
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ PROJECT_NUMBER
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ 
+
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ beakme-platform-20250602
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___   
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ Beakme
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___   
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ 464398060575
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ 
+
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ bhostd
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___                     
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___ Bhostd
+2025-09-24 19:39:12,726 INFO     ___FILE_ONLY___   
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ 858521750513
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ 
+
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ fanbie-platform-20250602
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___   
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ Fanbie
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___   
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ 322840563301
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ 
+
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ mouthu
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___                     
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ Mouthu
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___   
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ 620489856057
+2025-09-24 19:39:12,727 INFO     ___FILE_ONLY___ 
+
+2025-09-24 19:39:12,735 DEBUG    root            Metrics reporting process started...

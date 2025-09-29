@@ -1,0 +1,8 @@
+2025-09-24 22:21:27,443 DEBUG    root            Loaded Command Group: ['gcloud', 'services']
+2025-09-24 22:21:27,447 DEBUG    root            Loaded Command Group: ['gcloud', 'services', 'enable']
+2025-09-24 22:21:27,447 DEBUG    root            Running [gcloud.services.enable] with arguments: [SERVICE:1: "['cloudresourcemanager.googleapis.com']"]
+2025-09-24 22:21:27,503 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): serviceusage.googleapis.com:443
+2025-09-24 22:21:27,917 DEBUG    urllib3.connectionpool https://serviceusage.googleapis.com:443 "POST /v1/projects/bhostd/services/cloudresourcemanager.googleapis.com:enable?alt=json HTTP/11" 200 None
+2025-09-24 22:21:27,920 DEBUG    root            Chosen display Format:none
+2025-09-24 22:21:27,921 INFO     root            Display format: "none"
+2025-09-24 22:21:27,934 DEBUG    root            Metrics reporting process started...

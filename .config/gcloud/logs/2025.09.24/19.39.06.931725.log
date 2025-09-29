@@ -1,0 +1,11 @@
+2025-09-24 19:39:06,938 DEBUG    root            Loaded Command Group: ['gcloud', 'projects']
+2025-09-24 19:39:06,941 DEBUG    root            Loaded Command Group: ['gcloud', 'projects', 'update']
+2025-09-24 19:39:06,942 DEBUG    root            Running [gcloud.projects.update] with arguments: [--name: "TransGPT", PROJECT_ID: "mouthu"]
+2025-09-24 19:39:06,961 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): cloudresourcemanager.googleapis.com:443
+2025-09-24 19:39:07,230 DEBUG    urllib3.connectionpool https://cloudresourcemanager.googleapis.com:443 "GET /v1/projects/mouthu?alt=json HTTP/11" 200 None
+2025-09-24 19:39:07,814 DEBUG    urllib3.connectionpool https://cloudresourcemanager.googleapis.com:443 "PUT /v1/projects/mouthu?alt=json HTTP/11" 200 None
+2025-09-24 19:39:07,817 INFO     ___FILE_ONLY___ Updated [https://cloudresourcemanager.googleapis.com/v1/projects/mouthu].
+
+2025-09-24 19:39:07,818 DEBUG    root            Chosen display Format:none
+2025-09-24 19:39:07,818 INFO     root            Display format: "none"
+2025-09-24 19:39:07,846 DEBUG    root            Metrics reporting process started...

@@ -1,0 +1,18 @@
+2025-09-24 22:16:07,064 DEBUG    root            Loaded Command Group: ['gcloud', 'services']
+2025-09-24 22:16:07,068 DEBUG    root            Loaded Command Group: ['gcloud', 'services', 'list']
+2025-09-24 22:16:07,069 DEBUG    root            Running [gcloud.services.list] with arguments: [--enabled: "True", --filter: "name:oauth", --format: "table(name,title)"]
+2025-09-24 22:16:07,082 DEBUG    root            Chosen display Format:
+          table(
+            config.name:label=NAME:sort=1,
+            config.title
+          )
+         table(name,title)
+2025-09-24 22:16:07,082 INFO     root            Display format: "
+          table(
+            config.name:label=NAME:sort=1,
+            config.title
+          )
+         table(name,title)"
+2025-09-24 22:16:07,086 DEBUG    urllib3.connectionpool Starting new HTTPS connection (1): serviceusage.googleapis.com:443
+2025-09-24 22:16:07,684 DEBUG    urllib3.connectionpool https://serviceusage.googleapis.com:443 "GET /v1/projects/bhostd/services?alt=json&filter=state%3AENABLED&pageSize=200 HTTP/11" 200 None
+2025-09-24 22:16:07,759 DEBUG    root            Metrics reporting process started...

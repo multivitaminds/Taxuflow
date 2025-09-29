@@ -1,0 +1,8 @@
+2025-09-24 22:19:35,680 DEBUG    root            Loaded Command Group: ['gcloud', 'auth']
+2025-09-24 22:19:35,681 DEBUG    root            Loaded Command Group: ['gcloud', 'auth', 'print_access_token']
+2025-09-24 22:19:35,681 DEBUG    root            Running [gcloud.auth.print-access-token] with arguments: []
+2025-09-24 22:19:35,690 DEBUG    root            Chosen display Format:value(token)
+2025-09-24 22:19:35,690 INFO     root            Display format: "value(token)"
+2025-09-24 22:19:35,697 INFO     ___FILE_ONLY___ ya29.a0AQQ_BDQplmN_0LMEz9D_SGV5s57tY8c-sJrTMpGK1SHOEE8tC9OVc6xdUAMIh9bAzJQxlBMFW_W69ZxMYiVVVSehna1n3uhCXgHe0Qx_Agrj498sOqG57xTsOMqHtQ4oTKYDYBjZTPMpQrXPWpeWUgWiogvteqkiroBrdEHXnNZZ3vgcotwMdvLIP-g9jSMmYyoXexUVWiXKyMAaCgYKAZ0SARUSFQHGX2MiYGxX4EQsRdw9UciYjoS3Pw0214
+
+2025-09-24 22:19:35,703 DEBUG    root            Metrics reporting process started...
