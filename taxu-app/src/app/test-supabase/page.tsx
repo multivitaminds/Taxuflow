@@ -1,11 +1,12 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
 export default function TestSupabase() {
   const [status, setStatus] = useState<string>('Testing...')
-  const [tables, setTables] = useState<any[]>([])
+  const [tables, setTables] = useState<{ table_name: string }[]>([])
 
   useEffect(() => {
     async function testConnection() {
@@ -61,12 +62,12 @@ export default function TestSupabase() {
       )}
       
       <div className="mt-6">
-        <a 
+        <Link 
           href="/"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
         >
           ← Back to Home
-        </a>
+        </Link>
       </div>
     </div>
   )
