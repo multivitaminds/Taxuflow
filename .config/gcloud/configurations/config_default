@@ -1,9 +1,0 @@
-[core]
-account = bhostd.developer@gmail.com
-project = bhostd
-disable_usage_reporting = False
-
-[compute]
-region = us-east4
-zone = us-east4-a
-

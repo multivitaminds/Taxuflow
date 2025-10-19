@@ -1,0 +1,129 @@
+{
+  "examples": {
+    "deployment_success": {
+      "text": "✅ Deployment Successful",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "✅ Taxu Production Deployment Successful"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Environment:*\nProduction"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Status:*\nSuccess"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*URL:*\n<https://taxu.vercel.app|taxu.vercel.app>"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Duration:*\n2m 34s"
+            }
+          ]
+        }
+      ]
+    },
+    "deployment_failure": {
+      "text": "❌ Deployment Failed",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "❌ Taxu Deployment Failed"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Environment:*\nProduction"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Status:*\nFailed"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Error:*\nBuild failed"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Branch:*\nmain"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "elements": [
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "View Logs"
+              },
+              "url": "https://github.com/your-org/taxu/actions"
+            }
+          ]
+        }
+      ]
+    },
+    "pr_opened": {
+      "text": "📝 New Pull Request",
+      "blocks": [
+        {
+          "type": "header",
+          "text": {
+            "type": "plain_text",
+            "text": "📝 New Pull Request"
+          }
+        },
+        {
+          "type": "section",
+          "fields": [
+            {
+              "type": "mrkdwn",
+              "text": "*Title:*\nAdd new tax calculation feature"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Author:*\njohndoe"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Branch:*\n`feature/tax-calc` → `main`"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "*Status:*\nOpen"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "elements": [
+            {
+              "type": "button",
+              "text": {
+                "type": "plain_text",
+                "text": "Review PR"
+              },
+              "url": "https://github.com/your-org/taxu/pull/123"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
