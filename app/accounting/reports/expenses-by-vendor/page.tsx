@@ -1,16 +1,19 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getExpensesByVendorData } from "@/lib/accounting/data-service"
 
-export default function ExpensesByVendorReport() {
-  const vendors = [
-    { name: "Office Depot", amount: "$15,200.00", percentage: "19.7%" },
-    { name: "Google Ads", amount: "$12,800.00", percentage: "16.6%" },
-    { name: "AWS", amount: "$11,400.00", percentage: "14.8%" },
-    { name: "Adobe", amount: "$8,900.00", percentage: "11.5%" },
-    { name: "Salesforce", amount: "$7,600.00", percentage: "9.8%" },
-    { name: "Other Vendors", amount: "$21,280.00", percentage: "27.6%" },
-  ]
+export default async function ExpensesByVendorReport() {
+  const vendors = await getExpensesByVendorData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totalExpenses = vendors.reduce((sum, vendor) => sum + vendor.amount, 0)
 
   return (
     <div className="p-8">
@@ -40,13 +43,13 @@ export default function ExpensesByVendorReport() {
           {vendors.map((vendor) => (
             <div key={vendor.name} className="grid grid-cols-3 py-2 border-b">
               <span>{vendor.name}</span>
-              <span className="text-right font-medium">{vendor.amount}</span>
+              <span className="text-right font-medium">{formatCurrency(vendor.amount)}</span>
               <span className="text-right text-muted-foreground">{vendor.percentage}</span>
             </div>
           ))}
           <div className="grid grid-cols-3 pt-4 font-bold text-lg">
             <span>Total</span>
-            <span className="text-right">$77,180.00</span>
+            <span className="text-right">{formatCurrency(totalExpenses)}</span>
             <span className="text-right">100%</span>
           </div>
         </div>

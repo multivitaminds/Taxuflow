@@ -1,15 +1,17 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getTaxDeductionsData } from "@/lib/accounting/data-service"
 
-export default function TaxDeductionsReport() {
-  const deductions = [
-    { category: "Business Travel", amount: "$9,800.00", percentage: "21.4%" },
-    { category: "Office Expenses", amount: "$12,500.00", percentage: "27.3%" },
-    { category: "Professional Services", amount: "$8,280.00", percentage: "18.1%" },
-    { category: "Marketing & Advertising", amount: "$10,200.00", percentage: "22.3%" },
-    { category: "Equipment & Depreciation", amount: "$5,000.00", percentage: "10.9%" },
-  ]
+export default async function TaxDeductionsReport() {
+  const data = await getTaxDeductionsData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
 
   return (
     <div className="p-8">
@@ -37,16 +39,16 @@ export default function TaxDeductionsReport() {
               <span className="text-right">Amount</span>
               <span className="text-right">% of Total</span>
             </div>
-            {deductions.map((deduction) => (
+            {data.deductions.map((deduction) => (
               <div key={deduction.category} className="grid grid-cols-3 py-2 border-b">
                 <span>{deduction.category}</span>
-                <span className="text-right font-medium">{deduction.amount}</span>
+                <span className="text-right font-medium">{formatCurrency(deduction.amount)}</span>
                 <span className="text-right text-muted-foreground">{deduction.percentage}</span>
               </div>
             ))}
             <div className="grid grid-cols-3 pt-4 font-bold text-lg">
               <span>Total Deductions</span>
-              <span className="text-right text-green-600">$45,780.00</span>
+              <span className="text-right text-green-600">{formatCurrency(data.totalDeductions)}</span>
               <span className="text-right">100%</span>
             </div>
           </div>
@@ -56,7 +58,7 @@ export default function TaxDeductionsReport() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Total Deductible Expenses</span>
-                <span className="font-medium">$45,780.00</span>
+                <span className="font-medium">{formatCurrency(data.totalDeductions)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Estimated Tax Rate</span>
@@ -64,7 +66,7 @@ export default function TaxDeductionsReport() {
               </div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Estimated Tax Savings</span>
-                <span className="text-green-600">$10,987.20</span>
+                <span className="text-green-600">{formatCurrency(data.estimatedTaxSavings)}</span>
               </div>
             </div>
           </div>

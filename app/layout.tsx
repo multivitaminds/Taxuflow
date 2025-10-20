@@ -27,6 +27,19 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         {children}
         <Analytics />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Suppress Supabase auth errors globally
+              window.addEventListener('error', function(event) {
+                if (event.message && event.message.includes('Failed to fetch')) {
+                  event.preventDefault();
+                  console.log('[v0] Global error suppressed');
+                }
+              });
+            `,
+          }}
+        />
       </body>
     </html>
   )

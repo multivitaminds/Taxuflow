@@ -1,15 +1,26 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getVendorBalanceData } from "@/lib/accounting/data-service"
 
-export default function VendorBalanceReport() {
-  const vendors = [
-    { name: "Office Depot", billed: "$15,200.00", paid: "$12,000.00", balance: "$3,200.00" },
-    { name: "Google Ads", billed: "$12,800.00", paid: "$10,000.00", balance: "$2,800.00" },
-    { name: "AWS", billed: "$11,400.00", paid: "$7,300.00", balance: "$4,100.00" },
-    { name: "Adobe", billed: "$8,900.00", paid: "$7,000.00", balance: "$1,900.00" },
-    { name: "Salesforce", billed: "$7,600.00", paid: "$5,000.00", balance: "$2,600.00" },
-  ]
+export default async function VendorBalanceReport() {
+  const vendors = await getVendorBalanceData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totals = vendors.reduce(
+    (acc, vendor) => ({
+      billed: acc.billed + vendor.billed,
+      paid: acc.paid + vendor.paid,
+      balance: acc.balance + vendor.balance,
+    }),
+    { billed: 0, paid: 0, balance: 0 },
+  )
 
   return (
     <div className="p-8">
@@ -40,16 +51,16 @@ export default function VendorBalanceReport() {
           {vendors.map((vendor) => (
             <div key={vendor.name} className="grid grid-cols-4 py-2 border-b">
               <span>{vendor.name}</span>
-              <span className="text-right font-medium">{vendor.billed}</span>
-              <span className="text-right text-green-600">{vendor.paid}</span>
-              <span className="text-right font-bold">{vendor.balance}</span>
+              <span className="text-right font-medium">{formatCurrency(vendor.billed)}</span>
+              <span className="text-right text-green-600">{formatCurrency(vendor.paid)}</span>
+              <span className="text-right font-bold">{formatCurrency(vendor.balance)}</span>
             </div>
           ))}
           <div className="grid grid-cols-4 pt-4 font-bold text-lg">
             <span>Total</span>
-            <span className="text-right">$55,900.00</span>
-            <span className="text-right text-green-600">$41,300.00</span>
-            <span className="text-right">$14,600.00</span>
+            <span className="text-right">{formatCurrency(totals.billed)}</span>
+            <span className="text-right text-green-600">{formatCurrency(totals.paid)}</span>
+            <span className="text-right">{formatCurrency(totals.balance)}</span>
           </div>
         </div>
       </Card>

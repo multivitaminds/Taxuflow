@@ -2,50 +2,19 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, Calendar } from "lucide-react"
+import { getBillListData } from "@/lib/accounting/data-service"
 
-export default function BillListReport() {
-  const bills = [
-    {
-      number: "BILL-2045",
-      vendor: "Office Depot",
-      date: "2024-03-20",
-      dueDate: "2024-04-20",
-      amount: "$3,200.00",
-      status: "Unpaid",
-    },
-    {
-      number: "BILL-2044",
-      vendor: "Google Ads",
-      date: "2024-03-15",
-      dueDate: "2024-04-15",
-      amount: "$2,800.00",
-      status: "Paid",
-    },
-    {
-      number: "BILL-2043",
-      vendor: "AWS",
-      date: "2024-03-10",
-      dueDate: "2024-04-10",
-      amount: "$4,100.00",
-      status: "Overdue",
-    },
-    {
-      number: "BILL-2042",
-      vendor: "Adobe",
-      date: "2024-03-08",
-      dueDate: "2024-04-08",
-      amount: "$1,900.00",
-      status: "Paid",
-    },
-    {
-      number: "BILL-2041",
-      vendor: "Salesforce",
-      date: "2024-03-05",
-      dueDate: "2024-04-05",
-      amount: "$2,600.00",
-      status: "Paid",
-    },
-  ]
+export default async function BillListReport() {
+  const bills = await getBillListData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0)
 
   return (
     <div className="p-8">
@@ -81,19 +50,19 @@ export default function BillListReport() {
               <span>{bill.vendor}</span>
               <span className="text-muted-foreground text-sm">{bill.date}</span>
               <span className="text-muted-foreground text-sm">{bill.dueDate}</span>
-              <span className="text-right font-medium">{bill.amount}</span>
+              <span className="text-right font-medium">{formatCurrency(bill.amount)}</span>
               <div className="text-right">
                 <Badge
-                  variant={bill.status === "Paid" ? "default" : bill.status === "Overdue" ? "destructive" : "secondary"}
+                  variant={bill.status === "paid" ? "default" : bill.status === "overdue" ? "destructive" : "secondary"}
                 >
-                  {bill.status}
+                  {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
                 </Badge>
               </div>
             </div>
           ))}
           <div className="grid grid-cols-6 pt-4 font-bold text-lg">
             <span className="col-span-4">Total</span>
-            <span className="text-right">$14,600.00</span>
+            <span className="text-right">{formatCurrency(totalAmount)}</span>
             <span></span>
           </div>
         </div>

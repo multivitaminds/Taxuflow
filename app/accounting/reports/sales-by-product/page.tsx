@@ -1,15 +1,19 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getSalesByProductData } from "@/lib/accounting/data-service"
 
-export default function SalesByProductReport() {
-  const products = [
-    { name: "Professional Services", revenue: "$65,200.00", percentage: "38.2%" },
-    { name: "Software Licenses", revenue: "$48,500.00", percentage: "28.4%" },
-    { name: "Consulting", revenue: "$32,180.00", percentage: "18.9%" },
-    { name: "Training", revenue: "$14,660.00", percentage: "8.6%" },
-    { name: "Support Contracts", revenue: "$10,000.00", percentage: "5.9%" },
-  ]
+export default async function SalesByProductReport() {
+  const products = await getSalesByProductData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totalRevenue = products.reduce((sum, product) => sum + product.revenue, 0)
 
   return (
     <div className="p-8">
@@ -39,13 +43,13 @@ export default function SalesByProductReport() {
           {products.map((product) => (
             <div key={product.name} className="grid grid-cols-3 py-2 border-b">
               <span>{product.name}</span>
-              <span className="text-right font-medium">{product.revenue}</span>
+              <span className="text-right font-medium">{formatCurrency(product.revenue)}</span>
               <span className="text-right text-muted-foreground">{product.percentage}</span>
             </div>
           ))}
           <div className="grid grid-cols-3 pt-4 font-bold text-lg">
             <span>Total</span>
-            <span className="text-right">$170,540.00</span>
+            <span className="text-right">{formatCurrency(totalRevenue)}</span>
             <span className="text-right">100%</span>
           </div>
         </div>

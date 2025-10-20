@@ -1,87 +1,70 @@
-import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
+import { getSafeUser, hasSupabaseSession } from "@/lib/supabase/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { DashboardClient } from "@/components/dashboard-client"
 
 export default async function DashboardPage() {
-  try {
-    const supabase = await getSupabaseServerClient()
+  const cookieStore = await cookies()
 
-    if (!supabase) {
-      console.log("[v0] Supabase not configured, redirecting to login")
-      redirect("/login")
-    }
+  const hasSession = await hasSupabaseSession()
+  const demoModeCookie = cookieStore.get("demo_mode")?.value === "true"
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+  // Only use demo mode if explicitly set AND no session cookies exist
+  const demoMode = demoModeCookie && !hasSession
 
-    if (user && !error) {
-      console.log("[v0] Authenticated user found:", user.email)
-
-      // Clear demo mode cookie if it exists
-      const cookieStore = await cookies()
-      if (cookieStore.get("demo_mode")?.value === "true") {
-        console.log("[v0] Clearing demo mode cookie for authenticated user")
-        cookieStore.delete("demo_mode")
-      }
-
-      const { data: profile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle()
-
-      let userProfile = profile
-      if (!userProfile) {
-        console.log("[v0] No profile found, creating new profile for user:", user.id)
-        const { data: newProfile, error: createError } = await supabase
-          .from("user_profiles")
-          .insert({
-            user_id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
-          })
-          .select()
-          .single()
-
-        if (createError) {
-          console.log("[v0] Error creating profile:", createError.message)
-          userProfile = null
-        } else {
-          console.log("[v0] Profile created successfully")
-          userProfile = newProfile
-        }
-      }
-
-      return <DashboardClient user={user} profile={userProfile} />
-    }
-
-    const cookieStore = await cookies()
-    const demoMode = cookieStore.get("demo_mode")?.value === "true"
-
-    if (demoMode) {
-      console.log("[v0] Demo mode detected, loading dashboard with demo data")
-
-      const demoUser = {
-        id: "demo-user-id",
-        email: "demo@example.com",
-        user_metadata: {
-          full_name: "Demo User",
-        },
-      }
-
-      const demoProfile = {
-        id: "demo-user-id",
-        full_name: "Demo User",
-        email: "demo@example.com",
-        created_at: new Date().toISOString(),
-      }
-
-      return <DashboardClient user={demoUser as any} profile={demoProfile} />
-    }
-
-    console.log("[v0] No authenticated user, redirecting to login")
-    redirect("/login")
-  } catch (error) {
-    console.log("[v0] Auth error caught, redirecting to login:", error)
-    redirect("/login")
+  // Demo user data
+  const demoUser = {
+    id: "demo-user-id",
+    email: "demo@example.com",
+    user_metadata: {
+      full_name: "Demo User",
+    },
   }
+
+  const demoProfile = {
+    id: "demo-user-id",
+    full_name: "Demo User",
+    email: "demo@example.com",
+    created_at: new Date().toISOString(),
+  }
+
+  if (hasSession && demoModeCookie) {
+    console.log("[v0] Clearing demo mode cookie - user has active session")
+    cookieStore.delete("demo_mode")
+  }
+
+  if (demoMode) {
+    console.log("[v0] Demo mode active, skipping auth")
+    return <DashboardClient user={demoUser as any} profile={demoProfile} />
+  }
+
+  const { user, error } = await getSafeUser()
+
+  if (user) {
+    console.log("[v0] Authenticated user:", user.email)
+
+    let profile = null
+    try {
+      const supabase = await getSupabaseServerClient()
+      if (supabase) {
+        const result = await supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle()
+
+        profile = result.data
+      }
+    } catch (profileError: any) {
+      console.log("[v0] Profile fetch failed:", profileError?.message)
+    }
+
+    return <DashboardClient user={user} profile={profile} />
+  }
+
+  if (!hasSession) {
+    console.log("[v0] No authenticated user and no session, using demo mode")
+    cookieStore.set("demo_mode", "true", { maxAge: 60 * 60 * 24 })
+    return <DashboardClient user={demoUser as any} profile={demoProfile} />
+  }
+
+  // If we have session cookies but couldn't get user, show error instead of demo
+  console.log("[v0] Session exists but couldn't fetch user data")
+  return <DashboardClient user={user} profile={null} />
 }

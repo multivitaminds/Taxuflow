@@ -1,50 +1,29 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getARAgingData } from "@/lib/accounting/data-service"
 
-export default function ARAgingReport() {
-  const customers = [
-    {
-      name: "Acme Corporation",
-      current: "$5,200.00",
-      days30: "$2,400.00",
-      days60: "$0.00",
-      days90: "$0.00",
-      total: "$7,600.00",
-    },
-    {
-      name: "TechStart Inc",
-      current: "$8,500.00",
-      days30: "$0.00",
-      days60: "$0.00",
-      days90: "$0.00",
-      total: "$8,500.00",
-    },
-    {
-      name: "Global Solutions",
-      current: "$0.00",
-      days30: "$4,200.00",
-      days60: "$3,800.00",
-      days90: "$0.00",
-      total: "$8,000.00",
-    },
-    {
-      name: "Innovation Labs",
-      current: "$6,800.00",
-      days30: "$0.00",
-      days60: "$0.00",
-      days90: "$1,200.00",
-      total: "$8,000.00",
-    },
-    {
-      name: "Digital Ventures",
-      current: "$4,200.00",
-      days30: "$1,800.00",
-      days60: "$0.00",
-      days90: "$0.00",
-      total: "$6,000.00",
-    },
-  ]
+export default async function ARAgingReport() {
+  const customers = await getARAgingData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totals = customers.reduce(
+    (acc, customer) => ({
+      current: acc.current + customer.current,
+      days30: acc.days30 + customer.days30,
+      days60: acc.days60 + customer.days60,
+      days90: acc.days90 + customer.days90,
+      days90plus: acc.days90plus + (customer.days90plus || 0),
+      total: acc.total + customer.total,
+    }),
+    { current: 0, days30: 0, days60: 0, days90: 0, days90plus: 0, total: 0 },
+  )
 
   return (
     <div className="p-8">
@@ -66,31 +45,34 @@ export default function ARAgingReport() {
       </div>
       <Card className="p-6">
         <div className="space-y-4">
-          <div className="grid grid-cols-6 font-semibold pb-2 border-b text-sm">
+          <div className="grid grid-cols-7 font-semibold pb-2 border-b text-sm">
             <span>Customer</span>
             <span className="text-right">Current</span>
             <span className="text-right">1-30 Days</span>
             <span className="text-right">31-60 Days</span>
+            <span className="text-right">61-90 Days</span>
             <span className="text-right">Over 90 Days</span>
             <span className="text-right">Total</span>
           </div>
           {customers.map((customer) => (
-            <div key={customer.name} className="grid grid-cols-6 py-2 border-b text-sm">
+            <div key={customer.name} className="grid grid-cols-7 py-2 border-b text-sm">
               <span>{customer.name}</span>
-              <span className="text-right font-medium">{customer.current}</span>
-              <span className="text-right font-medium">{customer.days30}</span>
-              <span className="text-right font-medium">{customer.days60}</span>
-              <span className="text-right font-medium text-red-600">{customer.days90}</span>
-              <span className="text-right font-bold">{customer.total}</span>
+              <span className="text-right font-medium">{formatCurrency(customer.current)}</span>
+              <span className="text-right font-medium">{formatCurrency(customer.days30)}</span>
+              <span className="text-right font-medium">{formatCurrency(customer.days60)}</span>
+              <span className="text-right font-medium">{formatCurrency(customer.days90)}</span>
+              <span className="text-right font-medium text-red-600">{formatCurrency(customer.days90plus || 0)}</span>
+              <span className="text-right font-bold">{formatCurrency(customer.total)}</span>
             </div>
           ))}
-          <div className="grid grid-cols-6 pt-4 font-bold text-lg">
+          <div className="grid grid-cols-7 pt-4 font-bold text-lg">
             <span>Total</span>
-            <span className="text-right">$24,700.00</span>
-            <span className="text-right">$8,400.00</span>
-            <span className="text-right">$3,800.00</span>
-            <span className="text-right text-red-600">$1,200.00</span>
-            <span className="text-right">$38,100.00</span>
+            <span className="text-right">{formatCurrency(totals.current)}</span>
+            <span className="text-right">{formatCurrency(totals.days30)}</span>
+            <span className="text-right">{formatCurrency(totals.days60)}</span>
+            <span className="text-right">{formatCurrency(totals.days90)}</span>
+            <span className="text-right text-red-600">{formatCurrency(totals.days90plus)}</span>
+            <span className="text-right">{formatCurrency(totals.total)}</span>
           </div>
         </div>
       </Card>

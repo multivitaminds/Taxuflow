@@ -1,15 +1,26 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getCustomerBalanceData } from "@/lib/accounting/data-service"
 
-export default function CustomerBalanceReport() {
-  const customers = [
-    { name: "Acme Corporation", invoiced: "$45,200.00", paid: "$37,600.00", balance: "$7,600.00" },
-    { name: "TechStart Inc", invoiced: "$38,500.00", paid: "$30,000.00", balance: "$8,500.00" },
-    { name: "Global Solutions", invoiced: "$32,180.00", paid: "$24,180.00", balance: "$8,000.00" },
-    { name: "Innovation Labs", invoiced: "$28,400.00", paid: "$20,400.00", balance: "$8,000.00" },
-    { name: "Digital Ventures", invoiced: "$26,260.00", paid: "$20,260.00", balance: "$6,000.00" },
-  ]
+export default async function CustomerBalanceReport() {
+  const customers = await getCustomerBalanceData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totals = customers.reduce(
+    (acc, customer) => ({
+      invoiced: acc.invoiced + customer.invoiced,
+      paid: acc.paid + customer.paid,
+      balance: acc.balance + customer.balance,
+    }),
+    { invoiced: 0, paid: 0, balance: 0 },
+  )
 
   return (
     <div className="p-8">
@@ -40,16 +51,16 @@ export default function CustomerBalanceReport() {
           {customers.map((customer) => (
             <div key={customer.name} className="grid grid-cols-4 py-2 border-b">
               <span>{customer.name}</span>
-              <span className="text-right font-medium">{customer.invoiced}</span>
-              <span className="text-right text-green-600">{customer.paid}</span>
-              <span className="text-right font-bold">{customer.balance}</span>
+              <span className="text-right font-medium">{formatCurrency(customer.invoiced)}</span>
+              <span className="text-right text-green-600">{formatCurrency(customer.paid)}</span>
+              <span className="text-right font-bold">{formatCurrency(customer.balance)}</span>
             </div>
           ))}
           <div className="grid grid-cols-4 pt-4 font-bold text-lg">
             <span>Total</span>
-            <span className="text-right">$170,540.00</span>
-            <span className="text-right text-green-600">$132,440.00</span>
-            <span className="text-right">$38,100.00</span>
+            <span className="text-right">{formatCurrency(totals.invoiced)}</span>
+            <span className="text-right text-green-600">{formatCurrency(totals.paid)}</span>
+            <span className="text-right">{formatCurrency(totals.balance)}</span>
           </div>
         </div>
       </Card>

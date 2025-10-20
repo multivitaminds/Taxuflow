@@ -20,10 +20,32 @@ export async function middleware(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+          cookiesToSet.forEach(({ name, value, options }) => {
+            const enhancedOptions = {
+              ...options,
+              maxAge: 30 * 24 * 60 * 60, // 30 days
+              sameSite: "lax" as const,
+              secure: process.env.NODE_ENV === "production",
+            }
+            supabaseResponse.cookies.set(name, value, enhancedOptions)
+          })
         },
       },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
     })
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (session) {
+      // Session exists, refresh it to extend expiration
+      await supabase.auth.refreshSession()
+    }
 
     const {
       data: { user },

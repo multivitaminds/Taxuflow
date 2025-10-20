@@ -12,20 +12,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ============================================================================
 -- SECTION 1: USER PROFILES & AUTHENTICATION
 -- ============================================================================
+-- Note: user_profiles already exists in your database as a view
+-- If you need to modify it, do so separately
 
-CREATE TABLE IF NOT EXISTS user_profiles (
-  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name TEXT,
-  email TEXT,
-  avatar_url TEXT,
-  preferred_agent TEXT DEFAULT 'Sophie',
-  tone_preference TEXT DEFAULT 'Friendly',
-  subscription_tier TEXT DEFAULT 'Free' CHECK (subscription_tier IN ('Free', 'Developer', 'Startup', 'Business', 'Enterprise', 'Premium', 'AI Co-Pilot')),
-  filing_status TEXT,
-  income_type TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
 
 -- ============================================================================
 -- SECTION 2: CHART OF ACCOUNTS
@@ -323,7 +312,6 @@ CREATE TABLE IF NOT EXISTS estimate_items (
 -- SECTION 12: INDEXES FOR PERFORMANCE
 -- ============================================================================
 
-CREATE INDEX IF NOT EXISTS idx_user_profiles_user_id ON user_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_chart_of_accounts_user_id ON chart_of_accounts(user_id);
 CREATE INDEX IF NOT EXISTS idx_chart_of_accounts_type ON chart_of_accounts(account_type);
 CREATE INDEX IF NOT EXISTS idx_customers_user_id ON customers(user_id);
@@ -352,7 +340,6 @@ CREATE INDEX IF NOT EXISTS idx_estimates_customer_id ON estimates(customer_id);
 -- SECTION 13: ROW LEVEL SECURITY (RLS)
 -- ============================================================================
 
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chart_of_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vendors ENABLE ROW LEVEL SECURITY;
@@ -374,11 +361,6 @@ ALTER TABLE estimate_items ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 -- SECTION 14: RLS POLICIES
 -- ============================================================================
-
--- User Profiles
-CREATE POLICY "Users can view their own profile" ON user_profiles FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own profile" ON user_profiles FOR UPDATE USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert their own profile" ON user_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Chart of Accounts
 CREATE POLICY "Users can view their own accounts" ON chart_of_accounts FOR SELECT USING (auth.uid() = user_id);

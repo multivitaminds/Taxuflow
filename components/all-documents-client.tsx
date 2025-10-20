@@ -4,9 +4,10 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, FileText, Download, Trash2, CheckCircle2, Clock, Search } from "lucide-react"
+import { ArrowLeft, FileText, Download, Trash2, CheckCircle2, Clock, Search, Upload } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+import { DocumentUpload } from "@/components/document-upload"
 
 interface AllDocumentsClientProps {
   user: User
@@ -19,6 +20,7 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
+  const [showUpload, setShowUpload] = useState(false)
 
   const supabase = createClient()
 
@@ -133,10 +135,28 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
           Back to Documents
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">All Documents</h1>
-          <p className="text-muted-foreground">Complete list of all your uploaded tax documents</p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">All Documents</h1>
+            <p className="text-muted-foreground">Complete list of all your uploaded tax documents</p>
+          </div>
+          <Button onClick={() => setShowUpload(!showUpload)} className="bg-neon text-background hover:bg-neon/90">
+            <Upload className="w-4 h-4 mr-2" />
+            {showUpload ? "Hide Upload" : "Upload Document"}
+          </Button>
         </div>
+
+        {showUpload && (
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur mb-8">
+            <h2 className="text-xl font-semibold mb-4">Upload New Document</h2>
+            <DocumentUpload
+              onUploadComplete={() => {
+                fetchDocuments()
+                setShowUpload(false)
+              }}
+            />
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">

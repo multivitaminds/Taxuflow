@@ -2,15 +2,19 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Download, Calendar } from "lucide-react"
+import { getInvoiceListData } from "@/lib/accounting/data-service"
 
-export default function InvoiceListReport() {
-  const invoices = [
-    { number: "INV-1045", customer: "Acme Corporation", date: "2024-03-15", amount: "$12,500.00", status: "Paid" },
-    { number: "INV-1044", customer: "TechStart Inc", date: "2024-03-12", amount: "$8,200.00", status: "Paid" },
-    { number: "INV-1043", customer: "Global Solutions", date: "2024-03-10", amount: "$15,400.00", status: "Overdue" },
-    { number: "INV-1042", customer: "Innovation Labs", date: "2024-03-08", amount: "$6,800.00", status: "Pending" },
-    { number: "INV-1041", customer: "Digital Ventures", date: "2024-03-05", amount: "$9,200.00", status: "Paid" },
-  ]
+export default async function InvoiceListReport() {
+  const invoices = await getInvoiceListData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const totalAmount = invoices.reduce((sum, invoice) => sum + invoice.amount, 0)
 
   return (
     <div className="p-8">
@@ -44,21 +48,21 @@ export default function InvoiceListReport() {
               <span className="font-medium">{invoice.number}</span>
               <span>{invoice.customer}</span>
               <span className="text-muted-foreground">{invoice.date}</span>
-              <span className="text-right font-medium">{invoice.amount}</span>
+              <span className="text-right font-medium">{formatCurrency(invoice.amount)}</span>
               <div className="text-right">
                 <Badge
                   variant={
-                    invoice.status === "Paid" ? "default" : invoice.status === "Overdue" ? "destructive" : "secondary"
+                    invoice.status === "paid" ? "default" : invoice.status === "overdue" ? "destructive" : "secondary"
                   }
                 >
-                  {invoice.status}
+                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                 </Badge>
               </div>
             </div>
           ))}
           <div className="grid grid-cols-5 pt-4 font-bold text-lg">
             <span className="col-span-3">Total</span>
-            <span className="text-right">$52,100.00</span>
+            <span className="text-right">{formatCurrency(totalAmount)}</span>
             <span></span>
           </div>
         </div>

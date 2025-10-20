@@ -2,6 +2,7 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Upload, MessageSquare, CheckCircle, Download, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
 export default function HowItWorksPage() {
   const steps = [
@@ -121,10 +122,12 @@ export default function HowItWorksPage() {
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl sm:text-5xl font-bold mb-6">Ready to Try It?</h2>
           <p className="text-xl text-muted-foreground mb-8">Start your free filing now. No credit card required.</p>
-          <Button size="lg" className="glow-neon-strong">
-            Start Filing Free
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Link href="/get-started">
+            <Button size="lg" className="glow-neon-strong">
+              Start Filing Free
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </section>
 

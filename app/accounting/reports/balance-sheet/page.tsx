@@ -1,8 +1,23 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Download, Calendar } from "lucide-react"
+import { getBalanceSheetData } from "@/lib/accounting/data-service"
 
-export default function BalanceSheetReport() {
+export default async function BalanceSheetReport() {
+  const data = await getBalanceSheetData()
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount)
+  }
+
+  const currentAssetsTotal = data.assets.current.reduce((sum, a) => sum + (a.balance || 0), 0)
+  const fixedAssetsTotal = data.assets.fixed.reduce((sum, a) => sum + (a.balance || 0), 0)
+  const currentLiabilitiesTotal = data.liabilities.current.reduce((sum, l) => sum + (l.balance || 0), 0)
+  const longTermLiabilitiesTotal = data.liabilities.longTerm.reduce((sum, l) => sum + (l.balance || 0), 0)
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
@@ -29,44 +44,36 @@ export default function BalanceSheetReport() {
               <div className="ml-4">
                 <h3 className="font-medium mb-2">Current Assets</h3>
                 <div className="space-y-1 ml-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Cash and Cash Equivalents</span>
-                    <span className="font-medium">$85,420.00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Accounts Receivable</span>
-                    <span className="font-medium">$42,180.00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Inventory</span>
-                    <span className="font-medium">$28,500.00</span>
-                  </div>
+                  {data.assets.current.map((account, idx) => (
+                    <div key={idx} className="flex justify-between">
+                      <span>{account.account_name}</span>
+                      <span className="font-medium">{formatCurrency(account.balance || 0)}</span>
+                    </div>
+                  ))}
                   <div className="flex justify-between font-medium pt-1 border-t">
                     <span>Total Current Assets</span>
-                    <span>$156,100.00</span>
+                    <span>{formatCurrency(currentAssetsTotal)}</span>
                   </div>
                 </div>
               </div>
               <div className="ml-4">
                 <h3 className="font-medium mb-2">Fixed Assets</h3>
                 <div className="space-y-1 ml-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Property and Equipment</span>
-                    <span className="font-medium">$125,000.00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Less: Accumulated Depreciation</span>
-                    <span className="font-medium">($25,000.00)</span>
-                  </div>
+                  {data.assets.fixed.map((account, idx) => (
+                    <div key={idx} className="flex justify-between">
+                      <span>{account.account_name}</span>
+                      <span className="font-medium">{formatCurrency(account.balance || 0)}</span>
+                    </div>
+                  ))}
                   <div className="flex justify-between font-medium pt-1 border-t">
                     <span>Total Fixed Assets</span>
-                    <span>$100,000.00</span>
+                    <span>{formatCurrency(fixedAssetsTotal)}</span>
                   </div>
                 </div>
               </div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total Assets</span>
-                <span>$256,100.00</span>
+                <span>{formatCurrency(data.assets.total)}</span>
               </div>
             </div>
           </div>
@@ -77,36 +84,36 @@ export default function BalanceSheetReport() {
               <div className="ml-4">
                 <h3 className="font-medium mb-2">Current Liabilities</h3>
                 <div className="space-y-1 ml-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Accounts Payable</span>
-                    <span className="font-medium">$32,450.00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Accrued Expenses</span>
-                    <span className="font-medium">$8,200.00</span>
-                  </div>
+                  {data.liabilities.current.map((account, idx) => (
+                    <div key={idx} className="flex justify-between">
+                      <span>{account.account_name}</span>
+                      <span className="font-medium">{formatCurrency(account.balance || 0)}</span>
+                    </div>
+                  ))}
                   <div className="flex justify-between font-medium pt-1 border-t">
                     <span>Total Current Liabilities</span>
-                    <span>$40,650.00</span>
+                    <span>{formatCurrency(currentLiabilitiesTotal)}</span>
                   </div>
                 </div>
               </div>
               <div className="ml-4">
                 <h3 className="font-medium mb-2">Long-term Liabilities</h3>
                 <div className="space-y-1 ml-4 text-sm">
-                  <div className="flex justify-between">
-                    <span>Long-term Debt</span>
-                    <span className="font-medium">$75,000.00</span>
-                  </div>
+                  {data.liabilities.longTerm.map((account, idx) => (
+                    <div key={idx} className="flex justify-between">
+                      <span>{account.account_name}</span>
+                      <span className="font-medium">{formatCurrency(account.balance || 0)}</span>
+                    </div>
+                  ))}
                   <div className="flex justify-between font-medium pt-1 border-t">
                     <span>Total Long-term Liabilities</span>
-                    <span>$75,000.00</span>
+                    <span>{formatCurrency(longTermLiabilitiesTotal)}</span>
                   </div>
                 </div>
               </div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total Liabilities</span>
-                <span>$115,650.00</span>
+                <span>{formatCurrency(data.liabilities.total)}</span>
               </div>
             </div>
           </div>
@@ -114,17 +121,15 @@ export default function BalanceSheetReport() {
           <div className="pt-4">
             <h2 className="text-xl font-semibold mb-4">Equity</h2>
             <div className="space-y-2 ml-4">
-              <div className="flex justify-between">
-                <span>Owner's Equity</span>
-                <span className="font-medium">$100,000.00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Retained Earnings</span>
-                <span className="font-medium">$40,450.00</span>
-              </div>
+              {data.equity.accounts.map((account, idx) => (
+                <div key={idx} className="flex justify-between">
+                  <span>{account.account_name}</span>
+                  <span className="font-medium">{formatCurrency(account.balance || 0)}</span>
+                </div>
+              ))}
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total Equity</span>
-                <span>$140,450.00</span>
+                <span>{formatCurrency(data.equity.total)}</span>
               </div>
             </div>
           </div>
@@ -132,7 +137,7 @@ export default function BalanceSheetReport() {
           <div className="pt-4 border-t-2">
             <div className="flex justify-between text-2xl font-bold">
               <span>Total Liabilities & Equity</span>
-              <span>$256,100.00</span>
+              <span>{formatCurrency(data.liabilities.total + data.equity.total)}</span>
             </div>
           </div>
         </div>

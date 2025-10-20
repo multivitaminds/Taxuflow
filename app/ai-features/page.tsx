@@ -15,6 +15,7 @@ import {
   FileText,
   ArrowRight,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function AIFeaturesPage() {
   const features = [
@@ -202,10 +203,12 @@ export default function AIFeaturesPage() {
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl sm:text-5xl font-bold mb-6">Experience the Future of Filing</h2>
           <p className="text-xl text-muted-foreground mb-8">Try all AI features free. No credit card required.</p>
-          <Button size="lg" className="glow-neon-strong">
-            Start Filing Free
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <Link href="/get-started">
+            <Button size="lg" className="glow-neon-strong">
+              Start Filing Free
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </section>
 
