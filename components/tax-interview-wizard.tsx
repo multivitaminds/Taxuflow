@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
 import {
   User,
   Home,
@@ -18,6 +19,7 @@ import {
   CheckCircle,
   Sparkles,
   Loader2,
+  FileText,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -105,6 +107,14 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
   const [isLoadingAutoData, setIsLoadingAutoData] = useState(false)
   const [autoPopulatedFields, setAutoPopulatedFields] = useState<string[]>([])
   const { toast } = useToast()
+
+  const [taxReturnMetadata, setTaxReturnMetadata] = useState({
+    taxYear: new Date().getFullYear(),
+    taxType: "individual_1040",
+    taxCategory: "federal",
+    stateCode: "",
+    returnName: "",
+  })
 
   useEffect(() => {
     fetchAutoPopulateData()
@@ -318,6 +328,95 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
           )
         })}
       </div>
+
+      {currentSection === 0 && (
+        <Card className="mb-8 p-6 bg-accent/5 border-accent/20">
+          <h3 className="font-bold mb-4 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-accent" />
+            Tax Return Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="taxYear" className="mb-2 block">
+                Tax Year
+              </Label>
+              <Select
+                value={taxReturnMetadata.taxYear.toString()}
+                onValueChange={(value) =>
+                  setTaxReturnMetadata({ ...taxReturnMetadata, taxYear: Number.parseInt(value) })
+                }
+              >
+                <SelectTrigger id="taxYear">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[2024, 2023, 2022, 2021, 2020].map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="taxType" className="mb-2 block">
+                Tax Type
+              </Label>
+              <Select
+                value={taxReturnMetadata.taxType}
+                onValueChange={(value) => setTaxReturnMetadata({ ...taxReturnMetadata, taxType: value })}
+              >
+                <SelectTrigger id="taxType">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual_1040">Individual (Form 1040)</SelectItem>
+                  <SelectItem value="business_1120">Business (Form 1120)</SelectItem>
+                  <SelectItem value="partnership_1065">Partnership (Form 1065)</SelectItem>
+                  <SelectItem value="s_corp_1120s">S-Corp (Form 1120-S)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="taxCategory" className="mb-2 block">
+                Category
+              </Label>
+              <Select
+                value={taxReturnMetadata.taxCategory}
+                onValueChange={(value) => setTaxReturnMetadata({ ...taxReturnMetadata, taxCategory: value })}
+              >
+                <SelectTrigger id="taxCategory">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="federal">Federal</SelectItem>
+                  <SelectItem value="state">State</SelectItem>
+                  <SelectItem value="local">Local</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {taxReturnMetadata.taxCategory === "state" && (
+              <div>
+                <Label htmlFor="stateCode" className="mb-2 block">
+                  State
+                </Label>
+                <Input
+                  id="stateCode"
+                  placeholder="e.g., CA, NY, TX"
+                  value={taxReturnMetadata.stateCode}
+                  onChange={(e) =>
+                    setTaxReturnMetadata({ ...taxReturnMetadata, stateCode: e.target.value.toUpperCase() })
+                  }
+                  maxLength={2}
+                />
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-8 mb-8">
         <div className="flex items-center gap-3 mb-6">
