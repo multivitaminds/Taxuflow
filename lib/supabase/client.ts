@@ -13,7 +13,17 @@ export function createClient() {
   }
 
   try {
-    return createBrowserClient(supabaseUrl, supabaseAnonKey)
+    const rememberMe = typeof window !== "undefined" ? localStorage.getItem("taxu_remember_me") === "true" : false
+
+    return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        storage: typeof window !== "undefined" ? window.localStorage : undefined,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: "pkce",
+      },
+    })
   } catch (error) {
     console.error("[v0] Error creating Supabase client:", error)
     return null

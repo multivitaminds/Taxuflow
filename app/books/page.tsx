@@ -17,50 +17,29 @@ export default async function BooksPage() {
     redirect("/login")
   }
 
-  // Get user's organization
-  const { data: orgMember } = await booksClient.from("org_members").select("org_id").eq("user_id", user.id).single()
-
-  const orgId = orgMember?.org_id
-
-  if (!orgId) {
-    // Create default organization for user
-    const { data: newOrg } = await booksClient
-      .from("organizations")
-      .insert({ name: `${user.email}'s Books` })
-      .select()
-      .single()
-
-    if (newOrg) {
-      await booksClient.from("org_members").insert({ org_id: newOrg.id, user_id: user.id, role: "owner" })
-    }
-  }
-
-  // Fetch invoices
+  // Fetch invoices using user_id
   const { data: invoices = [] } = await booksClient
     .from("invoices")
-    .select(`
-      *,
-      contact:contacts(display_name, email)
-    `)
-    .eq("org_id", orgId)
+    .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10)
 
-  // Fetch expenses
+  // Fetch expenses using user_id
   const { data: expenses = [] } = await booksClient
     .from("journal_entries")
     .select("*")
-    .eq("org_id", orgId)
+    .eq("user_id", user.id)
     .eq("entry_type", "expense")
-    .order("date", { ascending: false })
+    .order("entry_date", { ascending: false })
     .limit(10)
 
-  // Fetch customers
+  // Fetch customers using user_id
   const { data: customers = [] } = await booksClient
     .from("contacts")
     .select("*")
-    .eq("org_id", orgId)
-    .eq("kind", "customer")
+    .eq("user_id", user.id)
+    .eq("contact_type", "customer")
     .order("created_at", { ascending: false })
 
   // Format recent transactions
@@ -68,17 +47,17 @@ export default async function BooksPage() {
     ...invoices.map((inv: any) => ({
       id: inv.id,
       type: "invoice",
-      description: `Invoice ${inv.number}`,
-      amount: inv.total,
-      date: inv.issue_date,
+      description: `Invoice ${inv.invoice_number || inv.id}`,
+      amount: inv.total_amount,
+      date: inv.invoice_date,
       status: inv.status,
     })),
     ...expenses.map((exp: any) => ({
       id: exp.id,
       type: "expense",
-      description: exp.memo || "Expense",
-      amount: exp.total_amount,
-      date: exp.date,
+      description: exp.description || "Expense",
+      amount: exp.amount,
+      date: exp.entry_date,
       status: "completed",
     })),
   ]

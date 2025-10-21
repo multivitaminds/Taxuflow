@@ -43,9 +43,7 @@ export default function SignupPage() {
 
     try {
       const supabase = getSupabaseBrowserClient()
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-        : `${window.location.origin}/auth/callback`
+      const redirectUrl = `${window.location.origin}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -280,7 +278,7 @@ export default function SignupPage() {
                 Terms
               </Link>{" "}
               and{" "}
-              <Link href="/privacy" className="text-[#2ACBFF] hover:underline">
+              <Link href="/privacy" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold transition-colors">
                 Privacy Policy
               </Link>
             </p>

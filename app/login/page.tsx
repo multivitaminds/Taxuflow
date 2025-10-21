@@ -63,9 +63,7 @@ export default function LoginPage() {
 
     try {
       const supabase = getSupabaseBrowserClient()
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-        : `${window.location.origin}/auth/callback`
+      const redirectUrl = `${window.location.origin}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -154,6 +152,18 @@ export default function LoginPage() {
         }
         setLoginLoading(false)
       } else {
+        if (rememberMe) {
+          localStorage.setItem("taxu_remember_me", "true")
+          // Set a cookie that expires in 30 days
+          const expiryDate = new Date()
+          expiryDate.setDate(expiryDate.getDate() + 30)
+          document.cookie = `taxu_remember_me=true; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax; Secure`
+        } else {
+          localStorage.removeItem("taxu_remember_me")
+          // Set a session cookie (expires when browser closes)
+          document.cookie = "taxu_remember_me=false; path=/; SameSite=Lax; Secure"
+        }
+
         console.log("[v0] Login successful, redirecting to dashboard")
         window.location.href = "/dashboard"
       }
@@ -250,7 +260,7 @@ export default function LoginPage() {
                   />
                   <path
                     fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77C17.45 20.53 14.97 23 12 23 7.7 23 3.99 20.53 2.18 16.93l2.85-2.22.81-.62z"
                   />
                   <path
                     fill="currentColor"

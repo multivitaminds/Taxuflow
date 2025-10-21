@@ -41,14 +41,30 @@ export function ExpensesClient() {
         return
       }
 
-      const { data, error } = await supabase
+      const { data: expensesData, error: expensesError } = await supabase
         .from("journal_entries")
-        .select("*, accounts(name)")
+        .select("*")
         .eq("entry_type", "expense")
         .order("entry_date", { ascending: false })
 
-      if (error) throw error
-      setExpenses(data || [])
+      if (expensesError) throw expensesError
+
+      // Fetch all accounts for the user
+      const { data: accountsData, error: accountsError } = await supabase.from("accounts").select("id, name")
+
+      if (accountsError) throw accountsError
+
+      // Create a map of account_id to account name
+      const accountsMap = new Map(accountsData?.map((acc) => [acc.id, acc.name]) || [])
+
+      // Merge the data
+      const expensesWithAccounts =
+        expensesData?.map((expense) => ({
+          ...expense,
+          account_name: expense.account_id ? accountsMap.get(expense.account_id) : null,
+        })) || []
+
+      setExpenses(expensesWithAccounts)
     } catch (error) {
       console.error("Error loading expenses:", error)
     } finally {
@@ -61,8 +77,8 @@ export function ExpensesClient() {
   const filteredExpenses = expenses.filter((expense) => {
     const matchesSearch =
       expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      expense.accounts?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = filterCategory === "all" || expense.accounts?.name === filterCategory
+      expense.account_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = filterCategory === "all" || expense.account_name === filterCategory
     return matchesSearch && matchesFilter
   })
 
@@ -223,11 +239,11 @@ export function ExpensesClient() {
                           {expense.description}
                         </Link>
                       </td>
-                      <td className="p-4 text-muted-foreground">{expense.accounts?.name || "—"}</td>
+                      <td className="p-4 text-muted-foreground">{expense.account_name || "—"}</td>
                       <td className="p-4">
                         <Badge variant="outline" className="gap-1">
                           <Tag className="h-3 w-3" />
-                          {expense.accounts?.name || "Uncategorized"}
+                          {expense.account_name || "Uncategorized"}
                         </Badge>
                       </td>
                       <td className="p-4 font-medium text-foreground">${expense.amount?.toLocaleString()}</td>

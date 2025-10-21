@@ -44,12 +44,37 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createBooksServerClient()
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    console.log("[v0] Creating customer - User:", user?.id)
+
+    if (authError || !user) {
+      console.error("[v0] Authentication error:", authError)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
+    console.log("[v0] Customer data received:", body)
 
-    const { data: customer, error } = await supabase.from("contacts").insert(body).select().single()
+    const customerData = {
+      ...body,
+      user_id: user.id,
+    }
 
-    if (error) throw error
+    console.log("[v0] Inserting customer with data:", customerData)
 
+    const { data: customer, error } = await supabase.from("contacts").insert(customerData).select().single()
+
+    if (error) {
+      console.error("[v0] Database error:", error)
+      throw error
+    }
+
+    console.log("[v0] Customer created successfully:", customer)
     return NextResponse.json({ customer })
   } catch (error: any) {
     console.error("[v0] Error creating customer:", error)

@@ -664,56 +664,56 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <button
-                  onClick={() => router.push("/accounting/invoices")}
+                  onClick={() => router.push("/accounting/invoices/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <Receipt className="w-6 h-6 text-blue-500" />
                   <span className="text-xs font-medium">Invoices</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/expenses")}
+                  onClick={() => router.push("/accounting/expenses/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <Wallet className="w-6 h-6 text-green-500" />
                   <span className="text-xs font-medium">Expenses</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/customers")}
+                  onClick={() => router.push("/accounting/customers/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <Users className="w-6 h-6 text-purple-500" />
                   <span className="text-xs font-medium">Customers</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/reports")}
+                  onClick={() => router.push("/accounting/reports/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <BarChart3 className="w-6 h-6 text-orange-500" />
                   <span className="text-xs font-medium">Reports</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/vendors")}
+                  onClick={() => router.push("/accounting/vendors/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <Building2 className="w-6 h-6 text-red-500" />
                   <span className="text-xs font-medium">Vendors</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/banking")}
+                  onClick={() => router.push("/accounting/banking/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <CreditCard className="w-6 h-6 text-cyan-500" />
                   <span className="text-xs font-medium">Banking</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/products")}
+                  onClick={() => router.push("/accounting/products/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <FileText className="w-6 h-6 text-yellow-500" />
                   <span className="text-xs font-medium">Products</span>
                 </button>
                 <button
-                  onClick={() => router.push("/accounting/projects")}
+                  onClick={() => router.push("/accounting/projects/dashboard")}
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
                 >
                   <TrendingUp className="w-6 h-6 text-pink-500" />

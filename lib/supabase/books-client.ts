@@ -13,15 +13,7 @@ export function getSupabaseBooksClient() {
     return null
   }
 
-  const client = createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    db: { schema: "books" },
-    global: {
-      headers: {
-        "Accept-Profile": "books",
-        "Content-Profile": "books",
-      },
-    },
-  })
+  const client = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
   return client
 }

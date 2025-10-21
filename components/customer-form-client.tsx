@@ -15,7 +15,8 @@ export function CustomerFormClient() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    display_name: "",
+    contact_name: "",
+    company_name: "",
     email: "",
     phone: "",
     tax_id: "",
@@ -31,7 +32,7 @@ export function CustomerFormClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          kind: "customer",
+          contact_type: "customer",
         }),
       })
 
@@ -51,16 +52,28 @@ export function CustomerFormClient() {
       <Card className="p-6">
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
-            <Label htmlFor="display_name">Customer Name *</Label>
+            <Label htmlFor="contact_name">Customer Name *</Label>
             <Input
-              id="display_name"
-              value={formData.display_name}
-              onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              placeholder="John Doe or Acme Corp"
+              id="contact_name"
+              value={formData.contact_name}
+              onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+              placeholder="John Doe"
               required
             />
           </div>
 
+          <div>
+            <Label htmlFor="company_name">Company Name</Label>
+            <Input
+              id="company_name"
+              value={formData.company_name}
+              onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+              placeholder="Acme Corp (optional)"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
             <Label htmlFor="email">Email *</Label>
             <Input
@@ -72,9 +85,7 @@ export function CustomerFormClient() {
               required
             />
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
             <Label htmlFor="phone">Phone</Label>
             <Input
@@ -85,7 +96,9 @@ export function CustomerFormClient() {
               placeholder="(555) 123-4567"
             />
           </div>
+        </div>
 
+        <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
             <Label htmlFor="tax_id">Tax ID</Label>
             <Input
@@ -104,7 +117,7 @@ export function CustomerFormClient() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" disabled={loading || !formData.display_name || !formData.email}>
+          <Button type="submit" disabled={loading || !formData.contact_name || !formData.email}>
             {loading ? "Creating..." : "Add Customer"}
           </Button>
         </div>

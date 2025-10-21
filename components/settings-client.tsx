@@ -1,0 +1,139 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ArrowLeft, Save, Loader2, LogOut } from "lucide-react"
+import type { User } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/client"
+
+interface SettingsClientProps {
+  user: User
+  profile: any
+}
+
+export function SettingsClient({ user, profile }: SettingsClientProps) {
+  const router = useRouter()
+  const supabase = createClient()
+
+  const [email, setEmail] = useState(user.email || "")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  const handleUpdateEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        email: email,
+      })
+
+      if (updateError) throw updateError
+
+      setSuccess(true)
+    } catch (err: any) {
+      console.error("[v0] Error updating email:", err)
+      setError(err.message || "Failed to update email")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 py-12 max-w-3xl">
+        <Button onClick={() => router.push("/dashboard")} variant="ghost" className="mb-6">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Button>
+
+        <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
+
+        <div className="space-y-6">
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+            <h2 className="text-xl font-bold mb-4">Email Address</h2>
+
+            {error && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-sm text-green-500">Email updated! Check your inbox to confirm the change.</p>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateEmail} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-2"
+                />
+              </div>
+              <Button
+                type="submit"
+                disabled={loading || email === user.email}
+                className="bg-neon hover:bg-neon/90 text-background"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Email
+                  </>
+                )}
+              </Button>
+            </form>
+          </Card>
+
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+            <h2 className="text-xl font-bold mb-4">Subscription</h2>
+            <p className="text-muted-foreground mb-4">
+              Current plan: <span className="font-semibold">{profile?.subscription_tier || "Free"}</span>
+            </p>
+            <Button onClick={() => router.push("/pricing")} variant="outline">
+              Manage Subscription
+            </Button>
+          </Card>
+
+          <Card className="p-6 border-red-500/20 bg-card/50 backdrop-blur">
+            <h2 className="text-xl font-bold mb-4 text-red-500">Danger Zone</h2>
+            <p className="text-muted-foreground mb-4">Sign out of your account</p>
+            <Button
+              onClick={handleSignOut}
+              variant="outline"
+              className="border-red-500/20 text-red-500 hover:bg-red-500/10 bg-transparent"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

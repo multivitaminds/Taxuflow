@@ -16,39 +16,17 @@ export default async function AccountingPage() {
 
   const booksClient = await createBooksServerClient()
 
-  // Get user's organization
-  const { data: orgMember } = await booksClient
-    .from("org_members")
-    .select("org_id, organizations(*)")
-    .eq("user_id", user.id)
-    .single()
-
-  if (!orgMember) {
-    // Create default organization for user
-    const { data: newOrg } = await booksClient
-      .from("organizations")
-      .insert({ name: `${user.email}'s Organization` })
-      .select()
-      .single()
-
-    if (newOrg) {
-      await booksClient.from("org_members").insert({ org_id: newOrg.id, user_id: user.id, role: "owner" })
-    }
-  }
-
-  const orgId = orgMember?.org_id
-
-  // Fetch dashboard data
+  // Fetch dashboard data using user_id instead of org_id
   const [invoicesRes, expensesRes, customersRes] = await Promise.all([
-    booksClient.from("invoices").select("*").eq("org_id", orgId).order("created_at", { ascending: false }).limit(10),
+    booksClient.from("invoices").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(10),
     booksClient
       .from("journal_entries")
       .select("*")
-      .eq("org_id", orgId)
+      .eq("user_id", user.id)
       .eq("entry_type", "expense")
       .order("entry_date", { ascending: false })
       .limit(10),
-    booksClient.from("contacts").select("*").eq("org_id", orgId).eq("kind", "customer").limit(10),
+    booksClient.from("contacts").select("*").eq("user_id", user.id).eq("contact_type", "customer").limit(10),
   ])
 
   return (
