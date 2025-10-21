@@ -54,14 +54,23 @@ export async function POST(request: NextRequest) {
 
     if (authError || !user) {
       console.error("[v0] Authentication error:", authError)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "You must be logged in to create a customer" }, { status: 401 })
     }
 
     const body = await request.json()
     console.log("[v0] Customer data received:", body)
 
+    if (!body.contact_name || !body.email) {
+      return NextResponse.json({ error: "Customer name and email are required" }, { status: 400 })
+    }
+
     const customerData = {
-      ...body,
+      contact_name: body.contact_name,
+      company_name: body.company_name || null,
+      email: body.email,
+      phone: body.phone || null,
+      tax_id: body.tax_id || null,
+      contact_type: body.contact_type || "customer",
       user_id: user.id,
     }
 
@@ -71,11 +80,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("[v0] Database error:", error)
-      throw error
+      return NextResponse.json({ error: error.message || "Database error occurred" }, { status: 500 })
     }
 
     console.log("[v0] Customer created successfully:", customer)
-    return NextResponse.json({ customer })
+    return NextResponse.json({ customer }, { status: 201 })
   } catch (error: any) {
     console.error("[v0] Error creating customer:", error)
     return NextResponse.json({ error: error.message || "Failed to create customer" }, { status: 500 })

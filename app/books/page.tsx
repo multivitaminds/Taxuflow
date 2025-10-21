@@ -17,34 +17,43 @@ export default async function BooksPage() {
     redirect("/login")
   }
 
-  // Fetch invoices using user_id
-  const { data: invoices = [] } = await booksClient
+  // Fetch invoices using user_id with error handling
+  const { data: invoices, error: invoicesError } = await booksClient
     .from("invoices")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10)
 
-  // Fetch expenses using user_id
-  const { data: expenses = [] } = await booksClient
+  console.log("[v0] Invoices query result:", { invoices, error: invoicesError })
+
+  // Fetch expenses using user_id with error handling
+  const { data: expenses, error: expensesError } = await booksClient
     .from("journal_entries")
     .select("*")
     .eq("user_id", user.id)
-    .eq("entry_type", "expense")
     .order("entry_date", { ascending: false })
     .limit(10)
 
-  // Fetch customers using user_id
-  const { data: customers = [] } = await booksClient
+  console.log("[v0] Expenses query result:", { expenses, error: expensesError })
+
+  // Fetch customers using user_id with error handling
+  const { data: customers, error: customersError } = await booksClient
     .from("contacts")
     .select("*")
     .eq("user_id", user.id)
-    .eq("contact_type", "customer")
     .order("created_at", { ascending: false })
 
-  // Format recent transactions
+  console.log("[v0] Customers query result:", { customers, error: customersError })
+
+  // Use empty arrays as fallback if queries fail
+  const safeInvoices = invoices || []
+  const safeExpenses = expenses || []
+  const safeCustomers = customers || []
+
+  // Format recent transactions with safe data
   const recentTransactions = [
-    ...invoices.map((inv: any) => ({
+    ...safeInvoices.map((inv: any) => ({
       id: inv.id,
       type: "invoice",
       description: `Invoice ${inv.invoice_number || inv.id}`,
@@ -52,7 +61,7 @@ export default async function BooksPage() {
       date: inv.invoice_date,
       status: inv.status,
     })),
-    ...expenses.map((exp: any) => ({
+    ...safeExpenses.map((exp: any) => ({
       id: exp.id,
       type: "expense",
       description: exp.description || "Expense",
@@ -67,9 +76,9 @@ export default async function BooksPage() {
   return (
     <AccountingDashboardClient
       user={user}
-      invoices={invoices}
-      expenses={expenses}
-      customers={customers}
+      invoices={safeInvoices}
+      expenses={safeExpenses}
+      customers={safeCustomers}
       recentTransactions={recentTransactions}
     />
   )
