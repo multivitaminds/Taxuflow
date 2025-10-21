@@ -114,4 +114,4 @@ The database is optimized with:
 Your Taxu platform is production-ready and secure!
 \`\`\`
 
-```typescript file="" isHidden
+\`\`\`typescript file="" isHidden
