@@ -8,9 +8,11 @@ export async function GET(request: Request) {
   const error = requestUrl.searchParams.get("error")
   const error_description = requestUrl.searchParams.get("error_description")
 
+  const origin = process.env.NEXT_PUBLIC_APP_URL || requestUrl.origin
+
   if (error) {
     console.error("[v0] OAuth error:", error, error_description)
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error_description || error)}`, request.url))
+    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error_description || error)}`, origin))
   }
 
   if (code) {
@@ -37,11 +39,11 @@ export async function GET(request: Request) {
 
     if (exchangeError) {
       console.error("[v0] Session exchange error:", exchangeError)
-      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, request.url))
+      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, origin))
     }
 
     cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
   }
 
-  return NextResponse.redirect(new URL("/dashboard", request.url))
+  return NextResponse.redirect(new URL("/dashboard", origin))
 }
