@@ -46,7 +46,22 @@ export default async function DashboardPage() {
       redirect("/login")
     }
 
-    const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
+    const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
+
+    if (!profile) {
+      console.log("[v0] User profile not found, creating new profile")
+      const { data: newProfile } = await supabase
+        .from("user_profiles")
+        .insert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+        })
+        .select()
+        .single()
+
+      return <DashboardClient user={user} profile={newProfile} />
+    }
 
     return <DashboardClient user={user} profile={profile} />
   } catch (error) {

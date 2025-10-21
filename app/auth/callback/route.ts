@@ -39,6 +39,8 @@ export async function GET(request: Request) {
       console.error("[v0] Session exchange error:", exchangeError)
       return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, request.url))
     }
+
+    cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
   }
 
   return NextResponse.redirect(new URL("/dashboard", request.url))
