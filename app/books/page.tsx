@@ -1,9 +1,11 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createBooksServerClient } from "@/lib/supabase/books-server"
+import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AccountingDashboardClient } from "@/components/accounting-dashboard-client"
 
 export default async function BooksPage() {
-  const supabase = await createServerClient()
+  const supabase = await createClient()
+  const booksClient = await createBooksServerClient()
 
   // Check authentication
   const {
@@ -15,47 +17,68 @@ export default async function BooksPage() {
     redirect("/login")
   }
 
+  // Get user's organization
+  const { data: orgMember } = await booksClient.from("org_members").select("org_id").eq("user_id", user.id).single()
+
+  const orgId = orgMember?.org_id
+
+  if (!orgId) {
+    // Create default organization for user
+    const { data: newOrg } = await booksClient
+      .from("organizations")
+      .insert({ name: `${user.email}'s Books` })
+      .select()
+      .single()
+
+    if (newOrg) {
+      await booksClient.from("org_members").insert({ org_id: newOrg.id, user_id: user.id, role: "owner" })
+    }
+  }
+
   // Fetch invoices
-  const { data: invoices = [] } = await supabase
+  const { data: invoices = [] } = await booksClient
     .from("invoices")
     .select(`
       *,
-      contact:contacts(name, email, company_name)
+      contact:contacts(display_name, email)
     `)
+    .eq("org_id", orgId)
     .order("created_at", { ascending: false })
     .limit(10)
 
-  // Fetch expenses (from journal_entries with type='expense')
-  const { data: expenses = [] } = await supabase
+  // Fetch expenses
+  const { data: expenses = [] } = await booksClient
     .from("journal_entries")
     .select("*")
+    .eq("org_id", orgId)
     .eq("entry_type", "expense")
-    .order("entry_date", { ascending: false })
+    .order("date", { ascending: false })
     .limit(10)
 
-  // Fetch customers (contacts with type='customer')
-  const { data: customers = [] } = await supabase
+  // Fetch customers
+  const { data: customers = [] } = await booksClient
     .from("contacts")
     .select("*")
-    .eq("contact_type", "customer")
+    .eq("org_id", orgId)
+    .eq("kind", "customer")
     .order("created_at", { ascending: false })
 
   // Format recent transactions
   const recentTransactions = [
-    ...invoices.map((inv) => ({
+    ...invoices.map((inv: any) => ({
       id: inv.id,
       type: "invoice",
-      description: `Invoice ${inv.invoice_number}`,
-      amount: inv.total_amount,
-      date: inv.invoice_date,
+      description: `Invoice ${inv.number}`,
+      amount: inv.total,
+      date: inv.issue_date,
       status: inv.status,
     })),
-    ...expenses.map((exp) => ({
+    ...expenses.map((exp: any) => ({
       id: exp.id,
       type: "expense",
-      description: exp.description || "Expense",
+      description: exp.memo || "Expense",
       amount: exp.total_amount,
-      date: exp.entry_date,
+      date: exp.date,
       status: "completed",
     })),
   ]
