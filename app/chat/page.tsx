@@ -13,7 +13,8 @@ export default async function ChatPage() {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).maybeSingle()
+  // Fetch user profile
+  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
 
   return <ChatClient userProfile={profile} />
 }

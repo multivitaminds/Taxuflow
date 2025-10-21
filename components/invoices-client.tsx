@@ -30,7 +30,7 @@ export function InvoicesClient() {
 
       const { data, error } = await supabase
         .from("invoices")
-        .select("*, customers(company_name, contact_name, email)")
+        .select("*, customers:contacts!invoices_contact_id_fkey(company_name, contact_name, email)")
         .order("created_at", { ascending: false })
 
       if (error) throw error

@@ -5,11 +5,8 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Key, Activity, CreditCard, Settings, Code, BarChart3, Zap } from "lucide-react"
 import Link from "next/link"
-import { requirePaidSubscription } from "@/lib/auth/check-subscription"
 
-export default async function DeveloperPortalPage() {
-  await requirePaidSubscription()
-
+export default function DeveloperPortalPage() {
   const apiKeys = [
     {
       name: "Production Key",

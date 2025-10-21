@@ -1,11 +1,8 @@
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { CreateKeyClient } from "@/components/create-key-client"
-import { requirePaidSubscription } from "@/lib/auth/check-subscription"
 
-export default async function CreateKeyPage() {
-  await requirePaidSubscription()
-
+export default function CreateKeyPage() {
   return (
     <main className="min-h-screen bg-background">
       <Navigation />

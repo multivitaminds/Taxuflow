@@ -2,6 +2,9 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { Suspense } from "react"
+import { ConditionalNavigation } from "@/components/conditional-navigation"
+import { AIChatWidget } from "@/components/ai-chat-widget"
 import "./globals.css"
 
 const inter = Inter({
@@ -25,21 +28,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
-        {children}
+        <ConditionalNavigation />
+        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+        <AIChatWidget />
         <Analytics />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Suppress Supabase auth errors globally
-              window.addEventListener('error', function(event) {
-                if (event.message && event.message.includes('Failed to fetch')) {
-                  event.preventDefault();
-                  console.log('[v0] Global error suppressed');
-                }
-              });
-            `,
-          }}
-        />
       </body>
     </html>
   )

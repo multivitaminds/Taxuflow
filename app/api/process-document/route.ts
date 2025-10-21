@@ -261,34 +261,23 @@ IMPORTANT:
 
 Return ONLY valid JSON, no markdown or explanation.`
 
-    let text: string
-    try {
-      const result = await generateText({
-        model: "openai/gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "file",
-                data: uint8Array,
-                mediaType: mimeType,
-              },
-            ],
-          },
-        ],
-        maxTokens: 4000,
-      })
-      text = result.text
-    } catch (aiError: any) {
-      console.error("[v0] AI Gateway error:", aiError)
-      console.error("[v0] AI Gateway error message:", aiError?.message)
-      console.error("[v0] AI Gateway error cause:", aiError?.cause)
-
-      // If AI Gateway fails, throw to trigger fallback
-      throw new Error(`AI Gateway failed: ${aiError?.message || "Unknown error"}`)
-    }
+    const { text } = await generateText({
+      model: "openai/gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "file",
+              data: uint8Array,
+              mediaType: mimeType,
+            },
+          ],
+        },
+      ],
+      maxTokens: 4000,
+    })
 
     console.log("[v0] AI response received, parsing...")
 
@@ -308,7 +297,7 @@ Return ONLY valid JSON, no markdown or explanation.`
       subtype: analysis.subtype,
       taxYear: analysis.taxYear || new Date().getFullYear(),
       filingStatus: analysis.filingStatus || analysis.extractedData?.filing_status || "single",
-      description: analysis.description || `${document.file_name || document.name || "Document"} - Tax document`,
+      description: analysis.description || `${document.name} - Tax document`,
       summary: analysis.summary || "Document analyzed successfully",
       confidence: analysis.confidence || 85,
       keyFindings: analysis.keyFindings || [],
@@ -319,9 +308,9 @@ Return ONLY valid JSON, no markdown or explanation.`
     console.error("[v0] Error details:", error instanceof Error ? error.message : String(error))
     console.error("[v0] Error stack:", error instanceof Error ? error.stack : "No stack trace")
 
-    const fileName = (document.file_name || document.name || "").toLowerCase()
+    const fileName = document.name.toLowerCase()
     let documentType = "other"
-    let description = `Document: ${document.file_name || document.name || "Unknown"}`
+    let description = `Document: ${document.name}`
 
     if (fileName.includes("w-2") || fileName.includes("w2")) {
       documentType = "w2"
@@ -343,27 +332,15 @@ Return ONLY valid JSON, no markdown or explanation.`
       taxYear: new Date().getFullYear(),
       filingStatus: "single",
       description,
-      summary: `Analyzed ${document.file_name || document.name || "document"} (fallback mode - AI vision unavailable)`,
+      summary: `Analyzed ${document.name} (fallback mode - AI vision failed)`,
       confidence: 50,
-      keyFindings: [
-        "Document uploaded successfully",
-        "AI analysis unavailable - using filename detection",
-        "Manual review recommended for accurate data extraction",
-      ],
+      keyFindings: ["Document uploaded successfully", "Manual review recommended - AI analysis failed"],
       extractedData: {},
     }
   }
 }
 
 async function processW2Document(userId: string, w2Data: any, supabase: any) {
-  if (!w2Data || !w2Data.wages) {
-    console.error("[v0] W-2 data is null or missing wages, cannot calculate taxes")
-    return {
-      error: "W-2 data extraction failed",
-      message: "Unable to extract wage information from the document. Please try uploading again or contact support.",
-    }
-  }
-
   console.log("[v0] Leo calculating refund...")
   const taxCalc = await calculateTaxes(userId, w2Data, supabase)
 
@@ -668,47 +645,18 @@ async function calculateTaxes(userId: string, w2Data: any, supabase: any) {
   const federalWithheld = Number.parseFloat(w2Data.federal_tax_withheld) || 0
   const stateWithheld = Number.parseFloat(w2Data.state_tax_withheld) || 0
 
-  const filingStatus = w2Data.filing_status || "single"
-
-  const standardDeduction = filingStatus === "married_joint" ? 29200 : 14600 // 2024 standard deductions
+  const standardDeduction = 14600 // 2024 standard deduction
   const taxableIncome = Math.max(0, wages - standardDeduction)
 
   let federalTax = 0
-
-  if (filingStatus === "married_joint") {
-    // 2024 tax brackets for Married Filing Jointly
-    if (taxableIncome <= 23200) {
-      federalTax = taxableIncome * 0.1
-    } else if (taxableIncome <= 94300) {
-      federalTax = 2320 + (taxableIncome - 23200) * 0.12
-    } else if (taxableIncome <= 201050) {
-      federalTax = 10852 + (taxableIncome - 94300) * 0.22
-    } else if (taxableIncome <= 383900) {
-      federalTax = 34337 + (taxableIncome - 201050) * 0.24
-    } else if (taxableIncome <= 487450) {
-      federalTax = 78221 + (taxableIncome - 383900) * 0.32
-    } else if (taxableIncome <= 731200) {
-      federalTax = 111357 + (taxableIncome - 487450) * 0.35
-    } else {
-      federalTax = 196670 + (taxableIncome - 731200) * 0.37
-    }
+  if (taxableIncome <= 11600) {
+    federalTax = taxableIncome * 0.1
+  } else if (taxableIncome <= 47150) {
+    federalTax = 1160 + (taxableIncome - 11600) * 0.12
+  } else if (taxableIncome <= 100525) {
+    federalTax = 5426 + (taxableIncome - 47150) * 0.22
   } else {
-    // 2024 tax brackets for Single
-    if (taxableIncome <= 11600) {
-      federalTax = taxableIncome * 0.1
-    } else if (taxableIncome <= 47150) {
-      federalTax = 1160 + (taxableIncome - 11600) * 0.12
-    } else if (taxableIncome <= 100525) {
-      federalTax = 5426 + (taxableIncome - 47150) * 0.22
-    } else if (taxableIncome <= 191950) {
-      federalTax = 17168.5 + (taxableIncome - 100525) * 0.24
-    } else if (taxableIncome <= 243725) {
-      federalTax = 39110.5 + (taxableIncome - 191950) * 0.32
-    } else if (taxableIncome <= 609350) {
-      federalTax = 55678.5 + (taxableIncome - 243725) * 0.35
-    } else {
-      federalTax = 183647.25 + (taxableIncome - 609350) * 0.37
-    }
+    federalTax = 17168.5 + (taxableIncome - 100525) * 0.24
   }
 
   const stateTax = wages * 0.05
@@ -729,7 +677,7 @@ async function calculateTaxes(userId: string, w2Data: any, supabase: any) {
     amount_owed: estimatedRefund < 0 ? Math.abs(estimatedRefund) : 0,
     confidence_level: "High",
     confidence_percentage: 96,
-    tax_year: w2Data.tax_year || 2024,
+    tax_year: 2024,
   }
 
   const { data } = await supabase.from("tax_calculations").upsert(taxCalc, { onConflict: "user_id" }).select().single()

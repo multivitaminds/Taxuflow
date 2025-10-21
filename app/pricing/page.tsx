@@ -351,9 +351,6 @@ export default function PricingPage() {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
-          <p className="text-sm text-muted-foreground mt-4">
-            Need developer API access? Upgrade to Developer tier or higher.
-          </p>
         </div>
       </section>
 

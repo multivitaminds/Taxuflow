@@ -21,23 +21,23 @@ export default function Home() {
           <div className="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-6">
             AI-Powered Business Operating System
           </div>
-          <h1 className="text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-6xl font-bold text-gray-900 mb-6 text-balance">
             Complete Accounting & Bookkeeping for Modern Businesses
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
-            Taxu combines the power of enterprise accounting with cutting-edge AI to automate your finances, save time,
-            and give you real-time insights into your business performance.
+          <p className="text-xl text-gray-600 mb-8 text-pretty">
+            Taxu combines the power of QuickBooks with cutting-edge AI to automate your finances, save time, and give
+            you real-time insights into your business performance.
           </p>
-          <div className="flex gap-4 justify-center flex-wrap">
+          <div className="flex gap-4 justify-center">
             <Link
-              href="/signup"
-              className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg cursor-pointer"
+              href="/login"
+              className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
             >
               Get Started Free
             </Link>
             <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold text-lg cursor-pointer"
+              href="/accounting"
+              className="px-8 py-4 bg-white text-blue-600 border-2 border-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold text-lg"
             >
               View Demo
             </Link>
@@ -52,62 +52,77 @@ export default function Home() {
           <p className="text-xl text-gray-600">Comprehensive tools that work together seamlessly</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Invoicing */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <FileText className="w-12 h-12 text-blue-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Invoicing</h3>
-            <p className="text-gray-600 text-sm">Create professional invoices and get paid faster</p>
-          </div>
-
-          {/* Expense Tracking */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <Wallet className="w-12 h-12 text-green-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Expense Tracking</h3>
-            <p className="text-gray-600 text-sm">Capture receipts and categorize expenses automatically</p>
-          </div>
-
-          {/* Customer Management */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <Users className="w-12 h-12 text-purple-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Customer Management</h3>
-            <p className="text-gray-600 text-sm">Track customer relationships and payment history</p>
-          </div>
-
-          {/* Financial Reports */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <BarChart3 className="w-12 h-12 text-orange-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Financial Reports</h3>
-            <p className="text-gray-600 text-sm">Real-time P&L, balance sheets, and cash flow</p>
-          </div>
-
-          {/* Vendor Management */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <Building2 className="w-12 h-12 text-red-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Vendor Management</h3>
-            <p className="text-gray-600 text-sm">Manage bills and vendor relationships</p>
-          </div>
-
-          {/* Banking */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <CreditCard className="w-12 h-12 text-cyan-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Banking</h3>
-            <p className="text-gray-600 text-sm">Connect accounts and reconcile transactions</p>
-          </div>
-
-          {/* Products & Services */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <Package className="w-12 h-12 text-yellow-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Products & Services</h3>
-            <p className="text-gray-600 text-sm">Manage your product catalog and pricing</p>
-          </div>
-
-          {/* Project Tracking */}
-          <div className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-            <TrendingUp className="w-12 h-12 text-pink-600 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Project Tracking</h3>
-            <p className="text-gray-600 text-sm">Track project profitability and time</p>
-          </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              icon: FileText,
+              title: "Invoicing",
+              desc: "Create professional invoices and get paid faster",
+              href: "/accounting/invoices",
+              color: "blue",
+            },
+            {
+              icon: Wallet,
+              title: "Expense Tracking",
+              desc: "Capture receipts and categorize expenses automatically",
+              href: "/accounting/expenses",
+              color: "green",
+            },
+            {
+              icon: Users,
+              title: "Customer Management",
+              desc: "Track customer relationships and payment history",
+              href: "/accounting/customers",
+              color: "purple",
+            },
+            {
+              icon: BarChart3,
+              title: "Financial Reports",
+              desc: "Real-time P&L, balance sheets, and cash flow",
+              href: "/accounting/reports",
+              color: "orange",
+            },
+            {
+              icon: Building2,
+              title: "Vendor Management",
+              desc: "Manage bills and vendor relationships",
+              href: "/accounting/vendors",
+              color: "red",
+            },
+            {
+              icon: CreditCard,
+              title: "Banking",
+              desc: "Connect accounts and reconcile transactions",
+              href: "/accounting/banking",
+              color: "cyan",
+            },
+            {
+              icon: Package,
+              title: "Products & Services",
+              desc: "Manage your product catalog and pricing",
+              href: "/accounting/products",
+              color: "yellow",
+            },
+            {
+              icon: TrendingUp,
+              title: "Project Tracking",
+              desc: "Track project profitability and time",
+              href: "/accounting/projects",
+              color: "pink",
+            },
+          ].map((feature) => (
+            <Link
+              key={feature.title}
+              href={feature.href}
+              className="p-6 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow border border-gray-100 group"
+            >
+              <feature.icon
+                className={`w-12 h-12 text-${feature.color}-600 mb-4 group-hover:scale-110 transition-transform`}
+              />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+              <p className="text-gray-600 text-sm">{feature.desc}</p>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -120,45 +135,44 @@ export default function Home() {
             <p className="text-xl text-blue-100">Let AI handle the busywork while you focus on growing your business</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <Zap className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Smart Categorization</h3>
-              <p className="text-blue-100">AI automatically categorizes transactions and expenses</p>
-            </div>
-            <div className="text-center">
-              <Brain className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Receipt OCR</h3>
-              <p className="text-blue-100">Extract data from receipts instantly with computer vision</p>
-            </div>
-            <div className="text-center">
-              <TrendingUp className="w-12 h-12 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Cash Flow Predictions</h3>
-              <p className="text-blue-100">Forecast your cash flow with machine learning</p>
-            </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Zap,
+                title: "Smart Categorization",
+                desc: "AI automatically categorizes transactions and expenses",
+              },
+              { icon: Brain, title: "Receipt OCR", desc: "Extract data from receipts instantly with computer vision" },
+              {
+                icon: TrendingUp,
+                title: "Cash Flow Predictions",
+                desc: "Forecast your cash flow with machine learning",
+              },
+            ].map((feature) => (
+              <div key={feature.title} className="text-center">
+                <feature.icon className="w-12 h-12 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-blue-100">{feature.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Stats */}
       <section className="container mx-auto px-4 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <div className="text-4xl font-bold text-blue-600 mb-2">50K+</div>
-            <div className="text-gray-600">Active Users</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold text-blue-600 mb-2">$2B+</div>
-            <div className="text-gray-600">Transactions Processed</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold text-blue-600 mb-2">99.9%</div>
-            <div className="text-gray-600">Uptime</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold text-blue-600 mb-2">24/7</div>
-            <div className="text-gray-600">Support</div>
-          </div>
+        <div className="grid md:grid-cols-4 gap-8 text-center">
+          {[
+            { value: "50K+", label: "Active Users" },
+            { value: "$2B+", label: "Transactions Processed" },
+            { value: "99.9%", label: "Uptime" },
+            { value: "24/7", label: "Support" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <div className="text-4xl font-bold text-blue-600 mb-2">{stat.value}</div>
+              <div className="text-gray-600">{stat.label}</div>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -169,16 +183,16 @@ export default function Home() {
           <p className="text-xl text-gray-300 mb-8">
             Join thousands of businesses using Taxu to streamline their finances
           </p>
-          <div className="flex gap-4 justify-center flex-wrap">
+          <div className="flex gap-4 justify-center">
             <Link
-              href="/signup"
-              className="inline-flex items-center justify-center px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg cursor-pointer"
+              href="/login"
+              className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
             >
               Start Free Trial
             </Link>
             <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-lg cursor-pointer"
+              href="/accounting"
+              className="px-8 py-4 bg-white text-gray-900 rounded-lg hover:bg-gray-100 transition-colors font-semibold text-lg"
             >
               Explore Features
             </Link>
@@ -187,24 +201,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="container mx-auto px-4 py-8 text-center text-gray-600 border-t border-gray-200">
-        <div className="flex justify-center gap-8 mb-4 flex-wrap">
-          <Link href="/about" className="hover:text-gray-900">
-            About
-          </Link>
-          <Link href="/pricing" className="hover:text-gray-900">
-            Pricing
-          </Link>
-          <Link href="/security" className="hover:text-gray-900">
-            Security
-          </Link>
-          <Link href="/developers" className="hover:text-gray-900">
-            Developers
-          </Link>
-          <Link href="/contact" className="hover:text-gray-900">
-            Contact
-          </Link>
-        </div>
+      <footer className="container mx-auto px-4 py-8 text-center text-gray-600">
         <p>&copy; 2025 Taxu. All rights reserved.</p>
       </footer>
     </main>
