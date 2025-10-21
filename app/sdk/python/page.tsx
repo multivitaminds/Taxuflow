@@ -4,7 +4,72 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, Copy, Terminal } from "lucide-react"
 import Link from "next/link"
 
+export const dynamic = "force-static"
+
 export default function PythonSDKPage() {
+  const quickStartCode = `import taxu
+
+# Initialize client
+client = taxu.Client(
+    api_key="your_api_key",
+    environment="production"  # or "sandbox"
+)
+
+# Estimate refund
+estimate = client.refunds.estimate(
+    income=75000,
+    filing_status="single",
+    deductions=["standard"]
+)
+
+print(f"Estimated refund: $" + str(estimate.amount))`
+
+  const returnsCode = `# Create a new tax return
+tax_return = client.returns.create(
+    user_id="user_123",
+    tax_year=2024,
+    filing_status="married_jointly"
+)
+
+# Add income
+client.returns.add_income(
+    tax_return.id,
+    type="W2",
+    employer="Acme Corp",
+    amount=85000
+)
+
+# File the return
+filed = client.returns.file(tax_return.id)`
+
+  const documentsCode = `# Upload and parse documents
+with open("w2.pdf", "rb") as file:
+    document = client.documents.upload(
+        file=file,
+        type="W2",
+        return_id="ret_abc123"
+    )
+
+# Get parsed data
+print(document.parsed)
+# {'employer': 'Acme Corp', 'wages': 85000, ...}`
+
+  const asyncCode = `import asyncio
+from taxu import AsyncClient
+
+async def main():
+    client = AsyncClient(api_key="your_api_key")
+    
+    # All methods support async
+    estimate = await client.refunds.estimate(
+        income=75000,
+        filing_status="single"
+    )
+    
+    print(f"Refund: $" + str(estimate.amount))
+
+asyncio.run(main())`
+
   return (
     <main className="min-h-screen">
       <Navigation />
@@ -48,22 +113,7 @@ export default function PythonSDKPage() {
             <h2 className="text-3xl font-bold mb-6">Quick Start</h2>
             <div className="rounded-xl border border-border bg-card p-6">
               <pre className="font-mono text-sm text-accent overflow-x-auto">
-                <code>{`import taxu
-
-# Initialize client
-client = taxu.Client(
-    api_key="your_api_key",
-    environment="production"  # or "sandbox"
-)
-
-# Estimate refund
-estimate = client.refunds.estimate(
-    income=75000,
-    filing_status="single",
-    deductions=["standard"]
-)
-
-print(f"Estimated refund: ${estimate.amount}")`}</code>
+                <code>{quickStartCode}</code>
               </pre>
             </div>
           </section>
@@ -76,23 +126,7 @@ print(f"Estimated refund: ${estimate.amount}")`}</code>
               <div className="rounded-xl border border-border bg-card p-6">
                 <h3 className="text-xl font-bold mb-4">Tax Returns</h3>
                 <pre className="font-mono text-sm text-accent overflow-x-auto">
-                  <code>{`# Create a new tax return
-tax_return = client.returns.create(
-    user_id="user_123",
-    tax_year=2024,
-    filing_status="married_jointly"
-)
-
-# Add income
-client.returns.add_income(
-    tax_return.id,
-    type="W2",
-    employer="Acme Corp",
-    amount=85000
-)
-
-# File the return
-filed = client.returns.file(tax_return.id)`}</code>
+                  <code>{returnsCode}</code>
                 </pre>
               </div>
 
@@ -100,17 +134,7 @@ filed = client.returns.file(tax_return.id)`}</code>
               <div className="rounded-xl border border-border bg-card p-6">
                 <h3 className="text-xl font-bold mb-4">Document Upload</h3>
                 <pre className="font-mono text-sm text-accent overflow-x-auto">
-                  <code>{`# Upload and parse documents
-with open("w2.pdf", "rb") as file:
-    document = client.documents.upload(
-        file=file,
-        type="W2",
-        return_id="ret_abc123"
-    )
-
-# Get parsed data
-print(document.parsed)
-# {'employer': 'Acme Corp', 'wages': 85000, ...}`}</code>
+                  <code>{documentsCode}</code>
                 </pre>
               </div>
 
@@ -118,21 +142,7 @@ print(document.parsed)
               <div className="rounded-xl border border-border bg-card p-6">
                 <h3 className="text-xl font-bold mb-4">Async/Await Support</h3>
                 <pre className="font-mono text-sm text-accent overflow-x-auto">
-                  <code>{`import asyncio
-from taxu import AsyncClient
-
-async def main():
-    client = AsyncClient(api_key="your_api_key")
-    
-    # All methods support async
-    estimate = await client.refunds.estimate(
-        income=75000,
-        filing_status="single"
-    )
-    
-    print(f"Refund: ${estimate.amount}")
-
-asyncio.run(main())`}</code>
+                  <code>{asyncCode}</code>
                 </pre>
               </div>
             </div>
