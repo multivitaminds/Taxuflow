@@ -30,7 +30,7 @@ export function Navigation() {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/ai-agents", label: "Meet Your AI Agents" },
+    { href: "/ai-agents", label: "AI Agents" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/ai-features", label: "Features" },
     { href: "/pricing", label: "Pricing" },

@@ -3,14 +3,40 @@
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, CreditCard, Download, Calendar } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export function BillingClient() {
+  const router = useRouter()
+
   const invoices = [
     { id: "INV-2025-001", date: "Jan 1, 2025", amount: "$299.00", status: "paid" },
     { id: "INV-2024-012", date: "Dec 1, 2024", amount: "$299.00", status: "paid" },
     { id: "INV-2024-011", date: "Nov 1, 2024", amount: "$299.00", status: "paid" },
     { id: "INV-2024-010", date: "Oct 1, 2024", amount: "$299.00", status: "paid" },
   ]
+
+  const handleChangePlan = () => {
+    router.push("/pricing")
+  }
+
+  const handleCancelSubscription = () => {
+    if (confirm("Are you sure you want to cancel your subscription?")) {
+      alert("Subscription cancellation initiated. You'll receive a confirmation email.")
+    }
+  }
+
+  const handleUpdatePayment = () => {
+    router.push("/developer-portal/billing/payment-methods")
+  }
+
+  const handleAddPayment = () => {
+    router.push("/developer-portal/billing/add-payment")
+  }
+
+  const handleDownloadInvoice = (invoiceId: string) => {
+    alert(`Downloading invoice ${invoiceId}...`)
+    // In production, this would trigger an actual download
+  }
 
   return (
     <div className="container mx-auto max-w-5xl px-4">
@@ -46,12 +72,14 @@ export function BillingClient() {
         </div>
 
         <div className="flex gap-3">
-          <Link href="/pricing">
-            <Button variant="outline" className="bg-transparent">
-              Change Plan
-            </Button>
-          </Link>
-          <Button variant="outline" className="bg-transparent text-red-500 border-red-500/30 hover:bg-red-500/10">
+          <Button onClick={handleChangePlan} variant="outline" className="bg-transparent">
+            Change Plan
+          </Button>
+          <Button
+            onClick={handleCancelSubscription}
+            variant="outline"
+            className="bg-transparent text-red-500 border-red-500/30 hover:bg-red-500/10"
+          >
             Cancel Subscription
           </Button>
         </div>
@@ -71,12 +99,12 @@ export function BillingClient() {
               <p className="text-sm text-muted-foreground">Expires 12/2026</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="bg-transparent">
+          <Button onClick={handleUpdatePayment} variant="outline" size="sm" className="bg-transparent">
             Update
           </Button>
         </div>
 
-        <Button variant="outline" className="bg-transparent">
+        <Button onClick={handleAddPayment} variant="outline" className="bg-transparent">
           Add Payment Method
         </Button>
       </div>
@@ -108,7 +136,7 @@ export function BillingClient() {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="ghost" size="sm">
+                    <Button onClick={() => handleDownloadInvoice(invoice.id)} variant="ghost" size="sm">
                       <Download className="w-4 h-4 mr-2" />
                       Download
                     </Button>
