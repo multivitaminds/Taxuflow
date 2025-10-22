@@ -76,7 +76,7 @@ export default function BusinessesPage() {
   ]
 
   const integrations = [
-    { name: "Xero", logo: "XE" },
+    { name: "QuickBooks", logo: "QB" },
     { name: "Stripe", logo: "ST" },
     { name: "Gusto", logo: "GU" },
     { name: "ADP", logo: "AD" },

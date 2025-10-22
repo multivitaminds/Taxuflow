@@ -5,7 +5,7 @@ import type React from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, X, Send, Mic, Volume2, RefreshCw, Settings, Sparkles } from "lucide-react"
+import { MessageSquare, X, Send, Mic, Volume2, RefreshCw, Settings } from "lucide-react"
 import { agents as agentData } from "@/data/agents"
 
 interface Message {
@@ -50,7 +50,7 @@ export function AIChatWidget() {
     const welcomeMessage: Message = {
       id: "welcome-" + Date.now(),
       role: "assistant",
-      content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. I have access to all your uploaded tax documents and can reference specific numbers from your W-2s, 1099s, and other forms. How can I help you with your taxes today?`,
+      content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. How can I help you with your taxes today?`,
     }
     setMessages([welcomeMessage])
   }, [currentAgent])
@@ -185,9 +185,9 @@ export function AIChatWidget() {
 
   const quickActions = [
     "What's my refund estimate?",
-    "Review my W-2 data",
+    "Am I eligible for EITC?",
     "What deductions can I claim?",
-    "Check my audit risk",
+    "How do I reduce audit risk?",
   ]
 
   const aiModels = [
@@ -207,8 +207,8 @@ export function AIChatWidget() {
         aria-label="Open AI chat"
       >
         <MessageSquare className="w-6 h-6 text-background" />
-        <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pulse">
-          <Sparkles className="w-3 h-3" />
+        <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pulse">
+          AI
         </div>
         <div className="absolute inset-0 rounded-full bg-neon/20 animate-ping" />
       </button>
@@ -226,19 +226,16 @@ export function AIChatWidget() {
           className="flex items-center gap-3 hover:opacity-80 transition-opacity"
         >
           <div
-            className={`w-10 h-10 rounded-full bg-gradient-to-br ${agent.color} flex items-center justify-center text-white font-bold relative`}
+            className={`w-10 h-10 rounded-full bg-gradient-to-br ${agent.color} flex items-center justify-center text-white font-bold`}
           >
             {agent.avatar}
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <Sparkles className="w-2 h-2 text-white" />
-            </div>
           </div>
           <div className="text-left">
             <div className="font-semibold flex items-center gap-1">
               {agent.name}
               <RefreshCw className="w-3 h-3 text-muted-foreground" />
             </div>
-            <div className="text-xs text-muted-foreground">{agent.role} • Document-Aware</div>
+            <div className="text-xs text-muted-foreground">{agent.role} • Online</div>
           </div>
         </button>
         <div className="flex gap-1">
@@ -267,9 +264,37 @@ export function AIChatWidget() {
             ))}
           </select>
           <p className="text-xs text-muted-foreground">
-            All models have access to your uploaded documents and tax data. GPT-4o is recommended for complex tax
-            questions.
+            Choose your preferred AI model. GPT-4o is recommended for most tasks.
           </p>
+        </div>
+      )}
+
+      {/* Agent Selector */}
+      {showAgentSelector && (
+        <div className="p-4 border-b border-neon/20 bg-background/50 space-y-2">
+          <p className="text-xs text-muted-foreground mb-2">Switch to another AI agent:</p>
+          {Object.entries(agents).map(([key, agentData]) => (
+            <button
+              key={key}
+              onClick={() => {
+                setCurrentAgent(key)
+                setShowAgentSelector(false)
+              }}
+              className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors ${
+                currentAgent === key ? "bg-neon/10 border border-neon/20" : ""
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full bg-gradient-to-br ${agentData.color} flex items-center justify-center text-white text-sm font-bold`}
+              >
+                {agentData.avatar}
+              </div>
+              <div className="text-left text-sm">
+                <div className="font-medium">{agentData.name}</div>
+                <div className="text-xs text-muted-foreground">{agentData.role}</div>
+              </div>
+            </button>
+          ))}
         </div>
       )}
 
@@ -352,7 +377,7 @@ export function AIChatWidget() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask ${currentAgent} about your taxes...`}
+            placeholder={`Ask ${currentAgent} anything...`}
             className="flex-1 border-neon/20 bg-background/50"
             disabled={isLoading}
           />
@@ -360,9 +385,8 @@ export function AIChatWidget() {
             <Send className="w-4 h-4" />
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center flex items-center justify-center gap-1">
-          <Sparkles className="w-3 h-3" />
-          Powered by {selectedModel.split("/")[1]} • Document-Aware • IRS Compliant
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          Powered by {selectedModel.split("/")[1]} • SOC 2 Compliant • Encrypted
         </p>
       </form>
     </Card>

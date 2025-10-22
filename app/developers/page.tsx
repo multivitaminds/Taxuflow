@@ -156,7 +156,7 @@ export default function DevelopersPage() {
       integration: "REST API + SDK",
     },
     {
-      company: "Xero",
+      company: "QuickBooks",
       useCase: "Tax Data Sync",
       description: "Real-time sync of deductions and expenses",
       integration: "Webhooks + GraphQL",

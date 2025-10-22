@@ -1,119 +1,109 @@
 import type React from "react"
-import type { Metadata } from "next"
+import { Navigation } from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import Link from "next/link"
-import { Code2, BookOpen, Key, Webhook, Terminal, Box, BarChart3, FileText, MessageSquare } from "lucide-react"
+import { Book, Code2, Wrench, Webhook, Terminal, TestTube, BarChart3, MessageSquare } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "Taxu Developer Platform",
-  description: "Build powerful tax and accounting integrations with Taxu APIs, SDKs, and tools",
-}
+export default function DeveloperLayout({ children }: { children: React.ReactNode }) {
+  const navSections = [
+    {
+      title: "Getting Started",
+      items: [
+        { label: "Overview", href: "/developer", icon: Book },
+        { label: "Quick Start", href: "/developer/quickstart", icon: Code2 },
+        { label: "Authentication", href: "/developer/authentication", icon: Wrench },
+      ],
+    },
+    {
+      title: "API Reference",
+      items: [
+        { label: "Tax Filing API", href: "/developer/api/tax-filing", icon: Code2 },
+        { label: "Document Intelligence", href: "/developer/api/documents", icon: Code2 },
+        { label: "Refund Estimator", href: "/developer/api/refunds", icon: Code2 },
+      ],
+    },
+    {
+      title: "Tools & SDKs",
+      items: [
+        { label: "Webhooks", href: "/developer/webhooks", icon: Webhook },
+        { label: "CLI Tool", href: "/developer/cli", icon: Terminal },
+        { label: "Sandbox", href: "/developer/sandbox", icon: TestTube },
+      ],
+    },
+    {
+      title: "Resources",
+      items: [
+        { label: "API Status", href: "/developer/status", icon: BarChart3 },
+        { label: "Changelog", href: "/developer/changelog", icon: Book },
+        { label: "Support", href: "/developer/support", icon: MessageSquare },
+      ],
+    },
+  ]
 
-const navigation = [
-  {
-    name: "Documentation",
-    items: [
-      { name: "Overview", href: "/developer", icon: BookOpen },
-      { name: "Getting Started", href: "/developer/docs", icon: Code2 },
-      { name: "API Reference", href: "/developer/docs/api-reference", icon: FileText },
-      { name: "Guides", href: "/developer/docs/guides", icon: BookOpen },
-    ],
-  },
-  {
-    name: "Tools",
-    items: [
-      { name: "Dashboard", href: "/developer/dashboard", icon: BarChart3 },
-      { name: "Sandbox", href: "/developer/sandbox", icon: Box },
-      { name: "CLI", href: "/developer/cli", icon: Terminal },
-      { name: "Webhooks", href: "/developer/webhooks", icon: Webhook },
-    ],
-  },
-  {
-    name: "SDKs",
-    items: [
-      { name: "Node.js", href: "/developer/sdks/nodejs", icon: Code2 },
-      { name: "Python", href: "/developer/sdks/python", icon: Code2 },
-      { name: "Ruby", href: "/developer/sdks/ruby", icon: Code2 },
-      { name: "Go", href: "/developer/sdks/go", icon: Code2 },
-    ],
-  },
-  {
-    name: "Resources",
-    items: [
-      { name: "API Status", href: "/developer/status", icon: BarChart3 },
-      { name: "Changelog", href: "/developer/changelog", icon: FileText },
-      { name: "Support", href: "/developer/support", icon: MessageSquare },
-    ],
-  },
-]
-
-export default function DeveloperLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
   return (
     <div className="min-h-screen bg-background">
+      <Navigation />
+
       {/* Developer Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/developer" className="flex items-center gap-2">
-              <Code2 className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">Taxu Developer</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/developer/docs" className="text-sm font-medium hover:text-primary transition-colors">
-                Docs
-              </Link>
-              <Link
-                href="/developer/docs/api-reference"
-                className="text-sm font-medium hover:text-primary transition-colors"
-              >
-                API Reference
-              </Link>
-              <Link href="/developer/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/developer/sdks/nodejs" className="text-sm font-medium hover:text-primary transition-colors">
-                SDKs
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-16 z-40">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-6 overflow-x-auto">
             <Link
-              href="/developer/dashboard"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              href="/developer"
+              className="text-sm font-semibold whitespace-nowrap hover:text-accent transition-colors"
             >
-              <Key className="mr-2 h-4 w-4" />
-              Get API Keys
+              Developers
+            </Link>
+            <Link
+              href="/developer/docs"
+              className="text-sm text-muted-foreground whitespace-nowrap hover:text-accent transition-colors"
+            >
+              Documentation
+            </Link>
+            <Link
+              href="/developer/api/tax-filing"
+              className="text-sm text-muted-foreground whitespace-nowrap hover:text-accent transition-colors"
+            >
+              API Reference
+            </Link>
+            <Link
+              href="/developer-portal"
+              className="text-sm text-muted-foreground whitespace-nowrap hover:text-accent transition-colors"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/developer/sandbox"
+              className="text-sm text-muted-foreground whitespace-nowrap hover:text-accent transition-colors"
+            >
+              Sandbox
             </Link>
           </div>
         </div>
-      </header>
+      </div>
 
-      <div className="container flex-1">
-        <div className="flex gap-8 py-8">
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex gap-8">
           {/* Sidebar Navigation */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24 space-y-6">
-              {navigation.map((section) => (
-                <div key={section.name}>
-                  <h3 className="mb-2 text-sm font-semibold text-foreground">{section.name}</h3>
-                  <ul className="space-y-1">
-                    {section.items.map((item) => {
-                      const Icon = item.icon
-                      return (
-                        <li key={item.name}>
-                          <Link
-                            href={item.href}
-                            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                          >
-                            <Icon className="h-4 w-4" />
-                            {item.name}
-                          </Link>
-                        </li>
-                      )
-                    })}
+          <aside className="hidden lg:block w-64 flex-shrink-0">
+            <div className="sticky top-32 space-y-6">
+              {navSections.map((section) => (
+                <div key={section.title}>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                    {section.title}
+                  </h3>
+                  <ul className="space-y-2">
+                    {section.items.map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-accent transition-colors py-1"
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               ))}
@@ -125,101 +115,7 @@ export default function DeveloperLayout({
         </div>
       </div>
 
-      {/* Developer Footer */}
-      <footer className="border-t bg-muted/50 mt-16">
-        <div className="container py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <h4 className="font-semibold mb-3">Documentation</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/developer/docs" className="hover:text-foreground">
-                    Getting Started
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/docs/api-reference" className="hover:text-foreground">
-                    API Reference
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/docs/guides" className="hover:text-foreground">
-                    Guides
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Tools</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/developer/dashboard" className="hover:text-foreground">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/sandbox" className="hover:text-foreground">
-                    Sandbox
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/cli" className="hover:text-foreground">
-                    CLI
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">SDKs</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/developer/sdks/nodejs" className="hover:text-foreground">
-                    Node.js
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/sdks/python" className="hover:text-foreground">
-                    Python
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/sdks/ruby" className="hover:text-foreground">
-                    Ruby
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/sdks/go" className="hover:text-foreground">
-                    Go
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-3">Resources</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="/developer/status" className="hover:text-foreground">
-                    API Status
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/changelog" className="hover:text-foreground">
-                    Changelog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/developer/support" className="hover:text-foreground">
-                    Support
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>© 2025 Taxu. All rights reserved. Built for developers, by developers.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

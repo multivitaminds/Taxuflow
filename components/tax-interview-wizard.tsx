@@ -7,21 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Progress } from "@/components/ui/progress"
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select"
-import {
-  User,
-  Home,
-  Briefcase,
-  Heart,
-  TrendingUp,
-  ArrowRight,
-  ArrowLeft,
-  CheckCircle,
-  Sparkles,
-  Loader2,
-  FileText,
-} from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { User, Home, Briefcase, Heart, TrendingUp, ArrowRight, ArrowLeft, CheckCircle, Sparkles } from "lucide-react"
 
 interface TaxInterviewData {
   // Personal Info
@@ -104,22 +90,8 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
   })
 
   const [estimatedRefund, setEstimatedRefund] = useState(0)
-  const [isLoadingAutoData, setIsLoadingAutoData] = useState(false)
-  const [autoPopulatedFields, setAutoPopulatedFields] = useState<string[]>([])
-  const { toast } = useToast()
 
-  const [taxReturnMetadata, setTaxReturnMetadata] = useState({
-    taxYear: new Date().getFullYear(),
-    taxType: "individual_1040",
-    taxCategory: "federal",
-    stateCode: "",
-    returnName: "",
-  })
-
-  useEffect(() => {
-    fetchAutoPopulateData()
-  }, [])
-
+  // Calculate estimated refund in real-time
   useEffect(() => {
     calculateRefund()
   }, [data])
@@ -146,6 +118,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
 
     const taxableIncome = Math.max(0, totalIncome - deduction)
 
+    // Simplified tax calculation (2024 brackets)
     let tax = 0
     if (data.filingStatus === "married") {
       if (taxableIncome <= 23200) tax = taxableIncome * 0.1
@@ -159,12 +132,14 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
       else tax = 17168.5 + (taxableIncome - 100525) * 0.24
     }
 
+    // Add credits
     const childTaxCredit = (data.childrenUnder17 || 0) * 2000
     const childCareCredit = Math.min((data.childCareExpenses || 0) * 0.35, 1050)
     const educationCredit = Math.min((data.educationExpenses || 0) * 1.0, 2500)
 
     const totalCredits = childTaxCredit + childCareCredit + educationCredit + (data.energyCredits || 0)
 
+    // Estimate withholding (assume 15% of W-2 income)
     const estimatedWithholding = (data.w2Income || 0) * 0.15
 
     const refund = estimatedWithholding + totalCredits - tax
@@ -194,97 +169,9 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
   const currentSectionData = sections[currentSection]
   const SectionIcon = currentSectionData.icon
 
-  const fetchAutoPopulateData = async () => {
-    setIsLoadingAutoData(true)
-    try {
-      const response = await fetch("/api/tax-interview/auto-populate")
-      const result = await response.json()
-
-      if (result.success && result.data) {
-        const autoData = result.data
-        const fieldsPopulated: string[] = []
-
-        const updates: Partial<TaxInterviewData> = {}
-
-        if (autoData.filingStatus) {
-          updates.filingStatus = autoData.filingStatus
-          fieldsPopulated.push("Filing Status")
-        }
-
-        if (autoData.w2Income > 0) {
-          updates.w2Income = autoData.w2Income
-          fieldsPopulated.push("W-2 Income")
-        }
-
-        if (autoData.selfEmploymentIncome > 0) {
-          updates.selfEmploymentIncome = autoData.selfEmploymentIncome
-          fieldsPopulated.push("Self-Employment Income")
-        }
-
-        if (autoData.interestIncome > 0) {
-          updates.interestIncome = autoData.interestIncome
-          fieldsPopulated.push("Interest Income")
-        }
-
-        if (autoData.dividendIncome > 0) {
-          updates.dividendIncome = autoData.dividendIncome
-          fieldsPopulated.push("Dividend Income")
-        }
-
-        if (Object.keys(updates).length > 0) {
-          setData((prev) => ({ ...prev, ...updates }))
-          setAutoPopulatedFields(fieldsPopulated)
-
-          toast({
-            title: "✨ AI Auto-Populated Your Tax Data",
-            description: `Filled in ${fieldsPopulated.length} fields from your uploaded documents: ${fieldsPopulated.join(", ")}`,
-            duration: 8000,
-          })
-
-          console.log("[v0] Auto-populated fields:", fieldsPopulated)
-          console.log("[v0] Auto-populated data:", updates)
-        } else {
-          console.log("[v0] No data to auto-populate")
-        }
-      }
-    } catch (error) {
-      console.error("[v0] Error fetching auto-populate data:", error)
-    } finally {
-      setIsLoadingAutoData(false)
-    }
-  }
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {isLoadingAutoData && (
-        <Card className="mb-8 p-6 bg-accent/10 border-accent/20">
-          <div className="flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-accent" />
-            <div>
-              <p className="font-medium">AI is analyzing your uploaded documents...</p>
-              <p className="text-sm text-muted-foreground">Extracting data from W-2s, 1099s, and other tax forms</p>
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {autoPopulatedFields.length > 0 && !isLoadingAutoData && (
-        <Card className="mb-8 p-6 bg-green-500/10 border-green-500/20">
-          <div className="flex items-start gap-3">
-            <Sparkles className="w-5 h-5 text-green-500 mt-0.5" />
-            <div className="flex-1">
-              <p className="font-medium text-green-700 dark:text-green-400 mb-1">
-                ✨ AI Auto-Populated {autoPopulatedFields.length} Fields
-              </p>
-              <p className="text-sm text-muted-foreground">
-                We've filled in: <strong>{autoPopulatedFields.join(", ")}</strong> from your uploaded documents. Review
-                and adjust as needed.
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
-
+      {/* Real-Time Refund Tracker */}
       <Card className="mb-8 p-6 bg-gradient-to-r from-accent/10 to-accent/5 border-accent/20">
         <div className="flex items-center justify-between">
           <div>
@@ -296,6 +183,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
         </div>
       </Card>
 
+      {/* Progress Bar */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium">
@@ -306,6 +194,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
         <Progress value={currentSectionData.progress} className="h-2" />
       </div>
 
+      {/* Section Navigation */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
         {sections.map((section, index) => {
           const Icon = section.icon
@@ -329,95 +218,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
         })}
       </div>
 
-      {currentSection === 0 && (
-        <Card className="mb-8 p-6 bg-accent/5 border-accent/20">
-          <h3 className="font-bold mb-4 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-accent" />
-            Tax Return Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="taxYear" className="mb-2 block">
-                Tax Year
-              </Label>
-              <Select
-                value={taxReturnMetadata.taxYear.toString()}
-                onValueChange={(value) =>
-                  setTaxReturnMetadata({ ...taxReturnMetadata, taxYear: Number.parseInt(value) })
-                }
-              >
-                <SelectTrigger id="taxYear">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {[2024, 2023, 2022, 2021, 2020].map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="taxType" className="mb-2 block">
-                Tax Type
-              </Label>
-              <Select
-                value={taxReturnMetadata.taxType}
-                onValueChange={(value) => setTaxReturnMetadata({ ...taxReturnMetadata, taxType: value })}
-              >
-                <SelectTrigger id="taxType">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="individual_1040">Individual (Form 1040)</SelectItem>
-                  <SelectItem value="business_1120">Business (Form 1120)</SelectItem>
-                  <SelectItem value="partnership_1065">Partnership (Form 1065)</SelectItem>
-                  <SelectItem value="s_corp_1120s">S-Corp (Form 1120-S)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="taxCategory" className="mb-2 block">
-                Category
-              </Label>
-              <Select
-                value={taxReturnMetadata.taxCategory}
-                onValueChange={(value) => setTaxReturnMetadata({ ...taxReturnMetadata, taxCategory: value })}
-              >
-                <SelectTrigger id="taxCategory">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="federal">Federal</SelectItem>
-                  <SelectItem value="state">State</SelectItem>
-                  <SelectItem value="local">Local</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {taxReturnMetadata.taxCategory === "state" && (
-              <div>
-                <Label htmlFor="stateCode" className="mb-2 block">
-                  State
-                </Label>
-                <Input
-                  id="stateCode"
-                  placeholder="e.g., CA, NY, TX"
-                  value={taxReturnMetadata.stateCode}
-                  onChange={(e) =>
-                    setTaxReturnMetadata({ ...taxReturnMetadata, stateCode: e.target.value.toUpperCase() })
-                  }
-                  maxLength={2}
-                />
-              </div>
-            )}
-          </div>
-        </Card>
-      )}
-
+      {/* Section Content */}
       <Card className="p-8 mb-8">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
@@ -430,6 +231,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
         </div>
 
         <div className="space-y-6">
+          {/* Personal Info Section */}
           {currentSection === 0 && (
             <>
               <div>
@@ -505,16 +307,12 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
             </>
           )}
 
+          {/* Income Section */}
           {currentSection === 1 && (
             <>
               <div>
-                <Label htmlFor="w2Income" className="text-base mb-2 block flex items-center gap-2">
+                <Label htmlFor="w2Income" className="text-base mb-2 block">
                   W-2 Income (Wages, Salaries, Tips)
-                  {autoPopulatedFields.includes("W-2 Income") && (
-                    <span className="text-xs bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
-                      ✨ Auto-filled
-                    </span>
-                  )}
                 </Label>
                 <Input
                   id="w2Income"
@@ -527,13 +325,8 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
               </div>
 
               <div>
-                <Label htmlFor="selfEmploymentIncome" className="text-base mb-2 block flex items-center gap-2">
+                <Label htmlFor="selfEmploymentIncome" className="text-base mb-2 block">
                   Self-Employment Income (1099, Freelance)
-                  {autoPopulatedFields.includes("Self-Employment Income") && (
-                    <span className="text-xs bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
-                      ✨ Auto-filled
-                    </span>
-                  )}
                 </Label>
                 <Input
                   id="selfEmploymentIncome"
@@ -546,13 +339,8 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
               </div>
 
               <div>
-                <Label htmlFor="interestIncome" className="text-base mb-2 block flex items-center gap-2">
+                <Label htmlFor="interestIncome" className="text-base mb-2 block">
                   Interest Income (Bank Accounts, Bonds)
-                  {autoPopulatedFields.includes("Interest Income") && (
-                    <span className="text-xs bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
-                      ✨ Auto-filled
-                    </span>
-                  )}
                 </Label>
                 <Input
                   id="interestIncome"
@@ -565,13 +353,8 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
               </div>
 
               <div>
-                <Label htmlFor="dividendIncome" className="text-base mb-2 block flex items-center gap-2">
+                <Label htmlFor="dividendIncome" className="text-base mb-2 block">
                   Dividend Income (Stocks, Mutual Funds)
-                  {autoPopulatedFields.includes("Dividend Income") && (
-                    <span className="text-xs bg-green-500/20 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full">
-                      ✨ Auto-filled
-                    </span>
-                  )}
                 </Label>
                 <Input
                   id="dividendIncome"
@@ -613,6 +396,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
             </>
           )}
 
+          {/* Deductions Section */}
           {currentSection === 2 && (
             <>
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-4">
@@ -714,6 +498,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
             </>
           )}
 
+          {/* Tax Credits Section */}
           {currentSection === 3 && (
             <>
               <div>
@@ -806,6 +591,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
             </>
           )}
 
+          {/* Life Events Section */}
           {currentSection === 4 && (
             <>
               <div>
@@ -875,6 +661,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
             </>
           )}
 
+          {/* Review Section */}
           {currentSection === 5 && (
             <div className="space-y-6">
               <div className="bg-accent/10 border border-accent/20 rounded-lg p-6">
@@ -926,6 +713,7 @@ export function TaxInterviewWizard({ onComplete }: { onComplete: (data: TaxInter
         </div>
       </Card>
 
+      {/* Navigation Buttons */}
       <div className="flex items-center justify-between">
         <Button
           type="button"

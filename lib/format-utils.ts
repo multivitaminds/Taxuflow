@@ -91,13 +91,6 @@ export function unformatNumber(value: string): string {
 }
 
 /**
- * Remove phone number formatting and return just numbers
- */
-export function unformatPhoneNumber(value: string): string {
-  return unformatNumber(value)
-}
-
-/**
  * Format currency as $X,XXX.XX
  */
 export function formatCurrency(value: string | number): string {

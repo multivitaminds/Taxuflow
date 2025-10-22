@@ -25,8 +25,8 @@ export default function Home() {
             Complete Accounting & Bookkeeping for Modern Businesses
           </h1>
           <p className="text-xl text-gray-600 mb-8 text-pretty">
-            Taxu combines cutting-edge AI with professional accounting tools to automate your finances, save time, and
-            give you real-time insights into your business performance.
+            Taxu combines the power of QuickBooks with cutting-edge AI to automate your finances, save time, and give
+            you real-time insights into your business performance.
           </p>
           <div className="flex gap-4 justify-center">
             <Link

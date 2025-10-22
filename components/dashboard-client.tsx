@@ -651,11 +651,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            {/* Taxu Business Accounting card */}
+            {/* QuickBooks-Style Accounting Features card */}
             <Card className="p-6 border-neon/20 bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-xl font-bold mb-1">Taxu Business Accounting</h2>
+                  <h2 className="text-xl font-bold mb-1">QuickBooks-Style Accounting</h2>
                   <p className="text-sm text-muted-foreground">Complete business accounting and bookkeeping tools</p>
                 </div>
                 <Button onClick={handleAccountingDashboard} className="bg-neon hover:bg-neon/90 text-background">

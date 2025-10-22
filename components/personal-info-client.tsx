@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
-import { formatPhoneNumber, unformatPhoneNumber } from "@/lib/format-utils"
 
 interface PersonalInfoClientProps {
   user: User
@@ -38,26 +37,9 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
   const [success, setSuccess] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-
-    let formattedValue = value
-
-    if (name === "phone") {
-      formattedValue = formatPhoneNumber(value)
-    } else if (name === "ssn_last_four") {
-      // Only allow digits and limit to 4
-      formattedValue = value.replace(/\D/g, "").slice(0, 4)
-    } else if (name === "zip_code") {
-      // Only allow digits and limit to 5
-      formattedValue = value.replace(/\D/g, "").slice(0, 5)
-    } else if (name === "state") {
-      // Convert to uppercase and limit to 2 characters
-      formattedValue = value.toUpperCase().slice(0, 2)
-    }
-
     setFormData({
       ...formData,
-      [name]: formattedValue,
+      [e.target.name]: e.target.value,
     })
   }
 
@@ -68,14 +50,9 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
     setSuccess(false)
 
     try {
-      const dataToSave = {
-        ...formData,
-        phone: unformatPhoneNumber(formData.phone),
-      }
-
       const { error: updateError } = await supabase.from("user_profiles").upsert({
         id: user.id,
-        ...dataToSave,
+        ...formData,
         updated_at: new Date().toISOString(),
       })
 
@@ -128,7 +105,6 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
                   onChange={handleChange}
                   required
                   className="mt-2"
-                  placeholder="John Doe"
                 />
               </div>
 
@@ -141,8 +117,6 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
                   value={formData.phone}
                   onChange={handleChange}
                   className="mt-2"
-                  placeholder="(555) 123-4567"
-                  maxLength={14}
                 />
               </div>
 
@@ -167,34 +141,19 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
                   value={formData.ssn_last_four}
                   onChange={handleChange}
                   className="mt-2"
-                  placeholder="1234"
                 />
               </div>
             </div>
 
             <div>
               <Label htmlFor="address">Street Address</Label>
-              <Input
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className="mt-2"
-                placeholder="123 Main St"
-              />
+              <Input id="address" name="address" value={formData.address} onChange={handleChange} className="mt-2" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  className="mt-2"
-                  placeholder="New York"
-                />
+                <Input id="city" name="city" value={formData.city} onChange={handleChange} className="mt-2" />
               </div>
 
               <div>
@@ -206,7 +165,6 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
                   value={formData.state}
                   onChange={handleChange}
                   className="mt-2"
-                  placeholder="NY"
                 />
               </div>
 
@@ -219,17 +177,12 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
                   value={formData.zip_code}
                   onChange={handleChange}
                   className="mt-2"
-                  placeholder="10001"
                 />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-6">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="bg-neon hover:bg-neon/90 text-background font-semibold"
-              >
+            <div className="flex gap-4 pt-6">
+              <Button type="submit" disabled={loading} className="bg-neon hover:bg-neon/90 text-background">
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
