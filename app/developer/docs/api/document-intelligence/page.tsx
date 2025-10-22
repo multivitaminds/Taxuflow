@@ -1,7 +1,63 @@
+"use client"
+
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { FileSearch, ArrowRight, Code } from "lucide-react"
 import Link from "next/link"
+
+const nodeExample = `import Taxu from '@taxu/node';
+import fs from 'fs';
+
+const taxu = new Taxu('sk_live_abc123xyz');
+
+// Upload document
+const document = await taxu.documents.upload({
+  file: fs.createReadStream('./w2.pdf'),
+  documentType: 'w2',
+  taxYear: 2024
+});
+
+console.log('Document ID:', document.id);
+
+// Poll for completion
+let result;
+do {
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  result = await taxu.documents.retrieve(document.id);
+} while (result.status === 'processing');
+
+if (result.status === 'completed') {
+  console.log('Employer:', result.extractedData.employerName);
+  console.log('Wages:', result.extractedData.wages);
+  console.log('Federal Tax Withheld:', result.extractedData.federalTaxWithheld);
+}`
+
+const pythonExample = `import taxu
+import time
+
+taxu.api_key = 'sk_live_abc123xyz'
+
+# Upload document
+with open('./w2.pdf', 'rb') as file:
+    document = taxu.Document.upload(
+        file=file,
+        document_type='w2',
+        tax_year=2024
+    )
+
+print(f'Document ID: {document.id}')
+
+# Poll for completion
+while True:
+    document = taxu.Document.retrieve(document.id)
+    if document.status != 'processing':
+        break
+    time.sleep(2)
+
+# Access extracted data
+print(f'Employer: {document.extracted_data.employer_name}')
+print(f'Wages: ${document.extracted_data.wages}')
+print(f'Federal Tax Withheld: ${document.extracted_data.federal_tax_withheld}')`
 
 export default function DocumentIntelligenceAPIPage() {
   return (
@@ -171,32 +227,7 @@ taxYear: 2024`}</code>
                 </h3>
                 <div className="rounded-xl bg-background-alt border border-border p-6 overflow-x-auto">
                   <pre className="text-sm font-mono text-accent">
-                    <code>{`import Taxu from '@taxu/node';
-import fs from 'fs';
-
-const taxu = new Taxu('sk_live_abc123xyz');
-
-// Upload document
-const document = await taxu.documents.upload({
-  file: fs.createReadStream('./w2.pdf'),
-  documentType: 'w2',
-  taxYear: 2024
-});
-
-console.log('Document ID:', document.id);
-
-// Poll for completion
-let result;
-do {
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  result = await taxu.documents.retrieve(document.id);
-} while (result.status === 'processing');
-
-if (result.status === 'completed') {
-  console.log('Employer:', result.extractedData.employerName);
-  console.log('Wages:', result.extractedData.wages);
-  console.log('Federal Tax Withheld:', result.extractedData.federalTaxWithheld);
-}`}</code>
+                    <code>{nodeExample}</code>
                   </pre>
                 </div>
               </div>
@@ -209,33 +240,7 @@ if (result.status === 'completed') {
                 </h3>
                 <div className="rounded-xl bg-background-alt border border-border p-6 overflow-x-auto">
                   <pre className="text-sm font-mono text-accent">
-                    <code>{`import taxu
-import time
-
-taxu.api_key = 'sk_live_abc123xyz'
-
-# Upload document
-with open('./w2.pdf', 'rb') as file:
-    document = taxu.Document.upload(
-        file=file,
-        document_type='w2',
-        tax_year=2024
-    )
-
-print(f'Document ID: {document.id}')
-
-# Poll for completion
-result = None
-while True:
-    result = taxu.Document.retrieve(document.id)
-    if result.status != 'processing':
-        break
-    time.sleep(2)
-
-if result.status == 'completed':
-    print(f'Employer: {result.extracted_data.employer_name}')
-    print(f'Wages: ${result.extracted_data.wages}')
-    print(f'Federal Tax Withheld: ${result.extracted_data.federal_tax_withheld}')`}</code>
+                    <code>{pythonExample}</code>
                   </pre>
                 </div>
               </div>
