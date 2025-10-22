@@ -222,7 +222,8 @@ Remember: You have access to their complete tax situation. Use it to provide per
       async start(controller) {
         try {
           for await (const chunk of result.textStream) {
-            controller.enqueue(encoder.encode(chunk))
+            const formatted = `0:${JSON.stringify({ content: chunk })}\n`
+            controller.enqueue(encoder.encode(formatted))
           }
           controller.close()
         } catch (error) {
