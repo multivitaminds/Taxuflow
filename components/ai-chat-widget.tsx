@@ -386,7 +386,7 @@ export function AIChatWidget() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2 text-center">
-          Powered by {selectedModel.split("/")[1]} • SOC 2 Compliant • Encrypted
+          Powered by {selectedModel.split("/")[1]} • SOC 2 Compliance In Progress • Encrypted
         </p>
       </form>
     </Card>

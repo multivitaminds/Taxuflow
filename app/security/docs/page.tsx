@@ -146,14 +146,14 @@ export default function SecurityDocsPage() {
       icon: FileCheck,
       content: [
         {
-          subtitle: "SOC 2 Type II",
+          subtitle: "SOC 2 Compliance In Progress",
           description:
-            "Independently audited by a third-party CPA firm for security, availability, and confidentiality controls.",
+            "Working towards independent audit by a third-party CPA firm for security, availability, and confidentiality controls.",
           technical: [
-            "Audit period: Annual",
+            "Audit period: In progress",
             "Trust service criteria: Security, Availability, Confidentiality",
-            "Auditor: [Redacted CPA Firm]",
-            "Report available: Upon request with NDA",
+            "Target completion: 2025",
+            "Report available: Upon completion",
           ],
         },
         {
@@ -304,8 +304,8 @@ export default function SecurityDocsPage() {
 
   const downloads = [
     {
-      title: "SOC 2 Type II Report",
-      description: "Latest security audit report (requires NDA)",
+      title: "SOC 2 Compliance Status",
+      description: "Current compliance progress (audit in progress)",
       icon: FileText,
       restricted: true,
     },
@@ -323,7 +323,7 @@ export default function SecurityDocsPage() {
     },
     {
       title: "Compliance Certifications",
-      description: "IRS, SOC 2, and other compliance certificates",
+      description: "IRS certification and compliance status",
       icon: FileCheck,
       restricted: false,
     },

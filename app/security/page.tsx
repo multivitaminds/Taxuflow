@@ -13,8 +13,8 @@ export default function SecurityPage() {
     },
     {
       icon: Shield,
-      title: "SOC 2 Type II Certified",
-      description: "Independently audited and certified for security, availability, and confidentiality.",
+      title: "SOC 2 Compliance In Progress",
+      description: "Working towards independent audit certification for security, availability, and confidentiality.",
     },
     {
       icon: FileCheck,

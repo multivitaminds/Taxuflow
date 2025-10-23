@@ -6,9 +6,9 @@ export default function CompliancePage() {
   const certifications = [
     {
       icon: Award,
-      title: "SOC 2 Type II",
-      description: "Independently audited for security, availability, and confidentiality controls",
-      status: "Certified",
+      title: "SOC 2 Compliance",
+      description: "Working towards independent audit for security, availability, and confidentiality controls",
+      status: "In Progress",
     },
     {
       icon: Shield,
@@ -170,10 +170,10 @@ export default function CompliancePage() {
             <div className="space-y-6">
               <div className="flex items-center justify-between p-4 border border-border rounded-lg">
                 <div>
-                  <h3 className="font-semibold mb-1">SOC 2 Type II Report</h3>
-                  <p className="text-sm text-muted-foreground">Latest audit report - Updated Q4 2024</p>
+                  <h3 className="font-semibold mb-1">SOC 2 Compliance Status</h3>
+                  <p className="text-sm text-muted-foreground">Audit in progress - Target completion 2025</p>
                 </div>
-                <button className="text-accent hover:underline text-sm font-medium">Request Report</button>
+                <button className="text-accent hover:underline text-sm font-medium">Request Status</button>
               </div>
               <div className="flex items-center justify-between p-4 border border-border rounded-lg">
                 <div>

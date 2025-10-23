@@ -32,7 +32,7 @@ export default function AboutPage() {
     { year: "2023", event: "Taxu founded with vision to democratize tax filing" },
     { year: "2024", event: "Launched AI-powered tax assistant Sophie" },
     { year: "2024", event: "Processed 100,000+ tax returns" },
-    { year: "2024", event: "Achieved SOC 2 Type II certification" },
+    { year: "2024", event: "Began SOC 2 compliance process" },
     { year: "2025", event: "Expanded to business tax filing solutions" },
   ]
 

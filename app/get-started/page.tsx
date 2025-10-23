@@ -265,7 +265,7 @@ export default function GetStartedPage() {
             </div>
             <div>
               <div className="text-4xl font-bold text-accent mb-2">SOC 2</div>
-              <div className="text-muted-foreground">Certified secure</div>
+              <div className="text-muted-foreground">Compliance In Progress</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-accent mb-2">IRS</div>
