@@ -1,4 +1,6 @@
 import { streamText } from "ai"
+import { createClient } from "@/lib/supabase/server"
+import { filingStatusTool, filingHistoryTool, estimatedTimelineTool } from "@/lib/ai/filing-tools"
 
 export const maxDuration = 30
 
@@ -52,6 +54,11 @@ export async function POST(req: Request) {
 
     const selectedAgent = agentPersonalities[agent as keyof typeof agentPersonalities] || agentPersonalities.Sophie
 
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
     const result = await streamText({
       model: model,
       messages: validatedMessages,
@@ -67,9 +74,19 @@ Context: You're helping users with their tax filing through the Taxu platform. U
 - Document requirements
 - IRS rules and deadlines
 
+${user ? `Current user ID: ${user.id}` : "User is not authenticated."}
+
+You have access to tools that can check real-time filing status, refund status, and estimated timelines. Use these tools when users ask about their filing progress or refund status.
+
 Always provide accurate, helpful information while encouraging users to consult the full Taxu platform for personalized calculations. If a question is outside your expertise, suggest connecting with another Taxu AI agent who specializes in that area.`,
       temperature: 0.7,
-      maxTokens: 500,
+      maxTokens: 1000,
+      tools: {
+        getFilingStatus: filingStatusTool,
+        getFilingHistory: filingHistoryTool,
+        getEstimatedTimeline: estimatedTimelineTool,
+      },
+      maxSteps: 5,
       abortSignal: req.signal,
     })
 

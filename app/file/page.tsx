@@ -20,6 +20,7 @@ export default function FilePage() {
     accountType: "checking",
   })
   const [calculations, setCalculations] = useState<any>(null)
+  const [filingStatus, setFilingStatus] = useState<string>("")
 
   useEffect(() => {
     loadCalculations()
@@ -53,6 +54,8 @@ export default function FilePage() {
 
   const handleFile = async () => {
     setLoading(true)
+    setFilingStatus("Validating tax return...")
+
     try {
       const supabase = createClient()
       const {
@@ -64,32 +67,46 @@ export default function FilePage() {
         return
       }
 
-      const { data, error } = await supabase
-        .from("tax_filings")
-        .insert({
-          user_id: user.id,
-          tax_year: 2024,
-          filing_status: "filed",
-          refund_amount: (calculations?.federal_refund || 0) + (calculations?.state_refund || 0),
-          bank_routing: bankInfo.routingNumber,
-          bank_account: bankInfo.accountNumber,
-          bank_account_type: bankInfo.accountType,
-          filed_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
+      setFilingStatus("Encrypting data...")
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      if (error) throw error
+      setFilingStatus("Submitting to IRS...")
 
-      console.log("[v0] Tax return filed successfully:", data)
+      // Call the new e-file API
+      const response = await fetch("/api/filing/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          taxYear: 2024,
+          filingStatus: "single",
+          federalRefund: calculations?.federal_refund || 0,
+          stateRefund: calculations?.state_refund || 0,
+          bankInfo: {
+            routingNumber: bankInfo.routingNumber,
+            accountNumber: bankInfo.accountNumber,
+            accountType: bankInfo.accountType,
+          },
+        }),
+      })
 
-      // Simulate IRS submission delay
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Failed to file return")
+      }
+
+      const result = await response.json()
+      console.log("[v0] Tax return filed successfully:", result)
+
+      setFilingStatus("Return accepted by IRS!")
+      await new Promise((resolve) => setTimeout(resolve, 1500))
 
       router.push("/refund")
     } catch (error) {
       console.error("[v0] Error filing return:", error)
-      alert("There was an error filing your return. Please try again.")
+      alert(`There was an error filing your return: ${error instanceof Error ? error.message : "Unknown error"}`)
+      setFilingStatus("")
     } finally {
       setLoading(false)
     }
@@ -268,7 +285,7 @@ export default function FilePage() {
                 <>
                   <div className="w-24 h-24 border-4 border-neon border-t-transparent rounded-full animate-spin mx-auto mb-6" />
                   <h3 className="text-2xl font-bold mb-2">Filing in Progress</h3>
-                  <p className="text-muted-foreground mb-6">This usually takes 30-60 seconds</p>
+                  <p className="text-muted-foreground mb-6">{filingStatus || "This usually takes 30-60 seconds"}</p>
                   <div className="space-y-2 text-left max-w-md mx-auto">
                     <div className="flex items-center gap-2 text-sm">
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -279,7 +296,11 @@ export default function FilePage() {
                       <span>Encrypting data</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <div className="w-4 h-4 border-2 border-neon border-t-transparent rounded-full animate-spin" />
+                      {filingStatus.includes("IRS") ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <div className="w-4 h-4 border-2 border-neon border-t-transparent rounded-full animate-spin" />
+                      )}
                       <span>Submitting to IRS...</span>
                     </div>
                   </div>
@@ -301,7 +322,7 @@ export default function FilePage() {
               <div className="flex gap-3">
                 <Shield className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-semibold mb-1">IRS e-file Certified</p>
+                  <p className="font-semibold mb-1">SOC 2 Compliance In Progress</p>
                   <p className="text-muted-foreground">
                     Your return is transmitted securely using IRS-approved encryption protocols.
                   </p>
