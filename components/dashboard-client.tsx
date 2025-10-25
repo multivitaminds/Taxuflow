@@ -423,6 +423,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
     router.push("/accounting")
   }
 
+  const handle1099Filing = () => {
+    console.log("[v0] Navigating to 1099 filing")
+    router.push("/1099-filing")
+  }
+
   const handleUploadComplete = () => {
     console.log("[v0] Document upload complete, refreshing dashboard data")
     setAutoRefresh(false)
@@ -719,6 +724,28 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
                   <TrendingUp className="w-6 h-6 text-pink-500" />
                   <span className="text-xs font-medium">Projects</span>
                 </button>
+              </div>
+            </Card>
+
+            <Card className="p-6 border-neon/20 bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold mb-1">1099 Filing & Management</h2>
+                  <p className="text-sm text-muted-foreground">File 1099 forms for contractors and vendors</p>
+                </div>
+                <Button onClick={handle1099Filing} className="bg-green-600 hover:bg-green-700 text-white">
+                  File 1099s
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50">
+                  <Users className="w-6 h-6 text-green-500" />
+                  <span className="text-xs font-medium text-center">Manage Recipients</span>
+                </div>
+                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50">
+                  <FileText className="w-6 h-6 text-blue-500" />
+                  <span className="text-xs font-medium text-center">File Forms</span>
+                </div>
               </div>
             </Card>
 
