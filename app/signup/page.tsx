@@ -91,11 +91,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-        // Skip email confirmation in development
-        data: {
-          email_confirmed: true,
-        },
+        emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
       },
     })
 
@@ -105,8 +101,12 @@ export default function SignupPage() {
       setLoading(false)
     } else {
       console.log("[v0] Signup successful:", data)
-      // Redirect immediately to dashboard
-      window.location.href = "/dashboard"
+      if (data.user && !data.session) {
+        setError("Please check your email to confirm your account before signing in.")
+        setLoading(false)
+      } else {
+        window.location.href = "/dashboard"
+      }
     }
   }
 

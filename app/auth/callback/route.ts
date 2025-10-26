@@ -8,6 +8,8 @@ export async function GET(request: Request) {
   const error = requestUrl.searchParams.get("error")
   const error_description = requestUrl.searchParams.get("error_description")
 
+  console.log("[v0] Auth callback - code:", !!code, "error:", error)
+
   if (error) {
     console.error("[v0] OAuth error:", error, error_description)
     return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error_description || error)}`, request.url))
@@ -20,14 +22,15 @@ export async function GET(request: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+          getAll() {
+            return cookieStore.getAll()
           },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+            } catch {
+              // Ignore errors from Server Component context
+            }
           },
         },
       },
@@ -40,14 +43,12 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, request.url))
     }
 
-    cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
-
     console.log("[v0] OAuth successful for user:", data.user?.email)
+
+    // Clear demo mode
+    cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
   }
 
-  const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-    ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
-    : new URL("/dashboard", request.url).toString()
-
+  const redirectUrl = new URL("/dashboard", request.url)
   return NextResponse.redirect(redirectUrl)
 }

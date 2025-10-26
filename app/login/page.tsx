@@ -146,9 +146,7 @@ export default function LoginPage() {
         if (error.message.includes("Email not confirmed")) {
           setError("Please confirm your email address before signing in. Check your inbox for the confirmation link.")
         } else if (error.message.includes("Invalid login credentials")) {
-          setError(
-            "Invalid email or password. Please check your credentials and try again, or sign up if you don't have an account yet.",
-          )
+          setError("Invalid email or password. Please check your credentials and try again.")
         } else {
           setError(error.message)
         }
@@ -156,14 +154,8 @@ export default function LoginPage() {
       } else {
         if (rememberMe) {
           localStorage.setItem("taxu_remember_me", "true")
-          // Set a cookie that expires in 30 days
-          const expiryDate = new Date()
-          expiryDate.setDate(expiryDate.getDate() + 30)
-          document.cookie = `taxu_remember_me=true; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax; Secure`
         } else {
           localStorage.removeItem("taxu_remember_me")
-          // Set a session cookie (expires when browser closes)
-          document.cookie = "taxu_remember_me=false; path=/; SameSite=Lax; Secure"
         }
 
         console.log("[v0] Login successful, redirecting to dashboard")

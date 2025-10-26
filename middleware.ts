@@ -21,49 +21,24 @@ export async function middleware(request: NextRequest) {
   try {
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
+        getAll() {
+          return request.cookies.getAll()
         },
-        set(name: string, value: string, options: any) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({
             request: {
               headers: request.headers,
             },
           })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: any) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          })
+          cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
         },
       },
     })
 
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (isAdminSubdomain) {
       const pathname = request.nextUrl.pathname
@@ -73,18 +48,16 @@ export async function middleware(request: NextRequest) {
         return response
       }
 
-      // Redirect to admin login if not authenticated
-      if (!session) {
+      if (!user) {
         const loginUrl = new URL("/admin/login", request.url)
         loginUrl.searchParams.set("redirect", pathname)
         return NextResponse.redirect(loginUrl)
       }
 
       // Verify user is an admin
-      const { data: adminUser } = await supabase.from("admin_users").select("*").eq("user_id", session.user.id).single()
+      const { data: adminUser } = await supabase.from("admin_users").select("*").eq("user_id", user.id).single()
 
       if (!adminUser) {
-        // User is authenticated but not an admin
         const unauthorizedUrl = new URL("/admin/unauthorized", request.url)
         return NextResponse.redirect(unauthorizedUrl)
       }
