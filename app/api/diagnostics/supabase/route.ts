@@ -32,6 +32,15 @@ export async function GET() {
       )
     }
 
+    // Check if user is authenticated
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json({ status: "error", message: "Unauthorized" }, { status: 401 })
+    }
+
     const { data: tables, error: tablesError } = await supabase.from("user_profiles").select("id").limit(1)
 
     if (tablesError) {
@@ -46,11 +55,6 @@ export async function GET() {
         { status: 200 },
       )
     }
-
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession()
 
     return NextResponse.json({
       status: "success",

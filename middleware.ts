@@ -9,6 +9,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  const hostname = request.headers.get("host") || ""
+  const isAdminSubdomain = hostname.startsWith("admin.")
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -58,7 +61,41 @@ export async function middleware(request: NextRequest) {
       },
     })
 
-    await supabase.auth.getSession()
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (isAdminSubdomain) {
+      const pathname = request.nextUrl.pathname
+
+      // Allow public admin login page
+      if (pathname === "/admin/login") {
+        return response
+      }
+
+      // Redirect to admin login if not authenticated
+      if (!session) {
+        const loginUrl = new URL("/admin/login", request.url)
+        loginUrl.searchParams.set("redirect", pathname)
+        return NextResponse.redirect(loginUrl)
+      }
+
+      // Verify user is an admin
+      const { data: adminUser } = await supabase.from("admin_users").select("*").eq("user_id", session.user.id).single()
+
+      if (!adminUser) {
+        // User is authenticated but not an admin
+        const unauthorizedUrl = new URL("/admin/unauthorized", request.url)
+        return NextResponse.redirect(unauthorizedUrl)
+      }
+
+      // Rewrite admin.taxu.io/* to /admin/*
+      if (!pathname.startsWith("/admin")) {
+        const url = request.nextUrl.clone()
+        url.pathname = `/admin${pathname}`
+        return NextResponse.rewrite(url)
+      }
+    }
   } catch (error) {
     console.error("[v0] Middleware error:", error)
   }

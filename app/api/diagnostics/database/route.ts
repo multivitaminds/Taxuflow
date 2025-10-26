@@ -15,6 +15,14 @@ export async function GET() {
       )
     }
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      return NextResponse.json({ status: "error", message: "Unauthorized" }, { status: 401 })
+    }
+
     const tables = [
       "user_profiles",
       "documents",
