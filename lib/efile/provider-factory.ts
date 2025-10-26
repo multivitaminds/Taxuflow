@@ -5,15 +5,13 @@ import { MockEFileProvider } from "./providers/mock-provider"
 import { TaxBanditsProvider } from "./providers/taxbandits-provider"
 
 export function createEFileProvider(): EFileProvider {
-  const providerType = process.env.EFILE_PROVIDER || "mock"
+  const hasTaxBanditsConfig = process.env.TAXBANDITS_API_KEY && process.env.TAXBANDITS_API_SECRET
 
-  console.log("[v0] Creating e-file provider:", providerType)
+  console.log("[v0] Creating e-file provider:", hasTaxBanditsConfig ? "taxbandits" : "mock")
 
-  switch (providerType.toLowerCase()) {
-    case "taxbandits":
-      return new TaxBanditsProvider()
-    case "mock":
-    default:
-      return new MockEFileProvider()
+  if (hasTaxBanditsConfig) {
+    return new TaxBanditsProvider()
   }
+
+  return new MockEFileProvider()
 }

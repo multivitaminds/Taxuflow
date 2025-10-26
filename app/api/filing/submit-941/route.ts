@@ -21,34 +21,35 @@ export async function POST(request: Request) {
 
     console.log("[v0] Submitting Form 941 to TaxBandits:", formData)
 
-    const taxbanditsResponse = await fetch(
-      `${process.env.TAXBANDITS_API_URL || "https://testtaxapi.com/v2"}/Form941/Create`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
-        },
-        body: JSON.stringify({
-          ReturnHeader: {
-            Business: {
-              BusinessNm: formData.businessName,
-              EIN: formData.ein,
-              BusinessType: "ESTE",
-            },
-            TaxYr: formData.taxYear,
-            Quarter: `Q${formData.quarter}`,
-          },
-          Form941: {
-            NumberOfEmployees: Number.parseInt(formData.numberOfEmployees),
-            WagesTipsAndOtherComp: Number.parseFloat(formData.wagesAndTips),
-            FederalIncomeTaxWithheld: Number.parseFloat(formData.federalIncomeTax),
-            TaxableSocialSecurityWages: Number.parseFloat(formData.taxableSSWages),
-            TaxableMedicareWagesAndTips: Number.parseFloat(formData.taxableMedicareWages),
-          },
-        }),
+    const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
+    const apiUrl =
+      environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testsandbox.taxbandits.com/v1.7.3"
+
+    const taxbanditsResponse = await fetch(`${apiUrl}/Form941/Create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
       },
-    )
+      body: JSON.stringify({
+        ReturnHeader: {
+          Business: {
+            BusinessNm: formData.businessName,
+            EIN: formData.ein,
+            BusinessType: "ESTE",
+          },
+          TaxYr: formData.taxYear,
+          Quarter: `Q${formData.quarter}`,
+        },
+        Form941: {
+          NumberOfEmployees: Number.parseInt(formData.numberOfEmployees),
+          WagesTipsAndOtherComp: Number.parseFloat(formData.wagesAndTips),
+          FederalIncomeTaxWithheld: Number.parseFloat(formData.federalIncomeTax),
+          TaxableSocialSecurityWages: Number.parseFloat(formData.taxableSSWages),
+          TaxableMedicareWagesAndTips: Number.parseFloat(formData.taxableMedicareWages),
+        },
+      }),
+    })
 
     const result = await taxbanditsResponse.json()
 

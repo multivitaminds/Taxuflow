@@ -5,20 +5,20 @@ import type { EFileProvider, TaxReturn, FilingResult, FilingStatusResponse } fro
 export class TaxBanditsProvider implements EFileProvider {
   name = "TaxBandits"
   private apiKey: string
-  private userToken: string
+  private apiSecret: string
   private apiUrl: string
   private environment: string
 
   constructor() {
     this.apiKey = process.env.TAXBANDITS_API_KEY || ""
-    this.userToken = process.env.TAXBANDITS_USER_TOKEN || ""
+    this.apiSecret = process.env.TAXBANDITS_API_SECRET || ""
     this.environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
     this.apiUrl =
       this.environment === "production"
         ? "https://api.taxbandits.com/v1.7.3"
         : "https://testsandbox.taxbandits.com/v1.7.3"
 
-    if (!this.apiKey || !this.userToken) {
+    if (!this.apiKey || !this.apiSecret) {
       console.warn("[v0] TaxBandits credentials not configured. Using mock provider.")
     }
   }
@@ -30,8 +30,8 @@ export class TaxBanditsProvider implements EFileProvider {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        UserToken: this.userToken,
         ApiKey: this.apiKey,
+        ApiSecret: this.apiSecret,
       }),
     })
 
@@ -44,7 +44,7 @@ export class TaxBanditsProvider implements EFileProvider {
   }
 
   async submitReturn(taxReturn: TaxReturn): Promise<FilingResult> {
-    if (!this.apiKey || !this.userToken) {
+    if (!this.apiKey || !this.apiSecret) {
       throw new Error("TaxBandits credentials not configured")
     }
 
@@ -100,7 +100,7 @@ export class TaxBanditsProvider implements EFileProvider {
   }
 
   async getFilingStatus(submissionId: string): Promise<FilingStatusResponse> {
-    if (!this.apiKey || !this.userToken) {
+    if (!this.apiKey || !this.apiSecret) {
       throw new Error("TaxBandits credentials not configured")
     }
 

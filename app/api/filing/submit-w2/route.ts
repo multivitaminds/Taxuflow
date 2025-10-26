@@ -21,41 +21,42 @@ export async function POST(request: Request) {
 
     console.log("[v0] Submitting W-2 to TaxBandits:", formData)
 
-    const taxbanditsResponse = await fetch(
-      `${process.env.TAXBANDITS_API_URL || "https://testtaxapi.com/v2"}/FormW2/Create`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
-        },
-        body: JSON.stringify({
-          ReturnHeader: {
-            Business: {
-              BusinessNm: formData.businessName,
-              EIN: formData.ein,
-              BusinessType: "ESTE",
-            },
-            TaxYr: formData.taxYear,
-          },
-          FormW2: {
-            EmployeeInfo: {
-              FirstNm: formData.employeeFirstName,
-              LastNm: formData.employeeLastName,
-              SSN: formData.employeeSSN,
-            },
-            WagesAndCompensation: {
-              WagesTipsAndOtherComp: Number.parseFloat(formData.wages),
-              FederalIncomeTaxWithheld: Number.parseFloat(formData.federalWithholding),
-              SocialSecurityWages: Number.parseFloat(formData.socialSecurityWages),
-              SocialSecurityTaxWithheld: Number.parseFloat(formData.socialSecurityWithholding),
-              MedicareWagesAndTips: Number.parseFloat(formData.medicareWages),
-              MedicareTaxWithheld: Number.parseFloat(formData.medicareWithholding),
-            },
-          },
-        }),
+    const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
+    const apiUrl =
+      environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testsandbox.taxbandits.com/v1.7.3"
+
+    const taxbanditsResponse = await fetch(`${apiUrl}/FormW2/Create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
       },
-    )
+      body: JSON.stringify({
+        ReturnHeader: {
+          Business: {
+            BusinessNm: formData.businessName,
+            EIN: formData.ein,
+            BusinessType: "ESTE",
+          },
+          TaxYr: formData.taxYear,
+        },
+        FormW2: {
+          EmployeeInfo: {
+            FirstNm: formData.employeeFirstName,
+            LastNm: formData.employeeLastName,
+            SSN: formData.employeeSSN,
+          },
+          WagesAndCompensation: {
+            WagesTipsAndOtherComp: Number.parseFloat(formData.wages),
+            FederalIncomeTaxWithheld: Number.parseFloat(formData.federalWithholding),
+            SocialSecurityWages: Number.parseFloat(formData.socialSecurityWages),
+            SocialSecurityTaxWithheld: Number.parseFloat(formData.socialSecurityWithholding),
+            MedicareWagesAndTips: Number.parseFloat(formData.medicareWages),
+            MedicareTaxWithheld: Number.parseFloat(formData.medicareWithholding),
+          },
+        },
+      }),
+    })
 
     const result = await taxbanditsResponse.json()
 

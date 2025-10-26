@@ -1,54 +1,48 @@
 "use client"
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react"
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createBrowserClient } from "@supabase/ssr"
 import DiagnosticsClient from "@/components/diagnostics-client"
 
-interface DiagnosticResult {
-  status: "success" | "error" | "warning"
-  message: string
-  details?: any
-  tables?: Record<string, boolean>
-  missingTables?: string[]
-  error?: string
-}
+export default function DiagnosticsPage() {
+  const router = useRouter()
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-export default async function DiagnosticsPage() {
-  const supabase = await createClient()
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      )
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-  // Redirect to login if not authenticated
-  if (!session) {
-    redirect("/login?redirect=/diagnostics")
+      if (!session) {
+        router.push("/login?redirect=/diagnostics")
+        return
+      }
+
+      setUserEmail(session.user.email || null)
+      setLoading(false)
+    }
+
+    checkAuth()
+  }, [router])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent mx-auto" />
+          <p className="text-slate-400">Loading diagnostics...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Optional: Check if user is admin (you can add admin role check here)
-  // const { data: profile } = await supabase
-  //   .from('user_profiles')
-  //   .select('role')
-  //   .eq('id', session.user.id)
-  //   .single()
-  //
-  // if (profile?.role !== 'admin') {
-  //   redirect('/dashboard')
-  // }
-
-  return <DiagnosticsClient userEmail={session.user.email} />
-}
-
-const StatusIcon = ({ status }: { status: string }) => {
-  if (status === "success") return <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-  if (status === "error") return <XCircle className="h-6 w-6 text-red-500" />
-  return <AlertCircle className="h-6 w-6 text-amber-500" />
-}
-
-const calculateHealthScore = (supabaseStatus: DiagnosticResult | null, databaseStatus: DiagnosticResult | null) => {
-  let score = 0
-  if (supabaseStatus?.status === "success") score += 50
-  if (databaseStatus?.status === "success") score += 50
-  else if (databaseStatus?.status === "warning") score += 35
-  return score
+  return <DiagnosticsClient userEmail={userEmail} />
 }

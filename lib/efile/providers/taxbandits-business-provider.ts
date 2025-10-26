@@ -4,13 +4,13 @@ import type { BusinessTaxReturn, PayrollTaxReturn, FilingResult } from "../types
 
 export class TaxBanditsBusinessProvider {
   private apiKey: string
-  private userToken: string
+  private apiSecret: string
   private apiUrl: string
   private environment: string
 
   constructor() {
     this.apiKey = process.env.TAXBANDITS_API_KEY || ""
-    this.userToken = process.env.TAXBANDITS_USER_TOKEN || ""
+    this.apiSecret = process.env.TAXBANDITS_API_SECRET || ""
     this.environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
     this.apiUrl =
       this.environment === "production"
@@ -25,8 +25,8 @@ export class TaxBanditsBusinessProvider {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        UserToken: this.userToken,
         ApiKey: this.apiKey,
+        ApiSecret: this.apiSecret,
       }),
     })
 
@@ -39,14 +39,13 @@ export class TaxBanditsBusinessProvider {
   }
 
   async submitBusinessReturn(businessReturn: BusinessTaxReturn): Promise<FilingResult> {
-    if (!this.apiKey || !this.userToken) {
+    if (!this.apiKey || !this.apiSecret) {
       throw new Error("TaxBandits credentials not configured")
     }
 
     try {
       const accessToken = await this.getAccessToken()
 
-      // Determine form type based on entity
       const formEndpoint = this.getBusinessFormEndpoint(businessReturn.entityType)
       const payload = this.transformBusinessReturn(businessReturn)
 
@@ -86,7 +85,7 @@ export class TaxBanditsBusinessProvider {
   }
 
   async submitPayrollReturn(payrollReturn: PayrollTaxReturn): Promise<FilingResult> {
-    if (!this.apiKey || !this.userToken) {
+    if (!this.apiKey || !this.apiSecret) {
       throw new Error("TaxBandits credentials not configured")
     }
 
