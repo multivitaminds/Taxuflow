@@ -5,6 +5,8 @@ import { encrypt } from "@/lib/crypto"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[v0] Starting 1099-NEC submission")
+
     const { isDemoMode } = await checkDemoMode()
 
     if (isDemoMode) {
@@ -21,11 +23,78 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { userId, taxYear, contractors } = body
 
+    console.log("[v0] Received submission for user:", userId, "contractors:", contractors.length)
+
+    const supabase = await getSupabaseServerClient()
+    if (!supabase) {
+      throw new Error("Database not available")
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single()
+
+    if (profileError || !profile) {
+      console.error("[v0] Failed to fetch user profile:", profileError)
+      throw new Error("User profile not found. Please complete your business information in settings.")
+    }
+
+    console.log("[v0] User profile loaded:", profile.email)
+
     const encryptedContractors = contractors.map((contractor: any) => ({
       ...contractor,
       ssn: contractor.ssn ? encrypt(contractor.ssn) : null,
       ein: contractor.ein ? encrypt(contractor.ein) : null,
     }))
+
+    const taxbanditsPayload = {
+      SubmissionManifest: {
+        TaxYear: taxYear,
+        IsFederalFiling: true,
+        IsStateFiling: false,
+      },
+      ReturnHeader: {
+        Business: {
+          BusinessNm: profile.business_name || `${profile.first_name} ${profile.last_name}`,
+          EIN: profile.ein || "XX-XXXXXXX",
+          BusinessType: profile.business_type || "Individual",
+          IsEIN: !!profile.ein,
+          Email: profile.email,
+          ContactNm: `${profile.first_name} ${profile.last_name}`,
+          Phone: profile.phone || "0000000000",
+          USAddress: {
+            Address1: profile.address || "123 Main St",
+            City: profile.city || "San Francisco",
+            State: profile.state || "CA",
+            ZipCd: profile.zip_code || "94102",
+          },
+        },
+      },
+      ReturnData: contractors.map((contractor: any, index: number) => ({
+        SequenceId: `${Date.now()}-${index}`,
+        Recipient: {
+          RecipientId: `RCP-${Date.now()}-${index}`,
+          RecipientNm: `${contractor.firstName} ${contractor.lastName}`,
+          IsForeign: false,
+          TINType: contractor.ein ? "EIN" : "SSN",
+          TIN: contractor.ein || contractor.ssn,
+          Email: contractor.email || "",
+          USAddress: {
+            Address1: contractor.address.street,
+            City: contractor.address.city,
+            State: contractor.address.state,
+            ZipCd: contractor.address.zipCode,
+          },
+        },
+        NECFormData: {
+          B1NonemployeeCompensation: contractor.compensation,
+        },
+      })),
+    }
+
+    console.log("[v0] Submitting to TaxBandits API...")
 
     const taxbanditsResponse = await fetch("https://testapi.taxbandits.com/v1.7.3/Form1099NEC/Create", {
       method: "POST",
@@ -33,64 +102,32 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
       },
-      body: JSON.stringify({
-        SubmissionManifest: {
-          TaxYear: taxYear,
-          IsFederalFiling: true,
-          IsStateFiling: false,
-        },
-        ReturnHeader: {
-          Business: {
-            BusinessNm: "Your Business Name",
-            EIN: "XX-XXXXXXX",
-            BusinessType: "Corporation",
-            IsEIN: true,
-            Email: "business@example.com",
-            ContactNm: "Contact Name",
-            Phone: "1234567890",
-            USAddress: {
-              Address1: "123 Business St",
-              City: "San Francisco",
-              State: "CA",
-              ZipCd: "94102",
-            },
-          },
-        },
-        ReturnData: contractors.map((contractor: any) => ({
-          SequenceId: Math.random().toString(36).substring(7),
-          Recipient: {
-            RecipientId: Math.random().toString(36).substring(7),
-            RecipientNm: `${contractor.firstName} ${contractor.lastName}`,
-            IsForeign: false,
-            TINType: contractor.ein ? "EIN" : "SSN",
-            TIN: contractor.ein || contractor.ssn, // TaxBandits needs plain text
-            Email: contractor.email || "",
-            USAddress: {
-              Address1: contractor.address.street,
-              City: contractor.address.city,
-              State: contractor.address.state,
-              ZipCd: contractor.address.zipCode,
-            },
-          },
-          NECFormData: {
-            B1NonemployeeCompensation: contractor.compensation,
-          },
-        })),
-      }),
+      body: JSON.stringify(taxbanditsPayload),
     })
 
+    console.log("[v0] TaxBandits response status:", taxbanditsResponse.status)
+
+    if (!taxbanditsResponse.ok) {
+      const errorText = await taxbanditsResponse.text()
+      console.error("[v0] TaxBandits API error:", errorText)
+      throw new Error(`TaxBandits API error: ${taxbanditsResponse.status} - ${errorText}`)
+    }
+
     const taxbanditsData = await taxbanditsResponse.json()
+    console.log("[v0] TaxBandits response:", JSON.stringify(taxbanditsData, null, 2))
 
-    if (!taxbanditsData.SubmissionId) {
-      throw new Error("Failed to submit to TaxBandits")
+    if (!taxbanditsData.SubmissionId && !taxbanditsData.Errors) {
+      console.error("[v0] Invalid TaxBandits response:", taxbanditsData)
+      throw new Error("Invalid response from TaxBandits API")
     }
 
-    const supabase = await getSupabaseServerClient()
-    if (!supabase) {
-      throw new Error("Database not available")
+    if (taxbanditsData.Errors && taxbanditsData.Errors.length > 0) {
+      const errorMessages = taxbanditsData.Errors.map((e: any) => e.Message || e.Name).join(", ")
+      console.error("[v0] TaxBandits validation errors:", errorMessages)
+      throw new Error(`TaxBandits validation failed: ${errorMessages}`)
     }
 
-    const { data: filing, error } = await supabase
+    const { data: filing, error: filingError } = await supabase
       .from("tax_filings")
       .insert({
         user_id: userId,
@@ -106,7 +143,12 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (error) throw error
+    if (filingError) {
+      console.error("[v0] Database error:", filingError)
+      throw new Error(`Failed to save filing: ${filingError.message}`)
+    }
+
+    console.log("[v0] Filing saved successfully:", filing.id)
 
     return NextResponse.json({
       success: true,

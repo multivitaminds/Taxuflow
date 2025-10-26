@@ -7,7 +7,10 @@ export function ConditionalNavigation() {
   const pathname = usePathname()
 
   const hideNavigation =
-    pathname.startsWith("/chat") || pathname.startsWith("/dashboard") || pathname.startsWith("/accounting")
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/accounting") ||
+    pathname.startsWith("/admin")
 
   if (hideNavigation) {
     return null

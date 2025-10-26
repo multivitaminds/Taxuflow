@@ -89,9 +89,9 @@ export default async function Filing1099Page() {
                 <span>CSV import/export</span>
               </li>
             </ul>
-            <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white" disabled>
-              Coming Soon
-            </Button>
+            <Link href="/recipients">
+              <Button className="w-full bg-purple-500 hover:bg-purple-600 text-white">Manage Recipients</Button>
+            </Link>
           </Card>
         </div>
 
