@@ -76,14 +76,19 @@ export default function Form941() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Form 941 - Employer's Quarterly Federal Tax Return</CardTitle>
+      <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+
+        <CardHeader className="relative">
+          <CardTitle className="text-2xl bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
+            Form 941 - Employer's Quarterly Federal Tax Return
+          </CardTitle>
           <CardDescription>
             Report quarterly payroll taxes for Q{formData.quarter} {formData.taxYear}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+
+        <CardContent className="space-y-6 relative">
           {/* Business Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Business Information</h3>

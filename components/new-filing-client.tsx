@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FileText, Upload, LinkIcon, Building2, Users, FileSpreadsheet } from "lucide-react"
 import Link from "next/link"
 import { Form1099NEC } from "@/components/forms/form-1099-nec"
+import { Form1099NECCSV } from "@/components/forms/form-1099-nec-csv"
 import { DocumentUpload } from "@/components/forms/document-upload"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
 import FormW2 from "@/components/forms/form-w2"
@@ -121,6 +122,8 @@ export function NewFilingClient({ userId }: NewFilingClientProps) {
     switch (selectedForm) {
       case "1099-nec":
         return <Form1099NEC userId={userId} />
+      case "1099-nec-csv":
+        return <Form1099NECCSV userId={userId} />
       case "w2":
         return <FormW2 />
       case "941":
@@ -137,16 +140,26 @@ export function NewFilingClient({ userId }: NewFilingClientProps) {
     }
   }
 
-  if (selectedForm && activeTab === "manual") {
+  if (selectedForm && (activeTab === "manual" || activeTab === "csv")) {
     return (
-      <div className="min-h-screen bg-background p-6">
-        <div className="mx-auto max-w-5xl space-y-6">
+      <div className="min-h-screen bg-gradient-to-br from-background via-purple-500/5 to-orange-500/5 p-6">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-orange-500/10 pointer-events-none" />
+
+        <div className="relative mx-auto max-w-5xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">New Tax Filing</h1>
-              <p className="text-muted-foreground">Fill out the form manually</p>
+              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
+                New Tax Filing
+              </h1>
+              <p className="text-muted-foreground">
+                {activeTab === "csv" ? "Upload CSV file" : "Fill out the form manually"}
+              </p>
             </div>
-            <Button variant="outline" onClick={() => setSelectedForm(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedForm(null)}
+              className="hover:scale-105 transition-transform"
+            >
               Back to Form Selection
             </Button>
           </div>
@@ -157,31 +170,53 @@ export function NewFilingClient({ userId }: NewFilingClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-background via-purple-500/5 to-orange-500/5 p-6">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-purple-500/10 via-transparent to-orange-500/10 pointer-events-none" />
+
+      <div className="relative mx-auto max-w-5xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">New Tax Filing</h1>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
+              New Tax Filing
+            </h1>
             <p className="text-muted-foreground">Choose how you want to file your taxes</p>
           </div>
           <Link href="/dashboard/filing">
-            <Button variant="outline">Back to Dashboard</Button>
+            <Button variant="outline" className="hover:scale-105 transition-transform bg-transparent">
+              Back to Dashboard
+            </Button>
           </Link>
         </div>
 
         {/* Filing Options */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="select" className="gap-2">
+          <TabsList className="grid w-full grid-cols-4 bg-white/5 backdrop-blur-xl border border-white/10">
+            <TabsTrigger
+              value="select"
+              className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-orange-500"
+            >
               <FileText className="h-4 w-4" />
               Select Form
             </TabsTrigger>
-            <TabsTrigger value="upload" className="gap-2">
+            <TabsTrigger
+              value="csv"
+              className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-orange-500"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Bulk CSV Upload
+            </TabsTrigger>
+            <TabsTrigger
+              value="upload"
+              className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-orange-500"
+            >
               <Upload className="h-4 w-4" />
               Upload Documents
             </TabsTrigger>
-            <TabsTrigger value="quickbooks" className="gap-2">
+            <TabsTrigger
+              value="quickbooks"
+              className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-orange-500"
+            >
               <LinkIcon className="h-4 w-4" />
               QuickBooks Sync
             </TabsTrigger>
@@ -193,15 +228,19 @@ export function NewFilingClient({ userId }: NewFilingClientProps) {
               return (
                 <div key={categoryId} className="space-y-4">
                   <div className="flex items-center gap-2">
-                    <Icon className="h-5 w-5 text-primary" />
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500/20 to-orange-500/20">
+                      <Icon className="h-5 w-5 text-purple-600" />
+                    </div>
                     <h2 className="text-xl font-semibold">{category.title}</h2>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {category.forms.map((form) => (
                       <Card
                         key={form.id}
-                        className={`cursor-pointer transition-all hover:border-primary ${
-                          !form.supported ? "opacity-60" : ""
+                        className={`cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20 border-2 ${
+                          form.supported
+                            ? "border-purple-500/20 hover:border-purple-500/40 bg-gradient-to-br from-white/5 to-purple-500/5 backdrop-blur-xl"
+                            : "opacity-60 border-white/10"
                         }`}
                         onClick={() => {
                           if (form.supported) {
@@ -214,14 +253,19 @@ export function NewFilingClient({ userId }: NewFilingClientProps) {
                           <CardTitle className="flex items-center justify-between text-base">
                             {form.name}
                             {form.comingSoon && (
-                              <span className="text-xs font-normal text-muted-foreground">Coming Soon</span>
+                              <span className="text-xs font-normal px-2 py-1 rounded-full bg-orange-500/20 text-orange-600">
+                                Coming Soon
+                              </span>
                             )}
                           </CardTitle>
                           <CardDescription className="text-sm">{form.description}</CardDescription>
                         </CardHeader>
                         <CardContent>
                           {form.supported ? (
-                            <Button className="w-full" size="sm">
+                            <Button
+                              className="w-full bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 shadow-lg shadow-purple-500/30"
+                              size="sm"
+                            >
                               File {form.name}
                             </Button>
                           ) : (
@@ -236,6 +280,57 @@ export function NewFilingClient({ userId }: NewFilingClientProps) {
                 </div>
               )
             })}
+          </TabsContent>
+
+          <TabsContent value="csv" className="mt-6">
+            <Card className="border-2 border-purple-500/20 bg-gradient-to-br from-white/5 to-purple-500/5 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
+                  Bulk CSV Upload
+                </CardTitle>
+                <CardDescription>Upload a CSV file to file multiple forms at once</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card
+                    className="cursor-pointer transition-all hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20 border-2 border-purple-500/20 bg-gradient-to-br from-white/5 to-purple-500/5"
+                    onClick={() => {
+                      setSelectedForm("1099-nec-csv")
+                      setActiveTab("csv")
+                    }}
+                  >
+                    <CardHeader>
+                      <CardTitle className="text-base">1099-NEC Bulk Upload</CardTitle>
+                      <CardDescription className="text-sm">Upload multiple contractor forms at once</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button
+                        className="w-full bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 shadow-lg shadow-purple-500/30"
+                        size="sm"
+                      >
+                        Upload 1099-NEC CSV
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  <Card className="opacity-60 border-2 border-white/10">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-base">
+                        W-2 Bulk Upload
+                        <span className="text-xs font-normal px-2 py-1 rounded-full bg-orange-500/20 text-orange-600">
+                          Coming Soon
+                        </span>
+                      </CardTitle>
+                      <CardDescription className="text-sm">Upload multiple employee W-2 forms</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button className="w-full bg-transparent" size="sm" variant="outline" disabled>
+                        Not Available Yet
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="upload" className="mt-6">

@@ -9,6 +9,11 @@ export async function sendProactiveFilingUpdate(userId: string, filingId: string
 
   if (!filing) return
 
+  const { data: user } = await supabase.auth.admin.getUserById(userId)
+  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", userId).single()
+
+  if (!user?.email) return
+
   // Generate personalized AI message based on status
   const { text } = await generateText({
     model: "openai/gpt-4o-mini",
@@ -30,6 +35,16 @@ export async function sendProactiveFilingUpdate(userId: string, filingId: string
     message: text,
     data: { filing_id: filingId, status: filing.status },
     read: false,
+  })
+
+  const { sendFilingStatusEmail } = await import("@/lib/email/send")
+  await sendFilingStatusEmail(userId, user.email, profile?.full_name || "there", {
+    id: filing.id,
+    form_type: filing.form_type,
+    filing_status: filing.filing_status,
+    submission_id: filing.submission_id,
+    refund_amount: filing.refund_amount,
+    rejection_reasons: filing.rejection_reasons,
   })
 
   return text

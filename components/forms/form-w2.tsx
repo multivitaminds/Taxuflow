@@ -88,12 +88,24 @@ export default function FormW2() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Form W-2 - Wage and Tax Statement</CardTitle>
+      <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+
+        <CardHeader className="relative">
+          <CardTitle className="text-2xl bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
+            Form W-2 - Wage and Tax Statement
+          </CardTitle>
           <CardDescription>Report employee wages and tax withholdings for {formData.taxYear}</CardDescription>
+
+          <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              <strong>Note:</strong> TaxBandits API does not currently support W-2 filing. This form will be submitted
+              via alternative methods or marked for manual processing.
+            </p>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+
+        <CardContent className="space-y-6 relative">
           {/* Employer Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Employer Information</h3>
