@@ -1,18 +1,21 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, ArrowLeft, Save, Send } from "lucide-react"
 
 export default function FormW2() {
+  const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [savingDraft, setSavingDraft] = useState(false)
+
   const [formData, setFormData] = useState({
     // Employer Information
     employerName: "",
@@ -72,6 +75,11 @@ export default function FormW2() {
           title: "W-2 Submitted Successfully",
           description: `Submission ID: ${result.submissionId}`,
         })
+
+        // Redirect to filing dashboard after successful submission
+        setTimeout(() => {
+          router.push("/dashboard/filing")
+        }, 2000)
       } else {
         throw new Error(result.error || "Failed to submit W-2")
       }
@@ -86,29 +94,64 @@ export default function FormW2() {
     }
   }
 
+  const handleSaveDraft = async () => {
+    setSavingDraft(true)
+
+    try {
+      // Save to localStorage for now
+      localStorage.setItem("w2_draft", JSON.stringify(formData))
+
+      toast({
+        title: "Draft Saved",
+        description: "Your W-2 form has been saved as a draft",
+      })
+    } catch (error: any) {
+      toast({
+        title: "Save Failed",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setSavingDraft(false)
+    }
+  }
+
+  const handleBack = () => {
+    router.push("/dashboard/filing/new")
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-6">
       <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
 
         <CardHeader className="relative">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleBack}
+              className="hover:scale-105 transition-transform bg-transparent"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </div>
+
           <CardTitle className="text-2xl bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
             Form W-2 - Wage and Tax Statement
           </CardTitle>
           <CardDescription>Report employee wages and tax withholdings for {formData.taxYear}</CardDescription>
-
-          <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              <strong>Note:</strong> TaxBandits API does not currently support W-2 filing. This form will be submitted
-              via alternative methods or marked for manual processing.
-            </p>
-          </div>
         </CardHeader>
 
-        <CardContent className="space-y-6 relative">
+        <CardContent className="space-y-8 relative">
           {/* Employer Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Employer Information</h3>
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <div className="h-8 w-1 bg-gradient-to-b from-purple-600 to-orange-600 rounded-full" />
+              Employer Information
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="employerName">Employer Name *</Label>
@@ -117,6 +160,7 @@ export default function FormW2() {
                   required
                   value={formData.employerName}
                   onChange={(e) => setFormData({ ...formData, employerName: e.target.value })}
+                  placeholder="ABC Company Inc."
                 />
               </div>
               <div>
@@ -136,6 +180,7 @@ export default function FormW2() {
                   required
                   value={formData.employerAddress}
                   onChange={(e) => setFormData({ ...formData, employerAddress: e.target.value })}
+                  placeholder="123 Business St"
                 />
               </div>
               <div>
@@ -145,6 +190,7 @@ export default function FormW2() {
                   required
                   value={formData.employerCity}
                   onChange={(e) => setFormData({ ...formData, employerCity: e.target.value })}
+                  placeholder="San Francisco"
                 />
               </div>
               <div>
@@ -165,6 +211,7 @@ export default function FormW2() {
                   required
                   value={formData.employerZip}
                   onChange={(e) => setFormData({ ...formData, employerZip: e.target.value })}
+                  placeholder="94102"
                 />
               </div>
             </div>
@@ -172,7 +219,10 @@ export default function FormW2() {
 
           {/* Employee Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Employee Information</h3>
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <div className="h-8 w-1 bg-gradient-to-b from-purple-600 to-orange-600 rounded-full" />
+              Employee Information
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="employeeFirstName">First Name *</Label>
@@ -181,6 +231,7 @@ export default function FormW2() {
                   required
                   value={formData.employeeFirstName}
                   onChange={(e) => setFormData({ ...formData, employeeFirstName: e.target.value })}
+                  placeholder="John"
                 />
               </div>
               <div>
@@ -190,6 +241,7 @@ export default function FormW2() {
                   required
                   value={formData.employeeLastName}
                   onChange={(e) => setFormData({ ...formData, employeeLastName: e.target.value })}
+                  placeholder="Doe"
                 />
               </div>
               <div>
@@ -202,12 +254,52 @@ export default function FormW2() {
                   onChange={(e) => setFormData({ ...formData, employeeSSN: e.target.value })}
                 />
               </div>
+              <div>
+                <Label htmlFor="employeeAddress">Address</Label>
+                <Input
+                  id="employeeAddress"
+                  value={formData.employeeAddress}
+                  onChange={(e) => setFormData({ ...formData, employeeAddress: e.target.value })}
+                  placeholder="456 Employee Ave"
+                />
+              </div>
+              <div>
+                <Label htmlFor="employeeCity">City</Label>
+                <Input
+                  id="employeeCity"
+                  value={formData.employeeCity}
+                  onChange={(e) => setFormData({ ...formData, employeeCity: e.target.value })}
+                  placeholder="San Francisco"
+                />
+              </div>
+              <div>
+                <Label htmlFor="employeeState">State</Label>
+                <Input
+                  id="employeeState"
+                  maxLength={2}
+                  placeholder="CA"
+                  value={formData.employeeState}
+                  onChange={(e) => setFormData({ ...formData, employeeState: e.target.value.toUpperCase() })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="employeeZip">ZIP Code</Label>
+                <Input
+                  id="employeeZip"
+                  value={formData.employeeZip}
+                  onChange={(e) => setFormData({ ...formData, employeeZip: e.target.value })}
+                  placeholder="94102"
+                />
+              </div>
             </div>
           </div>
 
           {/* Wage Information */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Wage and Tax Information</h3>
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <div className="h-8 w-1 bg-gradient-to-b from-purple-600 to-orange-600 rounded-full" />
+              Wage and Tax Information
+            </h3>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="wages">Box 1: Wages, tips, other compensation *</Label>
@@ -218,6 +310,7 @@ export default function FormW2() {
                   required
                   value={formData.wages}
                   onChange={(e) => setFormData({ ...formData, wages: e.target.value })}
+                  placeholder="75000.00"
                 />
               </div>
               <div>
@@ -229,6 +322,7 @@ export default function FormW2() {
                   required
                   value={formData.federalWithholding}
                   onChange={(e) => setFormData({ ...formData, federalWithholding: e.target.value })}
+                  placeholder="12500.00"
                 />
               </div>
               <div>
@@ -240,6 +334,7 @@ export default function FormW2() {
                   required
                   value={formData.socialSecurityWages}
                   onChange={(e) => setFormData({ ...formData, socialSecurityWages: e.target.value })}
+                  placeholder="75000.00"
                 />
               </div>
               <div>
@@ -251,6 +346,7 @@ export default function FormW2() {
                   required
                   value={formData.socialSecurityWithholding}
                   onChange={(e) => setFormData({ ...formData, socialSecurityWithholding: e.target.value })}
+                  placeholder="4650.00"
                 />
               </div>
               <div>
@@ -262,6 +358,7 @@ export default function FormW2() {
                   required
                   value={formData.medicareWages}
                   onChange={(e) => setFormData({ ...formData, medicareWages: e.target.value })}
+                  placeholder="75000.00"
                 />
               </div>
               <div>
@@ -273,18 +370,109 @@ export default function FormW2() {
                   required
                   value={formData.medicareWithholding}
                   onChange={(e) => setFormData({ ...formData, medicareWithholding: e.target.value })}
+                  placeholder="1087.50"
+                />
+              </div>
+              <div>
+                <Label htmlFor="socialSecurityTips">Box 7: Social security tips</Label>
+                <Input
+                  id="socialSecurityTips"
+                  type="number"
+                  step="0.01"
+                  value={formData.socialSecurityTips}
+                  onChange={(e) => setFormData({ ...formData, socialSecurityTips: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="allocatedTips">Box 8: Allocated tips</Label>
+                <Input
+                  id="allocatedTips"
+                  type="number"
+                  step="0.01"
+                  value={formData.allocatedTips}
+                  onChange={(e) => setFormData({ ...formData, allocatedTips: e.target.value })}
+                  placeholder="0.00"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Button type="submit" disabled={loading} className="flex-1">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submit W-2 to TaxBandits
-            </Button>
-            <Button type="button" variant="outline">
+          {/* State Information */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              <div className="h-8 w-1 bg-gradient-to-b from-purple-600 to-orange-600 rounded-full" />
+              State and Local Information
+            </h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="stateWages">State wages, tips, etc.</Label>
+                <Input
+                  id="stateWages"
+                  type="number"
+                  step="0.01"
+                  value={formData.stateWages}
+                  onChange={(e) => setFormData({ ...formData, stateWages: e.target.value })}
+                  placeholder="75000.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="stateWithholding">State income tax</Label>
+                <Input
+                  id="stateWithholding"
+                  type="number"
+                  step="0.01"
+                  value={formData.stateWithholding}
+                  onChange={(e) => setFormData({ ...formData, stateWithholding: e.target.value })}
+                  placeholder="3750.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="localWages">Local wages, tips, etc.</Label>
+                <Input
+                  id="localWages"
+                  type="number"
+                  step="0.01"
+                  value={formData.localWages}
+                  onChange={(e) => setFormData({ ...formData, localWages: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="localWithholding">Local income tax</Label>
+                <Input
+                  id="localWithholding"
+                  type="number"
+                  step="0.01"
+                  value={formData.localWithholding}
+                  onChange={(e) => setFormData({ ...formData, localWithholding: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-6 border-t border-border">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveDraft}
+              disabled={savingDraft || loading}
+              className="flex-1 bg-transparent"
+            >
+              {savingDraft && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Save className="mr-2 h-4 w-4" />
               Save Draft
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading || savingDraft}
+              className="flex-1 bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 shadow-lg shadow-purple-500/30"
+            >
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Send className="mr-2 h-4 w-4" />
+              Submit W-2 to IRS
             </Button>
           </div>
         </CardContent>

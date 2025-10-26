@@ -472,6 +472,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
     }
   }
 
+  const handleStartFiling = (formType: string) => {
+    console.log(`[v0] Starting ${formType} filing workflow`)
+    router.push(`/dashboard/file/${formType}`)
+  }
+
   const completionPercentage = () => {
     let completed = 0
     if (profile?.full_name) completed += 25
@@ -746,6 +751,47 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
                   <FileText className="w-6 h-6 text-blue-500" />
                   <span className="text-xs font-medium text-center">File Forms</span>
                 </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 border-neon/20 bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold mb-1">Start New Filing</h2>
+                  <p className="text-sm text-muted-foreground">File tax forms directly through Taxu</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button
+                  onClick={() => handleStartFiling("w2")}
+                  className="flex flex-col items-center gap-3 p-6 rounded-lg bg-background/50 hover:bg-background/80 transition-all border border-border hover:border-neon/40"
+                >
+                  <FileText className="w-8 h-8 text-green-500" />
+                  <div className="text-center">
+                    <div className="font-semibold mb-1">File W-2</div>
+                    <div className="text-xs text-muted-foreground">Employee wage reporting</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleStartFiling("1099-nec")}
+                  className="flex flex-col items-center gap-3 p-6 rounded-lg bg-background/50 hover:bg-background/80 transition-all border border-border hover:border-neon/40"
+                >
+                  <FileText className="w-8 h-8 text-blue-500" />
+                  <div className="text-center">
+                    <div className="font-semibold mb-1">File 1099-NEC</div>
+                    <div className="text-xs text-muted-foreground">Contractor payments</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleStartFiling("941")}
+                  className="flex flex-col items-center gap-3 p-6 rounded-lg bg-background/50 hover:bg-background/80 transition-all border border-border hover:border-neon/40"
+                >
+                  <FileText className="w-8 h-8 text-purple-500" />
+                  <div className="text-center">
+                    <div className="font-semibold mb-1">File Form 941</div>
+                    <div className="text-xs text-muted-foreground">Quarterly payroll taxes</div>
+                  </div>
+                </button>
               </div>
             </Card>
 
