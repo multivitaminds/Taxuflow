@@ -203,8 +203,8 @@ export default function AdminDashboardClient({ adminUser }: { adminUser: AdminUs
             <Link href="/admin/settings">
               <Card className="bg-white/5 backdrop-blur-xl border-white/10 p-6 hover:bg-white/10 transition-colors cursor-pointer group">
                 <Settings className="w-10 h-10 text-gray-400 mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-lg font-semibold text-white mb-2">Platform Settings</h3>
-                <p className="text-sm text-gray-400">Configure platform settings</p>
+                <h3 className="text-lg font-semibold text-white mb-2">Admin Settings</h3>
+                <p className="text-sm text-gray-400">Change password and manage account</p>
               </Card>
             </Link>
           </div>

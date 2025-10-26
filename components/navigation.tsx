@@ -37,7 +37,7 @@ const navigationStructure = [
   },
   { href: "/pricing", label: "Pricing" },
   {
-    label: "For Individuals",
+    label: "Individuals",
     items: [
       { href: "/individuals", label: "Overview", description: "Personal tax solutions" },
       { href: "/individuals/freelancers", label: "Freelancers", description: "For self-employed professionals" },
@@ -46,7 +46,7 @@ const navigationStructure = [
     ],
   },
   {
-    label: "For Businesses",
+    label: "Businesses",
     items: [
       { href: "/businesses", label: "Overview", description: "Business tax solutions" },
       { href: "/businesses/small-business", label: "Small Business", description: "For SMBs and startups" },
@@ -64,7 +64,7 @@ const navigationStructure = [
     ],
   },
   {
-    label: "Developer API",
+    label: "Developer",
     items: [
       { href: "/developer", label: "Documentation", description: "Start integrating Taxu's products and tools" },
       { href: "/developer/docs/getting-started", label: "Get Started", description: "Quick start guide" },
