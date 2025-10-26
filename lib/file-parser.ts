@@ -153,3 +153,18 @@ export class FileParser {
     return digits.length >= 10 && digits.length <= 11
   }
 }
+
+export async function parseCSV(file: File): Promise<any[]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        resolve(results.data)
+      },
+      error: (error) => {
+        reject(error)
+      },
+    })
+  })
+}
