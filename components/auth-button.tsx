@@ -77,12 +77,12 @@ export function AuthButton() {
     return (
       <div className="flex items-center gap-3">
         <Link href="/dashboard">
-          <Button variant="ghost" className="text-white hover:text-[#2ACBFF] hover:bg-white/5">
+          <Button variant="ghost" className="hover:text-[#2ACBFF]">
             <User className="w-4 h-4 mr-2" />
             Dashboard
           </Button>
         </Link>
-        <Button onClick={handleSignOut} variant="ghost" className="text-white hover:text-red-400 hover:bg-white/5">
+        <Button onClick={handleSignOut} variant="ghost" className="hover:text-red-400">
           <LogOut className="w-4 h-4 mr-2" />
           Sign out
         </Button>
@@ -93,7 +93,10 @@ export function AuthButton() {
   return (
     <div className="flex items-center gap-3">
       <Link href="/login">
-        <Button variant="ghost" className="text-white hover:text-[#2ACBFF] hover:bg-white/5">
+        <Button
+          variant="outline"
+          className="border-border text-foreground hover:bg-muted hover:text-[#2ACBFF] font-medium bg-transparent"
+        >
           Sign in
         </Button>
       </Link>
