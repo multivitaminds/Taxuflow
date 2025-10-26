@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Mail, Phone, MapPin, DollarSign, FileText, User, Users } from "lucide-react"
+import { Plus, Search, Mail, Phone, MapPin, DollarSign, FileText, User, Users, Upload } from "lucide-react"
 import Link from "next/link"
 import { getSupabaseBooksClient } from "@/lib/supabase/books-client"
+import { BulkUploadDialog } from "@/components/bulk-upload-dialog"
 
 export function CustomersClient() {
   const [customers, setCustomers] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
 
   useEffect(() => {
     loadCustomers()
@@ -76,12 +78,23 @@ export function CustomersClient() {
               <h1 className="text-3xl font-bold text-foreground mb-2">Customers</h1>
               <p className="text-muted-foreground">Manage your customer relationships</p>
             </div>
-            <Link href="/accounting/customers/new">
-              <Button size="lg" className="gap-2">
-                <Plus className="h-5 w-5" />
-                Add Customer
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 bg-transparent"
+                onClick={() => setShowBulkUpload(true)}
+              >
+                <Upload className="h-5 w-5" />
+                Bulk Upload
               </Button>
-            </Link>
+              <Link href="/accounting/customers/new">
+                <Button size="lg" className="gap-2">
+                  <Plus className="h-5 w-5" />
+                  Add Customer
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -220,6 +233,9 @@ export function CustomersClient() {
           </div>
         )}
       </div>
+
+      {/* Bulk Upload Dialog */}
+      <BulkUploadDialog open={showBulkUpload} onOpenChange={setShowBulkUpload} onComplete={loadCustomers} />
     </div>
   )
 }

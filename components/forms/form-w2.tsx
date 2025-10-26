@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, Save, Send } from "lucide-react"
+import { Loader2, ArrowLeft, Save, Send, Lock } from "lucide-react"
 
 export default function FormW2() {
   const router = useRouter()
@@ -69,6 +69,26 @@ export default function FormW2() {
       })
 
       const result = await response.json()
+
+      if (result.isDemoMode) {
+        toast({
+          title: "Demo Mode Restriction",
+          description: result.error,
+          variant: "destructive",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/signup")}
+              className="bg-neon hover:bg-neon/90 text-background"
+            >
+              Create Account
+            </Button>
+          ),
+        })
+        setLoading(false)
+        return
+      }
 
       if (result.success) {
         toast({
@@ -164,7 +184,10 @@ export default function FormW2() {
                 />
               </div>
               <div>
-                <Label htmlFor="employerEIN">Employer EIN *</Label>
+                <Label htmlFor="employerEIN" className="flex items-center gap-2">
+                  Employer EIN *
+                  <Lock className="h-3 w-3 text-green-500" />
+                </Label>
                 <Input
                   id="employerEIN"
                   required
@@ -172,6 +195,10 @@ export default function FormW2() {
                   value={formData.employerEIN}
                   onChange={(e) => setFormData({ ...formData, employerEIN: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Encrypted and secure
+                </p>
               </div>
               <div className="md:col-span-2">
                 <Label htmlFor="employerAddress">Address *</Label>
@@ -245,7 +272,10 @@ export default function FormW2() {
                 />
               </div>
               <div>
-                <Label htmlFor="employeeSSN">Social Security Number *</Label>
+                <Label htmlFor="employeeSSN" className="flex items-center gap-2">
+                  Social Security Number *
+                  <Lock className="h-3 w-3 text-green-500" />
+                </Label>
                 <Input
                   id="employeeSSN"
                   required
@@ -253,6 +283,10 @@ export default function FormW2() {
                   value={formData.employeeSSN}
                   onChange={(e) => setFormData({ ...formData, employeeSSN: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  AES-256 encrypted at rest
+                </p>
               </div>
               <div>
                 <Label htmlFor="employeeAddress">Address</Label>

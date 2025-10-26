@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { DashboardClient } from "@/components/dashboard-client"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export default async function DashboardPage() {
   try {
@@ -26,7 +27,11 @@ export default async function DashboardPage() {
         created_at: new Date().toISOString(),
       }
 
-      return <DashboardClient user={demoUser as any} profile={demoProfile} />
+      return (
+        <ErrorBoundary>
+          <DashboardClient user={demoUser as any} profile={demoProfile} />
+        </ErrorBoundary>
+      )
     }
 
     const supabase = await getSupabaseServerClient()
@@ -60,10 +65,18 @@ export default async function DashboardPage() {
         .select()
         .single()
 
-      return <DashboardClient user={user} profile={newProfile} />
+      return (
+        <ErrorBoundary>
+          <DashboardClient user={user} profile={newProfile} />
+        </ErrorBoundary>
+      )
     }
 
-    return <DashboardClient user={user} profile={profile} />
+    return (
+      <ErrorBoundary>
+        <DashboardClient user={user} profile={profile} />
+      </ErrorBoundary>
+    )
   } catch (error) {
     console.log("[v0] Auth error caught, redirecting to login:", error)
     redirect("/login")

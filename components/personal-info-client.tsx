@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Loader2 } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Lock } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 
@@ -133,7 +133,10 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
               </div>
 
               <div>
-                <Label htmlFor="ssn_last_four">SSN (Last 4 digits)</Label>
+                <Label htmlFor="ssn_last_four" className="flex items-center gap-2">
+                  SSN (Last 4 digits)
+                  <Lock className="h-3 w-3 text-green-500" />
+                </Label>
                 <Input
                   id="ssn_last_four"
                   name="ssn_last_four"
@@ -142,6 +145,10 @@ export function PersonalInfoClient({ user, profile }: PersonalInfoClientProps) {
                   onChange={handleChange}
                   className="mt-2"
                 />
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  AES-256 encrypted at rest
+                </p>
               </div>
             </div>
 

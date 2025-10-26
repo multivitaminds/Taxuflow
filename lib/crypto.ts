@@ -1,4 +1,4 @@
-// Encryption utility for OAuth tokens
+// Encryption utility for OAuth tokens and sensitive data
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto"
 
 const ALGORITHM = "aes-256-gcm"
@@ -6,14 +6,23 @@ const IV_LENGTH = 16
 const SALT_LENGTH = 64
 const TAG_LENGTH = 16
 
-// Get encryption key from environment or generate a default one
+// Get encryption key from environment
 function getEncryptionKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY
+
   if (!key) {
-    console.warn("[v0] ENCRYPTION_KEY not set, using default (not secure for production)")
-    // Default key for development - should be replaced in production
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("ENCRYPTION_KEY environment variable must be set in production")
+    }
+    console.warn("[v0] ENCRYPTION_KEY not set, using default (INSECURE - development only)")
+    // Default key for development only
     return Buffer.from("0".repeat(64), "hex")
   }
+
+  if (key.length !== 64) {
+    throw new Error("ENCRYPTION_KEY must be 64 hex characters (32 bytes)")
+  }
+
   return Buffer.from(key, "hex")
 }
 
@@ -59,4 +68,8 @@ export function decrypt(encryptedData: string): string {
     console.error("[v0] Decryption error:", error)
     throw new Error("Failed to decrypt data")
   }
+}
+
+export function generateEncryptionKey(): string {
+  return randomBytes(32).toString("hex")
 }

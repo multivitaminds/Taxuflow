@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Plus, Trash2, CheckCircle2, AlertCircle } from "lucide-react"
+import { Loader2, Plus, Trash2, CheckCircle2, AlertCircle, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -249,6 +249,26 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
 
       const data = await response.json()
 
+      if (data.isDemoMode) {
+        toast({
+          title: "Demo Mode Restriction",
+          description: data.error,
+          variant: "destructive",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/signup")}
+              className="bg-neon hover:bg-neon/90 text-background"
+            >
+              Create Account
+            </Button>
+          ),
+        })
+        setIsSubmitting(false)
+        return
+      }
+
       if (data.success) {
         toast({
           title: "Filing Submitted Successfully",
@@ -351,7 +371,10 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor={`ssn-${contractor.id}`}>SSN *</Label>
+                <Label htmlFor={`ssn-${contractor.id}`} className="flex items-center gap-2">
+                  SSN *
+                  <Lock className="h-3 w-3 text-green-500" />
+                </Label>
                 <Input
                   id={`ssn-${contractor.id}`}
                   value={contractor.ssn}
@@ -366,9 +389,16 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     {validationErrors[`${contractor.id}-ssn`]}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  AES-256 encrypted at rest
+                </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`ein-${contractor.id}`}>EIN (if business)</Label>
+                <Label htmlFor={`ein-${contractor.id}`} className="flex items-center gap-2">
+                  EIN (if business)
+                  <Lock className="h-3 w-3 text-green-500" />
+                </Label>
                 <Input
                   id={`ein-${contractor.id}`}
                   value={contractor.ein}
@@ -383,6 +413,10 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     {validationErrors[`${contractor.id}-ein`]}
                   </p>
                 )}
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  Encrypted and secure
+                </p>
               </div>
             </div>
 

@@ -1,5 +1,6 @@
 import { createServerClient as createSupabaseServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { DatabaseError } from "@/lib/errors"
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -9,7 +10,7 @@ export async function createClient() {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.error("[v0] Missing Supabase environment variables on server")
-    return null
+    throw new DatabaseError("Database configuration error")
   }
 
   return createSupabaseServerClient(supabaseUrl, supabaseAnonKey, {

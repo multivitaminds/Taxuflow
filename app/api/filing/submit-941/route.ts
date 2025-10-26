@@ -1,8 +1,23 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { checkDemoMode } from "@/lib/demo-mode"
+import { encrypt } from "@/lib/crypto"
 
 export async function POST(request: Request) {
   try {
+    const { isDemoMode } = await checkDemoMode()
+
+    if (isDemoMode) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Filing is not available in demo mode. Please create a free account to file tax forms.",
+          isDemoMode: true,
+        },
+        { status: 403 },
+      )
+    }
+
     const supabase = await getSupabaseServerClient()
 
     if (!supabase) {
@@ -21,6 +36,8 @@ export async function POST(request: Request) {
 
     console.log("[v0] Submitting Form 941 to TaxBandits:", formData)
 
+    const encryptedEIN = encrypt(formData.ein)
+
     const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
     const apiUrl =
       environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testsandbox.taxbandits.com/v1.7.3"
@@ -35,7 +52,7 @@ export async function POST(request: Request) {
         ReturnHeader: {
           Business: {
             BusinessNm: formData.businessName,
-            EIN: formData.ein,
+            EIN: formData.ein, // TaxBandits needs plain text
             BusinessType: "ESTE",
           },
           TaxYr: formData.taxYear,
@@ -57,6 +74,11 @@ export async function POST(request: Request) {
       throw new Error(result.message || "TaxBandits API error")
     }
 
+    const sanitizedFormData = {
+      ...formData,
+      ein: encryptedEIN,
+    }
+
     const { data: filing, error: filingError } = await supabase
       .from("tax_filings")
       .insert({
@@ -66,7 +88,7 @@ export async function POST(request: Request) {
         quarter: Number.parseInt(formData.quarter),
         status: "submitted",
         submission_id: result.SubmissionId,
-        form_data: formData,
+        form_data: sanitizedFormData,
         provider: "taxbandits",
       })
       .select()

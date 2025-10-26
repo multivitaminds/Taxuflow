@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { ConditionalNavigation } from "@/components/conditional-navigation"
 import { AIChatWidget } from "@/components/ai-chat-widget"
+import { ErrorBoundary } from "@/components/error-boundary"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -34,9 +35,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased">
-        <ConditionalNavigation />
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-        <AIChatWidget />
+        <ErrorBoundary>
+          <ConditionalNavigation />
+          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+          <AIChatWidget />
+        </ErrorBoundary>
         <Analytics />
       </body>
     </html>

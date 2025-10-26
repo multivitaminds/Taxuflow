@@ -1,10 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { checkDemoMode } from "@/lib/demo-mode"
 
 export async function DELETE(request: NextRequest) {
   console.log("[v0] DELETE /api/delete-document - Starting document deletion")
 
   try {
+    const { isDemoMode } = await checkDemoMode()
+
+    if (isDemoMode) {
+      return NextResponse.json(
+        {
+          error:
+            "Document deletion is not available in demo mode. Please create a free account to manage your documents.",
+          isDemoMode: true,
+        },
+        { status: 403 },
+      )
+    }
+
     const supabase = await createClient()
 
     // Get authenticated user

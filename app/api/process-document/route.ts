@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
+import { checkDemoMode } from "@/lib/demo-mode"
 import {
   AgentMemory,
   AgentCollaboration,
@@ -11,6 +12,19 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
+    const { isDemoMode } = await checkDemoMode()
+
+    if (isDemoMode) {
+      return NextResponse.json(
+        {
+          error:
+            "Document processing is not available in demo mode. Please create a free account to upload and process your documents.",
+          isDemoMode: true,
+        },
+        { status: 403 },
+      )
+    }
+
     console.log("[v0] Starting intelligent document processing")
 
     const supabase = await createClient()

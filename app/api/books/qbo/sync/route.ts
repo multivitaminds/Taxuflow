@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { decrypt } from "@/lib/crypto"
+import { handleApiError, ApiError, ErrorCode } from "@/lib/errors"
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
+      throw new ApiError("Not authenticated", ErrorCode.UNAUTHORIZED)
     }
 
     // Get QuickBooks connection
@@ -22,7 +23,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (connError || !connection) {
-      return NextResponse.json({ error: "QuickBooks not connected" }, { status: 400 })
+      throw new ApiError(
+        "QuickBooks not connected. Please connect your QuickBooks account first.",
+        ErrorCode.INTEGRATION_ERROR,
+      )
     }
 
     console.log("[v0] Starting QuickBooks sync for realm:", connection.realm_id)
@@ -42,8 +46,12 @@ export async function POST(request: NextRequest) {
     )
 
     if (!accountsResponse.ok) {
-      console.error("[v0] Failed to fetch accounts:", await accountsResponse.text())
-      return NextResponse.json({ error: "Failed to sync accounts" }, { status: 500 })
+      const errorText = await accountsResponse.text()
+      console.error("[v0] Failed to fetch accounts:", errorText)
+      throw new ApiError(
+        `Failed to sync accounts from QuickBooks: ${accountsResponse.statusText}`,
+        ErrorCode.EXTERNAL_API_ERROR,
+      )
     }
 
     const accountsData = await accountsResponse.json()
@@ -78,7 +86,6 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] QuickBooks sync error:", error)
-    return NextResponse.json({ error: "Sync failed" }, { status: 500 })
+    return handleApiError(error)
   }
 }

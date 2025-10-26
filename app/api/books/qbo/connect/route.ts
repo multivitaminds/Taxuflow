@@ -1,7 +1,19 @@
-import { NextResponse } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { randomBytes } from "crypto"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const clientId = process.env.QBO_CLIENT_ID
     const redirectUri = process.env.QBO_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/books/qbo/callback`
 
@@ -17,8 +29,15 @@ export async function GET() {
       )
     }
 
-    // Generate state for CSRF protection
-    const state = Math.random().toString(36).substring(7)
+    const state = randomBytes(32).toString("hex")
+
+    await supabase.from("oauth_states").insert({
+      user_id: user.id,
+      state,
+      provider: "quickbooks",
+      created_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+    })
 
     // Build QuickBooks OAuth URL
     const authUrl = new URL("https://appcenter.intuit.com/connect/oauth2")
@@ -28,7 +47,7 @@ export async function GET() {
     authUrl.searchParams.set("scope", "com.intuit.quickbooks.accounting")
     authUrl.searchParams.set("state", state)
 
-    console.log("[v0] QuickBooks OAuth URL generated:", authUrl.toString())
+    console.log("[v0] QuickBooks OAuth URL generated for user:", user.id)
 
     return NextResponse.json({
       authUrl: authUrl.toString(),

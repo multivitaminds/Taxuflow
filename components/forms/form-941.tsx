@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, Save, Send } from "lucide-react"
+import { Loader2, ArrowLeft, Save, Send, Lock } from "lucide-react"
 
 export default function Form941() {
   const router = useRouter()
@@ -57,6 +57,26 @@ export default function Form941() {
       })
 
       const result = await response.json()
+
+      if (result.isDemoMode) {
+        toast({
+          title: "Demo Mode Restriction",
+          description: result.error,
+          variant: "destructive",
+          action: (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/signup")}
+              className="bg-neon hover:bg-neon/90 text-background"
+            >
+              Create Account
+            </Button>
+          ),
+        })
+        setLoading(false)
+        return
+      }
 
       if (result.success) {
         toast({
@@ -154,7 +174,10 @@ export default function Form941() {
                 />
               </div>
               <div>
-                <Label htmlFor="ein">Employer Identification Number (EIN) *</Label>
+                <Label htmlFor="ein" className="flex items-center gap-2">
+                  Employer Identification Number (EIN) *
+                  <Lock className="h-3 w-3 text-green-500" />
+                </Label>
                 <Input
                   id="ein"
                   required
@@ -162,6 +185,10 @@ export default function Form941() {
                   value={formData.ein}
                   onChange={(e) => setFormData({ ...formData, ein: e.target.value })}
                 />
+                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  AES-256 encrypted at rest
+                </p>
               </div>
               <div className="md:col-span-2">
                 <Label htmlFor="address">Address *</Label>

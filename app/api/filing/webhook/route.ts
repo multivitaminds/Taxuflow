@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { sendProactiveFilingUpdate } from "@/lib/ai/filing-notifications"
-import crypto from "crypto"
+import { timingSafeEqual, createHmac } from "crypto"
 
 export async function POST(req: NextRequest) {
   // Process webhook asynchronously after responding
@@ -52,26 +52,19 @@ async function processWebhook(req: NextRequest) {
     console.log("[v0] Webhook payload length:", body.length)
     console.log("[v0] Webhook payload:", body.substring(0, 500) + (body.length > 500 ? "..." : ""))
 
-    // Verify signature: HMAC-SHA256(ClientId + Timestamp, ClientSecret)
     const message = clientId + timestamp
-    const expectedSignature = crypto.createHmac("sha256", clientSecret).update(message).digest("base64")
+    const expectedSignature = createHmac("sha256", clientSecret).update(message).digest("base64")
 
-    console.log("[v0] Signature verification:")
-    console.log("[v0] - Message:", message)
-    console.log("[v0] - Expected:", expectedSignature)
-    console.log("[v0] - Received:", signature)
-    console.log("[v0] - Match:", signature === expectedSignature ? "✅ YES" : "❌ NO")
+    // Convert strings to buffers for timing-safe comparison
+    const expectedBuffer = Buffer.from(expectedSignature)
+    const receivedBuffer = Buffer.from(signature)
 
-    if (signature !== expectedSignature) {
-      console.error("[v0] ❌ Signature verification FAILED!")
-      console.error("[v0] Possible causes:")
-      console.error("[v0]   1. TAXBANDITS_CLIENT_ID is incorrect")
-      console.error("[v0]   2. TAXBANDITS_API_SECRET is incorrect")
-      console.error("[v0]   3. TaxBandits changed their signing method")
+    if (expectedBuffer.length !== receivedBuffer.length || !timingSafeEqual(expectedBuffer, receivedBuffer)) {
+      console.error("[v0] Signature verification FAILED!")
       return
     }
 
-    console.log("[v0] ✅ Signature verified successfully!")
+    console.log("[v0] Signature verified successfully!")
 
     // Parse payload
     const payload = JSON.parse(body)

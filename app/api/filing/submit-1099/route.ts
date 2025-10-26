@@ -1,10 +1,31 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
+import { checkDemoMode } from "@/lib/demo-mode"
+import { encrypt } from "@/lib/crypto"
 
 export async function POST(request: NextRequest) {
   try {
+    const { isDemoMode } = await checkDemoMode()
+
+    if (isDemoMode) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Filing is not available in demo mode. Please create a free account to file tax forms.",
+          isDemoMode: true,
+        },
+        { status: 403 },
+      )
+    }
+
     const body = await request.json()
     const { userId, taxYear, contractors } = body
+
+    const encryptedContractors = contractors.map((contractor: any) => ({
+      ...contractor,
+      ssn: contractor.ssn ? encrypt(contractor.ssn) : null,
+      ein: contractor.ein ? encrypt(contractor.ein) : null,
+    }))
 
     const taxbanditsResponse = await fetch("https://testapi.taxbandits.com/v1.7.3/Form1099NEC/Create", {
       method: "POST",
@@ -42,7 +63,7 @@ export async function POST(request: NextRequest) {
             RecipientNm: `${contractor.firstName} ${contractor.lastName}`,
             IsForeign: false,
             TINType: contractor.ein ? "EIN" : "SSN",
-            TIN: contractor.ein || contractor.ssn,
+            TIN: contractor.ein || contractor.ssn, // TaxBandits needs plain text
             Email: contractor.email || "",
             USAddress: {
               Address1: contractor.address.street,
@@ -78,6 +99,7 @@ export async function POST(request: NextRequest) {
         provider_name: "taxbandits",
         submission_id: taxbanditsData.SubmissionId,
         provider_response: taxbanditsData,
+        form_data: { contractors: encryptedContractors },
         irs_status: "pending",
         filed_at: new Date().toISOString(),
       })
