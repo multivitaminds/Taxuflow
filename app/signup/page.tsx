@@ -43,7 +43,9 @@ export default function SignupPage() {
 
     try {
       const supabase = getSupabaseBrowserClient()
-      const redirectUrl = `${window.location.origin}/auth/callback`
+      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
+        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
+        : `${window.location.origin}/auth/callback`
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",

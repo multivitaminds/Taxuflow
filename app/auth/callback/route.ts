@@ -33,7 +33,7 @@ export async function GET(request: Request) {
       },
     )
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    const { error: exchangeError, data } = await supabase.auth.exchangeCodeForSession(code)
 
     if (exchangeError) {
       console.error("[v0] Session exchange error:", exchangeError)
@@ -41,7 +41,13 @@ export async function GET(request: Request) {
     }
 
     cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
+
+    console.log("[v0] OAuth successful for user:", data.user?.email)
   }
 
-  return NextResponse.redirect(new URL("/dashboard", request.url))
+  const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
+    : new URL("/dashboard", request.url).toString()
+
+  return NextResponse.redirect(redirectUrl)
 }
