@@ -1,11 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -28,44 +26,24 @@ export default function AdminLoginClient() {
     setError(null)
 
     try {
-      const supabase = getSupabaseBrowserClient()
-
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (authError) {
-        setError(authError.message)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Invalid login credentials")
         setLoading(false)
         return
       }
 
-      // Verify user is an admin
-      const { data: adminUser, error: adminError } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("user_id", data.user.id)
-        .single()
+      // Store admin session in localStorage
+      localStorage.setItem("admin_session", JSON.stringify(data.admin))
 
-      if (adminError || !adminUser) {
-        await supabase.auth.signOut()
-        setError("You do not have admin access")
-        setLoading(false)
-        return
-      }
-
-      // Log admin login
-      await supabase.from("admin_activity_logs").insert({
-        admin_id: adminUser.id,
-        action: "login",
-        resource_type: "auth",
-        details: { email },
-      })
-
-      // Update last login
-      await supabase.from("admin_users").update({ last_login_at: new Date().toISOString() }).eq("id", adminUser.id)
-
+      // Redirect to admin dashboard
       window.location.href = redirect
     } catch (err) {
       console.error("[v0] Admin login error:", err)
