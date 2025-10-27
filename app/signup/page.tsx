@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -13,11 +13,19 @@ import { Sparkles, ArrowRight, AlertCircle, Eye, EyeOff, CheckCircle2, X } from 
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error")
+    if (errorParam) {
+      setError(decodeURIComponent(errorParam))
+    }
+  }, [searchParams])
 
   const getPasswordStrength = (pwd: string) => {
     if (pwd.length === 0) return { strength: 0, label: "", color: "" }
