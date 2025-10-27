@@ -73,7 +73,13 @@ export default function SignupPage() {
       }
     } catch (err) {
       console.error("[v0] Google signup error:", err)
-      setError("Failed to sign up with Google. Please try again.")
+      if (err instanceof TypeError && (err as Error).message === "Failed to fetch") {
+        setError(
+          "Unable to connect to authentication server. Please check your internet connection or try again later.",
+        )
+      } else {
+        setError("Failed to sign up with Google. Please try again.")
+      }
       setLoading(false)
     }
   }
@@ -93,28 +99,56 @@ export default function SignupPage() {
     localStorage.removeItem("demo_user")
     document.cookie = "demo_mode=; path=/; max-age=0; SameSite=Lax"
 
-    const supabase = getSupabaseBrowserClient()
+    try {
+      const supabase = getSupabaseBrowserClient()
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
-      },
-    })
+      console.log("[v0] Testing Supabase connection...")
+      const { error: healthError } = await supabase.auth.getSession()
+      if (healthError) {
+        console.error("[v0] Supabase connection error:", healthError)
+      }
 
-    if (error) {
-      console.error("[v0] Signup error:", error.message)
-      setError(error.message)
-      setLoading(false)
-    } else {
-      console.log("[v0] Signup successful:", data)
-      if (data.user && !data.session) {
-        setError("Please check your email to confirm your account before signing in.")
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (error) {
+        console.error("[v0] Signup error:", error.message)
+
+        if (error.message.includes("Database error") || error.message.includes("Failed to fetch")) {
+          setError(
+            "Unable to connect to authentication server. This may be due to a configuration issue. Please contact support or try again later.",
+          )
+        } else if (error.message.includes("already registered")) {
+          setError("This email is already registered. Please sign in instead.")
+        } else {
+          setError(error.message)
+        }
         setLoading(false)
       } else {
-        window.location.href = "/dashboard"
+        console.log("[v0] Signup successful:", data)
+        if (data.user && !data.session) {
+          setError("Please check your email to confirm your account before signing in.")
+          setLoading(false)
+        } else {
+          window.location.href = "/dashboard"
+        }
       }
+    } catch (err) {
+      console.error("[v0] Signup error:", err)
+      if (err instanceof TypeError && err.message === "Failed to fetch") {
+        setError(
+          "Unable to connect to authentication server. Please check your internet connection or try again later.",
+        )
+      } else {
+        setError("An unexpected error occurred. Please try again.")
+      }
+      setLoading(false)
     }
   }
 

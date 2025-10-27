@@ -32,7 +32,19 @@ export default function AdminLoginClient() {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
+      let data
+      const contentType = response.headers.get("content-type")
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json()
+      } else {
+        // If response is not JSON, treat it as a server error
+        const text = await response.text()
+        console.error("[v0] Non-JSON response:", text)
+        setError("Server configuration error. Please ensure database scripts are run.")
+        setLoading(false)
+        return
+      }
 
       if (!response.ok) {
         setError(data.error || "Invalid login credentials")
@@ -47,7 +59,11 @@ export default function AdminLoginClient() {
       window.location.href = redirect
     } catch (err) {
       console.error("[v0] Admin login error:", err)
-      setError("An unexpected error occurred")
+      if (err instanceof SyntaxError) {
+        setError("Server configuration error. Please ensure all database scripts have been run.")
+      } else {
+        setError("Unable to connect to server. Please check your connection.")
+      }
       setLoading(false)
     }
   }

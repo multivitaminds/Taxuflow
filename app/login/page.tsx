@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -14,6 +13,7 @@ import { Sparkles, ArrowRight, Mail, Eye, EyeOff, Zap } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -27,12 +27,34 @@ export default function LoginPage() {
 
   const isAnyLoading = demoLoading || googleLoading || magicLinkLoading || loginLoading
 
+  useEffect(() => {
+    const errorParam = searchParams.get("error")
+    const errorDescription = searchParams.get("error_description")
+
+    if (errorParam) {
+      if (errorDescription) {
+        const decodedError = decodeURIComponent(errorDescription)
+        if (decodedError.includes("Database error saving new user")) {
+          setError("Authentication failed. Please try again or use email/password login.")
+        } else {
+          setError(decodedError)
+        }
+      } else {
+        setError(decodeURIComponent(errorParam))
+      }
+
+      const url = new URL(window.location.href)
+      url.searchParams.delete("error")
+      url.searchParams.delete("error_description")
+      window.history.replaceState({}, "", url.toString())
+    }
+  }, [searchParams])
+
   const handleDemoLogin = async () => {
     setDemoLoading(true)
     setError(null)
 
     try {
-      // Set demo mode flag in localStorage for client-side
       localStorage.setItem("demo_mode", "true")
       localStorage.setItem(
         "demo_user",
@@ -44,7 +66,6 @@ export default function LoginPage() {
         }),
       )
 
-      // Set demo mode cookie for server-side access (expires in 24 hours)
       document.cookie = `demo_mode=true; path=/; max-age=86400; SameSite=Lax`
 
       console.log("[v0] Demo mode activated, redirecting to dashboard")
@@ -80,13 +101,21 @@ export default function LoginPage() {
 
       if (error) {
         console.error("[v0] Google login error:", error.message)
-        setError(error.message)
+        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
+          setError("Unable to connect to authentication server. Please check your internet connection and try again.")
+        } else {
+          setError(error.message)
+        }
         setGoogleLoading(false)
       }
-      // Note: If successful, user will be redirected, so no need to reset loading
     } catch (err) {
       console.error("[v0] Google login error:", err)
-      setError("Failed to sign in with Google. Please try again.")
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("fetch")) {
+        setError("Unable to connect to authentication server. Please check your internet connection and try again.")
+      } else {
+        setError("Failed to sign in with Google. Please try again.")
+      }
       setGoogleLoading(false)
     }
   }
@@ -111,7 +140,11 @@ export default function LoginPage() {
 
       if (error) {
         console.error("[v0] Magic link error:", error.message)
-        setError(error.message)
+        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
+          setError("Unable to connect to authentication server. Please check your internet connection and try again.")
+        } else {
+          setError(error.message)
+        }
         setMagicLinkLoading(false)
       } else {
         setMagicLinkSent(true)
@@ -119,7 +152,12 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("[v0] Magic link error:", err)
-      setError("Failed to send magic link. Please try again.")
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("fetch")) {
+        setError("Unable to connect to authentication server. Please check your internet connection and try again.")
+      } else {
+        setError("Failed to send magic link. Please try again.")
+      }
       setMagicLinkLoading(false)
     }
   }
@@ -143,7 +181,9 @@ export default function LoginPage() {
 
       if (error) {
         console.error("[v0] Login error:", error.message)
-        if (error.message.includes("Email not confirmed")) {
+        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
+          setError("Unable to connect to authentication server. Please check your internet connection and try again.")
+        } else if (error.message.includes("Email not confirmed")) {
           setError("Please confirm your email address before signing in. Check your inbox for the confirmation link.")
         } else if (error.message.includes("Invalid login credentials")) {
           setError("Invalid email or password. Please check your credentials and try again.")
@@ -163,7 +203,12 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("[v0] Login error:", err)
-      setError("An unexpected error occurred. Please try again.")
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("fetch")) {
+        setError("Unable to connect to authentication server. Please check your internet connection and try again.")
+      } else {
+        setError("An unexpected error occurred. Please try again.")
+      }
       setLoginLoading(false)
     }
   }
@@ -200,7 +245,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-white" />
@@ -208,7 +252,6 @@ export default function LoginPage() {
           <span className="text-2xl font-bold text-white">Taxu</span>
         </Link>
 
-        {/* Login Card */}
         <div className="bg-[#1F1F1F] border border-white/10 rounded-2xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
@@ -377,7 +420,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Trust Indicators */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500 mb-4">Trusted by 50,000+ tax filers</p>
           <div className="flex items-center justify-center gap-6 text-xs text-gray-600">
