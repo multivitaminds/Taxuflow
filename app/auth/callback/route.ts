@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const error = requestUrl.searchParams.get("error")
   const error_description = requestUrl.searchParams.get("error_description")
 
-  console.log("[v0] Auth callback - code:", !!code, "error:", error)
+  console.log("[v0] Auth callback - code:", !!code, "error:", error, "description:", error_description)
 
   if (error) {
     console.error("[v0] OAuth error:", error, error_description)
@@ -47,25 +47,37 @@ export async function GET(request: Request) {
       )
     }
 
-    console.log("[v0] OAuth successful for user:", data.user?.email)
+    console.log("[v0] OAuth successful for user:", data.user?.email, "ID:", data.user?.id)
 
-    // Just check if onboarding is needed
     let needsOnboarding = false
 
     try {
       // Wait a moment for the trigger to create the profile
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      console.log("[v0] Waiting for trigger to create profile...")
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const { data: existingProfile } = await supabase
+      console.log("[v0] Checking for user profile...")
+      const { data: existingProfile, error: profileError } = await supabase
         .from("user_profiles")
         .select("id, onboarding_completed")
         .eq("id", data.user.id)
         .maybeSingle()
 
+      console.log("[v0] Profile check result:", {
+        hasProfile: !!existingProfile,
+        profileId: existingProfile?.id,
+        onboardingCompleted: existingProfile?.onboarding_completed,
+        error: profileError?.message,
+      })
+
+      if (profileError) {
+        console.error("[v0] Profile check error:", profileError)
+      }
+
       if (existingProfile && !existingProfile.onboarding_completed) {
         needsOnboarding = true
       } else if (!existingProfile) {
-        // Profile doesn't exist yet, assume new user needs onboarding
+        console.log("[v0] No profile found, user needs onboarding")
         needsOnboarding = true
       }
     } catch (err) {
@@ -77,9 +89,11 @@ export async function GET(request: Request) {
     cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
 
     const redirectUrl = new URL(needsOnboarding ? "/onboarding" : "/dashboard", request.url)
+    console.log("[v0] Redirecting to:", redirectUrl.pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
+  console.log("[v0] No code or error, redirecting to dashboard")
   const redirectUrl = new URL("/dashboard", request.url)
   return NextResponse.redirect(redirectUrl)
 }

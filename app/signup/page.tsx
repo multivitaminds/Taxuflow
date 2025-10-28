@@ -23,6 +23,7 @@ export default function SignupPage() {
   useEffect(() => {
     const errorParam = searchParams.get("error")
     if (errorParam) {
+      console.log("[v0] Signup error from URL:", errorParam)
       setError(decodeURIComponent(errorParam))
     }
   }, [searchParams])
@@ -32,6 +33,7 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      console.log("[v0] Starting Google OAuth signup")
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -40,8 +42,12 @@ export default function SignupPage() {
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Google OAuth error:", error)
+        throw error
+      }
     } catch (err: any) {
+      console.error("[v0] Google signup failed:", err)
       setError(err.message || "Failed to sign up with Google")
       setLoading(false)
     }
@@ -53,8 +59,10 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      console.log("[v0] Starting email signup for:", email)
       const supabase = createClient()
-      const { error } = await supabase.auth.signUp({
+
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -62,11 +70,23 @@ export default function SignupPage() {
         },
       })
 
-      if (error) throw error
+      console.log("[v0] Signup response:", {
+        hasData: !!data,
+        hasUser: !!data?.user,
+        userId: data?.user?.id,
+        error: error?.message,
+      })
+
+      if (error) {
+        console.error("[v0] Signup error:", error)
+        throw error
+      }
 
       // Show success message
+      console.log("[v0] Signup successful, check email")
       setError("Please check your email to confirm your account!")
     } catch (err: any) {
+      console.error("[v0] Signup failed:", err)
       setError(err.message || "Failed to create account")
       setLoading(false)
     }
@@ -112,7 +132,7 @@ export default function SignupPage() {
               />
               <path
                 fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
               />
               <path
                 fill="currentColor"
