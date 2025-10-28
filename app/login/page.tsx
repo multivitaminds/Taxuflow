@@ -8,8 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Sparkles, ArrowRight, Mail, Eye, EyeOff, Zap } from "lucide-react"
+import { Sparkles, ArrowRight, Mail, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -17,15 +16,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
-  const [demoLoading, setDemoLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
-  const [magicLinkLoading, setMagicLinkLoading] = useState(false)
-  const [loginLoading, setLoginLoading] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
-
-  const isAnyLoading = demoLoading || googleLoading || magicLinkLoading || loginLoading
 
   useEffect(() => {
     const errorParam = searchParams.get("error")
@@ -51,7 +44,7 @@ export default function LoginPage() {
   }, [searchParams])
 
   const handleDemoLogin = async () => {
-    setDemoLoading(true)
+    setLoading(true)
     setError(null)
 
     try {
@@ -74,49 +67,27 @@ export default function LoginPage() {
     } catch (err) {
       console.error("[v0] Demo mode error:", err)
       setError("Failed to activate demo mode. Please try again.")
-      setDemoLoading(false)
+      setLoading(false)
     }
   }
 
   const handleGoogleLogin = async () => {
-    setGoogleLoading(true)
+    setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-        : `${window.location.origin}/auth/callback`
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
-      if (error) {
-        console.error("[v0] Google login error:", error.message)
-        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
-          setError("Unable to connect to authentication server. Please check your internet connection and try again.")
-        } else {
-          setError(error.message)
-        }
-        setGoogleLoading(false)
-      }
-    } catch (err) {
-      console.error("[v0] Google login error:", err)
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("fetch")) {
-        setError("Unable to connect to authentication server. Please check your internet connection and try again.")
-      } else {
-        setError("Failed to sign in with Google. Please try again.")
-      }
-      setGoogleLoading(false)
+      if (error) throw error
+    } catch (err: any) {
+      setError(err.message || "Failed to sign in with Google")
+      setLoading(false)
     }
   }
 
@@ -126,7 +97,7 @@ export default function LoginPage() {
       return
     }
 
-    setMagicLinkLoading(true)
+    setLoading(true)
     setError(null)
 
     try {
@@ -138,78 +109,32 @@ export default function LoginPage() {
         },
       })
 
-      if (error) {
-        console.error("[v0] Magic link error:", error.message)
-        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
-          setError("Unable to connect to authentication server. Please check your internet connection and try again.")
-        } else {
-          setError(error.message)
-        }
-        setMagicLinkLoading(false)
-      } else {
-        setMagicLinkSent(true)
-        setMagicLinkLoading(false)
-      }
-    } catch (err) {
-      console.error("[v0] Magic link error:", err)
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("fetch")) {
-        setError("Unable to connect to authentication server. Please check your internet connection and try again.")
-      } else {
-        setError("Failed to send magic link. Please try again.")
-      }
-      setMagicLinkLoading(false)
+      if (error) throw error
+      setMagicLinkSent(true)
+    } catch (err: any) {
+      setError(err.message || "Failed to send magic link")
+      setLoading(false)
     }
   }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoginLoading(true)
+    setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-
-      localStorage.removeItem("demo_mode")
-      localStorage.removeItem("demo_user")
-      document.cookie = "demo_mode=; path=/; max-age=0; SameSite=Lax"
-
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) {
-        console.error("[v0] Login error:", error.message)
-        if (error.message.includes("Failed to fetch") || error.message.includes("fetch")) {
-          setError("Unable to connect to authentication server. Please check your internet connection and try again.")
-        } else if (error.message.includes("Email not confirmed")) {
-          setError("Please confirm your email address before signing in. Check your inbox for the confirmation link.")
-        } else if (error.message.includes("Invalid login credentials")) {
-          setError("Invalid email or password. Please check your credentials and try again.")
-        } else {
-          setError(error.message)
-        }
-        setLoginLoading(false)
-      } else {
-        if (rememberMe) {
-          localStorage.setItem("taxu_remember_me", "true")
-        } else {
-          localStorage.removeItem("taxu_remember_me")
-        }
-
-        console.log("[v0] Login successful, redirecting to dashboard")
-        window.location.href = "/dashboard"
-      }
-    } catch (err) {
-      console.error("[v0] Login error:", err)
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      if (errorMessage.includes("Failed to fetch") || errorMessage.includes("fetch")) {
-        setError("Unable to connect to authentication server. Please check your internet connection and try again.")
-      } else {
-        setError("An unexpected error occurred. Please try again.")
-      }
-      setLoginLoading(false)
+      if (error) throw error
+      router.push("/dashboard")
+      router.refresh()
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password")
+      setLoading(false)
     }
   }
 
@@ -268,10 +193,10 @@ export default function LoginPage() {
             <Button
               type="button"
               onClick={handleDemoLogin}
-              disabled={isAnyLoading}
+              disabled={loading}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold h-12 text-base shadow-lg shadow-purple-500/20 disabled:opacity-50"
             >
-              {demoLoading ? "Loading Demo..." : "🚀 Try Demo Account - Instant Access"}
+              {loading ? "Loading Demo..." : "🚀 Try Demo Account - Instant Access"}
             </Button>
             <p className="text-xs text-gray-400 text-center mt-2">
               <span className="text-green-400 font-semibold">No signup or email required</span> • Explore all features
@@ -282,11 +207,11 @@ export default function LoginPage() {
           <Button
             type="button"
             onClick={handleGoogleLogin}
-            disabled={isAnyLoading}
+            disabled={loading}
             variant="outline"
             className="w-full h-12 mb-4 bg-white hover:bg-gray-100 text-gray-900 border-white/20 disabled:opacity-50"
           >
-            {googleLoading ? (
+            {loading ? (
               "Connecting..."
             ) : (
               <>
@@ -318,11 +243,11 @@ export default function LoginPage() {
               <div className="w-full border-t border-white/10"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-[#1F1F1F] text-gray-500">Or sign in with your account</span>
+              <span className="px-4 bg-[#1F1F1F] text-gray-500">Or sign in with email</span>
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <Label htmlFor="email" className="text-white mb-2 block">
                 Email
@@ -334,8 +259,8 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                disabled={isAnyLoading}
-                className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 disabled:opacity-50"
+                disabled={loading}
+                className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12"
               />
             </div>
 
@@ -344,7 +269,7 @@ export default function LoginPage() {
                 <Label htmlFor="password" className="text-white">
                   Password
                 </Label>
-                <Link href="/forgot-password" className="text-sm text-[#2ACBFF] hover:text-[#0EA5E9] transition-colors">
+                <Link href="/forgot-password" className="text-sm text-[#2ACBFF] hover:text-[#0EA5E9]">
                   Forgot password?
                 </Link>
               </div>
@@ -356,39 +281,26 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  disabled={isAnyLoading}
-                  className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 disabled:opacity-50"
+                  disabled={loading}
+                  className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={isAnyLoading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors disabled:opacity-50"
+                  disabled={loading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="remember"
-                checked={rememberMe}
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                disabled={isAnyLoading}
-                className="border-white/20 data-[state=checked]:bg-[#2ACBFF] data-[state=checked]:border-[#2ACBFF] disabled:opacity-50"
-              />
-              <Label htmlFor="remember" className="text-sm text-gray-400 cursor-pointer select-none">
-                Remember me for 30 days
-              </Label>
-            </div>
-
             <Button
               type="submit"
-              disabled={isAnyLoading}
-              className="w-full bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold h-12 text-base group disabled:opacity-50"
+              disabled={loading}
+              className="w-full bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold h-12 group"
             >
-              {loginLoading ? (
+              {loading ? (
                 "Signing in..."
               ) : (
                 <>
@@ -397,35 +309,15 @@ export default function LoginPage() {
                 </>
               )}
             </Button>
-
-            <Button
-              type="button"
-              onClick={handleMagicLink}
-              disabled={isAnyLoading || !email}
-              variant="ghost"
-              className="w-full text-gray-400 hover:text-white hover:bg-white/5 disabled:opacity-50"
-            >
-              <Zap className="w-4 h-4 mr-2" />
-              {magicLinkLoading ? "Sending..." : "Send magic link instead"}
-            </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-gray-400">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold transition-colors">
+              <Link href="/signup" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold">
                 Sign up
               </Link>
             </p>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500 mb-4">Trusted by 50,000+ tax filers</p>
-          <div className="flex items-center justify-center gap-6 text-xs text-gray-600">
-            <span>🔒 Bank-level encryption</span>
-            <span>✓ IRS-approved</span>
-            <span>⚡ Instant refunds</span>
           </div>
         </div>
       </div>

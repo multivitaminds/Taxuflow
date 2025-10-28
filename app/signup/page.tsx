@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Sparkles, ArrowRight, AlertCircle, Eye, EyeOff, CheckCircle2, X } from "lucide-react"
+import { Sparkles, ArrowRight, Eye, EyeOff } from "lucide-react"
 
 export default function SignupPage() {
   const router = useRouter()
@@ -27,59 +27,22 @@ export default function SignupPage() {
     }
   }, [searchParams])
 
-  const getPasswordStrength = (pwd: string) => {
-    if (pwd.length === 0) return { strength: 0, label: "", color: "" }
-    if (pwd.length < 6) return { strength: 1, label: "Too short", color: "text-red-400" }
-    if (pwd.length < 8) return { strength: 2, label: "Weak", color: "text-orange-400" }
-
-    let strength = 2
-    if (pwd.length >= 10) strength++
-    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) strength++
-    if (/[0-9]/.test(pwd)) strength++
-    if (/[^A-Za-z0-9]/.test(pwd)) strength++
-
-    if (strength >= 5) return { strength: 4, label: "Strong", color: "text-green-400" }
-    if (strength >= 4) return { strength: 3, label: "Good", color: "text-blue-400" }
-    return { strength: 2, label: "Fair", color: "text-yellow-400" }
-  }
-
-  const passwordStrength = getPasswordStrength(password)
-
   const handleGoogleSignup = async () => {
     setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-      const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
-        : `${window.location.origin}/auth/callback`
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
-      if (error) {
-        console.error("[v0] Google signup error:", error.message)
-        setError(error.message)
-        setLoading(false)
-      }
-    } catch (err) {
-      console.error("[v0] Google signup error:", err)
-      if (err instanceof TypeError && (err as Error).message === "Failed to fetch") {
-        setError(
-          "Unable to connect to authentication server. Please check your internet connection or try again later.",
-        )
-      } else {
-        setError("Failed to sign up with Google. Please try again.")
-      }
+      if (error) throw error
+    } catch (err: any) {
+      setError(err.message || "Failed to sign up with Google")
       setLoading(false)
     }
   }
@@ -89,65 +52,22 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters")
-      setLoading(false)
-      return
-    }
-
-    localStorage.removeItem("demo_mode")
-    localStorage.removeItem("demo_user")
-    document.cookie = "demo_mode=; path=/; max-age=0; SameSite=Lax"
-
     try {
       const supabase = createClient()
-
-      console.log("[v0] Testing Supabase connection...")
-      const { error: healthError } = await supabase.auth.getSession()
-      if (healthError) {
-        console.error("[v0] Supabase connection error:", healthError)
-      }
-
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
-      if (error) {
-        console.error("[v0] Signup error:", error.message)
+      if (error) throw error
 
-        if (error.message.includes("Database error") || error.message.includes("Failed to fetch")) {
-          setError(
-            "Unable to connect to authentication server. This may be due to a configuration issue. Please contact support or try again later.",
-          )
-        } else if (error.message.includes("already registered")) {
-          setError("This email is already registered. Please sign in instead.")
-        } else {
-          setError(error.message)
-        }
-        setLoading(false)
-      } else {
-        console.log("[v0] Signup successful:", data)
-        if (data.user && !data.session) {
-          setError("Please check your email to confirm your account before signing in.")
-          setLoading(false)
-        } else {
-          window.location.href = "/dashboard"
-        }
-      }
-    } catch (err) {
-      console.error("[v0] Signup error:", err)
-      if (err instanceof TypeError && err.message === "Failed to fetch") {
-        setError(
-          "Unable to connect to authentication server. Please check your internet connection or try again later.",
-        )
-      } else {
-        setError("An unexpected error occurred. Please try again.")
-      }
+      // Show success message
+      setError("Please check your email to confirm your account!")
+    } catch (err: any) {
+      setError(err.message || "Failed to create account")
       setLoading(false)
     }
   }
@@ -169,9 +89,12 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400">{error}</p>
+            <div
+              className={`mb-6 p-4 ${error.includes("check your email") ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"} border rounded-lg`}
+            >
+              <p className={`text-sm ${error.includes("check your email") ? "text-green-400" : "text-red-400"}`}>
+                {error}
+              </p>
             </div>
           )}
 
@@ -224,6 +147,7 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
+                disabled={loading}
                 className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12"
               />
             </div>
@@ -241,68 +165,24 @@ export default function SignupPage() {
                   placeholder="Create a strong password"
                   required
                   minLength={6}
+                  disabled={loading}
                   className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-
-              {password && (
-                <div className="mt-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passwordStrength.strength === 1
-                            ? "w-1/4 bg-red-500"
-                            : passwordStrength.strength === 2
-                              ? "w-2/4 bg-yellow-500"
-                              : passwordStrength.strength === 3
-                                ? "w-3/4 bg-blue-500"
-                                : "w-full bg-green-500"
-                        }`}
-                      />
-                    </div>
-                    <span className={`text-xs font-medium ${passwordStrength.color}`}>{passwordStrength.label}</span>
-                  </div>
-
-                  <div className="space-y-1 text-xs">
-                    <div
-                      className={`flex items-center gap-2 ${password.length >= 8 ? "text-green-400" : "text-gray-500"}`}
-                    >
-                      {password.length >= 8 ? <CheckCircle2 className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                      <span>At least 8 characters</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 ${/[A-Z]/.test(password) && /[a-z]/.test(password) ? "text-green-400" : "text-gray-500"}`}
-                    >
-                      {/[A-Z]/.test(password) && /[a-z]/.test(password) ? (
-                        <CheckCircle2 className="w-3 h-3" />
-                      ) : (
-                        <X className="w-3 h-3" />
-                      )}
-                      <span>Upper & lowercase letters</span>
-                    </div>
-                    <div
-                      className={`flex items-center gap-2 ${/[0-9]/.test(password) ? "text-green-400" : "text-gray-500"}`}
-                    >
-                      {/[0-9]/.test(password) ? <CheckCircle2 className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                      <span>At least one number</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <Button
               type="submit"
-              disabled={loading || passwordStrength.strength < 2}
-              className="w-full bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold h-12 text-base group"
+              disabled={loading}
+              className="w-full bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold h-12 group"
             >
               {loading ? (
                 "Creating account..."
@@ -315,31 +195,14 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <div className="mt-6">
-            <p className="text-xs text-gray-500 text-center mb-4">
-              By signing up, you agree to our{" "}
-              <Link href="/terms" className="text-[#2ACBFF] hover:underline">
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold transition-colors">
-                Privacy Policy
-              </Link>
-            </p>
-            <p className="text-gray-400 text-center">
+          <div className="mt-6 text-center">
+            <p className="text-gray-400">
               Already have an account?{" "}
-              <Link href="/login" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold transition-colors">
+              <Link href="/login" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold">
                 Sign in
               </Link>
             </p>
           </div>
-        </div>
-
-        {/* Trust Indicators */}
-        <div className="mt-6 flex items-center justify-center gap-6 text-xs text-gray-600">
-          <span>🔒 Secure</span>
-          <span>✓ IRS-approved</span>
-          <span>⚡ Instant access</span>
         </div>
       </div>
     </div>

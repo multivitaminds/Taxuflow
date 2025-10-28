@@ -42,43 +42,42 @@ export async function GET(request: Request) {
 
     if (exchangeError) {
       console.error("[v0] Session exchange error:", exchangeError)
-      const errorMessage = exchangeError.message.includes("user_profiles")
-        ? "Database error saving new user. Please contact support."
-        : exchangeError.message
-      return NextResponse.redirect(new URL(`/signup?error=${encodeURIComponent(errorMessage)}`, request.url))
+      return NextResponse.redirect(
+        new URL(`/signup?error=${encodeURIComponent("Authentication failed. Please try again.")}`, request.url),
+      )
     }
 
     console.log("[v0] OAuth successful for user:", data.user?.email)
 
+    // Just check if onboarding is needed
+    let needsOnboarding = false
+
     try {
+      // Wait a moment for the trigger to create the profile
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
       const { data: existingProfile } = await supabase
         .from("user_profiles")
-        .select("id")
+        .select("id, onboarding_completed")
         .eq("id", data.user.id)
         .maybeSingle()
 
-      if (!existingProfile) {
-        console.log("[v0] Creating user profile for:", data.user.email)
-        const { error: profileError } = await supabase.from("user_profiles").insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
-        })
-
-        if (profileError) {
-          console.error("[v0] Error creating profile:", profileError)
-          // Don't fail the auth flow, profile will be created on dashboard load
-        } else {
-          console.log("[v0] User profile created successfully")
-        }
+      if (existingProfile && !existingProfile.onboarding_completed) {
+        needsOnboarding = true
+      } else if (!existingProfile) {
+        // Profile doesn't exist yet, assume new user needs onboarding
+        needsOnboarding = true
       }
     } catch (err) {
-      console.error("[v0] Unexpected error creating profile:", err)
-      // Don't fail the auth flow
+      console.error("[v0] Error checking onboarding status:", err)
+      // Default to dashboard if we can't check
     }
 
     // Clear demo mode
     cookieStore.set({ name: "demo_mode", value: "", maxAge: 0, path: "/" })
+
+    const redirectUrl = new URL(needsOnboarding ? "/onboarding" : "/dashboard", request.url)
+    return NextResponse.redirect(redirectUrl)
   }
 
   const redirectUrl = new URL("/dashboard", request.url)
