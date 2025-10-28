@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -83,7 +83,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = createClient()
       const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
         ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`
         : `${window.location.origin}/auth/callback`
@@ -130,7 +130,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = createClient()
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -168,7 +168,7 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const supabase = getSupabaseBrowserClient()
+      const supabase = createClient()
 
       localStorage.removeItem("demo_mode")
       localStorage.removeItem("demo_user")
