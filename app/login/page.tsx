@@ -123,17 +123,35 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      console.log("[v0] Login attempt starting")
+      console.log("[v0] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log("[v0] Supabase Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
       const supabase = createClient()
+      console.log("[v0] Supabase client created")
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (error) {
+        console.log("[v0] Login error:", error)
+        throw error
+      }
+
+      console.log("[v0] Login successful, redirecting to dashboard")
       router.push("/dashboard")
       router.refresh()
     } catch (err: any) {
-      setError(err.message || "Invalid email or password")
+      console.error("[v0] Login error caught:", err)
+      if (err.message?.includes("fetch")) {
+        setError(
+          `Unable to connect to authentication service (${process.env.NEXT_PUBLIC_SUPABASE_URL}). Please verify your Supabase configuration.`,
+        )
+      } else {
+        setError(err.message || "Invalid email or password")
+      }
       setLoading(false)
     }
   }

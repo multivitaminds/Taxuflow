@@ -59,14 +59,22 @@ export default function SignupPage() {
     setError(null)
 
     try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) {
+        throw new Error("Supabase configuration is missing. Please wait for deployment to complete.")
+      }
+
       console.log("[v0] Starting email signup for:", email)
+      console.log("[v0] Using Supabase URL:", supabaseUrl)
+
       const supabase = createClient()
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo:
+            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
         },
       })
 
@@ -78,13 +86,20 @@ export default function SignupPage() {
       })
 
       if (error) {
-        console.error("[v0] Signup error:", error)
+        if (error.message === "Failed to fetch") {
+          throw new Error(
+            "Unable to connect to authentication service. This may be due to:\n" +
+              "1. Environment variables not yet deployed (wait a few moments and try again)\n" +
+              "2. Network connectivity issues\n" +
+              "3. CORS restrictions in the preview environment\n\n" +
+              "Try refreshing the page and signing up again.",
+          )
+        }
         throw error
       }
 
-      // Show success message
       console.log("[v0] Signup successful, check email")
-      setError("Please check your email to confirm your account!")
+      router.push("/auth/check-email?email=" + encodeURIComponent(email))
     } catch (err: any) {
       console.error("[v0] Signup failed:", err)
       setError(err.message || "Failed to create account")
