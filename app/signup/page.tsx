@@ -15,6 +15,7 @@ export default function SignupPage() {
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -42,6 +43,12 @@ export default function SignupPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
 
     try {
       const supabase = createClient()
@@ -150,6 +157,23 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a strong password"
+                required
+                minLength={6}
+                disabled={loading}
+                className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="confirmPassword" className="text-white mb-2 block">
+                Confirm Password
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your password"
                 required
                 minLength={6}
                 disabled={loading}
