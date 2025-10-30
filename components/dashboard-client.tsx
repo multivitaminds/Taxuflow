@@ -24,7 +24,7 @@ import {
   BarChart3,
   Wallet,
 } from "lucide-react"
-import type { User } from "@supabase/supabase-js"
+import type { User } from "@supabase/ssr"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { DocumentUpload } from "@/components/document-upload"
 import { agents } from "@/data/agents"
@@ -138,7 +138,7 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }
 
   const fetchDashboardData = async () => {
-    if (isDemoMode) {
+    if (isDemoMode || user.id === "demo-user-id") {
       console.log("[v0] Loading demo data")
       setDocuments([
         {

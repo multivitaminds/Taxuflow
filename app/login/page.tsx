@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Sparkles, ArrowRight, Mail, Eye, EyeOff } from "lucide-react"
+import { Sparkles, ArrowRight, Eye, EyeOff } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -61,11 +61,8 @@ export default function LoginPage() {
 
       document.cookie = `demo_mode=true; path=/; max-age=86400; SameSite=Lax`
 
-      console.log("[v0] Demo mode activated, redirecting to dashboard")
-
       window.location.href = "/dashboard"
     } catch (err) {
-      console.error("[v0] Demo mode error:", err)
       setError("Failed to activate demo mode. Please try again.")
       setLoading(false)
     }
@@ -87,6 +84,42 @@ export default function LoginPage() {
       if (error) throw error
     } catch (err: any) {
       setError(err.message || "Failed to sign in with Google")
+      setLoading(false)
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const supabase = createClient()
+
+      console.log("[v0] Login attempt:", { email })
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      console.log("[v0] Login response:", { data, error })
+
+      if (error) {
+        console.log("[v0] Error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+        })
+        throw error
+      }
+
+      console.log("[v0] Login successful, redirecting to dashboard")
+      router.push("/dashboard")
+      router.refresh()
+    } catch (err: any) {
+      console.log("[v0] Login failed:", err)
+      setError(err.message || "Invalid email or password")
       setLoading(false)
     }
   }
@@ -117,45 +150,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
-      console.log("[v0] Login attempt starting")
-      console.log("[v0] Supabase URL:", process.env.NEXT_PUBLIC_SUPABASE_URL)
-      console.log("[v0] Supabase Key exists:", !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-
-      const supabase = createClient()
-      console.log("[v0] Supabase client created")
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        console.log("[v0] Login error:", error)
-        throw error
-      }
-
-      console.log("[v0] Login successful, redirecting to dashboard")
-      router.push("/dashboard")
-      router.refresh()
-    } catch (err: any) {
-      console.error("[v0] Login error caught:", err)
-      if (err.message?.includes("fetch")) {
-        setError(
-          `Unable to connect to authentication service (${process.env.NEXT_PUBLIC_SUPABASE_URL}). Please verify your Supabase configuration.`,
-        )
-      } else {
-        setError(err.message || "Invalid email or password")
-      }
-      setLoading(false)
-    }
-  }
-
   if (magicLinkSent) {
     return (
       <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4">
@@ -169,7 +163,7 @@ export default function LoginPage() {
 
           <div className="bg-[#1F1F1F] border border-white/10 rounded-2xl p-8 text-center">
             <div className="w-16 h-16 bg-[#2ACBFF]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Mail className="w-8 h-8 text-[#2ACBFF]" />
+              <Sparkles className="w-8 h-8 text-[#2ACBFF]" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-3">Check your email</h1>
             <p className="text-gray-400 mb-6">

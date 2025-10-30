@@ -6,6 +6,8 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const demoMode = request.cookies.get("demo_mode")?.value === "true"
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -36,7 +38,7 @@ export async function updateSession(request: NextRequest) {
   const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
   const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
-  if (isProtectedPath && !user) {
+  if (isProtectedPath && !user && !demoMode) {
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)

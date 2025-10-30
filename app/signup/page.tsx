@@ -2,38 +2,27 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Sparkles, ArrowRight, Eye, EyeOff } from "lucide-react"
+import { Sparkles, ArrowRight } from "lucide-react"
 
 export default function SignupPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const errorParam = searchParams.get("error")
-    if (errorParam) {
-      console.log("[v0] Signup error from URL:", errorParam)
-      setError(decodeURIComponent(errorParam))
-    }
-  }, [searchParams])
 
   const handleGoogleSignup = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      console.log("[v0] Starting Google OAuth signup")
       const supabase = createClient()
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -42,12 +31,8 @@ export default function SignupPage() {
         },
       })
 
-      if (error) {
-        console.error("[v0] Google OAuth error:", error)
-        throw error
-      }
+      if (error) throw error
     } catch (err: any) {
-      console.error("[v0] Google signup failed:", err)
       setError(err.message || "Failed to sign up with Google")
       setLoading(false)
     }
@@ -59,56 +44,28 @@ export default function SignupPage() {
     setError(null)
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      if (!supabaseUrl) {
-        throw new Error("Supabase configuration is missing. Please wait for deployment to complete.")
-      }
-
-      console.log("[v0] Starting email signup for:", email)
-      console.log("[v0] Using Supabase URL:", supabaseUrl)
-
       const supabase = createClient()
 
-      const { data, error } = await supabase.auth.signUp({
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
         },
       })
 
-      console.log("[v0] Signup response:", {
-        hasData: !!data,
-        hasUser: !!data?.user,
-        userId: data?.user?.id,
-        error: error?.message,
-      })
+      if (signUpError) throw signUpError
 
-      if (error) {
-        if (error.message === "Failed to fetch") {
-          throw new Error(
-            "Unable to connect to authentication service. This may be due to:\n" +
-              "1. Environment variables not yet deployed (wait a few moments and try again)\n" +
-              "2. Network connectivity issues\n" +
-              "3. CORS restrictions in the preview environment\n\n" +
-              "Try refreshing the page and signing up again.",
-          )
-        }
-        throw error
-      }
-
-      console.log("[v0] Signup successful, check email")
-      router.push("/auth/check-email?email=" + encodeURIComponent(email))
+      router.push("/dashboard")
+      router.refresh()
     } catch (err: any) {
-      console.error("[v0] Signup failed:", err)
       setError(err.message || "Failed to create account")
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
@@ -124,12 +81,8 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <div
-              className={`mb-6 p-4 ${error.includes("check your email") ? "bg-green-500/10 border-green-500/20" : "bg-red-500/10 border-red-500/20"} border rounded-lg`}
-            >
-              <p className={`text-sm ${error.includes("check your email") ? "text-green-400" : "text-red-400"}`}>
-                {error}
-              </p>
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
@@ -147,7 +100,7 @@ export default function SignupPage() {
               />
               <path
                 fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
               />
               <path
                 fill="currentColor"
@@ -191,27 +144,17 @@ export default function SignupPage() {
               <Label htmlFor="password" className="text-white mb-2 block">
                 Password
               </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a strong password"
-                  required
-                  minLength={6}
-                  disabled={loading}
-                  className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12 pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a strong password"
+                required
+                minLength={6}
+                disabled={loading}
+                className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12"
+              />
             </div>
 
             <Button

@@ -6,7 +6,7 @@ import Link from "next/link"
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { User, LogOut } from "lucide-react"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
+import type { User as SupabaseUser } from "@supabase/ssr"
 
 export function AuthButton() {
   const router = useRouter()
