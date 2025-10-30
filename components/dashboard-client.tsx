@@ -74,9 +74,8 @@ interface Deduction {
 export function DashboardClient({ user, profile }: DashboardClientProps) {
   const router = useRouter()
   const [selectedAgent, setSelectedAgent] = useState(profile?.preferred_agent || "Sam")
-  const [isDemoMode, setIsDemoMode] = useState(false)
-  const userName = isDemoMode ? "Demo User" : profile?.full_name?.split(" ")[0] || user.email?.split("@")[0] || "there"
-  const fullUserName = isDemoMode ? "Demo User" : profile?.full_name || user.email?.split("@")[0] || "User"
+  const userName = profile?.full_name?.split(" ")[0] || user.email?.split("@")[0] || "there"
+  const fullUserName = profile?.full_name || user.email?.split("@")[0] || "User"
 
   const [documents, setDocuments] = useState<Document[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)
@@ -138,7 +137,7 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }
 
   const fetchDashboardData = async () => {
-    if (isDemoMode || user.id === "demo-user-id") {
+    if (user.id === "demo-user-id") {
       console.log("[v0] Loading demo data")
       setDocuments([
         {
@@ -299,14 +298,6 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   useEffect(() => {
     fetchDashboardData()
   }, [user.id])
-
-  useEffect(() => {
-    const demoMode = localStorage.getItem("demo_mode") === "true"
-    setIsDemoMode(demoMode)
-    if (demoMode) {
-      console.log("[v0] Demo mode detected, loading sample data")
-    }
-  }, [])
 
   useEffect(() => {
     if (autoRefresh) {
@@ -588,22 +579,6 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
 
       <div className="min-h-screen bg-background pt-20">
         <div className="container mx-auto px-4 py-12">
-          {isDemoMode && (
-            <div className="mb-6 p-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-purple-400">🚀 Demo Mode Active</p>
-                  <p className="text-sm text-muted-foreground">
-                    You're exploring Taxu with sample data. Create a free account to use your own data.
-                  </p>
-                </div>
-                <Button onClick={() => router.push("/signup")} className="bg-purple-600 hover:bg-purple-700 text-white">
-                  Create Account
-                </Button>
-              </div>
-            </div>
-          )}
-
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}</h1>
             <p className="text-muted-foreground">

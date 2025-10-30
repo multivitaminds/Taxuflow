@@ -114,6 +114,10 @@ export default function LoginPage() {
         throw error
       }
 
+      localStorage.removeItem("demo_mode")
+      localStorage.removeItem("demo_user")
+      document.cookie = "demo_mode=; path=/; max-age=0"
+
       console.log("[v0] Login successful, redirecting to dashboard")
       router.push("/dashboard")
       router.refresh()
