@@ -9,7 +9,12 @@ export async function GET(request: Request) {
   const error_description = requestUrl.searchParams.get("error_description")
 
   if (error) {
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error_description || error)}`, request.url))
+    return NextResponse.redirect(
+      new URL(
+        `/login?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(error_description || error)}`,
+        request.url,
+      ),
+    )
   }
 
   if (code) {
@@ -35,19 +40,16 @@ export async function GET(request: Request) {
 
     const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (!sessionError && data.user) {
-      const { error: profileError } = await supabase.from("user_profiles").insert({
-        user_id: data.user.id,
-        email: data.user.email || "",
-        full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
-        subscription_tier: "free",
-        subscription_status: "active",
-      })
-
-      if (profileError && !profileError.message.includes("duplicate")) {
-        console.log("[v0] Profile creation skipped:", profileError.message)
-      }
+    if (sessionError) {
+      console.error("[v0] Session exchange error:", sessionError)
+      return NextResponse.redirect(
+        new URL(`/login?error=auth_error&error_description=${encodeURIComponent(sessionError.message)}`, request.url),
+      )
     }
+
+    // The handle_new_user() trigger function will create the profile when the user is created
+
+    console.log("[v0] Auth successful for user:", data.user?.email)
   }
 
   return NextResponse.redirect(new URL("/dashboard", request.url))
