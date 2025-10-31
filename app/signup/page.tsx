@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { createUserProfile } from "@/app/actions/create-profile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -54,7 +55,7 @@ export default function SignupPage() {
     try {
       const supabase = createClient()
 
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -62,25 +63,29 @@ export default function SignupPage() {
         },
       })
 
+      console.log("[v0] Signup response data:", data)
+      console.log("[v0] Signup error:", signUpError)
+      console.log("[v0] Full error object:", JSON.stringify(signUpError, null, 2))
+
       if (signUpError) throw signUpError
 
-      if (authData.user) {
-        const { error: profileError } = await supabase.from("user_profiles").insert({
-          user_id: authData.user.id,
-          email: authData.user.email,
-          full_name: authData.user.email?.split("@")[0] || "User",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+      if (data.user) {
+        const profileResult = await createUserProfile(data.user.id, email)
 
-        if (profileError) {
-          console.error("[v0] Profile creation error:", profileError)
+        if (!profileResult.success) {
+          console.error("[v0] Profile creation failed:", profileResult.error)
+          // Don't throw error - user is created, profile can be created later
         }
       }
 
       setSuccess(true)
       setLoading(false)
     } catch (err: any) {
+      console.error("[v0] Caught signup error:", err)
+      console.error("[v0] Error message:", err.message)
+      console.error("[v0] Error code:", err.code)
+      console.error("[v0] Error status:", err.status)
+      console.error("[v0] Full error:", JSON.stringify(err, null, 2))
       setError(err.message || "Failed to create account")
       setLoading(false)
     }
