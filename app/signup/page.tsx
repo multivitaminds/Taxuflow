@@ -18,6 +18,7 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   const handleGoogleSignup = async () => {
     setLoading(true)
@@ -53,7 +54,7 @@ export default function SignupPage() {
     try {
       const supabase = createClient()
 
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -63,12 +64,63 @@ export default function SignupPage() {
 
       if (signUpError) throw signUpError
 
-      router.push("/dashboard")
-      router.refresh()
+      if (authData.user) {
+        const { error: profileError } = await supabase.from("user_profiles").insert({
+          user_id: authData.user.id,
+          email: authData.user.email,
+          full_name: authData.user.email?.split("@")[0] || "User",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+
+        if (profileError) {
+          console.error("[v0] Profile creation error:", profileError)
+        }
+      }
+
+      setSuccess(true)
+      setLoading(false)
     } catch (err: any) {
       setError(err.message || "Failed to create account")
       setLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white">Taxu</span>
+          </Link>
+
+          <div className="bg-[#1F1F1F] border border-white/10 rounded-2xl p-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-2">Check your email!</h1>
+              <p className="text-gray-400 mb-6">
+                We've sent a confirmation link to <span className="text-white font-medium">{email}</span>
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Click the link in the email to confirm your account and get started.
+              </p>
+              <Link href="/login">
+                <Button className="w-full bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold h-12">
+                  Back to login
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
