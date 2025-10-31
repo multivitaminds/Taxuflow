@@ -73,6 +73,9 @@ export async function POST(request: NextRequest) {
         ai_description: analysisResult.description,
         ai_confidence: analysisResult.confidence,
         extracted_data: analysisResult.extractedData,
+        deductions: analysisResult.deductions,
+        processing_status: "completed",
+        processed_at: new Date().toISOString(),
       })
       .eq("id", documentId)
 
@@ -215,7 +218,7 @@ Your task:
    - For W-2: employer name, EIN, employee name (FULL NAME), SSN, wages (box 1), federal tax withheld (box 2), social security wages (box 3), social security tax withheld (box 4), medicare wages (box 5), medicare tax withheld (box 6), state wages, state tax withheld, TAX YEAR, FILING STATUS (check if there's a spouse name indicating married filing jointly), etc.
    - For 1099: payer name, recipient name (FULL NAME), income amount, tax withheld, form type, TAX YEAR
    - For 1040: taxpayer name, spouse name (if married filing jointly), filing status, AGI, total tax, refund/owed, TAX YEAR
-   - For receipts: merchant name, date, amount, items purchased, payment method
+   - For receipts: merchant name, date, amount, items purchased, payment method, category (business expense, medical, charitable, etc.)
    - For other documents: extract all relevant financial information
 
 3. IMPORTANT: Detect filing status:
@@ -225,21 +228,22 @@ Your task:
 
 4. IMPORTANT: Always extract the taxpayer's FULL NAME (employee_name for W-2, recipient_name for 1099)
 5. IMPORTANT: Always extract the TAX YEAR from the document
-6. Provide a detailed description of what you see in the document
+6. IMPORTANT: For receipts and deductible expenses, identify the deduction category and amount
+7. Provide a detailed description of what you see in the document
 
 Return a JSON object with this EXACT structure:
 {
   "documentType": "w2",
   "subtype": null,
-  "taxYear": 2022,
+  "taxYear": 2024,
   "filingStatus": "married_joint",
   "description": "W-2 Wage and Tax Statement for Sam & Jane Lightson from [Employer Name] showing wages of $X and federal tax withheld of $Y",
-  "summary": "W-2 form for Sam & Jane Lightson - tax year 2022 (Married Filing Jointly)",
+  "summary": "W-2 form for Sam & Jane Lightson - tax year 2024 (Married Filing Jointly)",
   "confidence": 95,
   "keyFindings": [
     "Taxpayers: Sam & Jane Lightson",
     "Filing Status: Married Filing Jointly",
-    "Tax Year: 2022",
+    "Tax Year: 2024",
     "Total wages: $X",
     "Federal tax withheld: $Y",
     "Employer: [Name]"
@@ -250,7 +254,7 @@ Return a JSON object with this EXACT structure:
     "employee_name": "Sam Lightson",
     "spouse_name": "Jane Lightson",
     "employee_ssn": "XXX-XX-1234",
-    "tax_year": 2022,
+    "tax_year": 2024,
     "filing_status": "married_joint",
     "wages": 50000.00,
     "federal_tax_withheld": 5000.00,
@@ -261,7 +265,15 @@ Return a JSON object with this EXACT structure:
     "state_wages": 50000.00,
     "state_tax_withheld": 2000.00,
     "state": "CA"
-  }
+  },
+  "deductions": [
+    {
+      "category": "business_expense",
+      "description": "Office supplies",
+      "amount": 150.00,
+      "date": "2024-03-15"
+    }
+  ]
 }
 
 IMPORTANT: 
@@ -269,6 +281,7 @@ IMPORTANT:
 - Extract REAL values from the document, not placeholder values
 - ALWAYS include employee_name/recipient_name and tax_year in extractedData
 - If married filing jointly, include spouse_name and set filing_status to "married_joint"
+- For receipts, identify deductible categories: business_expense, medical, charitable, education, etc.
 - If you can't read a field clearly, omit it from extractedData
 - Be accurate with numbers - these are used for tax calculations
 - Set confidence based on document quality and readability
@@ -316,6 +329,7 @@ Return ONLY valid JSON, no markdown or explanation.`
       confidence: analysis.confidence || 85,
       keyFindings: analysis.keyFindings || [],
       extractedData: analysis.extractedData || {},
+      deductions: analysis.deductions || [],
     }
   } catch (error) {
     console.error("[v0] Error in AI analysis:", error)
@@ -350,6 +364,7 @@ Return ONLY valid JSON, no markdown or explanation.`
       confidence: 50,
       keyFindings: ["Document uploaded successfully", "Manual review recommended - AI analysis failed"],
       extractedData: {},
+      deductions: [],
     }
   }
 }
@@ -605,7 +620,7 @@ async function process1040Document(userId: string, taxReturnData: any, supabase:
 }
 
 async function processGeneralDocument(userId: string, analysis: any, supabase: any) {
-  const { documentType, extractedData, keyFindings } = analysis
+  const { documentType, extractedData, keyFindings, deductions } = analysis
 
   console.log("[v0] Leo analyzing financial impact...")
   await supabase.from("agent_activities").insert({
@@ -651,6 +666,7 @@ async function processGeneralDocument(userId: string, analysis: any, supabase: a
   return {
     message: `${documentType} document processed successfully`,
     keyFindings,
+    deductions,
   }
 }
 
