@@ -96,6 +96,7 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
   }
 
   const handleUpload = () => {
+    console.log("[v0] Upload button clicked, navigating to upload page")
     router.push("/dashboard/documents/upload")
   }
 
@@ -142,7 +143,11 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
             <h1 className="text-4xl font-bold mb-2">All Documents</h1>
             <p className="text-muted-foreground">Complete list of all your uploaded tax documents</p>
           </div>
-          <Button onClick={handleUpload} className="bg-neon hover:bg-neon/90 text-background">
+          <Button
+            onClick={handleUpload}
+            className="bg-neon hover:bg-neon/90 text-background relative z-10 cursor-pointer"
+            type="button"
+          >
             <Upload className="w-4 h-4 mr-2" />
             Upload Document
           </Button>
@@ -276,7 +281,11 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
               <div className="text-center py-12">
                 <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">No documents found</p>
-                <Button onClick={handleUpload} className="bg-neon hover:bg-neon/90 text-background">
+                <Button
+                  onClick={handleUpload}
+                  className="bg-neon hover:bg-neon/90 text-background relative z-10 cursor-pointer"
+                  type="button"
+                >
                   <Upload className="w-4 h-4 mr-2" />
                   Upload Your First Document
                 </Button>

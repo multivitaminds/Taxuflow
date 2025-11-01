@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Upload, X, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Upload, X, Loader2, AlertCircle, CheckCircle2, FileText } from "lucide-react"
 import { Card } from "@/components/ui/card"
 
 interface UploadedFile {
@@ -17,14 +17,17 @@ interface UploadedFile {
   created_at: string
 }
 
+interface FileUploadProgress {
+  file: File
+  status: "uploading" | "processing" | "complete" | "error"
+  progress: string
+  error?: string
+  documentId?: string
+}
+
 export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => void }) {
-  const [uploading, setUploading] = useState(false)
-  const [processing, setProcessing] = useState(false)
+  const [uploadingFiles, setUploadingFiles] = useState<FileUploadProgress[]>([])
   const [dragActive, setDragActive] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [detailedError, setDetailedError] = useState<string | null>(null)
-  const [processingStatus, setProcessingStatus] = useState<string>("")
-  const [success, setSuccess] = useState(false)
 
   const supabase = createClient()
 
@@ -56,19 +59,16 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
     return "other"
   }
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, index: number) => {
     console.log("[v0] Starting file upload:", file.name)
-    setUploading(true)
-    setError(null)
-    setDetailedError(null)
-    setSuccess(false)
 
     try {
       const validationError = validateFile(file)
       if (validationError) {
         console.error("[v0] Validation failed:", validationError)
-        setError(validationError)
-        setUploading(false)
+        setUploadingFiles((prev) =>
+          prev.map((f, i) => (i === index ? { ...f, status: "error", error: validationError } : f)),
+        )
         return
       }
 
@@ -79,9 +79,11 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
 
       if (userError || !user) {
         console.error("[v0] User error:", userError)
-        setError("Please sign in to upload documents")
-        setDetailedError(userError?.message || "No user found")
-        setUploading(false)
+        setUploadingFiles((prev) =>
+          prev.map((f, i) =>
+            i === index ? { ...f, status: "error", error: "Please sign in to upload documents" } : f,
+          ),
+        )
         return
       }
 
@@ -92,6 +94,9 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
       const filePath = `${user.id}/${timestamp}-${sanitizedFileName}`
 
       console.log("[v0] Uploading to storage...")
+      setUploadingFiles((prev) =>
+        prev.map((f, i) => (i === index ? { ...f, progress: "Uploading to secure storage..." } : f)),
+      )
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("tax-documents")
@@ -102,14 +107,11 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
 
       if (uploadError) {
         console.error("[v0] Upload error:", uploadError)
+        let errorMsg = `Upload failed: ${uploadError.message}`
         if (uploadError.message.includes("not found") || uploadError.message.includes("does not exist")) {
-          setError("Storage bucket not set up. Please run the database setup scripts first.")
-          setDetailedError("Run scripts/004_setup_storage_bucket.sql to create the storage bucket")
-        } else {
-          setError(`Upload failed: ${uploadError.message}`)
-          setDetailedError(JSON.stringify(uploadError, null, 2))
+          errorMsg = "Storage bucket not set up. Please run the database setup scripts first."
         }
-        setUploading(false)
+        setUploadingFiles((prev) => prev.map((f, i) => (i === index ? { ...f, status: "error", error: errorMsg } : f)))
         return
       }
 
@@ -123,6 +125,10 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
       const currentYear = new Date().getFullYear()
 
       console.log("[v0] Saving document metadata...")
+      setUploadingFiles((prev) =>
+        prev.map((f, i) => (i === index ? { ...f, progress: "Saving document information..." } : f)),
+      )
+
       const { data: dbData, error: dbError } = await supabase
         .from("documents")
         .insert({
@@ -140,23 +146,24 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
 
       if (dbError) {
         console.error("[v0] Database error:", dbError)
+        let errorMsg = `Failed to save document info: ${dbError.message}`
         if (dbError.message.includes("relation") && dbError.message.includes("does not exist")) {
-          setError("Database table not set up. Please run the database setup scripts first.")
-          setDetailedError("Run scripts/003_create_documents_table.sql to create the documents table")
-        } else {
-          setError(`Failed to save document info: ${dbError.message}`)
-          setDetailedError(JSON.stringify(dbError, null, 2))
+          errorMsg = "Database table not set up. Please run the database setup scripts first."
         }
-        setUploading(false)
+        setUploadingFiles((prev) => prev.map((f, i) => (i === index ? { ...f, status: "error", error: errorMsg } : f)))
         return
       }
 
       console.log("[v0] Document saved successfully:", dbData.id)
-      setUploading(false)
 
       console.log("[v0] Starting AI document processing...")
-      setProcessing(true)
-      setProcessingStatus("Sophie is analyzing your document with AI vision...")
+      setUploadingFiles((prev) =>
+        prev.map((f, i) =>
+          i === index
+            ? { ...f, status: "processing", progress: "Sophie is analyzing with AI vision...", documentId: dbData.id }
+            : f,
+        ),
+      )
 
       try {
         const response = await fetch("/api/process-document", {
@@ -178,45 +185,78 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
         const result = await response.json()
         console.log("[v0] Document processing complete:", result)
 
-        setProcessingStatus(`✓ All 5 AI agents have analyzed your ${result.documentType?.toUpperCase() || "document"}!`)
-        setSuccess(true)
+        setUploadingFiles((prev) =>
+          prev.map((f, i) =>
+            i === index
+              ? {
+                  ...f,
+                  status: "complete",
+                  progress: `All 5 AI agents analyzed your ${result.documentType?.toUpperCase() || "document"}!`,
+                }
+              : f,
+          ),
+        )
 
+        // Remove completed file after 3 seconds
         setTimeout(() => {
-          setProcessing(false)
-          setProcessingStatus("")
-          setSuccess(false)
-          console.log("[v0] Calling onUploadComplete to refresh dashboard")
-          if (onUploadComplete) {
-            onUploadComplete()
+          setUploadingFiles((prev) => prev.filter((_, i) => i !== index))
+          // If all files are done, refresh
+          if (uploadingFiles.filter((f) => f.status !== "complete").length === 1) {
+            console.log("[v0] All files processed, refreshing dashboard")
+            if (onUploadComplete) {
+              onUploadComplete()
+            }
           }
         }, 3000)
       } catch (processingError) {
         console.error("[v0] Processing error:", processingError)
-        setProcessing(false)
-        setProcessingStatus("")
-        setError("Document uploaded but AI processing failed")
-        setDetailedError(processingError instanceof Error ? processingError.message : String(processingError))
-
-        setTimeout(() => {
-          if (onUploadComplete) {
-            onUploadComplete()
-          }
-        }, 1000)
+        setUploadingFiles((prev) =>
+          prev.map((f, i) =>
+            i === index
+              ? {
+                  ...f,
+                  status: "error",
+                  error: "Document uploaded but AI processing failed",
+                }
+              : f,
+          ),
+        )
       }
     } catch (err) {
       console.error("[v0] Unexpected error:", err)
-      setError("An unexpected error occurred")
-      setDetailedError(err instanceof Error ? err.message : String(err))
-      setUploading(false)
-      setProcessing(false)
+      setUploadingFiles((prev) =>
+        prev.map((f, i) =>
+          i === index
+            ? {
+                ...f,
+                status: "error",
+                error: "An unexpected error occurred",
+              }
+            : f,
+        ),
+      )
     }
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      uploadFile(file)
+    const files = Array.from(e.target.files || [])
+    if (files.length > 0) {
+      console.log("[v0] Selected", files.length, "files for upload")
+      const newFiles: FileUploadProgress[] = files.map((file) => ({
+        file,
+        status: "uploading",
+        progress: "Starting upload...",
+      }))
+
+      setUploadingFiles((prev) => [...prev, ...newFiles])
+
+      // Upload all files in parallel
+      files.forEach((file, index) => {
+        uploadFile(file, uploadingFiles.length + index)
+      })
     }
+    // Reset input
+    e.target.value = ""
   }
 
   const handleDrag = (e: React.DragEvent) => {
@@ -234,20 +274,34 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
     e.stopPropagation()
     setDragActive(false)
 
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      uploadFile(file)
+    const files = Array.from(e.dataTransfer.files || [])
+    if (files.length > 0) {
+      console.log("[v0] Dropped", files.length, "files")
+      const newFiles: FileUploadProgress[] = files.map((file) => ({
+        file,
+        status: "uploading",
+        progress: "Starting upload...",
+      }))
+
+      setUploadingFiles((prev) => [...prev, ...newFiles])
+
+      // Upload all files in parallel
+      files.forEach((file, index) => {
+        uploadFile(file, uploadingFiles.length + index)
+      })
     }
   }
 
-  const isWorking = uploading || processing
+  const removeFile = (index: number) => {
+    setUploadingFiles((prev) => prev.filter((_, i) => i !== index))
+  }
 
   return (
     <div className="space-y-4">
       <div
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
-        } ${isWorking ? "opacity-50 pointer-events-none" : ""}`}
+        }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
@@ -258,42 +312,65 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
           id="file-upload"
           className="hidden"
           onChange={handleFileInput}
-          disabled={isWorking}
           accept=".pdf,.jpg,.jpeg,.png,.docx"
+          multiple
         />
 
         <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center gap-2">
-          {isWorking ? (
-            <Loader2 className="h-12 w-12 text-muted-foreground animate-spin" />
-          ) : (
-            <Upload className="h-12 w-12 text-muted-foreground" />
-          )}
+          <Upload className="h-12 w-12 text-muted-foreground" />
 
           <div className="space-y-1">
-            <p className="text-sm font-medium">
-              {uploading ? "Uploading..." : processing ? "Processing..." : "Drop your tax documents here"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {isWorking ? processingStatus : "or click to browse (PDF, JPG, PNG, DOCX - max 10MB)"}
-            </p>
+            <p className="text-sm font-medium">Drop your tax documents here</p>
+            <p className="text-xs text-muted-foreground">or click to browse (PDF, JPG, PNG, DOCX - max 10MB each)</p>
+            <p className="text-xs text-primary font-medium mt-2">You can upload multiple files at once</p>
           </div>
         </label>
       </div>
 
-      {processing && (
-        <Card className={`p-4 ${success ? "bg-green-500/10 border-green-500" : "bg-primary/10 border-primary"}`}>
+      {uploadingFiles.map((fileProgress, index) => (
+        <Card
+          key={index}
+          className={`p-4 ${
+            fileProgress.status === "complete"
+              ? "bg-green-500/10 border-green-500"
+              : fileProgress.status === "error"
+                ? "bg-destructive/10 border-destructive"
+                : "bg-primary/10 border-primary"
+          }`}
+        >
           <div className="flex items-start gap-2">
-            {success ? (
+            {fileProgress.status === "complete" ? (
               <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+            ) : fileProgress.status === "error" ? (
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
             ) : (
               <Loader2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0 animate-spin" />
             )}
-            <div className="flex-1">
-              <p className={`text-sm font-medium ${success ? "text-green-500" : "text-primary"}`}>
-                {success ? "Processing Complete!" : "AI Processing"}
+            <FileText className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p
+                className={`text-sm font-medium truncate ${
+                  fileProgress.status === "complete"
+                    ? "text-green-500"
+                    : fileProgress.status === "error"
+                      ? "text-destructive"
+                      : "text-primary"
+                }`}
+              >
+                {fileProgress.file.name}
               </p>
-              <p className={`text-xs mt-1 ${success ? "text-green-500/80" : "text-primary/80"}`}>{processingStatus}</p>
-              {!success && (
+              <p
+                className={`text-xs mt-1 ${
+                  fileProgress.status === "complete"
+                    ? "text-green-500/80"
+                    : fileProgress.status === "error"
+                      ? "text-destructive/80"
+                      : "text-primary/80"
+                }`}
+              >
+                {fileProgress.status === "error" ? fileProgress.error : fileProgress.progress}
+              </p>
+              {fileProgress.status === "processing" && (
                 <div className="mt-3 space-y-1">
                   <p className="text-xs text-muted-foreground">• Sophie: Document analysis</p>
                   <p className="text-xs text-muted-foreground">• Leo: Tax calculations</p>
@@ -303,34 +380,14 @@ export function DocumentUpload({ onUploadComplete }: { onUploadComplete?: () => 
                 </div>
               )}
             </div>
+            {fileProgress.status === "error" && (
+              <Button variant="ghost" size="sm" onClick={() => removeFile(index)} className="h-6 w-6 p-0 flex-shrink-0">
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </Card>
-      )}
-
-      {error && (
-        <Card className="p-4 bg-destructive/10 border-destructive">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">Upload Error</p>
-              <p className="text-xs text-destructive/80 mt-1">{error}</p>
-              {detailedError && (
-                <details className="mt-2">
-                  <summary className="text-xs text-destructive/60 cursor-pointer hover:text-destructive/80">
-                    Technical details
-                  </summary>
-                  <pre className="text-xs text-destructive/60 mt-1 overflow-auto max-h-32 bg-destructive/5 p-2 rounded">
-                    {detailedError}
-                  </pre>
-                </details>
-              )}
-            </div>
-            <Button variant="ghost" size="sm" onClick={() => setError(null)} className="h-6 w-6 p-0 flex-shrink-0">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </Card>
-      )}
+      ))}
     </div>
   )
 }
