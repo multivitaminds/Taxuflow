@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         supabase_user_id: user.id,
         plan_id: planId,
+        planId: planId, // Added for webhook compatibility
       },
     })
 

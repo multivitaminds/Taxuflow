@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Check, ArrowRight, Loader2 } from "lucide-react"
+import { Check, ArrowRight, Loader2, CheckCircle, User, LayoutDashboard } from "lucide-react"
 import { SUBSCRIPTION_PLANS, getPlanById } from "@/lib/subscription-plans"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { SubscriptionCheckoutButton } from "@/components/subscription-checkout-button"
+import Link from "next/link"
 
 interface SubscriptionManagementClientProps {
   profile: {
@@ -22,8 +23,22 @@ interface SubscriptionManagementClientProps {
 
 export function SubscriptionManagementClient({ profile }: SubscriptionManagementClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const isSuccess = searchParams.get("success") === "true"
+  const successPlan = searchParams.get("plan")
+
+  useEffect(() => {
+    if (isSuccess) {
+      // Wait a moment for webhook to process, then refresh
+      const timer = setTimeout(() => {
+        router.refresh()
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [isSuccess, router])
 
   const currentPlanId = profile?.subscription_tier?.toLowerCase() || "free"
   const currentPlan = getPlanById(currentPlanId)
@@ -121,6 +136,37 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
           <h1 className="text-4xl font-bold mb-2">Manage Subscription</h1>
           <p className="text-muted-foreground">Upgrade, downgrade, or cancel your subscription</p>
         </div>
+
+        {isSuccess && (
+          <Card className="mb-6 border-green-500 bg-green-50 dark:bg-green-950">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">Payment Successful!</h3>
+                  <p className="text-green-800 dark:text-green-200 mb-4">
+                    Your subscription to {successPlan ? getPlanById(successPlan)?.name : "the plan"} has been activated.
+                    Your account will be updated shortly.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button asChild variant="default">
+                      <Link href="/dashboard">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Go to Dashboard
+                      </Link>
+                    </Button>
+                    <Button asChild variant="outline">
+                      <Link href="/dashboard/settings">
+                        <User className="mr-2 h-4 w-4" />
+                        View Profile
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive text-destructive">
