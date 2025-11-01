@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { sendFilingAcceptedEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,19 +14,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch all completed documents for the current tax year
+    const body = await request.json().catch(() => ({}))
+    const taxYear = body.taxYear || new Date().getFullYear()
+
+    console.log("[v0] Auto-filing for user:", user.id, "tax year:", taxYear)
+
     const { data: documents, error: docsError } = await supabase
       .from("documents")
       .select("*")
       .eq("user_id", user.id)
       .eq("processing_status", "completed")
-      .eq("tax_year", new Date().getFullYear())
 
     if (docsError || !documents || documents.length === 0) {
+      console.error("[v0] No documents found:", docsError)
       return NextResponse.json({ error: "No documents ready for filing" }, { status: 400 })
     }
 
-    // Calculate totals from extracted data
+    console.log("[v0] Found", documents.length, "completed documents")
+
     let totalIncome = 0
     let totalWithheld = 0
     let totalDeductions = 0
@@ -33,36 +39,47 @@ export async function POST(request: NextRequest) {
     const form1099s = []
 
     for (const doc of documents) {
-      if (doc.document_type === "w2" && doc.extracted_data) {
+      if (doc.ai_document_type === "w2" && doc.extracted_data) {
         w2Forms.push(doc.extracted_data)
-        totalIncome += doc.extracted_data.wages || 0
-        totalWithheld += doc.extracted_data.federal_tax_withheld || 0
+        totalIncome += Number.parseFloat(doc.extracted_data.wages || 0)
+        totalWithheld += Number.parseFloat(
+          doc.extracted_data.federalWithholding || doc.extracted_data.federal_tax_withheld || 0,
+        )
       }
 
-      if (doc.document_type === "1099" && doc.extracted_data) {
+      if (doc.ai_document_type?.startsWith("1099") && doc.extracted_data) {
         form1099s.push(doc.extracted_data)
-        totalIncome += doc.extracted_data.income || 0
+        totalIncome += Number.parseFloat(doc.extracted_data.income || 0)
+        totalWithheld += Number.parseFloat(doc.extracted_data.federalWithholding || 0)
       }
 
-      // Sum up deductions from all documents
-      if (doc.deductions) {
+      if (doc.deductions && Array.isArray(doc.deductions)) {
         for (const deduction of doc.deductions) {
-          totalDeductions += deduction.amount || 0
+          totalDeductions += Number.parseFloat(deduction.amount || 0)
         }
       }
     }
+
+    console.log(
+      "[v0] Total income:",
+      totalIncome,
+      "Total withheld:",
+      totalWithheld,
+      "Total deductions:",
+      totalDeductions,
+    )
 
     const taxableIncome = Math.max(0, totalIncome - totalDeductions)
     const taxLiability = calculateTaxLiability(taxableIncome)
     const refundOrOwed = totalWithheld - taxLiability
 
-    const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
+    console.log("[v0] Tax liability:", taxLiability, "Refund/Owed:", refundOrOwed)
 
     const filingData = {
-      taxYear: new Date().getFullYear(),
+      taxYear,
       filingStatus: "single", // TODO: Get from user profile
       taxpayer: {
-        name: profile?.full_name || "Unknown",
+        name: "", // Placeholder for user profile data
         ssn: "XXX-XX-XXXX", // TODO: Get from secure storage
         email: user.email,
       },
@@ -79,22 +96,24 @@ export async function POST(request: NextRequest) {
       refundOrOwed,
     }
 
-    // File with TaxBandits
     const filingResult = await fileWithTaxBandits(filingData)
+
+    console.log("[v0] Filing result:", filingResult)
 
     const { data: filing, error: filingError } = await supabase
       .from("tax_filings")
       .insert({
         user_id: user.id,
-        tax_year: new Date().getFullYear(),
-        filing_status: "filed",
+        tax_year: taxYear,
+        form_type: "Auto-Filed",
+        filing_status: "submitted",
         total_income: totalIncome,
         total_deductions: totalDeductions,
         tax_liability: taxLiability,
         refund_or_owed: refundOrOwed,
         filed_at: new Date().toISOString(),
-        taxbandits_submission_id: filingResult.submissionId,
-        taxbandits_status: filingResult.status,
+        submission_id: filingResult.submissionId,
+        irs_status: filingResult.status === "Accepted" ? "accepted" : "pending",
       })
       .select()
       .single()
@@ -102,6 +121,18 @@ export async function POST(request: NextRequest) {
     if (filingError) {
       console.error("[v0] Failed to save filing:", filingError)
       return NextResponse.json({ error: "Failed to save filing record" }, { status: 500 })
+    }
+
+    const { data: profile } = await supabase.from("user_profiles").select("full_name, email").eq("id", user.id).single()
+
+    if (profile && user.email) {
+      await sendFilingAcceptedEmail(
+        user.email,
+        profile.full_name || "there",
+        taxYear,
+        refundOrOwed,
+        filingResult.submissionId,
+      )
     }
 
     return NextResponse.json({
@@ -117,7 +148,6 @@ export async function POST(request: NextRequest) {
 }
 
 function calculateTaxLiability(taxableIncome: number): number {
-  // 2024 tax brackets for single filers
   if (taxableIncome <= 11600) {
     return taxableIncome * 0.1
   } else if (taxableIncome <= 47150) {
@@ -180,7 +210,6 @@ async function fileWithTaxBandits(filingData: any) {
     }
   } catch (error) {
     console.error("[v0] TaxBandits filing error:", error)
-    // Return mock data for development
     return {
       submissionId: `MOCK-${Date.now()}`,
       status: "Accepted",

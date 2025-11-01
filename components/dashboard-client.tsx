@@ -74,8 +74,12 @@ interface Deduction {
 export function DashboardClient({ user, profile }: DashboardClientProps) {
   const router = useRouter()
   const [selectedAgent, setSelectedAgent] = useState(profile?.preferred_agent || "Sam")
-  const userName = profile?.full_name?.split(" ")[0] || user.email?.split("@")[0] || "there"
-  const fullUserName = profile?.full_name || user.email?.split("@")[0] || "User"
+  const userName =
+    profile?.full_name?.split(" ")[0] ||
+    user.user_metadata?.full_name?.split(" ")[0] ||
+    user.email?.split("@")[0] ||
+    "there"
+  const fullUserName = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User"
 
   const [documents, setDocuments] = useState<Document[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)

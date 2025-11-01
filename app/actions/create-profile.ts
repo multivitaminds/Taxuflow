@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 
-export async function createUserProfile(userId: string, email: string) {
+export async function createUserProfile(userId: string, email: string, fullName?: string) {
   try {
     const supabase = await createClient()
 
@@ -10,7 +10,7 @@ export async function createUserProfile(userId: string, email: string) {
     const { error } = await supabase.from("user_profiles").insert({
       id: userId,
       email: email,
-      full_name: email.split("@")[0],
+      full_name: fullName || email.split("@")[0],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })

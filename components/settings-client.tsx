@@ -3,14 +3,15 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Loader2, LogOut } from "lucide-react"
+import { ArrowLeft, Save, Loader2, LogOut } from 'lucide-react'
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+import { updateProfile } from "@/app/actions/update-profile"
 
 interface SettingsClientProps {
   user: User
@@ -21,14 +22,43 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
   const router = useRouter()
   const supabase = createClient()
 
+  const [fullName, setFullName] = useState(profile?.full_name || "")
   const [email, setEmail] = useState(user.email || "")
   const [loading, setLoading] = useState(false)
+  const [nameLoading, setNameLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [nameSuccess, setNameSuccess] = useState(false)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     router.push("/login")
+  }
+
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setNameLoading(true)
+    setNameError(null)
+    setNameSuccess(false)
+
+    try {
+      const result = await updateProfile(fullName)
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      setNameSuccess(true)
+      setTimeout(() => {
+        router.refresh()
+      }, 1500)
+    } catch (err: any) {
+      console.error("[v0] Error updating name:", err)
+      setNameError(err.message || "Failed to update name")
+    } finally {
+      setNameLoading(false)
+    }
   }
 
   const handleUpdateEmail = async (e: React.FormEvent) => {
@@ -64,6 +94,56 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
         <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
 
         <div className="space-y-6">
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+            <h2 className="text-xl font-bold mb-4">Full Name</h2>
+
+            {nameError && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm text-red-500">{nameError}</p>
+              </div>
+            )}
+
+            {nameSuccess && (
+              <div className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                <p className="text-sm text-green-500">Name updated successfully!</p>
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateName} className="space-y-4">
+              <div>
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="mt-2"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  This name will appear throughout the app and on your tax documents
+                </p>
+              </div>
+              <Button
+                type="submit"
+                disabled={nameLoading || fullName === profile?.full_name || !fullName.trim()}
+                className="bg-neon hover:bg-neon/90 text-background"
+              >
+                {nameLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Name
+                  </>
+                )}
+              </Button>
+            </form>
+          </Card>
+
           <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
             <h2 className="text-xl font-bold mb-4">Email Address</h2>
 

@@ -9,6 +9,7 @@ import {
   TaxOptimizationEngine,
   PredictiveTaxModel,
 } from "@/lib/ai/agent-intelligence"
+import { sendDocumentProcessedEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -78,6 +79,18 @@ export async function POST(request: NextRequest) {
         processed_at: new Date().toISOString(),
       })
       .eq("id", documentId)
+
+    const { data: profile } = await supabase.from("user_profiles").select("full_name, email").eq("id", user.id).single()
+
+    if (profile && user.email && analysisResult.extractedData) {
+      await sendDocumentProcessedEmail(
+        user.email,
+        profile.full_name || "there",
+        document.file_name,
+        analysisResult.documentType,
+        analysisResult.extractedData,
+      )
+    }
 
     const { data: taxDoc, error: taxDocError } = await supabase
       .from("tax_documents")

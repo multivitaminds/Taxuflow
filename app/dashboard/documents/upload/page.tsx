@@ -4,8 +4,9 @@ import { DocumentUpload } from "@/components/document-upload"
 import { AutoFileButton } from "@/components/auto-file-button"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Sparkles } from "lucide-react"
+import { ArrowLeft, Sparkles, Calendar } from "lucide-react"
 import Link from "next/link"
+import { MultiYearFileButton } from "@/components/multi-year-file-button"
 
 export default async function UploadPage() {
   const supabase = await createClient()
@@ -20,20 +21,43 @@ export default async function UploadPage() {
 
   let hasIncomeDocs = false
   let completedDocsCount = 0
+  let availableYears: Array<{ year: number; documentCount: number; estimatedRefund: number }> = []
 
   try {
     const { data: completedDocs } = await supabase
       .from("documents")
-      .select("id, document_type")
+      .select("id, document_type, extracted_data")
       .eq("user_id", user.id)
       .eq("processing_status", "completed")
 
     if (completedDocs) {
       hasIncomeDocs = completedDocs.some((doc) => doc.document_type === "w2" || doc.document_type === "1099")
       completedDocsCount = completedDocs.length
+
+      const yearMap = new Map<number, { count: number; refund: number }>()
+
+      completedDocs.forEach((doc) => {
+        const taxYear = doc.extracted_data?.tax_year
+        if (taxYear) {
+          const existing = yearMap.get(taxYear) || { count: 0, refund: 0 }
+          yearMap.set(taxYear, {
+            count: existing.count + 1,
+            refund: existing.refund + (doc.extracted_data?.federal_tax_withheld || 0) * 0.15,
+          })
+        }
+      })
+
+      availableYears = Array.from(yearMap.entries())
+        .map(([year, data]) => ({
+          year,
+          documentCount: data.count,
+          estimatedRefund: data.refund,
+        }))
+        .sort((a, b) => b.year - a.year)
     }
   } catch (error) {
     console.log("[v0] Documents table not yet created, skipping auto-file check")
+    console.log("[v0] Error calculating available years:", error)
   }
 
   return (
@@ -65,6 +89,21 @@ export default async function UploadPage() {
                   extracted all data and calculated your deductions. Click below to automatically file your taxes.
                 </p>
                 <AutoFileButton />
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {availableYears.length > 1 && (
+          <Card className="p-6 mb-6 bg-gradient-to-br from-purple-500/10 to-blue-500/10 border-purple-500/20">
+            <div className="flex items-start gap-4">
+              <Calendar className="h-6 w-6 text-purple-500 mt-1 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-semibold mb-2">File Multiple Years at Once!</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You have documents for {availableYears.length} tax years. File them all together and save time.
+                </p>
+                <MultiYearFileButton availableYears={availableYears} />
               </div>
             </div>
           </Card>
