@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, FileText, Download, Trash2, CheckCircle2, Clock, Search } from "lucide-react"
+import { ArrowLeft, FileText, Download, Trash2, CheckCircle2, Clock, Search, Upload } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 
@@ -95,6 +95,10 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
     }
   }
 
+  const handleUpload = () => {
+    router.push("/dashboard/documents/upload")
+  }
+
   const getDocumentStatus = (doc: any) => {
     if (doc.ai_document_type) {
       return { status: "processed", label: "Processed", icon: CheckCircle2, color: "text-green-500" }
@@ -133,9 +137,15 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
           Back to Documents
         </Button>
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">All Documents</h1>
-          <p className="text-muted-foreground">Complete list of all your uploaded tax documents</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">All Documents</h1>
+            <p className="text-muted-foreground">Complete list of all your uploaded tax documents</p>
+          </div>
+          <Button onClick={handleUpload} className="bg-neon hover:bg-neon/90 text-background">
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Document
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -265,7 +275,11 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
             {filteredDocuments.length === 0 && (
               <div className="text-center py-12">
                 <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No documents found</p>
+                <p className="text-muted-foreground mb-4">No documents found</p>
+                <Button onClick={handleUpload} className="bg-neon hover:bg-neon/90 text-background">
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Your First Document
+                </Button>
               </div>
             )}
           </div>
