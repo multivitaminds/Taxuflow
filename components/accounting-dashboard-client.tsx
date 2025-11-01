@@ -49,11 +49,11 @@ export function AccountingDashboardClient({
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-card">
-        <div className="container mx-auto px-6 py-6">
+        <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
-            <div>
+            <div className="space-y-2">
               <h1 className="text-3xl font-bold">Accounting</h1>
-              <p className="text-muted-foreground mt-1">Manage your business finances</p>
+              <p className="text-muted-foreground">Manage your business finances</p>
             </div>
             <div className="flex gap-3">
               <Button variant="outline" size="sm">
