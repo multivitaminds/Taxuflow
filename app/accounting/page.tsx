@@ -1,6 +1,7 @@
 import { createBooksServerClient } from "@/lib/supabase/books-server"
 import { createClient } from "@/lib/supabase/server"
 import { AccountingDashboardClient } from "@/components/accounting-dashboard-client"
+import { AccountingMenuGrid } from "@/components/accounting-menu-grid"
 import { redirect } from "next/navigation"
 
 export default async function AccountingPage() {
@@ -30,12 +31,20 @@ export default async function AccountingPage() {
   ])
 
   return (
-    <AccountingDashboardClient
-      user={user}
-      invoices={invoicesRes.data || []}
-      expenses={expensesRes.data || []}
-      customers={customersRes.data || []}
-      recentTransactions={[]}
-    />
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Accounting</h1>
+        <p className="text-muted-foreground mb-6">Manage your business finances and accounting</p>
+        <AccountingMenuGrid />
+      </div>
+
+      <AccountingDashboardClient
+        user={user}
+        invoices={invoicesRes.data || []}
+        expenses={expensesRes.data || []}
+        customers={customersRes.data || []}
+        recentTransactions={[]}
+      />
+    </div>
   )
 }

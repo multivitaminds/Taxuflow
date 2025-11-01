@@ -24,13 +24,17 @@ export default async function UploadPage() {
   let availableYears: Array<{ year: number; documentCount: number; estimatedRefund: number }> = []
 
   try {
-    const { data: completedDocs } = await supabase
+    const { data: completedDocs, error: docsError } = await supabase
       .from("documents")
       .select("id, document_type, extracted_data")
       .eq("user_id", user.id)
       .eq("processing_status", "completed")
 
-    if (completedDocs) {
+    if (docsError) {
+      console.log("[v0] Error fetching documents:", docsError.message)
+    }
+
+    if (completedDocs && completedDocs.length > 0) {
       hasIncomeDocs = completedDocs.some((doc) => doc.document_type === "w2" || doc.document_type === "1099")
       completedDocsCount = completedDocs.length
 
@@ -56,8 +60,7 @@ export default async function UploadPage() {
         .sort((a, b) => b.year - a.year)
     }
   } catch (error) {
-    console.log("[v0] Documents table not yet created, skipping auto-file check")
-    console.log("[v0] Error calculating available years:", error)
+    console.log("[v0] Documents table not yet created or error occurred:", error)
   }
 
   return (
