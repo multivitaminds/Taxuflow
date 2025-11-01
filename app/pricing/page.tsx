@@ -1,9 +1,9 @@
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 import { ArrowRight, Check } from "lucide-react"
 import Link from "next/link"
+import { SubscriptionCheckoutButton } from "@/components/subscription-checkout-button"
 
 export default function PricingPage() {
   const plans = [
@@ -162,14 +162,14 @@ export default function PricingPage() {
                   <p className="text-muted-foreground">{plan.description}</p>
                 </div>
                 {plan.priceId ? (
-                  <StripeCheckoutButton
-                    priceId={plan.priceId}
-                    mode="payment"
-                    className={`w-full mb-6 ${plan.popular ? "glow-neon-strong" : "bg-transparent"}`}
+                  <SubscriptionCheckoutButton
+                    planId={plan.name.toLowerCase().replace(" ", "-")}
+                    className={`w-full mb-6 ${plan.popular ? "glow-neon-strong" : ""}`}
+                    variant={plan.popular ? "default" : "outline"}
                   >
                     {plan.cta}
                     <ArrowRight className="ml-2 h-5 w-5" />
-                  </StripeCheckoutButton>
+                  </SubscriptionCheckoutButton>
                 ) : (
                   <Link href="/get-started">
                     <Button
@@ -217,12 +217,14 @@ export default function PricingPage() {
                   </div>
                   <p className="text-muted-foreground">{plan.description}</p>
                 </div>
-                <Link href="/get-started">
-                  <Button className="w-full mb-6 bg-transparent" variant="outline">
-                    {plan.cta}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+                <SubscriptionCheckoutButton
+                  planId={plan.name.toLowerCase().replace(" ", "-")}
+                  className="w-full mb-6"
+                  variant="outline"
+                >
+                  {plan.cta}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </SubscriptionCheckoutButton>
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3">

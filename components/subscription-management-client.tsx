@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Check, ArrowRight, Loader2 } from "lucide-react"
 import { SUBSCRIPTION_PLANS, getPlanById } from "@/lib/subscription-plans"
 import { useRouter } from "next/navigation"
+import { SubscriptionCheckoutButton } from "@/components/subscription-checkout-button"
 
 interface SubscriptionManagementClientProps {
   profile: {
@@ -212,28 +213,14 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
                         Current Plan
                       </Button>
                     ) : plan.priceId ? (
-                      <Button
+                      <SubscriptionCheckoutButton
+                        planId={plan.id}
                         className="w-full"
                         variant={canUpgrade ? "default" : "outline"}
-                        onClick={() =>
-                          profile?.stripe_subscription_id
-                            ? handleChangePlan(plan.priceId!, plan.id)
-                            : handleSubscribe(plan.priceId!, plan.id)
-                        }
-                        disabled={loading === plan.id}
                       >
-                        {loading === plan.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            {canUpgrade ? "Upgrade" : canDowngrade ? "Downgrade" : "Subscribe"}
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
+                        {canUpgrade ? "Upgrade" : canDowngrade ? "Downgrade" : "Subscribe"}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </SubscriptionCheckoutButton>
                     ) : (
                       <Button className="w-full bg-transparent" variant="outline" disabled>
                         Free Plan
@@ -277,27 +264,10 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
                         Current Plan
                       </Button>
                     ) : (
-                      <Button
-                        className="w-full"
-                        onClick={() =>
-                          profile?.stripe_subscription_id
-                            ? handleChangePlan(plan.priceId!, plan.id)
-                            : handleSubscribe(plan.priceId!, plan.id)
-                        }
-                        disabled={loading === plan.id}
-                      >
-                        {loading === plan.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            Subscribe
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
+                      <SubscriptionCheckoutButton planId={plan.id} className="w-full">
+                        Subscribe
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </SubscriptionCheckoutButton>
                     )}
                   </CardContent>
                 </Card>
