@@ -3,12 +3,12 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Loader2, LogOut } from 'lucide-react'
+import { ArrowLeft, Save, Loader2, LogOut, RefreshCw } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { updateProfile } from "@/app/actions/update-profile"
@@ -30,6 +30,7 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
   const [nameError, setNameError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [nameSuccess, setNameSuccess] = useState(false)
+  const [syncing, setSyncing] = useState(false)
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -80,6 +81,36 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
       setError(err.message || "Failed to update email")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSyncSubscription = async () => {
+    setSyncing(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/sync-subscription", {
+        method: "POST",
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to sync subscription")
+      }
+
+      console.log("[v0] Subscription synced:", data)
+      setSuccess(true)
+
+      // Refresh the page to show updated subscription
+      setTimeout(() => {
+        router.refresh()
+      }, 1500)
+    } catch (err: any) {
+      console.error("[v0] Sync error:", err)
+      setError(err.message || "Failed to sync subscription")
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -195,9 +226,24 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
             <p className="text-muted-foreground mb-4">
               Current plan: <span className="font-semibold">{profile?.subscription_tier || "Free"}</span>
             </p>
-            <Button onClick={() => router.push("/pricing")} variant="outline">
-              Manage Subscription
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={() => router.push("/dashboard/subscription")} variant="outline">
+                Manage Subscription
+              </Button>
+              <Button onClick={handleSyncSubscription} variant="outline" disabled={syncing}>
+                {syncing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Sync Subscription
+                  </>
+                )}
+              </Button>
+            </div>
           </Card>
 
           <Card className="p-6 border-red-500/20 bg-card/50 backdrop-blur">

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Check, ArrowRight, Loader2, CheckCircle, User, LayoutDashboard } from "lucide-react"
+import { Check, ArrowRight, Loader2, CheckCircle, User, LayoutDashboard, RefreshCw } from "lucide-react"
 import { SUBSCRIPTION_PLANS, getPlanById } from "@/lib/subscription-plans"
 import { useRouter, useSearchParams } from "next/navigation"
 import { SubscriptionCheckoutButton } from "@/components/subscription-checkout-button"
@@ -26,13 +26,13 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
 
   const isSuccess = searchParams.get("success") === "true"
   const successPlan = searchParams.get("plan")
 
   useEffect(() => {
     if (isSuccess) {
-      // Wait a moment for webhook to process, then refresh
       const timer = setTimeout(() => {
         router.refresh()
       }, 2000)
@@ -60,7 +60,6 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
         throw new Error(data.error || "Failed to create subscription")
       }
 
-      // Redirect to Stripe checkout
       window.location.href = data.url
     } catch (err: any) {
       setError(err.message)
@@ -126,6 +125,33 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
     }
   }
 
+  const handleSyncSubscription = async () => {
+    setSyncing(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/sync-subscription", {
+        method: "POST",
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to sync subscription")
+      }
+
+      console.log("[v0] Subscription synced:", data)
+
+      router.refresh()
+      window.location.reload()
+    } catch (err: any) {
+      console.error("[v0] Sync error:", err)
+      setError(err.message || "Failed to sync subscription")
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const individualPlans = SUBSCRIPTION_PLANS.filter((p) => p.category === "individual")
   const businessPlans = SUBSCRIPTION_PLANS.filter((p) => p.category === "business")
 
@@ -161,6 +187,19 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
                         View Profile
                       </Link>
                     </Button>
+                    <Button onClick={handleSyncSubscription} variant="outline" disabled={syncing}>
+                      {syncing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Syncing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Sync Now
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -174,7 +213,6 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
           </div>
         )}
 
-        {/* Current Plan */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Current Plan</CardTitle>
@@ -216,7 +254,6 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
           </CardContent>
         </Card>
 
-        {/* Individual Plans */}
         <div className="mb-12">
           <h2 className="text-3xl font-bold mb-6">Individual Plans</h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -279,7 +316,6 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
           </div>
         </div>
 
-        {/* Business Plans */}
         <div>
           <h2 className="text-3xl font-bold mb-6">Business Plans</h2>
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl">
