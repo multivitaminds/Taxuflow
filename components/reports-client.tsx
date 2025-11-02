@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { FileText, TrendingUp, DollarSign, PieChart, Download, Calendar } from "lucide-react"
 import Link from "next/link"
 
-export default function ReportsClient() {
+export function ReportsClient() {
   const reportCategories = [
     {
       title: "Financial Statements",

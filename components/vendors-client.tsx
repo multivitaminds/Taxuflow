@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Search, Building2, Phone, Mail, DollarSign, FileText, MoreVertical } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export default function VendorsClient() {
+export function VendorsClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showNewVendorDialog, setShowNewVendorDialog] = useState(false)
 
