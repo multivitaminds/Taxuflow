@@ -1,6 +1,7 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
 import type React from "react"
+import { usePathname } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -37,6 +38,7 @@ export function AIChatWidget() {
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
+  const pathname = usePathname()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -81,6 +83,7 @@ export function AIChatWidget() {
           })),
           agent: currentAgent,
           model: selectedModel,
+          context: getContextPrompt(),
         }),
       })
 
@@ -183,20 +186,48 @@ export function AIChatWidget() {
     }
   }
 
-  const quickActions = [
-    "What's my refund estimate?",
-    "Am I eligible for EITC?",
-    "What deductions can I claim?",
-    "How do I reduce audit risk?",
-  ]
+  const getContextPrompt = () => {
+    if (pathname?.includes("/file/w2")) {
+      return "\n\nCONTEXT: User is currently on the W-2 filing page. Help them with W-2 specific questions like understanding boxes, employer vs employee information, and filing deadlines."
+    }
+    if (pathname?.includes("/file/1099")) {
+      return "\n\nCONTEXT: User is currently on the 1099-NEC filing page. Help them with contractor payments, $600 threshold, and 1099 requirements."
+    }
+    if (pathname?.includes("/file/941")) {
+      return "\n\nCONTEXT: User is currently on the Form 941 (quarterly payroll tax) page. Help them with quarterly filing, payroll tax calculations, and deposit schedules."
+    }
+    if (pathname?.includes("/dashboard")) {
+      return "\n\nCONTEXT: User is on their dashboard. Help them understand their filing status, upcoming deadlines, and next steps."
+    }
+    return ""
+  }
 
-  const aiModels = [
-    { value: "openai/gpt-4o-mini", label: "GPT-4o Mini (Fast)" },
-    { value: "openai/gpt-4o", label: "GPT-4o (OpenAI)" },
-    { value: "anthropic/claude-sonnet-4.5", label: "Claude Sonnet 4.5" },
-    { value: "anthropic/claude-opus-4", label: "Claude Opus 4" },
-    { value: "xai/grok-4-fast", label: "Grok 4 Fast" },
-  ]
+  const getQuickActions = () => {
+    if (pathname?.includes("/file/w2")) {
+      return [
+        "What is Box 1 on a W-2?",
+        "How do I correct a W-2 error?",
+        "What's the W-2 filing deadline?",
+        "Can I e-file a late W-2?",
+      ]
+    }
+    if (pathname?.includes("/file/1099")) {
+      return [
+        "Who needs a 1099-NEC?",
+        "What's the $600 threshold?",
+        "When is 1099 deadline?",
+        "Do I need to file 1099 for LLC?",
+      ]
+    }
+    return [
+      "What's my refund estimate?",
+      "Am I eligible for EITC?",
+      "What deductions can I claim?",
+      "How do I reduce audit risk?",
+    ]
+  }
+
+  const quickActions = getQuickActions()
 
   if (!isOpen) {
     return (
@@ -392,3 +423,11 @@ export function AIChatWidget() {
     </Card>
   )
 }
+
+const aiModels = [
+  { value: "openai/gpt-4o-mini", label: "GPT-4o Mini (Fast)" },
+  { value: "openai/gpt-4o", label: "GPT-4o (OpenAI)" },
+  { value: "anthropic/claude-sonnet-4.5", label: "Claude Sonnet 4.5" },
+  { value: "anthropic/claude-opus-4", label: "Claude Opus 4" },
+  { value: "xai/grok-4-fast", label: "Grok 4 Fast" },
+]

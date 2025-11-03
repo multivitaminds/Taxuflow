@@ -9,7 +9,27 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, Save, Send, Lock, Sparkles } from "lucide-react"
+import {
+  Loader2,
+  ArrowLeft,
+  Save,
+  Send,
+  Lock,
+  Sparkles,
+  FileText,
+  AlertCircle,
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { PenaltyAbatementDialog } from "@/components/penalty-abatement-dialog"
+import { parseAddress } from "@/lib/address-parser"
+
+interface FormW2Props {
+  extractedData?: any
+}
 
 interface ExtractedW2Data {
   employer?: {
@@ -36,13 +56,18 @@ interface ExtractedW2Data {
   taxYear?: number
 }
 
-export default function FormW2() {
+export default function FormW2({ extractedData }: FormW2Props) {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [extracting, setExtracting] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [validationResult, setValidationResult] = useState<any>(null)
+  const [showPenaltyDialog, setShowPenaltyDialog] = useState(false)
+
+  const [filingType, setFilingType] = useState<"original" | "corrected">("original")
 
   const [formData, setFormData] = useState({
     // Employer Information
@@ -86,11 +111,100 @@ export default function FormW2() {
   })
 
   const currentYear = new Date().getFullYear()
-  const taxYearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i)
+  const taxYearOptions = Array.from({ length: 10 }, (_, i) => currentYear - i)
+
+  const canEfile = (year: number) => {
+    const yearsBack = currentYear - year
+    // Original W-2s: current year only (by Jan 31 deadline)
+    // Corrected W-2s: current year + 2 prior years (in some cases)
+    if (filingType === "original") {
+      return yearsBack === 0
+    } else {
+      return yearsBack <= 2
+    }
+  }
+
+  useEffect(() => {
+    if (extractedData) {
+      console.log("[v0] Auto-filling form with extracted data:", extractedData)
+
+      const extracted: ExtractedW2Data = extractedData
+
+      // Parse employee name
+      const [employeeFirst, ...employeeLast] = (extracted.employee?.name || "").split(" ")
+
+      const employerAddressParts = (extracted.employer?.address || "").split(",")
+      const employeeAddressParts = (extracted.employee?.address || "").split(",")
+
+      // Try to parse employer city/state/ZIP if combined
+      let employerCity = employerAddressParts[1]?.trim() || ""
+      let employerState = extracted.income?.state || ""
+      let employerZip = employerAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+
+      // Check if city field contains combined city/state/ZIP (e.g., "CAMDEN NJ 08103")
+      if (employerCity && !employerState) {
+        const parsed = parseAddress(employerCity)
+        if (parsed) {
+          employerCity = parsed.city
+          employerState = parsed.state
+          employerZip = parsed.zipCode
+        }
+      }
+
+      // Try to parse employee city/state/ZIP if combined
+      let employeeCity = employeeAddressParts[1]?.trim() || ""
+      let employeeState = extracted.income?.state || ""
+      let employeeZip = employeeAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+
+      // Check if city field contains combined city/state/ZIP
+      if (employeeCity && !employeeState) {
+        const parsed = parseAddress(employeeCity)
+        if (parsed) {
+          employeeCity = parsed.city
+          employeeState = parsed.state
+          employeeZip = parsed.zipCode
+        }
+      }
+
+      setFormData({
+        ...formData,
+        employerName: extracted.employer?.name || "",
+        employerEIN: extracted.employer?.ein || "",
+        employerAddress: employerAddressParts[0]?.trim() || "",
+        employerCity,
+        employerState,
+        employerZip,
+
+        employeeFirstName: employeeFirst || "",
+        employeeLastName: employeeLast.join(" ") || "",
+        employeeSSN: extracted.employee?.ssn || "",
+        employeeAddress: employeeAddressParts[0]?.trim() || "",
+        employeeCity,
+        employeeState,
+        employeeZip,
+
+        wages: extracted.income?.wages?.toString() || "",
+        federalWithholding: extracted.income?.federalWithholding?.toString() || "",
+        socialSecurityWages: extracted.income?.socialSecurityWages?.toString() || "",
+        socialSecurityWithholding: extracted.income?.socialSecurityTax?.toString() || "",
+        medicareWages: extracted.income?.medicareWages?.toString() || "",
+        medicareWithholding: extracted.income?.medicareTax?.toString() || "",
+        stateWages: extracted.income?.stateWages?.toString() || "",
+        stateWithholding: extracted.income?.stateTax?.toString() || "",
+
+        taxYear: extracted.taxYear?.toString() || new Date().getFullYear().toString(),
+      })
+
+      toast({
+        title: "✨ Form Auto-Filled",
+        description: "Your W-2 data has been automatically populated. Please review and submit.",
+      })
+    }
+  }, [extractedData])
 
   useEffect(() => {
     const draft = localStorage.getItem("w2_draft")
-    if (draft) {
+    if (draft && !extractedData) {
       try {
         setFormData(JSON.parse(draft))
       } catch (e) {
@@ -132,27 +246,54 @@ export default function FormW2() {
       if (extractData.success && extractData.data.documentType === "w2") {
         const extracted: ExtractedW2Data = extractData.data
 
-        // Auto-fill form with extracted data
         const [employeeFirst, ...employeeLast] = (extracted.employee?.name || "").split(" ")
         const employerAddressParts = (extracted.employer?.address || "").split(",")
         const employeeAddressParts = (extracted.employee?.address || "").split(",")
+
+        // Try to parse employer city/state/ZIP if combined
+        let employerCity = employerAddressParts[1]?.trim() || ""
+        let employerState = extracted.income?.state || ""
+        let employerZip = employerAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+
+        if (employerCity && !employerState) {
+          const parsed = parseAddress(employerCity)
+          if (parsed) {
+            employerCity = parsed.city
+            employerState = parsed.state
+            employerZip = parsed.zipCode
+          }
+        }
+
+        // Try to parse employee city/state/ZIP if combined
+        let employeeCity = employeeAddressParts[1]?.trim() || ""
+        let employeeState = extracted.income?.state || ""
+        let employeeZip = employeeAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+
+        if (employeeCity && !employeeState) {
+          const parsed = parseAddress(employeeCity)
+          if (parsed) {
+            employeeCity = parsed.city
+            employeeState = parsed.state
+            employeeZip = parsed.zipCode
+          }
+        }
 
         setFormData({
           ...formData,
           employerName: extracted.employer?.name || "",
           employerEIN: extracted.employer?.ein || "",
           employerAddress: employerAddressParts[0]?.trim() || "",
-          employerCity: employerAddressParts[1]?.trim() || "",
-          employerState: extracted.income?.state || "",
-          employerZip: employerAddressParts[2]?.match(/\d{5}/)?.[0] || "",
+          employerCity,
+          employerState,
+          employerZip,
 
           employeeFirstName: employeeFirst || "",
           employeeLastName: employeeLast.join(" ") || "",
           employeeSSN: extracted.employee?.ssn || "",
           employeeAddress: employeeAddressParts[0]?.trim() || "",
-          employeeCity: employeeAddressParts[1]?.trim() || "",
-          employeeState: extracted.income?.state || "",
-          employeeZip: employeeAddressParts[2]?.match(/\d{5}/)?.[0] || "",
+          employeeCity,
+          employeeState,
+          employeeZip,
 
           wages: extracted.income?.wages?.toString() || "",
           federalWithholding: extracted.income?.federalWithholding?.toString() || "",
@@ -185,8 +326,76 @@ export default function FormW2() {
     }
   }
 
+  const handleValidateForm = async () => {
+    setValidating(true)
+    setValidationResult(null)
+
+    try {
+      const response = await fetch("/api/validate-form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formType: "W-2",
+          formData,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setValidationResult(result.validation)
+
+        const hasErrors = result.validation.errors?.length > 0
+        const hasWarnings = result.validation.warnings?.length > 0
+
+        if (!hasErrors && !hasWarnings) {
+          toast({
+            title: "✓ Validation Passed",
+            description: "Your form looks great! Ready to submit.",
+          })
+        } else if (hasErrors) {
+          toast({
+            title: "Validation Issues Found",
+            description: `Found ${result.validation.errors.length} error(s) that need attention`,
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Validation Complete",
+            description: `Found ${result.validation.warnings.length} warning(s) to review`,
+          })
+        }
+      } else {
+        throw new Error(result.error || "Validation failed")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Validation Failed",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setValidating(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validationResult) {
+      await handleValidateForm()
+      return
+    }
+
+    if (validationResult?.errors?.length > 0) {
+      toast({
+        title: "Cannot Submit",
+        description: "Please fix all errors before submitting",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -224,10 +433,8 @@ export default function FormW2() {
           description: `Submission ID: ${result.submissionId}`,
         })
 
-        // Clear draft
         localStorage.removeItem("w2_draft")
 
-        // Redirect to filing dashboard after successful submission
         setTimeout(() => {
           router.push("/dashboard/filing")
         }, 2000)
@@ -249,7 +456,6 @@ export default function FormW2() {
     setSavingDraft(true)
 
     try {
-      // Save to localStorage for now
       localStorage.setItem("w2_draft", JSON.stringify(formData))
 
       toast({
@@ -270,6 +476,10 @@ export default function FormW2() {
   const handleBack = () => {
     router.push("/dashboard/filing/new")
   }
+
+  const selectedYear = Number.parseInt(formData.taxYear)
+  const isEfileEligible = canEfile(selectedYear)
+  const isPaperFilingRequired = !isEfileEligible
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -323,24 +533,152 @@ export default function FormW2() {
             Form W-2 - Wage and Tax Statement
           </CardTitle>
           <CardDescription>
-            <div className="flex items-center gap-3 mt-2">
-              <span>Report employee wages and tax withholdings for</span>
-              <Select value={formData.taxYear} onValueChange={(value) => setFormData({ ...formData, taxYear: value })}>
-                <SelectTrigger className="w-[120px] h-8 bg-background/80 border-purple-500/20">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  {taxYearOptions.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-4 mt-3">
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Filing Type:</Label>
+                <RadioGroup
+                  value={filingType}
+                  onValueChange={(value: "original" | "corrected") => setFilingType(value)}
+                  className="space-y-3"
+                >
+                  <div className="flex items-start space-x-3 p-3 rounded-lg border border-border/50 hover:border-purple-500/30 transition-colors">
+                    <RadioGroupItem value="original" id="original" className="mt-1" />
+                    <div className="flex-1">
+                      <Label htmlFor="original" className="font-medium cursor-pointer block mb-1">
+                        Original W-2 (First-Time Filing)
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Use this if you're filing this W-2 for the first time, even if it's late. For example: filing a
+                        2018 W-2 that was never submitted before.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3 p-3 rounded-lg border border-border/50 hover:border-orange-500/30 transition-colors">
+                    <RadioGroupItem value="corrected" id="corrected" className="mt-1" />
+                    <div className="flex-1">
+                      <Label htmlFor="corrected" className="font-medium cursor-pointer block mb-1">
+                        Corrected W-2c (Fixing Previous Filing)
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Use this only if you already filed this W-2 before and need to correct errors (wrong SSN,
+                        incorrect amounts, etc.). Requires showing original vs corrected values.
+                      </p>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-sm">Report employee wages and tax withholdings for</span>
+                <Select
+                  value={formData.taxYear}
+                  onValueChange={(value) => setFormData({ ...formData, taxYear: value })}
+                >
+                  <SelectTrigger className="w-[120px] h-8 bg-background/80 border-purple-500/20">
+                    <SelectValue placeholder="Select year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taxYearOptions.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isPaperFilingRequired && filingType === "original" && (
+                <Alert className="bg-orange-500/10 border-orange-500/20">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <AlertTitle className="text-orange-600 font-semibold">
+                    Late Original W-2 Filing - Paper Filing Required
+                  </AlertTitle>
+                  <AlertDescription className="text-sm space-y-2 mt-2">
+                    <p>
+                      <strong>Tax year {formData.taxYear}</strong> is beyond the IRS e-filing deadline (January 31st of
+                      the following year).
+                    </p>
+                    <p>Since this is your first time filing this W-2, you'll need to:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Complete the original Form W-2 (not W-2c)</li>
+                      <li>Submit via paper mail to the IRS</li>
+                      <li>Include a cover letter explaining the late filing</li>
+                      <li>Be prepared for potential late filing penalties</li>
+                    </ul>
+                    <div className="mt-3 p-3 bg-background/50 rounded border border-orange-500/20">
+                      <p className="font-semibold text-orange-600 mb-1">📦 Paper Filing Package - $29</p>
+                      <p className="text-xs">
+                        We'll generate pre-filled W-2 forms, cover letter template, IRS mailing labels, and filing
+                        instructions. Premium service ($49) includes certified mail with tracking.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isPaperFilingRequired && filingType === "corrected" && (
+                <Alert className="bg-orange-500/10 border-orange-500/20">
+                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <AlertTitle className="text-orange-600 font-semibold">
+                    W-2c Correction - Paper Filing Required
+                  </AlertTitle>
+                  <AlertDescription className="text-sm space-y-2 mt-2">
+                    <p>
+                      <strong>Tax year {formData.taxYear}</strong> corrections must be paper filed (beyond e-filing
+                      window).
+                    </p>
+                    <p>Since you're correcting a previously filed W-2, you'll need to:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>Complete Form W-2c (Corrected Wage and Tax Statement)</li>
+                      <li>Show both original amounts (what was filed) and corrected amounts</li>
+                      <li>Submit via paper mail to the IRS</li>
+                      <li>Include explanation of what's being corrected and why</li>
+                    </ul>
+                    <div className="mt-3 p-3 bg-background/50 rounded border border-orange-500/20">
+                      <p className="font-semibold text-orange-600 mb-1">📦 W-2c Correction Package - $35</p>
+                      <p className="text-xs">
+                        We'll generate pre-filled W-2c forms with before/after comparison, explanation letter, IRS
+                        mailing labels, and instructions. Premium service ($49) includes certified mail with tracking.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isEfileEligible && filingType === "corrected" && (
+                <Alert className="bg-blue-500/10 border-blue-500/20">
+                  <FileText className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-600 font-semibold">W-2c Correction - E-Filing Available</AlertTitle>
+                  <AlertDescription className="text-sm space-y-2 mt-2">
+                    <p>
+                      You're filing a corrected W-2c for <strong>{formData.taxYear}</strong>. This correction is
+                      eligible for e-filing.
+                    </p>
+                    <div className="mt-2 p-2 bg-blue-500/5 rounded border border-blue-500/10">
+                      <p className="text-xs">
+                        <strong>Note:</strong> W-2c requires you to provide both the original amounts (what was
+                        previously filed) and the corrected amounts for all changed fields. We'll guide you through this
+                        process.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {isEfileEligible && filingType === "original" && (
+                <Alert className="bg-green-500/10 border-green-500/20">
+                  <Info className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-600 font-semibold">E-Filing Available</AlertTitle>
+                  <AlertDescription className="text-sm">
+                    Tax year {formData.taxYear} is eligible for electronic filing. Complete the form below and we'll
+                    submit it directly to the IRS.
+                    <span className="block mt-2 text-purple-600 font-medium">
+                      💡 Tip: Use the "Upload W-2" tab to auto-fill this form with AI!
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
-            <span className="block mt-2 text-purple-600 font-medium">
-              💡 Tip: Upload your W-2 PDF and AI will auto-fill everything!
-            </span>
           </CardDescription>
         </CardHeader>
 
@@ -608,6 +946,48 @@ export default function FormW2() {
                   placeholder="0.00"
                 />
               </div>
+              <div>
+                <Label htmlFor="dependentCareBenefits">Box 11: Dependent care benefits</Label>
+                <Input
+                  id="dependentCareBenefits"
+                  type="number"
+                  step="0.01"
+                  value={formData.dependentCareBenefits}
+                  onChange={(e) => setFormData({ ...formData, dependentCareBenefits: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="nonqualifiedPlans">Box 12: Nonqualified plans</Label>
+                <Input
+                  id="nonqualifiedPlans"
+                  type="number"
+                  step="0.01"
+                  value={formData.nonqualifiedPlans}
+                  onChange={(e) => setFormData({ ...formData, nonqualifiedPlans: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <Label htmlFor="box12Code">Box 12 Code</Label>
+                <Input
+                  id="box12Code"
+                  value={formData.box12Code}
+                  onChange={(e) => setFormData({ ...formData, box12Code: e.target.value })}
+                  placeholder="Code"
+                />
+              </div>
+              <div>
+                <Label htmlFor="box12Amount">Box 12 Amount</Label>
+                <Input
+                  id="box12Amount"
+                  type="number"
+                  step="0.01"
+                  value={formData.box12Amount}
+                  onChange={(e) => setFormData({ ...formData, box12Amount: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
             </div>
           </div>
 
@@ -665,31 +1045,119 @@ export default function FormW2() {
             </div>
           </div>
 
+          {/* Validation Results */}
+          {validationResult && (
+            <div className="space-y-3">
+              {validationResult.errors?.map((error: any, index: number) => (
+                <Alert key={`error-${index}`} className="bg-red-500/10 border-red-500/20">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertTitle className="text-red-600 font-semibold">Error: {error.field}</AlertTitle>
+                  <AlertDescription className="text-sm">{error.message}</AlertDescription>
+                </Alert>
+              ))}
+
+              {validationResult.warnings?.map((warning: any, index: number) => (
+                <Alert key={`warning-${index}`} className="bg-orange-500/10 border-orange-500/20">
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                  <AlertTitle className="text-orange-600 font-semibold">Warning: {warning.field}</AlertTitle>
+                  <AlertDescription className="text-sm">{warning.message}</AlertDescription>
+                </Alert>
+              ))}
+
+              {validationResult.suggestions?.map((suggestion: any, index: number) => (
+                <Alert key={`suggestion-${index}`} className="bg-blue-500/10 border-blue-500/20">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertTitle className="text-blue-600 font-semibold">Suggestion: {suggestion.field}</AlertTitle>
+                  <AlertDescription className="text-sm">{suggestion.message}</AlertDescription>
+                </Alert>
+              ))}
+
+              {validationResult.valid && !validationResult.errors?.length && !validationResult.warnings?.length && (
+                <Alert className="bg-green-500/10 border-green-500/20">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle className="text-green-600 font-semibold">All Clear!</AlertTitle>
+                  <AlertDescription className="text-sm">
+                    Your form passed all validation checks. Ready to submit!
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          )}
+
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-6 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSaveDraft}
-              disabled={savingDraft || loading}
-              className="flex-1 bg-transparent"
-            >
-              {savingDraft && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Save className="mr-2 h-4 w-4" />
-              Save Draft
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || savingDraft}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 shadow-lg shadow-purple-500/30"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Send className="mr-2 h-4 w-4" />
-              Review & Submit
-            </Button>
+          <div className="flex flex-col gap-4 pt-6 border-t border-border">
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleValidateForm}
+                disabled={validating || loading}
+                className="flex-1 bg-transparent border-blue-500/20"
+              >
+                {validating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Validating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    AI Validate Form
+                  </>
+                )}
+              </Button>
+
+              {isPaperFilingRequired && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowPenaltyDialog(true)}
+                  className="flex-1 bg-transparent border-orange-500/20"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Penalty Letter ($39)
+                </Button>
+              )}
+            </div>
+
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSaveDraft}
+                disabled={savingDraft || loading}
+                className="flex-1 bg-transparent"
+              >
+                {savingDraft && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" />
+                Save Draft
+              </Button>
+              <Button
+                type="submit"
+                disabled={loading || savingDraft || validating}
+                className="flex-1 bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 shadow-lg shadow-purple-500/30"
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Send className="mr-2 h-4 w-4" />
+                {isPaperFilingRequired
+                  ? "Generate Paper Filing Package"
+                  : validationResult
+                    ? "Submit to IRS"
+                    : "Validate & Submit"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Penalty Abatement Dialog */}
+      <PenaltyAbatementDialog
+        open={showPenaltyDialog}
+        onOpenChange={setShowPenaltyDialog}
+        businessName={formData.employerName}
+        ein={formData.employerEIN}
+        taxYear={formData.taxYear}
+      />
     </form>
   )
 }

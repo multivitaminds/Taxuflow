@@ -38,9 +38,16 @@ export async function POST(req: Request) {
       messages,
       agent = "Sophie",
       model = "openai/gpt-4o-mini",
-    }: { messages: Array<{ role: string; content: string }>; agent?: string; model?: string } = await req.json()
+      context = "", // Accept context from client
+    }: {
+      messages: Array<{ role: string; content: string }>
+      agent?: string
+      model?: string
+      context?: string
+    } = await req.json()
 
     console.log("[v0] Chat API called with agent:", agent, "model:", model)
+    console.log("[v0] Page context:", context)
     console.log("[v0] Messages received:", JSON.stringify(messages))
 
     const validatedMessages = messages
@@ -75,6 +82,8 @@ Context: You're helping users with their tax filing through the Taxu platform. U
 - IRS rules and deadlines
 
 ${user ? `Current user ID: ${user.id}` : "User is not authenticated."}
+
+${context}
 
 You have access to tools that can check real-time filing status, refund status, and estimated timelines. Use these tools when users ask about their filing progress or refund status.
 

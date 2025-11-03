@@ -1,23 +1,20 @@
-import { redirect } from "next/navigation"
-import { getSupabaseServerClient } from "@/lib/supabase/server"
+"use client"
+
+import { useState } from "react"
 import FormW2 from "@/components/forms/form-w2"
 import { DocumentUpload } from "@/components/forms/document-upload"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default async function FileW2Page() {
-  const supabase = await getSupabaseServerClient()
+export default function FileW2Page() {
+  const [extractedData, setExtractedData] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState("upload")
 
-  if (!supabase) {
-    redirect("/login")
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/login")
+  const handleExtractComplete = (data: any) => {
+    console.log("[v0] Extracted data received:", data)
+    setExtractedData(data)
+    // Switch to manual entry tab to show the populated form
+    setActiveTab("manual")
   }
 
   return (
@@ -34,7 +31,7 @@ export default async function FileW2Page() {
           </div>
         </div>
 
-        <Tabs defaultValue="upload" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3 bg-background/50 backdrop-blur-sm">
             <TabsTrigger value="upload">📄 Upload W-2</TabsTrigger>
             <TabsTrigger value="quickbooks">💼 QuickBooks</TabsTrigger>
@@ -42,15 +39,15 @@ export default async function FileW2Page() {
           </TabsList>
 
           <TabsContent value="upload" className="mt-6">
-            <DocumentUpload userId={user.id} />
+            <DocumentUpload onExtractComplete={handleExtractComplete} />
           </TabsContent>
 
           <TabsContent value="quickbooks" className="mt-6">
-            <QuickBooksSync userId={user.id} />
+            <QuickBooksSync onSyncComplete={handleExtractComplete} />
           </TabsContent>
 
           <TabsContent value="manual" className="mt-6">
-            <FormW2 />
+            <FormW2 extractedData={extractedData} />
           </TabsContent>
         </Tabs>
       </div>

@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
+import { parseFullAddress } from "@/lib/address-parser"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,9 +15,11 @@ export async function POST(request: NextRequest) {
 
     const dataUrl = `data:${mimeType};base64,${fileData}`
 
-    const prompt = `You are an expert tax document analyst with OCR capabilities.
+    const extractionInstructions = `You are an expert tax document analyst with OCR capabilities.
 
 Analyze this tax document image/PDF and extract ALL relevant information.
+
+IMPORTANT: This may be a demo, sample, or test document. Extract the data regardless of whether it says "DEMO", "SAMPLE", or "NOT A VALID TAX DOCUMENT". Your job is to extract the visible data accurately.
 
 Identify the document type:
 - "w2" for W-2 Wage and Tax Statement
@@ -56,7 +59,9 @@ For 1099-MISC:
 For receipts:
 - merchant_name, date, amount, category, items
 
-Return ONLY valid JSON with this structure:
+CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no apologies, no text before or after the JSON.
+
+Return this exact JSON structure:
 {
   "documentType": "w2",
   "taxYear": 2024,
@@ -83,40 +88,116 @@ Return ONLY valid JSON with this structure:
   }
 }
 
-IMPORTANT:
+Rules:
 - Extract REAL values from the document, not placeholders
-- If you can't read a field clearly, omit it
+- If you can't read a field clearly, omit it from the JSON
 - Be accurate with numbers - these are used for tax filing
-- Always include taxYear
-
-Return ONLY valid JSON, no markdown.
-
-Here is the document image:
-${dataUrl}`
+- Always include documentType and taxYear
+- Return ONLY the JSON object, nothing else
+- Do NOT wrap in markdown code blocks
+- Do NOT add any explanatory text`
 
     console.log("[v0] Calling AI model for extraction...")
 
     const { text } = await generateText({
       model: "openai/gpt-4o",
-      prompt,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              image: dataUrl,
+            },
+            {
+              type: "text",
+              text: extractionInstructions,
+            },
+          ],
+        },
+      ],
       maxTokens: 2000,
     })
 
     console.log("[v0] AI extraction complete, parsing response...")
     console.log("[v0] Raw AI response:", text.substring(0, 200))
 
-    // Clean up the response
     let cleanedText = text.trim()
+
+    // Remove markdown code blocks
     if (cleanedText.startsWith("```")) {
       cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
       cleanedText = cleanedText.replace(/\n?```$/, "")
       cleanedText = cleanedText.trim()
     }
 
-    const extractedData = JSON.parse(cleanedText)
+    // Remove any leading text before the JSON object
+    const jsonStart = cleanedText.indexOf("{")
+    if (jsonStart > 0) {
+      cleanedText = cleanedText.substring(jsonStart)
+    }
+
+    // Remove any trailing text after the JSON object
+    const jsonEnd = cleanedText.lastIndexOf("}")
+    if (jsonEnd > 0 && jsonEnd < cleanedText.length - 1) {
+      cleanedText = cleanedText.substring(0, jsonEnd + 1)
+    }
+
+    let extractedData
+    try {
+      extractedData = JSON.parse(cleanedText)
+    } catch (parseError) {
+      console.error("[v0] Failed to parse AI response as JSON:", cleanedText)
+      throw new Error(`AI returned invalid JSON. Response: ${cleanedText.substring(0, 100)}...`)
+    }
+
+    if (extractedData.employer?.address) {
+      const parsed = parseFullAddress(extractedData.employer.address)
+      if (parsed) {
+        extractedData.employer.street = parsed.street || extractedData.employer.address
+        extractedData.employer.city = parsed.city
+        extractedData.employer.state = parsed.state
+        extractedData.employer.zipCode = parsed.zipCode
+      }
+    }
+
+    if (extractedData.employee?.address) {
+      const parsed = parseFullAddress(extractedData.employee.address)
+      if (parsed) {
+        extractedData.employee.street = parsed.street || extractedData.employee.address
+        extractedData.employee.city = parsed.city
+        extractedData.employee.state = parsed.state
+        extractedData.employee.zipCode = parsed.zipCode
+      }
+    }
+
+    // Also handle payer/recipient for 1099 forms
+    if (extractedData.payer?.address) {
+      const parsed = parseFullAddress(extractedData.payer.address)
+      if (parsed) {
+        extractedData.payer.street = parsed.street || extractedData.payer.address
+        extractedData.payer.city = parsed.city
+        extractedData.payer.state = parsed.state
+        extractedData.payer.zipCode = parsed.zipCode
+      }
+    }
+
+    if (extractedData.recipient?.address) {
+      const parsed = parseFullAddress(extractedData.recipient.address)
+      if (parsed) {
+        extractedData.recipient.street = parsed.street || extractedData.recipient.address
+        extractedData.recipient.city = parsed.city
+        extractedData.recipient.state = parsed.state
+        extractedData.recipient.zipCode = parsed.zipCode
+      }
+    }
 
     console.log("[v0] Extracted document type:", extractedData.documentType)
     console.log("[v0] Extracted tax year:", extractedData.taxYear)
+    console.log("[v0] Post-processed addresses:", {
+      employer: extractedData.employer,
+      employee: extractedData.employee,
+    })
 
     return NextResponse.json({
       success: true,

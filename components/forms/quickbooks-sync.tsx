@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation"
 
 interface QuickBooksSyncProps {
   userId: string
+  onSyncComplete?: (data: any) => void
 }
 
 interface SyncStatus {
@@ -18,7 +19,7 @@ interface SyncStatus {
   categorizedCount: number
 }
 
-export function QuickBooksSync({ userId }: QuickBooksSyncProps) {
+export function QuickBooksSync({ userId, onSyncComplete }: QuickBooksSyncProps) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -60,6 +61,10 @@ export function QuickBooksSync({ userId }: QuickBooksSyncProps) {
           description: `Synced ${data.transactionCount} transactions and categorized them for taxes`,
         })
         fetchSyncStatus()
+
+        if (onSyncComplete && data.extractedData) {
+          onSyncComplete(data.extractedData)
+        }
       }
     } catch (error) {
       toast({
