@@ -1,20 +1,47 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, Save, Send, Lock } from "lucide-react"
+import { Loader2, ArrowLeft, Save, Send, Lock, Sparkles } from "lucide-react"
+
+interface ExtractedW2Data {
+  employer?: {
+    name?: string
+    ein?: string
+    address?: string
+  }
+  employee?: {
+    name?: string
+    ssn?: string
+    address?: string
+  }
+  income?: {
+    wages?: number
+    federalWithholding?: number
+    socialSecurityWages?: number
+    socialSecurityTax?: number
+    medicareWages?: number
+    medicareTax?: number
+    stateWages?: number
+    stateTax?: number
+    state?: string
+  }
+  taxYear?: number
+}
 
 export default function FormW2() {
   const router = useRouter()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [savingDraft, setSavingDraft] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [extracting, setExtracting] = useState(false)
 
   const [formData, setFormData] = useState({
     // Employer Information
@@ -57,6 +84,103 @@ export default function FormW2() {
     taxYear: new Date().getFullYear().toString(),
   })
 
+  useEffect(() => {
+    const draft = localStorage.getItem("w2_draft")
+    if (draft) {
+      try {
+        setFormData(JSON.parse(draft))
+      } catch (e) {
+        console.error("Failed to load draft:", e)
+      }
+    }
+  }, [])
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setExtracting(true)
+
+    try {
+      // Upload file to blob storage
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
+
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      })
+
+      if (!uploadResponse.ok) throw new Error("Upload failed")
+
+      const { url } = await uploadResponse.json()
+
+      // Extract data using AI
+      const extractResponse = await fetch("/api/filing/extract-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: url }),
+      })
+
+      const extractData = await extractResponse.json()
+
+      if (extractData.success && extractData.data.documentType === "w2") {
+        const extracted: ExtractedW2Data = extractData.data
+
+        // Auto-fill form with extracted data
+        const [employeeFirst, ...employeeLast] = (extracted.employee?.name || "").split(" ")
+        const employerAddressParts = (extracted.employer?.address || "").split(",")
+        const employeeAddressParts = (extracted.employee?.address || "").split(",")
+
+        setFormData({
+          ...formData,
+          employerName: extracted.employer?.name || "",
+          employerEIN: extracted.employer?.ein || "",
+          employerAddress: employerAddressParts[0]?.trim() || "",
+          employerCity: employerAddressParts[1]?.trim() || "",
+          employerState: extracted.income?.state || "",
+          employerZip: employerAddressParts[2]?.match(/\d{5}/)?.[0] || "",
+
+          employeeFirstName: employeeFirst || "",
+          employeeLastName: employeeLast.join(" ") || "",
+          employeeSSN: extracted.employee?.ssn || "",
+          employeeAddress: employeeAddressParts[0]?.trim() || "",
+          employeeCity: employeeAddressParts[1]?.trim() || "",
+          employeeState: extracted.income?.state || "",
+          employeeZip: employeeAddressParts[2]?.match(/\d{5}/)?.[0] || "",
+
+          wages: extracted.income?.wages?.toString() || "",
+          federalWithholding: extracted.income?.federalWithholding?.toString() || "",
+          socialSecurityWages: extracted.income?.socialSecurityWages?.toString() || "",
+          socialSecurityWithholding: extracted.income?.socialSecurityTax?.toString() || "",
+          medicareWages: extracted.income?.medicareWages?.toString() || "",
+          medicareWithholding: extracted.income?.medicareTax?.toString() || "",
+          stateWages: extracted.income?.stateWages?.toString() || "",
+          stateWithholding: extracted.income?.stateTax?.toString() || "",
+
+          taxYear: extracted.taxYear?.toString() || new Date().getFullYear().toString(),
+        })
+
+        toast({
+          title: "✨ AI Extraction Complete",
+          description: "Your W-2 has been automatically filled. Please review and submit.",
+        })
+      } else {
+        throw new Error("Could not extract W-2 data from document")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Extraction Failed",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setUploading(false)
+      setExtracting(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -95,6 +219,9 @@ export default function FormW2() {
           title: "W-2 Submitted Successfully",
           description: `Submission ID: ${result.submissionId}`,
         })
+
+        // Clear draft
+        localStorage.removeItem("w2_draft")
 
         // Redirect to filing dashboard after successful submission
         setTimeout(() => {
@@ -146,7 +273,7 @@ export default function FormW2() {
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
 
         <CardHeader className="relative">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-between gap-4 mb-4">
             <Button
               type="button"
               variant="outline"
@@ -157,12 +284,46 @@ export default function FormW2() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
+
+            <div className="relative">
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={uploading || extracting}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploading || extracting}
+                className="bg-gradient-to-r from-purple-600/10 to-orange-600/10 border-purple-500/20"
+              >
+                {extracting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Extracting...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Upload W-2 (AI Extract)
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           <CardTitle className="text-2xl bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
             Form W-2 - Wage and Tax Statement
           </CardTitle>
-          <CardDescription>Report employee wages and tax withholdings for {formData.taxYear}</CardDescription>
+          <CardDescription>
+            Report employee wages and tax withholdings for {formData.taxYear}
+            <span className="block mt-1 text-purple-600 font-medium">
+              💡 Tip: Upload your W-2 PDF and AI will auto-fill everything!
+            </span>
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-8 relative">

@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import FormW2 from "@/components/forms/form-w2"
+import { DocumentUpload } from "@/components/forms/document-upload"
+import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default async function FileW2Page() {
   const supabase = await getSupabaseServerClient()
@@ -31,7 +34,25 @@ export default async function FileW2Page() {
           </div>
         </div>
 
-        <FormW2 />
+        <Tabs defaultValue="upload" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-background/50 backdrop-blur-sm">
+            <TabsTrigger value="upload">📄 Upload W-2</TabsTrigger>
+            <TabsTrigger value="quickbooks">💼 QuickBooks</TabsTrigger>
+            <TabsTrigger value="manual">✍️ Manual Entry</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="upload" className="mt-6">
+            <DocumentUpload userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="quickbooks" className="mt-6">
+            <QuickBooksSync userId={user.id} />
+          </TabsContent>
+
+          <TabsContent value="manual" className="mt-6">
+            <FormW2 />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
