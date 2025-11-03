@@ -685,7 +685,7 @@ export default function FormW2() {
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Send className="mr-2 h-4 w-4" />
-              Submit W-2 to IRS
+              Review & Submit
             </Button>
           </div>
         </CardContent>

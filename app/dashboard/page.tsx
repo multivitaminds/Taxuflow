@@ -44,7 +44,15 @@ export default async function DashboardPage() {
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser()
+    } = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<{ data: { user: null }; error: Error }>((_, reject) =>
+        setTimeout(() => reject(new Error("Auth check timeout")), 5000),
+      ),
+    ]).catch((err) => {
+      console.log("[v0] Dashboard auth check failed:", err.message)
+      return { data: { user: null }, error: err }
+    })
 
     if (error || !user) {
       console.log("[v0] No authenticated user, redirecting to login")

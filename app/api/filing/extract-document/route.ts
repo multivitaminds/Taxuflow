@@ -6,13 +6,13 @@ export async function POST(request: NextRequest) {
     const { fileData, fileName, mimeType, userId } = await request.json()
 
     console.log("[v0] Extracting data from document:", fileName)
+    console.log("[v0] File type:", mimeType)
 
     if (!fileData) {
       throw new Error("No file data provided")
     }
 
-    // Convert base64 to Uint8Array
-    const uint8Array = Uint8Array.from(Buffer.from(fileData, "base64"))
+    const dataUrl = `data:${mimeType};base64,${fileData}`
 
     const prompt = `You are an expert tax document analyst with OCR capabilities.
 
@@ -89,29 +89,21 @@ IMPORTANT:
 - Be accurate with numbers - these are used for tax filing
 - Always include taxYear
 
-Return ONLY valid JSON, no markdown.`
+Return ONLY valid JSON, no markdown.
+
+Here is the document image:
+${dataUrl}`
 
     console.log("[v0] Calling AI model for extraction...")
 
     const { text } = await generateText({
       model: "openai/gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            {
-              type: "file",
-              data: uint8Array,
-              mimeType: mimeType || "application/pdf",
-            },
-          ],
-        },
-      ],
+      prompt,
       maxTokens: 2000,
     })
 
     console.log("[v0] AI extraction complete, parsing response...")
+    console.log("[v0] Raw AI response:", text.substring(0, 200))
 
     // Clean up the response
     let cleanedText = text.trim()
@@ -136,6 +128,7 @@ Return ONLY valid JSON, no markdown.`
       {
         success: false,
         error: error instanceof Error ? error.message : "Failed to extract document data",
+        details: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 },
     )
