@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { ArrowLeft, FileText, Download, Trash2, CheckCircle2, Clock, Search, Upload } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+import { DocumentDetailModal } from "@/components/document-detail-modal"
 
 interface AllDocumentsClientProps {
   user: User
@@ -19,6 +20,8 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
+  const [selectedDocument, setSelectedDocument] = useState<any>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
   const supabase = createClient()
 
@@ -118,6 +121,11 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
 
     return matchesSearch && matchesFilter
   })
+
+  const handleDocumentClick = (doc: any) => {
+    setSelectedDocument(doc)
+    setIsDetailModalOpen(true)
+  }
 
   if (loading) {
     return (
@@ -236,7 +244,8 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
               return (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                  onClick={() => handleDocumentClick(doc)}
+                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <FileText className="w-6 h-6 text-neon" />
@@ -293,6 +302,12 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
             )}
           </div>
         </Card>
+
+        <DocumentDetailModal
+          document={selectedDocument}
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+        />
       </div>
     </div>
   )

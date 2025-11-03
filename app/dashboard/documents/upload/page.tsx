@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { DocumentUpload } from "@/components/document-upload"
+import { MultiDocumentUpload } from "@/components/multi-document-upload"
 import { AutoFileButton } from "@/components/auto-file-button"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -112,34 +112,33 @@ export default async function UploadPage() {
           </Card>
         )}
 
-        <Card className="p-8 border-neon/20 bg-card/50 backdrop-blur">
-          <DocumentUpload
-            onUploadComplete={() => {
-              window.location.href = "/dashboard/documents/upload"
-            }}
-          />
+        <MultiDocumentUpload
+          userId={user.id}
+          onUploadComplete={() => {
+            window.location.href = "/dashboard/documents/upload"
+          }}
+        />
 
-          <div className="mt-8 pt-8 border-t border-border">
-            <h3 className="font-semibold mb-4">Accepted Document Types</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <h4 className="font-medium mb-2">Income Documents</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>• W-2 Forms</li>
-                  <li>• 1099 Forms (all types)</li>
-                  <li>• K-1 Forms</li>
-                  <li>• Income Statements</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Deduction Documents</h4>
-                <ul className="space-y-1 text-muted-foreground">
-                  <li>• Receipts</li>
-                  <li>• Mortgage Interest Statements</li>
-                  <li>• Charitable Donation Records</li>
-                  <li>• Medical Expense Records</li>
-                </ul>
-              </div>
+        <Card className="p-6 mt-6 border-neon/20 bg-card/50 backdrop-blur">
+          <h3 className="font-semibold mb-4">Accepted Document Types</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium mb-2">Income Documents</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• W-2 Forms</li>
+                <li>• 1099 Forms (all types)</li>
+                <li>• K-1 Forms</li>
+                <li>• Income Statements</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">Deduction Documents</h4>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Receipts</li>
+                <li>• Mortgage Interest Statements</li>
+                <li>• Charitable Donation Records</li>
+                <li>• Medical Expense Records</li>
+              </ul>
             </div>
           </div>
 

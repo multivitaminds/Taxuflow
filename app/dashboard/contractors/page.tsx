@@ -1,0 +1,21 @@
+import { createServerClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
+import { ContractorManagementClient } from "@/components/contractor-management-client"
+
+export default async function ContractorManagementPage() {
+  const supabase = await createServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <ContractorManagementClient userId={user.id} />
+    </div>
+  )
+}

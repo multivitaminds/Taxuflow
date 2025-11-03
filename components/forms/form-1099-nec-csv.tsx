@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Upload, Download, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { DollarSign, TrendingUp } from "lucide-react"
 
 interface CSVContractor {
   firstName: string
@@ -31,6 +31,8 @@ export function Form1099NECCSV({ userId }: Form1099NECCSVProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  const [importSource, setImportSource] = useState<"csv" | "stripe" | "quickbooks">("csv")
+  const [isImporting, setIsImporting] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -204,6 +206,64 @@ Jane,Smith,,12-3456789,jane@example.com,456 Oak Ave,Los Angeles,CA,90001,7500.00
     }
   }
 
+  const importFromStripe = async () => {
+    setIsImporting(true)
+    try {
+      const response = await fetch("/api/contractors/import/stripe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year: new Date().getFullYear() - 1 }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setContractors(data.contractors)
+        toast({
+          title: "Stripe Import Complete",
+          description: `Imported ${data.contractors.length} contractor(s) from Stripe`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: "Failed to import from Stripe",
+        variant: "destructive",
+      })
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  const importFromQuickBooks = async () => {
+    setIsImporting(true)
+    try {
+      const response = await fetch("/api/contractors/import/quickbooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year: new Date().getFullYear() - 1 }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setContractors(data.contractors)
+        toast({
+          title: "QuickBooks Import Complete",
+          description: `Imported ${data.contractors.length} contractor(s) from QuickBooks`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: "Failed to import from QuickBooks",
+        variant: "destructive",
+      })
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-stripe-purple/10 via-stripe-pink/10 to-stripe-orange/10 p-8 backdrop-blur-xl">
@@ -219,6 +279,49 @@ Jane,Smith,,12-3456789,jane@example.com,456 Oak Ave,Los Angeles,CA,90001,7500.00
           </div>
         </div>
       </div>
+
+      <Card className="border-white/10 bg-white/5 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle>Import Source</CardTitle>
+          <CardDescription>Choose how you want to import contractor data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            <Button
+              variant={importSource === "csv" ? "default" : "outline"}
+              onClick={() => setImportSource("csv")}
+              className="h-24 flex-col"
+            >
+              <FileSpreadsheet className="h-8 w-8 mb-2" />
+              CSV File
+            </Button>
+            <Button
+              variant={importSource === "stripe" ? "default" : "outline"}
+              onClick={() => {
+                setImportSource("stripe")
+                importFromStripe()
+              }}
+              disabled={isImporting}
+              className="h-24 flex-col"
+            >
+              <DollarSign className="h-8 w-8 mb-2" />
+              Stripe
+            </Button>
+            <Button
+              variant={importSource === "quickbooks" ? "default" : "outline"}
+              onClick={() => {
+                setImportSource("quickbooks")
+                importFromQuickBooks()
+              }}
+              disabled={isImporting}
+              className="h-24 flex-col"
+            >
+              <TrendingUp className="h-8 w-8 mb-2" />
+              QuickBooks
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="border-white/10 bg-white/5 backdrop-blur-xl">
         <CardHeader>
@@ -262,12 +365,12 @@ Jane,Smith,,12-3456789,jane@example.com,456 Oak Ave,Los Angeles,CA,90001,7500.00
               onChange={handleFileUpload}
               className="hidden"
               id="csv-upload"
-              disabled={isUploading}
+              disabled={isUploading || importSource !== "csv"}
             />
             <label htmlFor="csv-upload">
               <Button
                 type="button"
-                disabled={isUploading}
+                disabled={isUploading || importSource !== "csv"}
                 className="bg-gradient-to-r from-stripe-purple via-stripe-pink to-stripe-orange hover:opacity-90 transition-opacity cursor-pointer"
                 onClick={() => document.getElementById("csv-upload")?.click()}
               >

@@ -8,13 +8,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Plus, Trash2, CheckCircle2, AlertCircle, Lock } from "lucide-react"
+import { Loader2, Trash2, CheckCircle2, AlertCircle, Lock, Sparkles, FileText } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { parseAddress } from "@/lib/address-parser"
+import { parseName } from "@/lib/name-parser"
+import { PenaltyAbatementDialog } from "@/components/penalty-abatement-dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface Contractor {
   id: string
   firstName: string
+  middleInitial: string
   lastName: string
   ssn: string
   ein: string
@@ -111,6 +116,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
     {
       id: "1",
       firstName: "",
+      middleInitial: "",
       lastName: "",
       ssn: "",
       ein: "",
@@ -124,6 +130,9 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
   ])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  const [isValidating, setIsValidating] = useState(false)
+  const [validationResults, setValidationResults] = useState<any>(null)
+  const [showPenaltyDialog, setShowPenaltyDialog] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -133,6 +142,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
       {
         id: Date.now().toString(),
         firstName: "",
+        middleInitial: "",
         lastName: "",
         ssn: "",
         ein: "",
@@ -160,9 +170,32 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
       formattedValue = value.toUpperCase()
     }
 
+    if (field === "city" && value.includes(" ")) {
+      const parsed = parseAddress(value)
+      if (parsed.city && parsed.state && parsed.zipCode) {
+        setContractors(
+          contractors.map((c) =>
+            c.id === id ? { ...c, city: parsed.city, state: parsed.state, zipCode: parsed.zipCode } : c,
+          ),
+        )
+        return
+      }
+    }
+
+    if (field === "lastName" && value.includes(" ")) {
+      const parsed = parseName("", value)
+      if (parsed.middleInitial && parsed.lastName) {
+        setContractors(
+          contractors.map((c) =>
+            c.id === id ? { ...c, middleInitial: parsed.middleInitial, lastName: parsed.lastName } : c,
+          ),
+        )
+        return
+      }
+    }
+
     setContractors(contractors.map((c) => (c.id === id ? { ...c, [field]: formattedValue } : c)))
 
-    // Clear validation error when user starts typing
     if (validationErrors[`${id}-${field}`]) {
       setValidationErrors({ ...validationErrors, [`${id}-${field}`]: "" })
     }
@@ -209,8 +242,58 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
     return Object.keys(errors).length === 0
   }
 
+  const handleAIValidation = async () => {
+    setIsValidating(true)
+    setValidationResults(null)
+
+    try {
+      const response = await fetch("/api/validate-form", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formType: "1099-NEC",
+          formData: { contractors },
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setValidationResults(data.validation)
+        toast({
+          title: "AI Validation Complete",
+          description: `Found ${data.validation.errors.length} errors, ${data.validation.warnings.length} warnings, ${data.validation.suggestions.length} suggestions`,
+        })
+      } else {
+        throw new Error(data.error || "Validation failed")
+      }
+    } catch (error) {
+      toast({
+        title: "Validation Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsValidating(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!validationResults) {
+      await handleAIValidation()
+      return
+    }
+
+    if (validationResults.errors.length > 0) {
+      toast({
+        title: "Please Fix Errors",
+        description: "Your form has validation errors that must be fixed before submission",
+        variant: "destructive",
+      })
+      return
+    }
 
     if (!validateForm()) {
       toast({
@@ -232,6 +315,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
           taxYear: new Date().getFullYear() - 1,
           contractors: contractors.map((c) => ({
             firstName: c.firstName,
+            middleInitial: c.middleInitial,
             lastName: c.lastName,
             ssn: c.ssn.replace(/\D/g, ""),
             ein: c.ein.replace(/\D/g, ""),
@@ -307,6 +391,29 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
         </div>
       </div>
 
+      {validationResults && (
+        <div className="space-y-3">
+          {validationResults.errors.map((error: string, i: number) => (
+            <Alert key={i} variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ))}
+          {validationResults.warnings.map((warning: string, i: number) => (
+            <Alert key={i} className="border-orange-500/50 bg-orange-500/10">
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+              <AlertDescription className="text-orange-500">{warning}</AlertDescription>
+            </Alert>
+          ))}
+          {validationResults.suggestions.map((suggestion: string, i: number) => (
+            <Alert key={i} className="border-blue-500/50 bg-blue-500/10">
+              <Sparkles className="h-4 w-4 text-blue-500" />
+              <AlertDescription className="text-blue-500">{suggestion}</AlertDescription>
+            </Alert>
+          ))}
+        </div>
+      )}
+
       {contractors.map((contractor, index) => (
         <Card key={contractor.id} className="border-white/10 bg-white/5 backdrop-blur-xl">
           <CardHeader>
@@ -334,7 +441,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor={`firstName-${contractor.id}`}>First Name *</Label>
                 <Input
@@ -350,6 +457,16 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     {validationErrors[`${contractor.id}-firstName`]}
                   </p>
                 )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`middleInitial-${contractor.id}`}>Middle Initial</Label>
+                <Input
+                  id={`middleInitial-${contractor.id}`}
+                  value={contractor.middleInitial}
+                  onChange={(e) => updateContractor(contractor.id, "middleInitial", e.target.value.toUpperCase())}
+                  maxLength={1}
+                  placeholder="M"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor={`lastName-${contractor.id}`}>Last Name *</Label>
@@ -534,31 +651,55 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
         </Card>
       ))}
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={addContractor}
-        className="w-full border-white/10 bg-white/5 hover:bg-white/10 backdrop-blur-xl"
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Add Another Contractor
-      </Button>
-
-      <div className="flex justify-end gap-4">
-        <Link href="/dashboard/filing">
-          <Button type="button" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10">
-            Cancel
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-center">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleAIValidation}
+            disabled={isValidating}
+            className="border-purple-500/50 bg-purple-500/10 hover:bg-purple-500/20"
+          >
+            {isValidating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Sparkles className="mr-2 h-4 w-4" />
+            AI Validate Form
           </Button>
-        </Link>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-gradient-to-r from-stripe-purple via-stripe-pink to-stripe-orange hover:opacity-90 transition-opacity"
-        >
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? "Submitting to IRS..." : "Submit to IRS"}
-        </Button>
+
+          <Button
+            type="button"
+            variant="link"
+            onClick={() => setShowPenaltyDialog(true)}
+            className="text-orange-500 hover:text-orange-600"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Generate Penalty Abatement Letter ($39)
+          </Button>
+        </div>
+
+        <div className="flex justify-end gap-4">
+          <Link href="/dashboard/filing">
+            <Button type="button" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10">
+              Cancel
+            </Button>
+          </Link>
+          <Button
+            type="submit"
+            disabled={isSubmitting || isValidating}
+            className="bg-gradient-to-r from-stripe-purple via-stripe-pink to-stripe-orange hover:opacity-90 transition-opacity"
+          >
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? "Submitting to IRS..." : validationResults ? "Submit to IRS" : "Validate & Submit"}
+          </Button>
+        </div>
       </div>
+
+      <PenaltyAbatementDialog
+        open={showPenaltyDialog}
+        onOpenChange={setShowPenaltyDialog}
+        formType="1099-NEC"
+        taxYear={new Date().getFullYear() - 1}
+        userId={userId}
+      />
     </form>
   )
 }

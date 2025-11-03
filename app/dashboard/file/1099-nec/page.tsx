@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { Form1099NEC } from "@/components/forms/form-1099-nec"
+import { Form1099NECTabs } from "@/components/forms/form-1099-nec-tabs"
 
 export default async function File1099NECPage() {
   const supabase = await getSupabaseServerClient()
@@ -31,7 +31,7 @@ export default async function File1099NECPage() {
           </div>
         </div>
 
-        <Form1099NEC userId={user.id} />
+        <Form1099NECTabs userId={user.id} />
       </div>
     </div>
   )

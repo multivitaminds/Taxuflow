@@ -4,6 +4,7 @@ import { useState } from "react"
 import FormW2 from "@/components/forms/form-w2"
 import { DocumentUpload } from "@/components/forms/document-upload"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
+import { PayrollIntegration } from "@/components/payroll-integration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function FileW2Page() {
@@ -13,7 +14,6 @@ export default function FileW2Page() {
   const handleExtractComplete = (data: any) => {
     console.log("[v0] Extracted data received:", data)
     setExtractedData(data)
-    // Switch to manual entry tab to show the populated form
     setActiveTab("manual")
   }
 
@@ -32,14 +32,19 @@ export default function FileW2Page() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-background/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-4 bg-background/50 backdrop-blur-sm">
             <TabsTrigger value="upload">📄 Upload W-2</TabsTrigger>
-            <TabsTrigger value="quickbooks">💼 QuickBooks</TabsTrigger>
+            <TabsTrigger value="payroll">💼 Payroll Sync</TabsTrigger>
+            <TabsTrigger value="quickbooks">📊 QuickBooks</TabsTrigger>
             <TabsTrigger value="manual">✍️ Manual Entry</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="mt-6">
             <DocumentUpload onExtractComplete={handleExtractComplete} />
+          </TabsContent>
+
+          <TabsContent value="payroll" className="mt-6">
+            <PayrollIntegration />
           </TabsContent>
 
           <TabsContent value="quickbooks" className="mt-6">

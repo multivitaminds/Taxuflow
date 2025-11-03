@@ -26,6 +26,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PenaltyAbatementDialog } from "@/components/penalty-abatement-dialog"
 import { parseAddress } from "@/lib/address-parser"
+import { parseName, parseLastNameWithMiddleInitial } from "@/lib/name-parser"
 
 interface FormW2Props {
   extractedData?: any
@@ -80,6 +81,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
     // Employee Information
     employeeFirstName: "",
+    employeeMiddleInitial: "", // Added middle initial field
     employeeLastName: "",
     employeeSSN: "",
     employeeAddress: "",
@@ -130,8 +132,18 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
       const extracted: ExtractedW2Data = extractedData
 
-      // Parse employee name
-      const [employeeFirst, ...employeeLast] = (extracted.employee?.name || "").split(" ")
+      const employeeName = extracted.employee?.name || ""
+      const parsedName = parseName(employeeName)
+
+      let employeeFirstName = ""
+      let employeeMiddleInitial = ""
+      let employeeLastName = ""
+
+      if (parsedName) {
+        employeeFirstName = parsedName.firstName
+        employeeMiddleInitial = parsedName.middleInitial
+        employeeLastName = parsedName.lastName
+      }
 
       const employerAddressParts = (extracted.employer?.address || "").split(",")
       const employeeAddressParts = (extracted.employee?.address || "").split(",")
@@ -175,8 +187,9 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employerState,
         employerZip,
 
-        employeeFirstName: employeeFirst || "",
-        employeeLastName: employeeLast.join(" ") || "",
+        employeeFirstName: employeeFirstName || "",
+        employeeMiddleInitial: employeeMiddleInitial || "", // Set middle initial
+        employeeLastName: employeeLastName || "",
         employeeSSN: extracted.employee?.ssn || "",
         employeeAddress: employeeAddressParts[0]?.trim() || "",
         employeeCity,
@@ -246,7 +259,19 @@ export default function FormW2({ extractedData }: FormW2Props) {
       if (extractData.success && extractData.data.documentType === "w2") {
         const extracted: ExtractedW2Data = extractData.data
 
-        const [employeeFirst, ...employeeLast] = (extracted.employee?.name || "").split(" ")
+        const employeeName = extracted.employee?.name || ""
+        const parsedName = parseName(employeeName)
+
+        let employeeFirstName = ""
+        let employeeMiddleInitial = ""
+        let employeeLastName = ""
+
+        if (parsedName) {
+          employeeFirstName = parsedName.firstName
+          employeeMiddleInitial = parsedName.middleInitial
+          employeeLastName = parsedName.lastName
+        }
+
         const employerAddressParts = (extracted.employer?.address || "").split(",")
         const employeeAddressParts = (extracted.employee?.address || "").split(",")
 
@@ -287,8 +312,9 @@ export default function FormW2({ extractedData }: FormW2Props) {
           employerState,
           employerZip,
 
-          employeeFirstName: employeeFirst || "",
-          employeeLastName: employeeLast.join(" ") || "",
+          employeeFirstName,
+          employeeMiddleInitial, // Set middle initial
+          employeeLastName,
           employeeSSN: extracted.employee?.ssn || "",
           employeeAddress: employeeAddressParts[0]?.trim() || "",
           employeeCity,
@@ -779,16 +805,39 @@ export default function FormW2({ extractedData }: FormW2Props) {
                 />
               </div>
               <div>
+                <Label htmlFor="employeeMiddleInitial">Middle Initial</Label>
+                <Input
+                  id="employeeMiddleInitial"
+                  maxLength={1}
+                  value={formData.employeeMiddleInitial}
+                  onChange={(e) => setFormData({ ...formData, employeeMiddleInitial: e.target.value.toUpperCase() })}
+                  placeholder="A"
+                  className="uppercase"
+                />
+              </div>
+              <div className="md:col-span-2">
                 <Label htmlFor="employeeLastName">Last Name *</Label>
                 <Input
                   id="employeeLastName"
                   required
                   value={formData.employeeLastName}
-                  onChange={(e) => setFormData({ ...formData, employeeLastName: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    const parsed = parseLastNameWithMiddleInitial(value)
+                    if (parsed && parsed.middleInitial && !formData.employeeMiddleInitial) {
+                      setFormData({
+                        ...formData,
+                        employeeLastName: parsed.lastName,
+                        employeeMiddleInitial: parsed.middleInitial,
+                      })
+                    } else {
+                      setFormData({ ...formData, employeeLastName: value })
+                    }
+                  }}
                   placeholder="Doe"
                 />
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <Label htmlFor="employeeSSN" className="flex items-center gap-2">
                   Social Security Number *
                   <Lock className="h-3 w-3 text-green-500" />
