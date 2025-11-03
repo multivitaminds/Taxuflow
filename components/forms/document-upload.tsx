@@ -6,11 +6,12 @@ import { useState, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { Upload, FileText, Loader2, CheckCircle2, X } from "lucide-react"
+import { Upload, FileText, Loader2, CheckCircle2, X, AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 interface DocumentUploadProps {
   userId: string
+  onExtractComplete?: (data: any) => void
 }
 
 interface UploadedFile {
@@ -20,9 +21,10 @@ interface UploadedFile {
   type: string
   status: "uploading" | "processing" | "complete" | "error"
   extractedData?: any
+  errorMessage?: string
 }
 
-export function DocumentUpload({ userId }: DocumentUploadProps) {
+export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProps) {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const { toast } = useToast()
@@ -47,37 +49,37 @@ export function DocumentUpload({ userId }: DocumentUploadProps) {
 
     setFiles((prev) => [...prev, ...newFiles])
 
-    // Process each file
-    for (const file of fileList) {
-      const fileId = newFiles.find((f) => f.name === file.name)?.id
-      if (!fileId) continue
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i]
+      const fileId = newFiles[i].id
 
       try {
-        // Upload file
-        const formData = new FormData()
-        formData.append("file", file)
-        formData.append("userId", userId)
-
-        const uploadResponse = await fetch("/api/filing/upload-document", {
-          method: "POST",
-          body: formData,
-        })
-
-        if (!uploadResponse.ok) throw new Error("Upload failed")
+        console.log("[v0] Starting AI extraction for:", file.name)
 
         // Update status to processing
         setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, status: "processing" } : f)))
 
-        // Extract data using AI
+        // Convert file to base64 for AI processing
+        const arrayBuffer = await file.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString("base64")
+
+        // Extract data using AI directly from file
         const extractResponse = await fetch("/api/filing/extract-document", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fileId, userId }),
+          body: JSON.stringify({
+            fileData: base64,
+            fileName: file.name,
+            mimeType: file.type,
+            userId,
+          }),
         })
 
         const extractData = await extractResponse.json()
 
-        if (extractData.success) {
+        console.log("[v0] Extraction response:", extractData)
+
+        if (extractData.success && extractData.data) {
           setFiles((prev) =>
             prev.map((f) =>
               f.id === fileId
@@ -89,14 +91,38 @@ export function DocumentUpload({ userId }: DocumentUploadProps) {
                 : f,
             ),
           )
+
+          toast({
+            title: "✅ Document Processed",
+            description: `Successfully extracted data from ${file.name}`,
+          })
+
+          // Notify parent component
+          if (onExtractComplete) {
+            onExtractComplete(extractData.data)
+          }
         } else {
-          throw new Error("Extraction failed")
+          throw new Error(extractData.error || "Extraction failed")
         }
       } catch (error) {
-        setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f)))
+        console.error("[v0] Processing error:", error)
+        const errorMessage = error instanceof Error ? error.message : "Failed to process document"
+
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileId
+              ? {
+                  ...f,
+                  status: "error",
+                  errorMessage,
+                }
+              : f,
+          ),
+        )
+
         toast({
-          title: "Processing Failed",
-          description: `Failed to process ${file.name}`,
+          title: "❌ Processing Failed",
+          description: `Failed to process ${file.name}: ${errorMessage}`,
           variant: "destructive",
         })
       }
@@ -147,6 +173,35 @@ export function DocumentUpload({ userId }: DocumentUploadProps) {
     }
   }
 
+  const getStatusDisplay = (file: UploadedFile) => {
+    switch (file.status) {
+      case "uploading":
+        return {
+          icon: <Loader2 className="h-5 w-5 animate-spin text-blue-600" />,
+          text: "Uploading...",
+          color: "text-blue-600",
+        }
+      case "processing":
+        return {
+          icon: <Loader2 className="h-5 w-5 animate-spin text-yellow-600" />,
+          text: "AI Extracting Data...",
+          color: "text-yellow-600",
+        }
+      case "complete":
+        return {
+          icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+          text: "✓ Extracted Successfully",
+          color: "text-green-600",
+        }
+      case "error":
+        return {
+          icon: <AlertCircle className="h-5 w-5 text-red-600" />,
+          text: file.errorMessage || "Processing Failed",
+          color: "text-red-600",
+        }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -186,33 +241,41 @@ export function DocumentUpload({ userId }: DocumentUploadProps) {
             <CardTitle>Uploaded Documents</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {files.map((file) => (
-              <div key={file.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center gap-3">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium">{file.name}</p>
-                    <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</p>
+            {files.map((file) => {
+              const statusDisplay = getStatusDisplay(file)
+              return (
+                <div key={file.id} className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center gap-3 flex-1">
+                    <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{file.name}</p>
+                      <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(2)} KB</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                      {statusDisplay.icon}
+                      <span className={`text-sm font-medium ${statusDisplay.color}`}>{statusDisplay.text}</span>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => removeFile(file.id)}>
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {file.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-blue-600" />}
-                  {file.status === "processing" && <Loader2 className="h-4 w-4 animate-spin text-yellow-600" />}
-                  {file.status === "complete" && <CheckCircle2 className="h-4 w-4 text-green-600" />}
-                  {file.status === "error" && <X className="h-4 w-4 text-red-600" />}
-                  <Button variant="ghost" size="sm" onClick={() => removeFile(file.id)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </CardContent>
         </Card>
       )}
 
       {files.some((f) => f.status === "complete") && (
-        <div className="flex justify-end">
-          <Button onClick={handleSubmit}>Submit Filing</Button>
+        <div className="flex justify-end gap-3">
+          <Button variant="outline" onClick={() => setFiles([])}>
+            Clear All
+          </Button>
+          <Button onClick={handleSubmit} className="bg-gradient-to-r from-purple-600 to-orange-600">
+            Submit Filing
+          </Button>
         </div>
       )}
     </div>

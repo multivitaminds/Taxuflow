@@ -3,20 +3,16 @@ import { generateText } from "ai"
 
 export async function POST(request: NextRequest) {
   try {
-    const { fileId, userId } = await request.json()
+    const { fileData, fileName, mimeType, userId } = await request.json()
 
-    console.log("[v0] Extracting data from document:", fileId)
+    console.log("[v0] Extracting data from document:", fileName)
 
-    // Fetch the document from the blob URL
-    const response = await fetch(fileId)
-    if (!response.ok) {
-      throw new Error("Failed to fetch document")
+    if (!fileData) {
+      throw new Error("No file data provided")
     }
 
-    const arrayBuffer = await response.arrayBuffer()
-    const uint8Array = new Uint8Array(arrayBuffer)
-
-    const contentType = response.headers.get("content-type") || "application/pdf"
+    // Convert base64 to Uint8Array
+    const uint8Array = Uint8Array.from(Buffer.from(fileData, "base64"))
 
     const prompt = `You are an expert tax document analyst with OCR capabilities.
 
@@ -91,9 +87,11 @@ IMPORTANT:
 - Extract REAL values from the document, not placeholders
 - If you can't read a field clearly, omit it
 - Be accurate with numbers - these are used for tax filing
-- Always include tax_year
+- Always include taxYear
 
 Return ONLY valid JSON, no markdown.`
+
+    console.log("[v0] Calling AI model for extraction...")
 
     const { text } = await generateText({
       model: "openai/gpt-4o",
@@ -105,7 +103,7 @@ Return ONLY valid JSON, no markdown.`
             {
               type: "file",
               data: uint8Array,
-              mimeType: contentType,
+              mimeType: mimeType || "application/pdf",
             },
           ],
         },
@@ -126,6 +124,7 @@ Return ONLY valid JSON, no markdown.`
     const extractedData = JSON.parse(cleanedText)
 
     console.log("[v0] Extracted document type:", extractedData.documentType)
+    console.log("[v0] Extracted tax year:", extractedData.taxYear)
 
     return NextResponse.json({
       success: true,
