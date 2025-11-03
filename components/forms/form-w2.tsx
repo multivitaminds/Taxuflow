@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, ArrowLeft, Save, Send, Lock, Sparkles } from "lucide-react"
 
@@ -83,6 +84,9 @@ export default function FormW2() {
 
     taxYear: new Date().getFullYear().toString(),
   })
+
+  const currentYear = new Date().getFullYear()
+  const taxYearOptions = Array.from({ length: 6 }, (_, i) => currentYear - i)
 
   useEffect(() => {
     const draft = localStorage.getItem("w2_draft")
@@ -319,8 +323,22 @@ export default function FormW2() {
             Form W-2 - Wage and Tax Statement
           </CardTitle>
           <CardDescription>
-            Report employee wages and tax withholdings for {formData.taxYear}
-            <span className="block mt-1 text-purple-600 font-medium">
+            <div className="flex items-center gap-3 mt-2">
+              <span>Report employee wages and tax withholdings for</span>
+              <Select value={formData.taxYear} onValueChange={(value) => setFormData({ ...formData, taxYear: value })}>
+                <SelectTrigger className="w-[120px] h-8 bg-background/80 border-purple-500/20">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  {taxYearOptions.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <span className="block mt-2 text-purple-600 font-medium">
               💡 Tip: Upload your W-2 PDF and AI will auto-fill everything!
             </span>
           </CardDescription>
