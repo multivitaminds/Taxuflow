@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { FileText, TrendingUp, DollarSign, PieChart, Download, Calendar } from "lucide-react"
 import Link from "next/link"
 
-export function ReportsClient() {
+export default function ReportsClient() {
   const reportCategories = [
     {
       title: "Financial Statements",
@@ -147,7 +147,7 @@ export function ReportsClient() {
                   <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
                     <div className="flex items-start gap-4">
                       <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <report.icon className="h-6 w-6 text-primary" />
+                        {report.icon && <report.icon className="h-6 w-6 text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold mb-1">{report.name}</h3>

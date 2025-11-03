@@ -10,7 +10,7 @@ export default function PricingPage() {
     {
       name: "Free",
       price: "$0",
-      priceId: null, // Free plan doesn't need Stripe
+      priceId: null,
       description: "Perfect for simple W-2 returns",
       features: [
         "W-2 income filing",
@@ -26,7 +26,7 @@ export default function PricingPage() {
     {
       name: "Premium",
       price: "$29",
-      priceId: "price_premium_29", // Replace with actual Stripe price ID
+      priceId: "price_premium_29",
       description: "For complex returns with deductions",
       features: [
         "Everything in Free",
@@ -46,7 +46,7 @@ export default function PricingPage() {
       name: "AI Co-Pilot",
       price: "$5",
       period: "/month",
-      priceId: "price_copilot_5_monthly", // Replace with actual Stripe price ID
+      priceId: "price_copilot_5_monthly",
       description: "Year-round tax assistant",
       features: [
         "Everything in Premium",
@@ -68,6 +68,7 @@ export default function PricingPage() {
       name: "Business Filing",
       price: "$10",
       period: "/month",
+      priceId: "price_business_10_monthly",
       description: "For freelancers and sole proprietors",
       features: [
         "Schedule C filing",
@@ -78,11 +79,13 @@ export default function PricingPage() {
         "Self-employment tax optimization",
       ],
       cta: "Start Business",
+      popular: false,
     },
     {
       name: "Audit Shield Pro",
       price: "$49",
       period: "/year",
+      priceId: "price_audit_49_yearly",
       description: "Complete audit protection",
       features: [
         "Full audit representation",
@@ -93,6 +96,26 @@ export default function PricingPage() {
         "Peace of mind guarantee",
       ],
       cta: "Get Protection",
+      popular: false,
+    },
+    {
+      name: "Enterprise",
+      price: "Custom",
+      priceId: "price_enterprise_custom",
+      description: "For businesses with bulk filing needs",
+      features: [
+        "Everything in AI Co-Pilot",
+        "Unlimited bulk uploads",
+        "API access for automated filing",
+        "White-label options",
+        "Dedicated account manager",
+        "Custom integrations",
+        "SLA guarantees",
+        "Priority phone support",
+      ],
+      cta: "Contact Sales",
+      popular: true,
+      isEnterprise: true,
     },
   ]
 
@@ -203,12 +226,21 @@ export default function PricingPage() {
             <p className="text-xl text-muted-foreground">Professional tools for business owners</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-8">
             {businessPlans.map((plan, index) => (
               <div
                 key={index}
-                className="rounded-2xl border border-border bg-card p-8 hover:border-accent/50 hover:glow-neon transition-all"
+                className={`rounded-2xl border p-8 relative ${
+                  plan.popular
+                    ? "border-accent bg-card glow-neon scale-105"
+                    : "border-border bg-card hover:border-accent/50"
+                } transition-all`}
               >
+                {plan.popular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-accent text-accent-foreground text-sm font-semibold">
+                    Most Popular
+                  </div>
+                )}
                 <div className="mb-6">
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1 mb-2">
@@ -217,14 +249,23 @@ export default function PricingPage() {
                   </div>
                   <p className="text-muted-foreground">{plan.description}</p>
                 </div>
-                <SubscriptionCheckoutButton
-                  planId={plan.name.toLowerCase().replace(" ", "-")}
-                  className="w-full mb-6"
-                  variant="outline"
-                >
-                  {plan.cta}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </SubscriptionCheckoutButton>
+                {plan.isEnterprise ? (
+                  <Link href="/contact-sales">
+                    <Button className="w-full mb-6 glow-neon-strong" variant="default">
+                      {plan.cta}
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <SubscriptionCheckoutButton
+                    planId={plan.name.toLowerCase().replace(" ", "-")}
+                    className="w-full mb-6"
+                    variant="outline"
+                  >
+                    {plan.cta}
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </SubscriptionCheckoutButton>
+                )}
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -275,18 +316,26 @@ export default function PricingPage() {
                   <th className="text-center p-4 font-semibold">Free</th>
                   <th className="text-center p-4 font-semibold">Premium</th>
                   <th className="text-center p-4 font-semibold">AI Co-Pilot</th>
+                  <th className="text-center p-4 font-semibold">Enterprise</th>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ["Federal e-file", true, true, true],
-                  ["State filing", false, true, true],
-                  ["AI chat support", true, true, true],
-                  ["Itemized deductions", false, true, true],
-                  ["Investment income", false, true, true],
-                  ["Year-round assistant", false, false, true],
-                  ["Receipt scanning", false, false, true],
-                  ["Quarterly estimates", false, false, true],
+                  ["Federal e-file", true, true, true, true],
+                  ["State filing", false, true, true, true],
+                  ["AI chat support", true, true, true, true],
+                  ["Itemized deductions", false, true, true, true],
+                  ["Investment income", false, true, true, true],
+                  ["Year-round assistant", false, false, true, true],
+                  ["Receipt scanning", false, false, true, true],
+                  ["Quarterly estimates", false, false, true, true],
+                  ["Unlimited bulk uploads", false, false, false, true],
+                  ["API access", false, false, false, true],
+                  ["White-label options", false, false, false, true],
+                  ["Dedicated account manager", false, false, false, true],
+                  ["Custom integrations", false, false, false, true],
+                  ["SLA guarantees", false, false, false, true],
+                  ["Priority phone support", false, false, false, true],
                 ].map((row, index) => (
                   <tr key={index} className="border-b border-border">
                     <td className="p-4">{row[0]}</td>
@@ -298,6 +347,9 @@ export default function PricingPage() {
                     </td>
                     <td className="text-center p-4">
                       {row[3] ? <Check className="w-5 h-5 text-accent mx-auto" /> : "—"}
+                    </td>
+                    <td className="text-center p-4">
+                      {row[4] ? <Check className="w-5 h-5 text-accent mx-auto" /> : "—"}
                     </td>
                   </tr>
                 ))}
