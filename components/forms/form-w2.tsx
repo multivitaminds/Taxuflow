@@ -25,7 +25,6 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PenaltyAbatementDialog } from "@/components/penalty-abatement-dialog"
-import { parseAddress } from "@/lib/address-parser"
 import { parseName, parseLastNameWithMiddleInitial } from "@/lib/name-parser"
 
 interface FormW2Props {
@@ -67,6 +66,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const [validating, setValidating] = useState(false)
   const [validationResult, setValidationResult] = useState<any>(null)
   const [showPenaltyDialog, setShowPenaltyDialog] = useState(false)
+  const [overrideValidation, setOverrideValidation] = useState(false)
 
   const [filingType, setFilingType] = useState<"original" | "corrected">("original")
 
@@ -143,57 +143,45 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const cleanAndParseAddress = (addressString: string) => {
     if (!addressString) return { street: "", city: "", state: "", zip: "" }
 
-    // Split by comma
-    const parts = addressString.split(",").map((p) => p.trim())
+    // Remove extra whitespace and normalize
+    const normalized = addressString.replace(/\s+/g, " ").trim()
 
-    const street = parts[0] || ""
+    // Extract ZIP code first (5 digits or 5+4 format)
+    const zipMatch = normalized.match(/\b(\d{5}(?:-\d{4})?)\b/)
+    const zip = zipMatch ? zipMatch[1] : ""
+
+    // Remove ZIP from string
+    let remaining = normalized.replace(/\b\d{5}(?:-\d{4})?\b/, "").trim()
+
+    // Extract state (2 letter code)
+    const stateMatch = remaining.match(/\b([A-Z]{2})\b/)
+    const state = stateMatch ? stateMatch[1] : ""
+
+    // Remove state from string
+    remaining = remaining.replace(/\b[A-Z]{2}\b/, "").trim()
+
+    // Split by comma to get street and city
+    const parts = remaining
+      .split(",")
+      .map((p) => p.trim())
+      .filter(Boolean)
+
+    let street = ""
     let city = ""
-    let state = ""
-    let zip = ""
 
-    // Handle different address formats
     if (parts.length >= 2) {
-      // Check if the last part contains state and ZIP (e.g., "TN 37212" or "Nashville TN 37212")
-      const lastPart = parts[parts.length - 1]
-      const parsed = parseAddress(lastPart)
-
-      if (parsed && parsed.state && parsed.zipCode) {
-        // Successfully parsed state and ZIP from last part
-        state = parsed.state
-        zip = parsed.zipCode
-        city = parsed.city || parts[parts.length - 2] || ""
-      } else {
-        // Try parsing the second-to-last part
-        const secondLast = parts[parts.length - 2]
-        const parsedSecond = parseAddress(secondLast)
-
-        if (parsedSecond && parsedSecond.state && parsedSecond.zipCode) {
-          state = parsedSecond.state
-          zip = parsedSecond.zipCode
-          city = parsedSecond.city || parts[parts.length - 3] || ""
-        } else {
-          // Fallback: assume standard format
-          city = parts[1] || ""
-          state = parts[2] || ""
-          zip = parts[3]?.match(/\d{5}/)?.[0] || ""
-        }
-      }
+      street = parts[0]
+      city = parts[1]
+    } else if (parts.length === 1) {
+      // If only one part, assume it's the street
+      street = parts[0]
     }
 
-    // Clean up city (remove apartment numbers like "Apt 405")
+    // Clean up city (remove apartment numbers)
     city = city.replace(/^(Apt|Apartment|Unit|Suite|#)\s*\d+\w*$/i, "").trim()
     city = city.replace(/^(Apt|Apartment|Unit|Suite|#)\s*\d+\w*,?\s*/i, "").trim()
 
-    // Clean up state (remove ZIP if it's stuck in there)
-    state = state.replace(/\s*\d{5}(-\d{4})?$/, "").trim()
-
-    // Ensure state is 2 letters only
-    if (state.length > 2) {
-      const stateMatch = state.match(/\b([A-Z]{2})\b/)
-      if (stateMatch) {
-        state = stateMatch[1]
-      }
-    }
+    console.log("[v0] Parsed address:", { input: addressString, output: { street, city, state, zip } })
 
     return { street, city, state, zip }
   }
@@ -486,24 +474,29 @@ export default function FormW2({ extractedData }: FormW2Props) {
       return
     }
 
-    if (validationResult?.errors?.length > 0) {
-      console.log("[v0] Validation errors present, cannot submit:", validationResult.errors)
+    if (validationResult?.errors?.length > 0 && !overrideValidation) {
+      console.log("[v0] Validation errors present, asking user to confirm override")
       toast({
-        title: "Cannot Submit",
-        description: "Please fix all errors before submitting",
+        title: "Validation Errors Found",
+        description: "Please fix all errors or click 'Submit Anyway' to override",
         variant: "destructive",
       })
+      setOverrideValidation(true) // Next click will override
       return
     }
 
-    console.log("[v0] Submitting form to IRS...")
+    console.log("[v0] Submitting form to IRS...", overrideValidation ? "(with override)" : "")
     setLoading(true)
+    setOverrideValidation(false) // Reset override flag
 
     try {
       const response = await fetch("/api/filing/submit-w2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          overrideValidation: overrideValidation || validationResult?.errors?.length === 0,
+        }),
       })
 
       const result = await response.json()
@@ -1319,9 +1312,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
                 <Send className="mr-2 h-4 w-4" />
                 {isPaperFilingRequired
                   ? "Generate Paper Filing Package"
-                  : validationResult
-                    ? "Submit to IRS"
-                    : "Validate & Submit"}
+                  : !validationResult
+                    ? "Validate & Submit"
+                    : validationResult?.errors?.length > 0 && overrideValidation
+                      ? "Submit Anyway"
+                      : validationResult?.errors?.length > 0
+                        ? "Fix Errors & Submit"
+                        : "Submit to IRS"}
               </Button>
             </div>
           </div>
