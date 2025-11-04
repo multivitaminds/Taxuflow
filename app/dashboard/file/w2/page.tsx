@@ -6,15 +6,42 @@ import { DocumentUpload } from "@/components/forms/document-upload"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
 import { PayrollIntegration } from "@/components/payroll-integration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "@/components/ui/use-toast"
 
 export default function FileW2Page() {
   const [extractedData, setExtractedData] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("upload")
 
   const handleExtractComplete = (data: any) => {
-    console.log("[v0] Extracted data received:", data)
+    console.log("[v0] Extracted data received in page:", data)
+
+    if (!data || !data.employer || !data.employee || !data.income) {
+      console.error("[v0] Invalid extraction data structure:", data)
+      toast({
+        title: "⚠️ Extraction Failed",
+        description: "Could not extract W-2 data. Please try again or enter manually.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (data.employer.name === "Company Name" || data.employee.name === "John Doe") {
+      console.error("[v0] AI returned template data instead of real extraction")
+      toast({
+        title: "⚠️ Extraction Incomplete",
+        description: "AI could not read the document clearly. Please try a clearer image or enter manually.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setExtractedData(data)
     setActiveTab("manual")
+
+    toast({
+      title: "✅ Extraction Successful",
+      description: `Extracted data for ${data.employee.name} from ${data.employer.name}`,
+    })
   }
 
   return (

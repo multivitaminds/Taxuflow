@@ -132,6 +132,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
       const extracted: ExtractedW2Data = extractedData
 
+      if (!extracted.employer?.name || !extracted.employee?.name || !extracted.income?.wages) {
+        console.error("[v0] Extracted data is incomplete or invalid:", extracted)
+        toast({
+          title: "⚠️ Extraction Incomplete",
+          description: "Some data could not be extracted. Please fill in the missing fields manually.",
+          variant: "destructive",
+        })
+        return
+      }
+
       const employeeName = extracted.employee?.name || ""
       const parsedName = parseName(employeeName)
 
@@ -178,6 +188,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }
       }
 
+      console.log("[v0] Populating form with:", {
+        employerName: extracted.employer?.name,
+        employeeName: employeeName,
+        wages: extracted.income?.wages,
+      })
+
       setFormData({
         ...formData,
         employerName: extracted.employer?.name || "",
@@ -188,7 +204,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employerZip,
 
         employeeFirstName: employeeFirstName || "",
-        employeeMiddleInitial: employeeMiddleInitial || "", // Set middle initial
+        employeeMiddleInitial: employeeMiddleInitial || "",
         employeeLastName: employeeLastName || "",
         employeeSSN: extracted.employee?.ssn || "",
         employeeAddress: employeeAddressParts[0]?.trim() || "",
@@ -259,6 +275,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
       if (extractData.success && extractData.data.documentType === "w2") {
         const extracted: ExtractedW2Data = extractData.data
 
+        if (!extracted.employer?.name || !extracted.employee?.name || !extracted.income?.wages) {
+          console.error("[v0] Extracted data is incomplete or invalid:", extracted)
+          toast({
+            title: "⚠️ Extraction Incomplete",
+            description: "Some data could not be extracted. Please fill in the missing fields manually.",
+            variant: "destructive",
+          })
+          return
+        }
+
         const employeeName = extracted.employee?.name || ""
         const parsedName = parseName(employeeName)
 
@@ -302,6 +328,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
             employeeZip = parsed.zipCode
           }
         }
+
+        console.log("[v0] Populating form with:", {
+          employerName: extracted.employer?.name,
+          employeeName: employeeName,
+          wages: extracted.income?.wages,
+        })
 
         setFormData({
           ...formData,

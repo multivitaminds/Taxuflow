@@ -151,6 +151,21 @@ Rules:
       throw new Error(`AI returned invalid JSON. Response: ${cleanedText.substring(0, 100)}...`)
     }
 
+    if (extractedData.employer && extractedData.employee && extractedData.income) {
+      // Check if the data looks like placeholder/template data
+      const hasRealData =
+        extractedData.employer.name &&
+        extractedData.employer.name !== "Company Name" &&
+        extractedData.employee.name &&
+        extractedData.employee.name !== "John Doe" &&
+        extractedData.income.wages > 0
+
+      if (!hasRealData) {
+        console.error("[v0] AI returned template/placeholder data instead of extracting real values")
+        throw new Error("Could not extract real data from document. Please ensure the document is clear and readable.")
+      }
+    }
+
     if (extractedData.employer?.address) {
       const parsed = parseFullAddress(extractedData.employer.address)
       if (parsed) {
@@ -194,10 +209,9 @@ Rules:
 
     console.log("[v0] Extracted document type:", extractedData.documentType)
     console.log("[v0] Extracted tax year:", extractedData.taxYear)
-    console.log("[v0] Post-processed addresses:", {
-      employer: extractedData.employer,
-      employee: extractedData.employee,
-    })
+    console.log("[v0] Extracted employer:", extractedData.employer?.name)
+    console.log("[v0] Extracted employee:", extractedData.employee?.name)
+    console.log("[v0] Extracted wages:", extractedData.income?.wages)
 
     return NextResponse.json({
       success: true,
