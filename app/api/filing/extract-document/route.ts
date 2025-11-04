@@ -2,6 +2,59 @@ import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import { parseFullAddress } from "@/lib/address-parser"
 
+async function extractWithRetry(dataUrl: string, extractionInstructions: string, maxRetries = 2) {
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`[v0] Extraction attempt ${attempt + 1}/${maxRetries + 1}`)
+
+      const { text } = await generateText({
+        model: "openai/gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                image: dataUrl,
+              },
+              {
+                type: "text",
+                text: extractionInstructions,
+              },
+            ],
+          },
+        ],
+        maxTokens: 2000,
+        abortSignal: AbortSignal.timeout(30000), // 30 second timeout
+      })
+
+      return text
+    } catch (error) {
+      lastError = error as Error
+      console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, error)
+
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      const isRetryable =
+        errorMessage.includes("Gateway") ||
+        errorMessage.includes("timeout") ||
+        errorMessage.includes("ECONNRESET") ||
+        errorMessage.includes("network")
+
+      if (!isRetryable || attempt === maxRetries) {
+        throw error
+      }
+
+      const waitTime = Math.min(1000 * Math.pow(2, attempt), 5000)
+      console.log(`[v0] Waiting ${waitTime}ms before retry...`)
+      await new Promise((resolve) => setTimeout(resolve, waitTime))
+    }
+  }
+
+  throw lastError || new Error("Extraction failed after retries")
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { fileData, fileName, mimeType, userId } = await request.json()
@@ -11,6 +64,14 @@ export async function POST(request: NextRequest) {
 
     if (!fileData) {
       throw new Error("No file data provided")
+    }
+
+    const fileSizeBytes = (fileData.length * 3) / 4 // Approximate base64 to bytes
+    const fileSizeMB = fileSizeBytes / (1024 * 1024)
+    console.log(`[v0] File size: ${fileSizeMB.toFixed(2)} MB`)
+
+    if (fileSizeMB > 10) {
+      throw new Error("File too large. Maximum size is 10MB. Please compress or split the document.")
     }
 
     const dataUrl = `data:${mimeType};base64,${fileData}`
@@ -99,25 +160,7 @@ Rules:
 
     console.log("[v0] Calling AI model for extraction...")
 
-    const { text } = await generateText({
-      model: "openai/gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              image: dataUrl,
-            },
-            {
-              type: "text",
-              text: extractionInstructions,
-            },
-          ],
-        },
-      ],
-      maxTokens: 2000,
-    })
+    const text = await extractWithRetry(dataUrl, extractionInstructions)
 
     console.log("[v0] AI extraction complete, parsing response...")
     console.log("[v0] Raw AI response:", text.substring(0, 200))
@@ -219,11 +262,27 @@ Rules:
     })
   } catch (error) {
     console.error("[v0] Document extraction error:", error)
+
+    let userMessage = "Failed to extract document data"
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    if (errorMessage.includes("Gateway") || errorMessage.includes("timeout")) {
+      userMessage =
+        "The AI service is temporarily unavailable or the request timed out. Please try again in a moment or try with a smaller/clearer document."
+    } else if (errorMessage.includes("File too large")) {
+      userMessage = errorMessage
+    } else if (errorMessage.includes("invalid JSON")) {
+      userMessage =
+        "Could not understand the document format. Please ensure it's a valid tax document (W-2, 1099, etc.)"
+    } else if (errorMessage.includes("placeholder data")) {
+      userMessage = "Could not extract real data from the document. Please ensure the image is clear and readable."
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to extract document data",
-        details: error instanceof Error ? error.stack : undefined,
+        error: userMessage,
+        technicalDetails: error instanceof Error ? error.message : undefined,
       },
       { status: 500 },
     )

@@ -56,6 +56,11 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
       try {
         console.log("[v0] Starting AI extraction for:", file.name)
 
+        const fileSizeMB = file.size / (1024 * 1024)
+        if (fileSizeMB > 10) {
+          throw new Error("File too large. Maximum size is 10MB. Please compress the document.")
+        }
+
         // Update status to processing
         setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, status: "processing" } : f)))
 
@@ -63,46 +68,62 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
         const arrayBuffer = await file.arrayBuffer()
         const base64 = Buffer.from(arrayBuffer).toString("base64")
 
-        // Extract data using AI directly from file
-        const extractResponse = await fetch("/api/filing/extract-document", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileData: base64,
-            fileName: file.name,
-            mimeType: file.type,
-            userId,
-          }),
-        })
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 45000) // 45 second timeout
 
-        const extractData = await extractResponse.json()
-
-        console.log("[v0] Extraction response:", extractData)
-
-        if (extractData.success && extractData.data) {
-          setFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileId
-                ? {
-                    ...f,
-                    status: "complete",
-                    extractedData: extractData.data,
-                  }
-                : f,
-            ),
-          )
-
-          toast({
-            title: "✅ Document Processed",
-            description: `Successfully extracted data from ${file.name}`,
+        try {
+          // Extract data using AI directly from file
+          const extractResponse = await fetch("/api/filing/extract-document", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileData: base64,
+              fileName: file.name,
+              mimeType: file.type,
+              userId,
+            }),
+            signal: controller.signal,
           })
 
-          // Notify parent component
-          if (onExtractComplete) {
-            onExtractComplete(extractData.data)
+          clearTimeout(timeoutId)
+
+          const extractData = await extractResponse.json()
+
+          console.log("[v0] Extraction response:", JSON.stringify(extractData).substring(0, 200))
+
+          if (extractData.success && extractData.data) {
+            setFiles((prev) =>
+              prev.map((f) =>
+                f.id === fileId
+                  ? {
+                      ...f,
+                      status: "complete",
+                      extractedData: extractData.data,
+                    }
+                  : f,
+              ),
+            )
+
+            toast({
+              title: "✅ Document Processed",
+              description: `Successfully extracted data from ${file.name}`,
+            })
+
+            // Notify parent component
+            if (onExtractComplete) {
+              onExtractComplete(extractData.data)
+            }
+          } else {
+            throw new Error(extractData.error || "Extraction failed")
           }
-        } else {
-          throw new Error(extractData.error || "Extraction failed")
+        } catch (fetchError) {
+          clearTimeout(timeoutId)
+          if (fetchError instanceof Error && fetchError.name === "AbortError") {
+            throw new Error(
+              "Request timed out. The document may be too large or complex. Please try with a smaller/clearer document.",
+            )
+          }
+          throw fetchError
         }
       } catch (error) {
         console.error("[v0] Processing error:", error)
@@ -122,7 +143,7 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
 
         toast({
           title: "❌ Processing Failed",
-          description: `Failed to process ${file.name}: ${errorMessage}`,
+          description: errorMessage,
           variant: "destructive",
         })
       }
