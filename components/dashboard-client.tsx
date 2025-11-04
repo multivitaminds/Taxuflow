@@ -283,7 +283,6 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         .from("deductions_credits")
         .select("*")
         .eq("user_id", user.id)
-        .eq("status", "suggested")
 
       if (deductionsError) {
         console.log("[v0] No deductions yet:", deductionsError.message)
