@@ -155,36 +155,56 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employeeLastName = parsedName.lastName
       }
 
-      const employerAddressParts = (extracted.employer?.address || "").split(",")
-      const employeeAddressParts = (extracted.employee?.address || "").split(",")
+      const employerAddress = extracted.employer?.address || ""
+      const employeeAddress = extracted.employee?.address || ""
 
-      // Try to parse employer city/state/ZIP if combined
-      let employerCity = employerAddressParts[1]?.trim() || ""
-      let employerState = extracted.income?.state || ""
-      let employerZip = employerAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+      // Parse employer address
+      let employerStreet = ""
+      let employerCity = ""
+      let employerState = ""
+      let employerZip = ""
 
-      // Check if city field contains combined city/state/ZIP (e.g., "CAMDEN NJ 08103")
-      if (employerCity && !employerState) {
-        const parsed = parseAddress(employerCity)
-        if (parsed) {
-          employerCity = parsed.city
-          employerState = parsed.state
-          employerZip = parsed.zipCode
+      if (employerAddress) {
+        const parts = employerAddress.split(",").map((p) => p.trim())
+        employerStreet = parts[0] || ""
+
+        // Check if second part contains city/state/ZIP combined (e.g., "Springfield IL 62701")
+        if (parts[1]) {
+          const parsed = parseAddress(parts[1])
+          if (parsed) {
+            employerCity = parsed.city
+            employerState = parsed.state
+            employerZip = parsed.zipCode
+          } else {
+            employerCity = parts[1]
+            employerState = parts[2] || extracted.income?.state || ""
+            employerZip = parts[3]?.match(/\d{5}/)?.[0] || ""
+          }
         }
       }
 
-      // Try to parse employee city/state/ZIP if combined
-      let employeeCity = employeeAddressParts[1]?.trim() || ""
-      let employeeState = extracted.income?.state || ""
-      let employeeZip = employeeAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+      // Parse employee address
+      let employeeStreet = ""
+      let employeeCity = ""
+      let employeeState = ""
+      let employeeZip = ""
 
-      // Check if city field contains combined city/state/ZIP
-      if (employeeCity && !employeeState) {
-        const parsed = parseAddress(employeeCity)
-        if (parsed) {
-          employeeCity = parsed.city
-          employeeState = parsed.state
-          employeeZip = parsed.zipCode
+      if (employeeAddress) {
+        const parts = employeeAddress.split(",").map((p) => p.trim())
+        employeeStreet = parts[0] || ""
+
+        // Check if second part contains city/state/ZIP combined
+        if (parts[1]) {
+          const parsed = parseAddress(parts[1])
+          if (parsed) {
+            employeeCity = parsed.city
+            employeeState = parsed.state
+            employeeZip = parsed.zipCode
+          } else {
+            employeeCity = parts[1]
+            employeeState = parts[2] || extracted.income?.state || ""
+            employeeZip = parts[3]?.match(/\d{5}/)?.[0] || ""
+          }
         }
       }
 
@@ -192,13 +212,19 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employerName: extracted.employer?.name,
         employeeName: employeeName,
         wages: extracted.income?.wages,
+        employerCity,
+        employerState,
+        employerZip,
+        employeeCity,
+        employeeState,
+        employeeZip,
       })
 
-      setFormData({
+      const newFormData = {
         ...formData,
         employerName: extracted.employer?.name || "",
         employerEIN: extracted.employer?.ein || "",
-        employerAddress: employerAddressParts[0]?.trim() || "",
+        employerAddress: employerStreet,
         employerCity,
         employerState,
         employerZip,
@@ -207,7 +233,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employeeMiddleInitial: employeeMiddleInitial || "",
         employeeLastName: employeeLastName || "",
         employeeSSN: extracted.employee?.ssn || "",
-        employeeAddress: employeeAddressParts[0]?.trim() || "",
+        employeeAddress: employeeStreet,
         employeeCity,
         employeeState,
         employeeZip,
@@ -222,11 +248,17 @@ export default function FormW2({ extractedData }: FormW2Props) {
         stateWithholding: extracted.income?.stateTax?.toString() || "",
 
         taxYear: extracted.taxYear?.toString() || new Date().getFullYear().toString(),
-      })
+      }
+
+      setFormData(newFormData)
+
+      setTimeout(() => {
+        handleValidateForm()
+      }, 500)
 
       toast({
         title: "✨ Form Auto-Filled",
-        description: "Your W-2 data has been automatically populated. Please review and submit.",
+        description: "Your W-2 data has been automatically populated. Validating...",
       })
     }
   }, [extractedData])
@@ -298,34 +330,56 @@ export default function FormW2({ extractedData }: FormW2Props) {
           employeeLastName = parsedName.lastName
         }
 
-        const employerAddressParts = (extracted.employer?.address || "").split(",")
-        const employeeAddressParts = (extracted.employee?.address || "").split(",")
+        const employerAddress = extracted.employer?.address || ""
+        const employeeAddress = extracted.employee?.address || ""
 
-        // Try to parse employer city/state/ZIP if combined
-        let employerCity = employerAddressParts[1]?.trim() || ""
-        let employerState = extracted.income?.state || ""
-        let employerZip = employerAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+        // Parse employer address
+        let employerStreet = ""
+        let employerCity = ""
+        let employerState = ""
+        let employerZip = ""
 
-        if (employerCity && !employerState) {
-          const parsed = parseAddress(employerCity)
-          if (parsed) {
-            employerCity = parsed.city
-            employerState = parsed.state
-            employerZip = parsed.zipCode
+        if (employerAddress) {
+          const parts = employerAddress.split(",").map((p) => p.trim())
+          employerStreet = parts[0] || ""
+
+          // Check if second part contains city/state/ZIP combined (e.g., "Springfield IL 62701")
+          if (parts[1]) {
+            const parsed = parseAddress(parts[1])
+            if (parsed) {
+              employerCity = parsed.city
+              employerState = parsed.state
+              employerZip = parsed.zipCode
+            } else {
+              employerCity = parts[1]
+              employerState = parts[2] || extracted.income?.state || ""
+              employerZip = parts[3]?.match(/\d{5}/)?.[0] || ""
+            }
           }
         }
 
-        // Try to parse employee city/state/ZIP if combined
-        let employeeCity = employeeAddressParts[1]?.trim() || ""
-        let employeeState = extracted.income?.state || ""
-        let employeeZip = employeeAddressParts[2]?.match(/\d{5}/)?.[0] || ""
+        // Parse employee address
+        let employeeStreet = ""
+        let employeeCity = ""
+        let employeeState = ""
+        let employeeZip = ""
 
-        if (employeeCity && !employeeState) {
-          const parsed = parseAddress(employeeCity)
-          if (parsed) {
-            employeeCity = parsed.city
-            employeeState = parsed.state
-            employeeZip = parsed.zipCode
+        if (employeeAddress) {
+          const parts = employeeAddress.split(",").map((p) => p.trim())
+          employeeStreet = parts[0] || ""
+
+          // Check if second part contains city/state/ZIP combined
+          if (parts[1]) {
+            const parsed = parseAddress(parts[1])
+            if (parsed) {
+              employeeCity = parsed.city
+              employeeState = parsed.state
+              employeeZip = parsed.zipCode
+            } else {
+              employeeCity = parts[1]
+              employeeState = parts[2] || extracted.income?.state || ""
+              employeeZip = parts[3]?.match(/\d{5}/)?.[0] || ""
+            }
           }
         }
 
@@ -333,13 +387,19 @@ export default function FormW2({ extractedData }: FormW2Props) {
           employerName: extracted.employer?.name,
           employeeName: employeeName,
           wages: extracted.income?.wages,
+          employerCity,
+          employerState,
+          employerZip,
+          employeeCity,
+          employeeState,
+          employeeZip,
         })
 
         setFormData({
           ...formData,
           employerName: extracted.employer?.name || "",
           employerEIN: extracted.employer?.ein || "",
-          employerAddress: employerAddressParts[0]?.trim() || "",
+          employerAddress: employerStreet,
           employerCity,
           employerState,
           employerZip,
@@ -348,7 +408,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
           employeeMiddleInitial, // Set middle initial
           employeeLastName,
           employeeSSN: extracted.employee?.ssn || "",
-          employeeAddress: employeeAddressParts[0]?.trim() || "",
+          employeeAddress: employeeStreet,
           employeeCity,
           employeeState,
           employeeZip,
@@ -365,9 +425,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
           taxYear: extracted.taxYear?.toString() || new Date().getFullYear().toString(),
         })
 
+        setTimeout(() => {
+          handleValidateForm()
+        }, 500)
+
         toast({
           title: "✨ AI Extraction Complete",
-          description: "Your W-2 has been automatically filled. Please review and submit.",
+          description: "Your W-2 has been automatically filled. Validating...",
         })
       } else {
         throw new Error("Could not extract W-2 data from document")
@@ -389,6 +453,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
     setValidationResult(null)
 
     try {
+      console.log("[v0] Validating form with data:", formData)
+
       const response = await fetch("/api/validate-form", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -406,10 +472,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
         const hasErrors = result.validation.errors?.length > 0
         const hasWarnings = result.validation.warnings?.length > 0
 
+        console.log("[v0] Validation result:", {
+          valid: result.validation.valid,
+          errors: hasErrors ? result.validation.errors.length : 0,
+          warnings: hasWarnings ? result.validation.warnings.length : 0,
+        })
+
         if (!hasErrors && !hasWarnings) {
           toast({
             title: "✓ Validation Passed",
-            description: "Your form looks great! Ready to submit.",
+            description: "Your form looks great! Click 'Submit to IRS' to file.",
           })
         } else if (hasErrors) {
           toast({
@@ -427,6 +499,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         throw new Error(result.error || "Validation failed")
       }
     } catch (error: any) {
+      console.error("[v0] Validation error:", error)
       toast({
         title: "Validation Failed",
         description: error.message,
@@ -440,12 +513,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log("[v0] Submit clicked, validationResult:", validationResult)
+
     if (!validationResult) {
+      console.log("[v0] No validation result, validating first...")
       await handleValidateForm()
       return
     }
 
     if (validationResult?.errors?.length > 0) {
+      console.log("[v0] Validation errors present, cannot submit:", validationResult.errors)
       toast({
         title: "Cannot Submit",
         description: "Please fix all errors before submitting",
@@ -454,6 +531,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
       return
     }
 
+    console.log("[v0] Submitting form to IRS...")
     setLoading(true)
 
     try {
@@ -486,6 +564,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
 
       if (result.success) {
+        console.log("[v0] W-2 submitted successfully:", result.submissionId)
         toast({
           title: "W-2 Submitted Successfully",
           description: `Submission ID: ${result.submissionId}`,
@@ -500,6 +579,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         throw new Error(result.error || "Failed to submit W-2")
       }
     } catch (error: any) {
+      console.error("[v0] Submission error:", error)
       toast({
         title: "Submission Failed",
         description: error.message,
