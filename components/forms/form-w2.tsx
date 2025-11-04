@@ -471,23 +471,36 @@ export default function FormW2({ extractedData }: FormW2Props) {
     if (!validationResult) {
       console.log("[v0] No validation result, validating first...")
       await handleValidateForm()
+      toast({
+        title: "Validation Complete",
+        description: "Please review the results and click 'Submit to IRS' again to continue",
+      })
       return
     }
 
     if (validationResult?.errors?.length > 0 && !overrideValidation) {
       console.log("[v0] Validation errors present, asking user to confirm override")
-      toast({
-        title: "Validation Errors Found",
-        description: "Please fix all errors or click 'Submit Anyway' to override",
-        variant: "destructive",
-      })
-      setOverrideValidation(true) // Next click will override
-      return
+      const errorCount = validationResult.errors.length
+      const errorList = validationResult.errors.map((e: any) => `• ${e.field}: ${e.message}`).join("\n")
+
+      const confirmed = window.confirm(
+        `Found ${errorCount} validation error(s):\n\n${errorList}\n\nDo you want to submit anyway? The IRS may reject this filing.`,
+      )
+
+      if (!confirmed) {
+        toast({
+          title: "Submission Cancelled",
+          description: "Please fix the validation errors and try again",
+          variant: "destructive",
+        })
+        return
+      }
+
+      setOverrideValidation(true)
     }
 
-    console.log("[v0] Submitting form to IRS...", overrideValidation ? "(with override)" : "")
+    console.log("[v0] Submitting W-2 to TaxBandits/IRS...", overrideValidation ? "(with validation override)" : "")
     setLoading(true)
-    setOverrideValidation(false) // Reset override flag
 
     try {
       const response = await fetch("/api/filing/submit-w2", {
@@ -495,6 +508,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          filingType,
           overrideValidation: overrideValidation || validationResult?.errors?.length === 0,
         }),
       })
@@ -522,29 +536,31 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
 
       if (result.success) {
-        console.log("[v0] W-2 submitted successfully:", result.submissionId)
+        console.log("[v0] W-2 submitted successfully to IRS via TaxBandits:", result.submissionId)
         toast({
-          title: "W-2 Submitted Successfully",
-          description: `Submission ID: ${result.submissionId}`,
+          title: "✓ W-2 Submitted to IRS",
+          description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours.`,
         })
 
         localStorage.removeItem("w2_draft")
+        setOverrideValidation(false)
 
         setTimeout(() => {
           router.push("/dashboard/filing")
         }, 2000)
       } else {
-        throw new Error(result.error || "Failed to submit W-2")
+        throw new Error(result.error || "Failed to submit W-2 to IRS")
       }
     } catch (error: any) {
-      console.error("[v0] Submission error:", error)
+      console.error("[v0] TaxBandits submission error:", error)
       toast({
-        title: "Submission Failed",
-        description: error.message,
+        title: "IRS Submission Failed",
+        description: error.message || "Could not submit to TaxBandits. Please try again.",
         variant: "destructive",
       })
     } finally {
       setLoading(false)
+      setOverrideValidation(false)
     }
   }
 
@@ -1314,11 +1330,9 @@ export default function FormW2({ extractedData }: FormW2Props) {
                   ? "Generate Paper Filing Package"
                   : !validationResult
                     ? "Validate & Submit"
-                    : validationResult?.errors?.length > 0 && overrideValidation
-                      ? "Submit Anyway"
-                      : validationResult?.errors?.length > 0
-                        ? "Fix Errors & Submit"
-                        : "Submit to IRS"}
+                    : validationResult?.errors?.length > 0
+                      ? "Submit to IRS (Override Errors)"
+                      : "Submit to IRS"}
               </Button>
             </div>
           </div>
