@@ -1,6 +1,33 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+async function getTaxBanditsAccessToken(): Promise<string> {
+  const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
+  const apiUrl =
+    environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testapi.taxbandits.com/v1.7.3"
+
+  const response = await fetch(`${apiUrl}/tbsauth`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ApiKey: process.env.TAXBANDITS_API_KEY,
+      ApiSecret: process.env.TAXBANDITS_API_SECRET,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error("[v0] TaxBandits authentication failed:", error)
+    throw new Error(`Failed to authenticate with TaxBandits: ${error.StatusMessage || "Unknown error"}`)
+  }
+
+  const result = await response.json()
+  console.log("[v0] TaxBandits authentication successful")
+  return result.AccessToken
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId, documents } = await request.json()
@@ -17,6 +44,8 @@ export async function POST(request: NextRequest) {
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const accessToken = await getTaxBanditsAccessToken()
 
     const filings = []
 
@@ -63,17 +92,25 @@ export async function POST(request: NextRequest) {
           ],
         }
 
-        // Submit to TaxBandits API
         const taxbanditsResponse = await fetch("https://testapi.taxbandits.com/v1.7.3/Form/W2", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify(w2Payload),
         })
 
+        if (!taxbanditsResponse.ok) {
+          const error = await taxbanditsResponse.json()
+          console.error("[v0] TaxBandits W-2 submission failed:", error)
+          throw new Error(
+            `TaxBandits W-2 submission failed: ${error.StatusMessage || error.Errors?.[0]?.Message || "Unknown error"}`,
+          )
+        }
+
         const taxbanditsData = await taxbanditsResponse.json()
+        console.log("[v0] W-2 submitted successfully:", taxbanditsData.SubmissionId)
 
         const { data: filing } = await supabase
           .from("tax_filings")
@@ -131,12 +168,21 @@ export async function POST(request: NextRequest) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify(payload1099),
         })
 
+        if (!taxbanditsResponse.ok) {
+          const error = await taxbanditsResponse.json()
+          console.error("[v0] TaxBandits 1099-NEC submission failed:", error)
+          throw new Error(
+            `TaxBandits 1099-NEC submission failed: ${error.StatusMessage || error.Errors?.[0]?.Message || "Unknown error"}`,
+          )
+        }
+
         const taxbanditsData = await taxbanditsResponse.json()
+        console.log("[v0] 1099-NEC submitted successfully:", taxbanditsData.SubmissionId)
 
         const { data: filing } = await supabase
           .from("tax_filings")
