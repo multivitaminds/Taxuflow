@@ -1390,14 +1390,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
         </CardContent>
       </Card>
 
-      {/* Penalty Abatement Dialog */}
-      <PenaltyAbatementDialog
-        open={showPenaltyDialog}
-        onOpenChange={setShowPenaltyDialog}
-        businessName={formData.employerName}
-        ein={formData.employerEIN}
-        taxYear={formData.taxYear}
-      />
+      {showPenaltyDialog && (
+        <PenaltyAbatementDialog
+          businessName={formData.employerName}
+          ein={formData.employerEIN}
+          taxYear={Number.parseInt(formData.taxYear)}
+          formType="W-2"
+        />
+      )}
     </form>
   )
 }

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Download, FileText, CheckCircle2, AlertCircle, Clock, X } from "lucide-react"
 import { useState } from "react"
+import PenaltyAbatementDialog from "@/components/penalty-abatement-dialog"
 
 interface DocumentDetailModalProps {
   document: any
@@ -15,6 +16,7 @@ interface DocumentDetailModalProps {
 
 export function DocumentDetailModal({ document, isOpen, onClose }: DocumentDetailModalProps) {
   const [downloading, setDownloading] = useState(false)
+  const [showPenaltyDialog, setShowPenaltyDialog] = useState(false)
 
   if (!document) return null
 
@@ -167,13 +169,26 @@ export function DocumentDetailModal({ document, isOpen, onClose }: DocumentDetai
             {document.ai_document_type === "w2" &&
               document.tax_year &&
               document.tax_year < new Date().getFullYear() && (
-                <Button variant="outline" className="flex-1 border-neon/50 text-neon hover:bg-neon/10 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-neon/50 text-neon hover:bg-neon/10 bg-transparent"
+                  onClick={() => setShowPenaltyDialog(true)}
+                >
                   <FileText className="w-4 h-4 mr-2" />
                   Generate Penalty Letter ($39)
                 </Button>
               )}
           </div>
         </div>
+
+        {showPenaltyDialog && (
+          <PenaltyAbatementDialog
+            businessName={extractedData?.employer?.name || "Your Business"}
+            ein={extractedData?.employer?.ein || ""}
+            taxYear={document.tax_year || new Date().getFullYear()}
+            formType="W-2"
+          />
+        )}
       </DialogContent>
     </Dialog>
   )

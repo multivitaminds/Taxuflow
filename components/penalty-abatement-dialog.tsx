@@ -22,10 +22,19 @@ interface PenaltyAbatementDialogProps {
   ein: string
   taxYear: number
   formType: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function PenaltyAbatementDialog({ businessName, ein, taxYear, formType }: PenaltyAbatementDialogProps) {
-  const [open, setOpen] = useState(false)
+export function PenaltyAbatementDialog({
+  businessName,
+  ein,
+  taxYear,
+  formType,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
+}: PenaltyAbatementDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
   const [reason, setReason] = useState("")
   const [additionalContext, setAdditionalContext] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
@@ -41,6 +50,9 @@ export function PenaltyAbatementDialog({ businessName, ein, taxYear, formType }:
     { value: "system", label: "System or technical issues" },
     { value: "other", label: "Other reasonable cause" },
   ]
+
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = externalOnOpenChange || setInternalOpen
 
   const handleGenerate = async () => {
     if (!reason) {
@@ -211,3 +223,5 @@ export function PenaltyAbatementDialog({ businessName, ein, taxYear, formType }:
     </Dialog>
   )
 }
+
+export default PenaltyAbatementDialog
