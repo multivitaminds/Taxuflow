@@ -400,50 +400,90 @@ export default function FormW2({ extractedData }: FormW2Props) {
     setValidationResult(null)
 
     try {
-      console.log("[v0] Validating form with data:", formData)
+      console.log("[v0] Running client-side validation...")
 
-      const response = await fetch("/api/validate-form", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          formType: "W-2",
-          formData,
-        }),
-      })
+      const errors: any[] = []
+      const warnings: any[] = []
 
-      const result = await response.json()
+      // Check required fields
+      if (!formData.employerName) errors.push({ field: "employerName", message: "Employer name is required" })
+      if (!formData.employerEIN) errors.push({ field: "employerEIN", message: "Employer EIN is required" })
+      if (!formData.employeeFirstName)
+        errors.push({ field: "employeeFirstName", message: "Employee first name is required" })
+      if (!formData.employeeLastName)
+        errors.push({ field: "employeeLastName", message: "Employee last name is required" })
+      if (!formData.employeeSSN) errors.push({ field: "employeeSSN", message: "Employee SSN is required" })
+      if (!formData.wages) errors.push({ field: "wages", message: "Wages are required" })
 
-      if (result.success) {
-        setValidationResult(result.validation)
+      // Basic math validation
+      const wages = Number.parseFloat(formData.wages) || 0
+      const federalWithholding = Number.parseFloat(formData.federalWithholding) || 0
+      const socialSecurityWages = Number.parseFloat(formData.socialSecurityWages) || 0
+      const socialSecurityWithholding = Number.parseFloat(formData.socialSecurityWithholding) || 0
+      const medicareWages = Number.parseFloat(formData.medicareWages) || 0
+      const medicareWithholding = Number.parseFloat(formData.medicareWithholding) || 0
 
-        const hasErrors = result.validation.errors?.length > 0
-        const hasWarnings = result.validation.warnings?.length > 0
+      // Federal withholding should not exceed wages
+      if (federalWithholding > wages) {
+        errors.push({ field: "federalWithholding", message: "Federal withholding cannot exceed total wages" })
+      }
 
-        console.log("[v0] Validation result:", {
-          valid: result.validation.valid,
-          errors: hasErrors ? result.validation.errors.length : 0,
-          warnings: hasWarnings ? result.validation.warnings.length : 0,
-        })
-
-        if (!hasErrors && !hasWarnings) {
-          toast({
-            title: "✓ Validation Passed",
-            description: "Your form looks great! Click 'Submit to IRS' to file.",
-          })
-        } else if (hasErrors) {
-          toast({
-            title: "Validation Issues Found",
-            description: `Found ${result.validation.errors.length} error(s) that need attention`,
-            variant: "destructive",
-          })
-        } else {
-          toast({
-            title: "Validation Complete",
-            description: `Found ${result.validation.warnings.length} warning(s) to review`,
+      // Social Security withholding should be approximately 6.2% (allow 0-10% range)
+      if (socialSecurityWages > 0) {
+        const ssRate = (socialSecurityWithholding / socialSecurityWages) * 100
+        if (ssRate > 10) {
+          warnings.push({
+            field: "socialSecurityWithholding",
+            message: `Social Security withholding rate is ${ssRate.toFixed(1)}% (expected ~6.2%)`,
           })
         }
+      }
+
+      // Medicare withholding should be approximately 1.45% (allow 0-5% range)
+      if (medicareWages > 0) {
+        const medicareRate = (medicareWithholding / medicareWages) * 100
+        if (medicareRate > 5) {
+          warnings.push({
+            field: "medicareWithholding",
+            message: `Medicare withholding rate is ${medicareRate.toFixed(1)}% (expected ~1.45%)`,
+          })
+        }
+      }
+
+      const result = {
+        valid: errors.length === 0,
+        errors,
+        warnings,
+        suggestions: [],
+      }
+
+      setValidationResult(result)
+
+      const hasErrors = errors.length > 0
+      const hasWarnings = warnings.length > 0
+
+      console.log("[v0] Validation result:", {
+        valid: result.valid,
+        errors: hasErrors ? errors.length : 0,
+        warnings: hasWarnings ? warnings.length : 0,
+      })
+
+      if (!hasErrors && !hasWarnings) {
+        toast({
+          title: "✓ Validation Passed",
+          description: "Your form looks great! Click 'Submit to IRS' to file.",
+        })
+      } else if (hasErrors) {
+        toast({
+          title: "Validation Issues Found",
+          description: `Found ${errors.length} error(s) that need attention`,
+          variant: "destructive",
+        })
       } else {
-        throw new Error(result.error || "Validation failed")
+        toast({
+          title: "Validation Complete",
+          description: `Found ${warnings.length} warning(s) to review`,
+        })
       }
     } catch (error: any) {
       console.error("[v0] Validation error:", error)
@@ -471,10 +511,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
     if (!validationResult) {
       console.log("[v0] No validation result, validating first...")
       await handleValidateForm()
-      toast({
-        title: "Validation Complete",
-        description: "Please review the results and click 'Submit to IRS' again to continue",
-      })
       return
     }
 
@@ -513,6 +549,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }),
       })
 
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text()
+        console.error("[v0] Non-JSON response from server:", text)
+        throw new Error("Server returned an invalid response. Please try again.")
+      }
+
       const result = await response.json()
 
       if (result.isDemoMode) {
@@ -537,16 +580,23 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
       if (result.success) {
         console.log("[v0] W-2 submitted successfully to IRS via TaxBandits:", result.submissionId)
+
         toast({
           title: "✓ W-2 Submitted to IRS",
           description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours.`,
+          duration: 5000,
         })
 
         localStorage.removeItem("w2_draft")
+        setValidationResult(null)
         setOverrideValidation(false)
 
         setTimeout(() => {
-          router.push("/dashboard/filing")
+          if (result.filingId) {
+            router.push(`/dashboard/filing/${result.filingId}`)
+          } else {
+            router.push("/dashboard/filing")
+          }
         }, 2000)
       } else {
         throw new Error(result.error || "Failed to submit W-2 to IRS")
@@ -557,6 +607,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         title: "IRS Submission Failed",
         description: error.message || "Could not submit to TaxBandits. Please try again.",
         variant: "destructive",
+        duration: 7000,
       })
     } finally {
       setLoading(false)

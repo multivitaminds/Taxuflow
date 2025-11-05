@@ -53,6 +53,12 @@ export default function SignupPage() {
       return
     }
 
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      setLoading(false)
+      return
+    }
+
     try {
       const supabase = createClient()
 
@@ -69,28 +75,43 @@ export default function SignupPage() {
 
       console.log("[v0] Signup response data:", data)
       console.log("[v0] Signup error:", signUpError)
-      console.log("[v0] Full error object:", JSON.stringify(signUpError, null, 2))
 
-      if (signUpError) throw signUpError
+      if (signUpError) {
+        // Handle specific error cases
+        if (signUpError.message.includes("User already registered")) {
+          throw new Error("An account with this email already exists. Please sign in instead.")
+        } else if (signUpError.message.includes("Invalid email")) {
+          throw new Error("Please enter a valid email address.")
+        } else if (signUpError.message.includes("Password")) {
+          throw new Error("Password must be at least 8 characters long.")
+        } else if (signUpError.message.includes("unexpected")) {
+          throw new Error("Unable to create account. Please check your internet connection and try again.")
+        } else {
+          throw new Error(signUpError.message)
+        }
+      }
 
-      if (data.user) {
+      if (!data.user) {
+        throw new Error("Failed to create account. Please try again.")
+      }
+
+      try {
         const profileResult = await createUserProfile(data.user.id, email, fullName)
 
         if (!profileResult.success) {
           console.error("[v0] Profile creation failed:", profileResult.error)
           // Don't throw error - user is created, profile can be created later
         }
+      } catch (profileError) {
+        console.error("[v0] Profile creation error:", profileError)
+        // Continue anyway - user account is created
       }
 
       setSuccess(true)
       setLoading(false)
     } catch (err: any) {
       console.error("[v0] Caught signup error:", err)
-      console.error("[v0] Error message:", err.message)
-      console.error("[v0] Error code:", err.code)
-      console.error("[v0] Error status:", err.status)
-      console.error("[v0] Full error:", JSON.stringify(err, null, 2))
-      setError(err.message || "Failed to create account")
+      setError(err.message || "Failed to create account. Please try again.")
       setLoading(false)
     }
   }
@@ -168,7 +189,7 @@ export default function SignupPage() {
               />
               <path
                 fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23s.43 3.45 1.18 4.93l2.85-2.84.81-.62z"
               />
               <path
                 fill="currentColor"
@@ -235,10 +256,11 @@ export default function SignupPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a strong password"
                 required
-                minLength={6}
+                minLength={8}
                 disabled={loading}
                 className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12"
               />
+              <p className="text-xs text-gray-500 mt-1">Must be at least 8 characters</p>
             </div>
 
             <div>

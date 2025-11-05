@@ -136,9 +136,16 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   const supabase = getSupabaseBrowserClient()
 
   // Check if Supabase is properly configured
-  if (!supabase) {
-    console.error("[v0] Supabase client is not configured")
-  }
+  const [supabaseError, setSupabaseError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!supabase) {
+      console.error("[v0] Supabase client is not configured")
+      setSupabaseError("Database connection error. Please check your configuration.")
+      setLoadingData(false)
+      setLoadingDocuments(false)
+    }
+  }, [supabase])
 
   const fetchDashboardData = async () => {
     if (user.id === "demo-user-id") {
@@ -224,7 +231,7 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
 
     if (!supabase) {
       console.error("[v0] Cannot fetch data: Supabase client is not configured")
-      setDocumentError("Database connection error. Please check your configuration.")
+      setDocumentError("Database connection error. Please refresh the page.")
       setLoadingData(false)
       setLoadingDocuments(false)
       return
@@ -234,11 +241,16 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
     setLoadingData(true)
 
     try {
-      const { data: docsData, error: docsError } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+      const fetchWithTimeout = async <T,>(promise: Promise<T>, timeoutMs = 10000): Promise<T> => {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), timeoutMs),
+        )
+        return Promise.race([promise, timeoutPromise])
+      }
+
+      const { data: docsData, error: docsError } = await fetchWithTimeout(
+        supabase.from("documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      )
 
       if (docsError) {
         console.error("[v0] Error fetching documents:", docsError)
@@ -248,13 +260,15 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         setDocuments(docsData || [])
       }
 
-      const { data: taxData, error: taxError } = await supabase
-        .from("tax_calculations")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const { data: taxData, error: taxError } = await fetchWithTimeout(
+        supabase
+          .from("tax_calculations")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      )
 
       if (taxError) {
         console.log("[v0] Error fetching tax calculations:", taxError.message)
@@ -265,12 +279,14 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         console.log("[v0] No tax calculations yet")
       }
 
-      const { data: activitiesData, error: activitiesError } = await supabase
-        .from("agent_activities")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
+      const { data: activitiesData, error: activitiesError } = await fetchWithTimeout(
+        supabase
+          .from("agent_activities")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(5),
+      )
 
       if (activitiesError) {
         console.log("[v0] No activities yet:", activitiesError.message)
@@ -279,10 +295,9 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         setActivities(activitiesData || [])
       }
 
-      const { data: deductionsData, error: deductionsError } = await supabase
-        .from("deductions_credits")
-        .select("*")
-        .eq("user_id", user.id)
+      const { data: deductionsData, error: deductionsError } = await fetchWithTimeout(
+        supabase.from("deductions_credits").select("*").eq("user_id", user.id),
+      )
 
       if (deductionsError) {
         console.log("[v0] No deductions yet:", deductionsError.message)
@@ -292,6 +307,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
       }
     } catch (err) {
       console.error("[v0] Unexpected error fetching dashboard data:", err)
+      if (err instanceof Error && err.message === "Request timeout") {
+        setDocumentError("Request timed out. Please check your internet connection.")
+      } else {
+        setDocumentError("Failed to load data. Please refresh the page.")
+      }
     }
 
     setLoadingData(false)
