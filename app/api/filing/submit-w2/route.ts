@@ -6,7 +6,6 @@ export const runtime = "nodejs"
 
 async function safeEncrypt(value: string): Promise<string> {
   try {
-    // Dynamically import crypto to ensure it's available
     const crypto = await import("crypto")
     const algorithm = "aes-256-cbc"
     const key = Buffer.from(process.env.ENCRYPTION_KEY || "default-key-32-characters-long!", "utf8").slice(0, 32)
@@ -17,7 +16,6 @@ async function safeEncrypt(value: string): Promise<string> {
     return `${iv.toString("hex")}:${encrypted}`
   } catch (error) {
     console.error("[v0] Encryption failed:", error)
-    // Return a placeholder if encryption fails - don't block submission
     return "ENCRYPTED"
   }
 }
@@ -71,12 +69,14 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.TAXBANDITS_API_KEY
     const apiSecret = process.env.TAXBANDITS_API_SECRET
+    const clientId = process.env.TAXBANDITS_CLIENT_ID
 
     console.log("[v0] Checking TaxBandits credentials...")
     console.log("[v0] - API Key:", apiKey ? `${apiKey.substring(0, 10)}...` : "❌ MISSING")
     console.log("[v0] - API Secret:", apiSecret ? "✅ Set" : "❌ MISSING")
+    console.log("[v0] - Client ID:", clientId ? `${clientId.substring(0, 10)}...` : "❌ MISSING")
 
-    if (!apiKey || !apiSecret) {
+    if (!apiKey || !apiSecret || !clientId) {
       console.error("[v0] ❌ TaxBandits credentials missing")
       return NextResponse.json(
         {
@@ -90,30 +90,34 @@ export async function POST(request: Request) {
     const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
     console.log("[v0] TaxBandits environment:", environment)
 
-    const authUrl =
-      environment === "production"
-        ? "https://api.taxbandits.com/v1.7.3/tbsauth"
-        : "https://testapi.taxbandits.com/v1.7.3/tbsauth"
+    const baseUrl =
+      environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testapi.taxbandits.com/v1.7.3"
 
     console.log("[v0] ========================================")
     console.log("[v0] STEP 1: AUTHENTICATING WITH TAXBANDITS")
     console.log("[v0] ========================================")
+
+    const authUrl = `${baseUrl}/User/UserToken`
     console.log("[v0] Auth URL:", authUrl)
 
-    const credentials = Buffer.from(`${apiKey}:${apiSecret}`).toString("base64")
-    console.log("[v0] Credentials encoded (first 20 chars):", credentials.substring(0, 20) + "...")
+    const authPayload = {
+      UserToken: {
+        ClientId: clientId,
+        ClientSecretKey: apiSecret,
+      },
+    }
+
+    console.log("[v0] Auth payload:", JSON.stringify(authPayload, null, 2))
 
     const authResponse = await fetch(authUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Basic ${credentials}`,
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify(authPayload),
     })
 
     console.log("[v0] Auth response status:", authResponse.status)
-    console.log("[v0] Auth response headers:", Object.fromEntries(authResponse.headers.entries()))
 
     if (!authResponse.ok) {
       const authError = await authResponse.text()
@@ -133,7 +137,7 @@ export async function POST(request: Request) {
     const authResult = await authResponse.json()
     console.log("[v0] Auth result:", authResult)
 
-    const accessToken = authResult.AccessToken
+    const accessToken = authResult.AccessToken || authResult.UserToken?.AccessToken
 
     if (!accessToken) {
       console.error("[v0] ❌ No access token in response")
@@ -153,46 +157,62 @@ export async function POST(request: Request) {
     console.log("[v0] STEP 2: SUBMITTING W-2 TO TAXBANDITS")
     console.log("[v0] ========================================")
 
-    const apiUrl =
-      environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testapi.taxbandits.com/v1.7.3"
-
     const taxbanditsPayload = {
+      SubmissionManifest: {
+        SubmissionId: `W2-${user.id}-${Date.now()}`,
+        TaxYear: formData.taxYear,
+        IsFederalFiling: true,
+        IsStateFiling: formData.stateWages && Number.parseFloat(formData.stateWages) > 0,
+      },
       ReturnHeader: {
         Business: {
           BusinessNm: formData.employerName,
           EIN: formData.employerEIN,
           BusinessType: "ESTE",
-        },
-        TaxYr: formData.taxYear,
-      },
-      FormW2: {
-        EmployeeInfo: {
-          FirstNm: formData.employeeFirstName,
-          MiddleInitial: formData.employeeMiddleInitial || "",
-          LastNm: formData.employeeLastName,
-          SSN: formData.employeeSSN,
-          Address: {
-            Address1: formData.employeeAddress,
-            City: formData.employeeCity,
-            State: formData.employeeState,
-            ZipCd: formData.employeeZip,
+          USAddress: {
+            Address1: formData.employerAddress,
+            City: formData.employerCity,
+            State: formData.employerState,
+            ZipCd: formData.employerZip,
           },
         },
-        WagesAndCompensation: {
-          WagesTipsAndOtherComp: Number.parseFloat(formData.wages) || 0,
-          FederalIncomeTaxWithheld: Number.parseFloat(formData.federalWithholding) || 0,
-          SocialSecurityWages: Number.parseFloat(formData.socialSecurityWages) || 0,
-          SocialSecurityTaxWithheld: Number.parseFloat(formData.socialSecurityWithholding) || 0,
-          MedicareWagesAndTips: Number.parseFloat(formData.medicareWages) || 0,
-          MedicareTaxWithheld: Number.parseFloat(formData.medicareWithholding) || 0,
-        },
       },
+      ReturnData: [
+        {
+          RecordId: `W2-${Date.now()}`,
+          SequenceId: "1",
+          FormW2: {
+            EmployeeUSAddress: {
+              Address1: formData.employeeAddress || formData.employerAddress,
+              City: formData.employeeCity || formData.employerCity,
+              State: formData.employeeState || formData.employerState,
+              ZipCd: formData.employeeZip || formData.employerZip,
+            },
+            EmployeeName: {
+              FirstNm: formData.employeeFirstName,
+              MiddleInitial: formData.employeeMiddleInitial || "",
+              LastNm: formData.employeeLastName,
+            },
+            SSN: formData.employeeSSN.replace(/-/g, ""),
+            Wages: Number.parseFloat(formData.wages) || 0,
+            FedIncomeTaxWH: Number.parseFloat(formData.federalWithholding) || 0,
+            SocialSecurityWages: Number.parseFloat(formData.socialSecurityWages) || 0,
+            SocialSecurityTaxWH: Number.parseFloat(formData.socialSecurityWithholding) || 0,
+            MedicareWages: Number.parseFloat(formData.medicareWages) || 0,
+            MedicareTaxWH: Number.parseFloat(formData.medicareWithholding) || 0,
+            SocialSecurityTips: Number.parseFloat(formData.socialSecurityTips) || 0,
+            AllocatedTips: Number.parseFloat(formData.allocatedTips) || 0,
+            DependentCareBenefits: Number.parseFloat(formData.dependentCareBenefits) || 0,
+            NonQualifiedPlans: Number.parseFloat(formData.nonqualifiedPlans) || 0,
+          },
+        },
+      ],
     }
 
     console.log("[v0] TaxBandits payload:", JSON.stringify(taxbanditsPayload, null, 2))
-    console.log("[v0] Sending request to:", `${apiUrl}/Form/W2`)
+    console.log("[v0] Sending request to:", `${baseUrl}/Form/W2`)
 
-    const taxbanditsResponse = await fetch(`${apiUrl}/Form/W2`, {
+    const taxbanditsResponse = await fetch(`${baseUrl}/Form/W2`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -202,10 +222,9 @@ export async function POST(request: Request) {
     })
 
     console.log("[v0] TaxBandits response status:", taxbanditsResponse.status)
-    console.log("[v0] TaxBandits response headers:", Object.fromEntries(taxbanditsResponse.headers.entries()))
 
     const responseText = await taxbanditsResponse.text()
-    console.log("[v0] TaxBandits response body:", responseText)
+    console.log("[v0] TaxBandits response body:", responseText.substring(0, 500))
 
     let result: any
     try {
@@ -265,7 +284,6 @@ export async function POST(request: Request) {
 
     if (filingError) {
       console.error("[v0] ⚠️ Error storing filing:", filingError)
-      // Don't fail the request if database save fails - the IRS submission succeeded
     } else {
       console.log("[v0] ✅ Filing saved to database:", filing?.id)
     }
