@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { checkDemoMode } from "@/lib/demo-mode"
+import jwt from "jsonwebtoken"
 
 export const runtime = "nodejs"
 
@@ -72,8 +73,8 @@ export async function POST(request: Request) {
     const clientId = process.env.TAXBANDITS_CLIENT_ID
 
     console.log("[v0] Checking TaxBandits credentials...")
-    console.log("[v0] - API Key:", apiKey ? `${apiKey.substring(0, 10)}...` : "❌ MISSING")
-    console.log("[v0] - API Secret:", apiSecret ? "✅ Set" : "❌ MISSING")
+    console.log("[v0] - API Key (User Token):", apiKey ? `${apiKey.substring(0, 10)}...` : "❌ MISSING")
+    console.log("[v0] - API Secret (Client Secret):", apiSecret ? "✅ Set" : "❌ MISSING")
     console.log("[v0] - Client ID:", clientId ? `${clientId.substring(0, 10)}...` : "❌ MISSING")
 
     if (!apiKey || !apiSecret || !clientId) {
@@ -90,44 +91,49 @@ export async function POST(request: Request) {
     const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
     console.log("[v0] TaxBandits environment:", environment)
 
-    const baseUrl =
+    const oauthUrl =
+      environment === "production"
+        ? "https://oauth.expressauth.net/v2/tbsauth"
+        : "https://testoauth.expressauth.net/v2/tbsauth"
+
+    const apiBaseUrl =
       environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testapi.taxbandits.com/v1.7.3"
 
     console.log("[v0] ========================================")
-    console.log("[v0] STEP 1: AUTHENTICATING WITH TAXBANDITS")
+    console.log("[v0] STEP 1: AUTHENTICATING WITH TAXBANDITS OAUTH")
     console.log("[v0] ========================================")
 
-    const authUrl = `${baseUrl}/User/UserToken`
-    console.log("[v0] Auth URL:", authUrl)
+    console.log("[v0] OAuth URL:", oauthUrl)
 
-    const authPayload = {
-      UserToken: {
-        ClientId: clientId,
-        ClientSecretKey: apiSecret,
-      },
+    const jwtPayload = {
+      iss: clientId, // Issuer: Client ID
+      sub: clientId, // Subject: Client ID
+      aud: apiKey, // Audience: User Token
+      iat: Math.floor(Date.now() / 1000), // Issued At: Current timestamp
     }
 
-    console.log("[v0] Auth payload:", JSON.stringify(authPayload, null, 2))
+    console.log("[v0] Generating JWS for OAuth...")
+    const jws = jwt.sign(jwtPayload, apiSecret)
+    console.log("[v0] JWS generated (first 30 chars):", jws.substring(0, 30) + "...")
 
-    const authResponse = await fetch(authUrl, {
-      method: "POST",
+    const authResponse = await fetch(oauthUrl, {
+      method: "GET",
       headers: {
-        "Content-Type": "application/json",
+        Authentication: jws, // TaxBandits uses "Authentication" not "Authorization"
       },
-      body: JSON.stringify(authPayload),
     })
 
     console.log("[v0] Auth response status:", authResponse.status)
 
     if (!authResponse.ok) {
-      const authError = await authResponse.text()
-      console.error("[v0] ❌ TaxBandits authentication failed")
+      const authError = await authResponse.json()
+      console.error("[v0] ❌ TaxBandits OAuth authentication failed")
       console.error("[v0] Error response:", authError)
 
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to authenticate with TaxBandits. Please check your API credentials.",
+          error: "Failed to authenticate with TaxBandits OAuth. Please verify your credentials.",
           details: authError,
         },
         { status: 500 },
@@ -135,9 +141,9 @@ export async function POST(request: Request) {
     }
 
     const authResult = await authResponse.json()
-    console.log("[v0] Auth result:", authResult)
+    console.log("[v0] Auth result keys:", Object.keys(authResult))
 
-    const accessToken = authResult.AccessToken || authResult.UserToken?.AccessToken
+    const accessToken = authResult.AccessToken
 
     if (!accessToken) {
       console.error("[v0] ❌ No access token in response")
@@ -150,7 +156,7 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log("[v0] ✅ Authentication successful")
+    console.log("[v0] ✅ OAuth authentication successful")
     console.log("[v0] Access token (first 20 chars):", accessToken.substring(0, 20) + "...")
 
     console.log("[v0] ========================================")
@@ -210,9 +216,9 @@ export async function POST(request: Request) {
     }
 
     console.log("[v0] TaxBandits payload:", JSON.stringify(taxbanditsPayload, null, 2))
-    console.log("[v0] Sending request to:", `${baseUrl}/Form/W2`)
+    console.log("[v0] Sending request to:", `${apiBaseUrl}/Form/W2`)
 
-    const taxbanditsResponse = await fetch(`${baseUrl}/Form/W2`, {
+    const taxbanditsResponse = await fetch(`${apiBaseUrl}/Form/W2`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

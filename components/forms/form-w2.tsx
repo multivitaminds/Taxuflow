@@ -21,6 +21,7 @@ import {
   Info,
   CheckCircle2,
   AlertTriangle,
+  Activity,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -499,14 +500,24 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
 
     console.log("[v0] ========================================")
-    console.log("[v0] SUBMIT BUTTON CLICKED")
+    console.log("[v0] SUBMIT BUTTON CLICKED - HANDLER EXECUTING")
     console.log("[v0] ========================================")
+    console.log("[v0] Event type:", e.type)
+    console.log("[v0] Event target:", e.target)
     console.log("[v0] Current validation result:", validationResult)
     console.log("[v0] Is paper filing required:", isPaperFilingRequired)
     console.log("[v0] Override validation:", overrideValidation)
     console.log("[v0] Loading state:", loading)
+    console.log("[v0] Form data summary:", {
+      employerName: formData.employerName,
+      employeeFirstName: formData.employeeFirstName,
+      employeeLastName: formData.employeeLastName,
+      wages: formData.wages,
+      taxYear: formData.taxYear,
+    })
 
     if (loading) {
       console.log("[v0] Already submitting, ignoring duplicate click")
@@ -756,8 +767,42 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const isEfileEligible = canEfile(selectedYear)
   const isPaperFilingRequired = !isEfileEligible
 
+  const testTaxBanditsAPI = async () => {
+    console.log("[v0] Testing TaxBandits API connection...")
+    setLoading(true)
+
+    try {
+      const response = await fetch("/api/filing/test-taxbandits")
+      const data = await response.json()
+
+      console.log("[v0] TaxBandits API test result:", data)
+
+      if (data.success) {
+        toast({
+          title: "✓ TaxBandits API Connected",
+          description: `Successfully authenticated with TaxBandits ${data.environment} environment.`,
+        })
+      } else {
+        toast({
+          title: "✗ TaxBandits API Error",
+          description: data.error || "Failed to connect to TaxBandits API",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      console.error("[v0] TaxBandits API test failed:", error)
+      toast({
+        title: "✗ Connection Failed",
+        description: "Could not reach TaxBandits API. Check console for details.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
 
@@ -1388,6 +1433,17 @@ export default function FormW2({ extractedData }: FormW2Props) {
               <Button
                 type="button"
                 variant="outline"
+                onClick={testTaxBanditsAPI}
+                disabled={loading}
+                className="flex-1 bg-transparent border-green-500/20 hover:bg-green-500/5"
+              >
+                <Activity className="mr-2 h-4 w-4" />
+                Test TaxBandits API
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
                 onClick={handleValidateForm}
                 disabled={validating || loading}
                 className="flex-1 bg-transparent border-blue-500/20"
@@ -1433,6 +1489,24 @@ export default function FormW2({ extractedData }: FormW2Props) {
               <Button
                 type="submit"
                 disabled={loading || savingDraft || validating}
+                onClick={(e) => {
+                  console.log("[v0] ========================================")
+                  console.log("[v0] SUBMIT BUTTON CLICKED (onClick)")
+                  console.log("[v0] ========================================")
+                  console.log("[v0] Button disabled:", loading || savingDraft || validating)
+                  console.log("[v0] Loading:", loading)
+                  console.log("[v0] Saving draft:", savingDraft)
+                  console.log("[v0] Validating:", validating)
+
+                  if (loading || savingDraft || validating) {
+                    console.log("[v0] Button is disabled, preventing submission")
+                    e.preventDefault()
+                    e.stopPropagation()
+                    return
+                  }
+
+                  console.log("[v0] Button click will trigger form submission")
+                }}
                 className="flex-1 bg-gradient-to-r from-purple-600 to-orange-600 hover:from-purple-700 hover:to-orange-700 shadow-lg shadow-purple-500/30"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
