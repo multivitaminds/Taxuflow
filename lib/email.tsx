@@ -2,69 +2,94 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function sendFilingAcceptedEmail(
+export async function sendDocumentProcessedEmail(
   to: string,
   userName: string,
-  taxYear: number,
-  refundAmount: number,
-  submissionId: string,
+  documentName: string,
+  documentType: string,
+  extractedData: any,
 ) {
   try {
-    await resend.emails.send({
+    if (!process.env.RESEND_API_KEY) {
+      console.log("[v0] Resend API key not configured, skipping email")
+      return { success: false, reason: "API key not configured" }
+    }
+
+    const { data, error } = await resend.emails.send({
       from: "Taxu <noreply@taxu.io>",
-      to,
-      subject: `🎉 Your ${taxYear} Tax Return Was Accepted!`,
+      to: [to],
+      subject: `Your ${documentType.toUpperCase()} has been processed`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #2ACBFF 0%, #0EA5E9 100%); padding: 40px 20px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 32px;">Great News, ${userName}!</h1>
-          </div>
-          
-          <div style="padding: 40px 20px; background: #f9fafb;">
-            <p style="font-size: 18px; color: #111827; margin-bottom: 20px;">
-              Your ${taxYear} tax return has been <strong>accepted by the IRS</strong>! 🎉
-            </p>
-            
-            <div style="background: white; border-radius: 12px; padding: 24px; margin: 24px 0; border: 2px solid #2ACBFF;">
-              <h2 style="color: #2ACBFF; margin-top: 0;">Refund Details</h2>
-              <p style="font-size: 36px; font-weight: bold; color: #10b981; margin: 16px 0;">
-                $${refundAmount.toLocaleString()}
-              </p>
-              <p style="color: #6b7280; margin: 0;">Expected in 7-21 business days</p>
-            </div>
-            
-            <div style="background: white; border-radius: 12px; padding: 20px; margin: 24px 0;">
-              <p style="margin: 8px 0; color: #374151;">
-                <strong>Submission ID:</strong> <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">${submissionId}</code>
-              </p>
-              <p style="margin: 8px 0; color: #374151;">
-                <strong>Tax Year:</strong> ${taxYear}
-              </p>
-            </div>
-            
-            <div style="margin-top: 32px; text-align: center;">
-              <a href="https://taxu.io/dashboard/filing" 
-                 style="display: inline-block; background: #2ACBFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                View Filing Details
-              </a>
-            </div>
-            
-            <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
-              Questions? Reply to this email or chat with our AI team at taxu.io/chat
-            </p>
-          </div>
-          
-          <div style="padding: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
-            <p>© 2025 Taxu. All rights reserved.</p>
-          </div>
-        </div>
+        <h2>Hi ${userName},</h2>
+        <p>Great news! We've successfully processed your <strong>${documentName}</strong>.</p>
+        <h3>What we found:</h3>
+        <ul>
+          <li>Document Type: ${documentType.toUpperCase()}</li>
+          ${extractedData?.wages ? `<li>Wages: $${extractedData.wages.toLocaleString()}</li>` : ""}
+          ${extractedData?.federal_tax_withheld ? `<li>Federal Tax Withheld: $${extractedData.federal_tax_withheld.toLocaleString()}</li>` : ""}
+        </ul>
+        <p>Your tax team is now analyzing this document to maximize your refund!</p>
+        <p><a href="https://taxu.io/dashboard">View your dashboard</a></p>
       `,
     })
 
-    console.log("[v0] Filing accepted email sent to:", to)
-    return { success: true }
+    if (error) {
+      console.log("[v0] Email sending failed (non-critical):", error.message)
+      return { success: false, error }
+    }
+
+    console.log("[v0] Document processed email sent to:", to)
+    return { success: true, data }
   } catch (error) {
-    console.error("[v0] Error sending filing accepted email:", error)
+    console.log("[v0] Email sending failed (non-critical):", error instanceof Error ? error.message : String(error))
+    return { success: false, error }
+  }
+}
+
+export async function sendFilingAcceptedEmail(
+  to: string,
+  userName: string,
+  filingType: string,
+  submissionId: string,
+  filingDetails: any,
+) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.log("[v0] Resend API key not configured, skipping email")
+      return { success: false, reason: "API key not configured" }
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: "Taxu <noreply@taxu.io>",
+      to: [to],
+      subject: `✅ Your ${filingType} has been accepted by the IRS`,
+      html: `
+        <h2>Great news, ${userName}!</h2>
+        <p>Your <strong>${filingType}</strong> has been successfully accepted by the IRS.</p>
+        <h3>Filing Details:</h3>
+        <ul>
+          <li>Submission ID: ${submissionId}</li>
+          <li>Status: Accepted</li>
+          <li>Filing Type: ${filingType}</li>
+          ${filingDetails?.taxYear ? `<li>Tax Year: ${filingDetails.taxYear}</li>` : ""}
+          ${filingDetails?.employeeName ? `<li>Employee: ${filingDetails.employeeName}</li>` : ""}
+        </ul>
+        <p>Your filing has been successfully transmitted to the IRS and is now being processed.</p>
+        <p><a href="https://taxu.io/dashboard/filings">View your filings</a></p>
+        <hr />
+        <p style="color: #666; font-size: 12px;">This is an automated notification from Taxu. Please do not reply to this email.</p>
+      `,
+    })
+
+    if (error) {
+      console.log("[v0] Email sending failed (non-critical):", error.message)
+      return { success: false, error }
+    }
+
+    console.log("[v0] Filing accepted email sent to:", to)
+    return { success: true, data }
+  } catch (error) {
+    console.log("[v0] Email sending failed (non-critical):", error instanceof Error ? error.message : String(error))
     return { success: false, error }
   }
 }
@@ -72,131 +97,56 @@ export async function sendFilingAcceptedEmail(
 export async function sendFilingRejectedEmail(
   to: string,
   userName: string,
-  taxYear: number,
-  rejectionReasons: string[],
+  filingType: string,
   submissionId: string,
+  rejectionReason: string,
+  filingDetails: any,
 ) {
   try {
-    await resend.emails.send({
+    if (!process.env.RESEND_API_KEY) {
+      console.log("[v0] Resend API key not configured, skipping email")
+      return { success: false, reason: "API key not configured" }
+    }
+
+    const { data, error } = await resend.emails.send({
       from: "Taxu <noreply@taxu.io>",
-      to,
-      subject: `Action Required: Your ${taxYear} Tax Return Needs Attention`,
+      to: [to],
+      subject: `⚠️ Action Required: Your ${filingType} was rejected by the IRS`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px 20px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 32px;">Action Required</h1>
-          </div>
-          
-          <div style="padding: 40px 20px; background: #f9fafb;">
-            <p style="font-size: 18px; color: #111827; margin-bottom: 20px;">
-              Hi ${userName},
-            </p>
-            
-            <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
-              Your ${taxYear} tax return was rejected by the IRS. Don't worry - this is common and easy to fix!
-            </p>
-            
-            <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; margin: 24px 0; border-radius: 4px;">
-              <h3 style="color: #dc2626; margin-top: 0;">Rejection Reasons:</h3>
-              <ul style="color: #7f1d1d; margin: 0; padding-left: 20px;">
-                ${rejectionReasons.map((reason) => `<li style="margin: 8px 0;">${reason}</li>`).join("")}
-              </ul>
-            </div>
-            
-            <div style="background: white; border-radius: 12px; padding: 20px; margin: 24px 0;">
-              <p style="margin: 8px 0; color: #374151;">
-                <strong>Submission ID:</strong> <code style="background: #f3f4f6; padding: 4px 8px; border-radius: 4px;">${submissionId}</code>
-              </p>
-              <p style="margin: 8px 0; color: #374151;">
-                <strong>Tax Year:</strong> ${taxYear}
-              </p>
-            </div>
-            
-            <div style="background: #dbeafe; border-radius: 12px; padding: 20px; margin: 24px 0;">
-              <h3 style="color: #1e40af; margin-top: 0;">What's Next?</h3>
-              <p style="color: #1e3a8a; margin: 0;">
-                Our AI team has already analyzed the issues. Log in to review the corrections and resubmit your return.
-              </p>
-            </div>
-            
-            <div style="margin-top: 32px; text-align: center;">
-              <a href="https://taxu.io/dashboard/filing" 
-                 style="display: inline-block; background: #2ACBFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                Fix & Resubmit
-              </a>
-            </div>
-            
-            <p style="margin-top: 32px; color: #6b7280; font-size: 14px;">
-              Need help? Chat with Sophie, our Lead Tax AI, at taxu.io/chat
-            </p>
-          </div>
-          
-          <div style="padding: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
-            <p>© 2025 Taxu. All rights reserved.</p>
-          </div>
-        </div>
+        <h2>Hi ${userName},</h2>
+        <p>Unfortunately, your <strong>${filingType}</strong> was rejected by the IRS and requires your attention.</p>
+        <h3>Filing Details:</h3>
+        <ul>
+          <li>Submission ID: ${submissionId}</li>
+          <li>Status: Rejected</li>
+          <li>Filing Type: ${filingType}</li>
+          ${filingDetails?.taxYear ? `<li>Tax Year: ${filingDetails.taxYear}</li>` : ""}
+        </ul>
+        <h3>Rejection Reason:</h3>
+        <p style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">
+          ${rejectionReason}
+        </p>
+        <h3>Next Steps:</h3>
+        <ol>
+          <li>Review the rejection reason above</li>
+          <li>Correct the identified issues in your filing</li>
+          <li>Resubmit your corrected filing</li>
+        </ol>
+        <p><a href="https://taxu.io/dashboard/filings" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Review and Resubmit</a></p>
+        <hr />
+        <p style="color: #666; font-size: 12px;">Need help? Contact our support team at support@taxu.io</p>
       `,
     })
+
+    if (error) {
+      console.log("[v0] Email sending failed (non-critical):", error.message)
+      return { success: false, error }
+    }
 
     console.log("[v0] Filing rejected email sent to:", to)
-    return { success: true }
+    return { success: true, data }
   } catch (error) {
-    console.error("[v0] Error sending filing rejected email:", error)
-    return { success: false, error }
-  }
-}
-
-export async function sendDocumentProcessedEmail(
-  to: string,
-  userName: string,
-  fileName: string,
-  documentType: string,
-  extractedData: any,
-) {
-  try {
-    await resend.emails.send({
-      from: "Taxu <noreply@taxu.io>",
-      to,
-      subject: `✅ ${fileName} Processed Successfully`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px 20px; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 32px;">Document Processed!</h1>
-          </div>
-          
-          <div style="padding: 40px 20px; background: #f9fafb;">
-            <p style="font-size: 18px; color: #111827; margin-bottom: 20px;">
-              Hi ${userName},
-            </p>
-            
-            <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
-              We've successfully processed your <strong>${documentType.toUpperCase()}</strong> document.
-            </p>
-            
-            <div style="background: white; border-radius: 12px; padding: 20px; margin: 24px 0;">
-              <h3 style="color: #10b981; margin-top: 0;">📄 ${fileName}</h3>
-              <p style="color: #6b7280; margin: 0;">AI extracted ${Object.keys(extractedData).length} fields</p>
-            </div>
-            
-            <div style="margin-top: 32px; text-align: center;">
-              <a href="https://taxu.io/dashboard/documents" 
-                 style="display: inline-block; background: #2ACBFF; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-                Review Extracted Data
-              </a>
-            </div>
-          </div>
-          
-          <div style="padding: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
-            <p>© 2025 Taxu. All rights reserved.</p>
-          </div>
-        </div>
-      `,
-    })
-
-    console.log("[v0] Document processed email sent to:", to)
-    return { success: true }
-  } catch (error) {
-    console.error("[v0] Error sending document processed email:", error)
+    console.log("[v0] Email sending failed (non-critical):", error instanceof Error ? error.message : String(error))
     return { success: false, error }
   }
 }

@@ -194,21 +194,37 @@ Rules:
       throw new Error(`AI returned invalid JSON. Response: ${cleanedText.substring(0, 100)}...`)
     }
 
-    if (extractedData.employer && extractedData.employee && extractedData.income) {
-      // Check if the data looks like placeholder/template data
-      const hasRealData =
-        extractedData.employer.name &&
-        extractedData.employer.name !== "Company Name" &&
-        extractedData.employee.name &&
-        extractedData.employee.name !== "John Doe" &&
-        extractedData.income.wages > 0
+    // Validate that we have the minimum required data for the document type
+    if (extractedData.documentType === "w2") {
+      const hasRequiredW2Data =
+        extractedData.employer?.name &&
+        extractedData.employer?.ein &&
+        extractedData.employee?.name &&
+        extractedData.employee?.ssn &&
+        extractedData.income?.wages !== undefined
 
-      if (!hasRealData) {
-        console.error("[v0] AI returned template/placeholder data instead of extracting real values")
-        throw new Error("Could not extract real data from document. Please ensure the document is clear and readable.")
+      if (!hasRequiredW2Data) {
+        console.error("[v0] W-2 extraction missing required fields")
+        throw new Error(
+          "Could not extract all required W-2 data. Please ensure the document is clear and all fields are visible.",
+        )
+      }
+    } else if (extractedData.documentType === "1099-nec" || extractedData.documentType === "1099-misc") {
+      const hasRequired1099Data =
+        extractedData.payer?.name &&
+        extractedData.payer?.ein &&
+        extractedData.recipient?.name &&
+        extractedData.recipient?.tin
+
+      if (!hasRequired1099Data) {
+        console.error("[v0] 1099 extraction missing required fields")
+        throw new Error(
+          "Could not extract all required 1099 data. Please ensure the document is clear and all fields are visible.",
+        )
       }
     }
 
+    // Parse addresses for better structure
     if (extractedData.employer?.address) {
       const parsed = parseFullAddress(extractedData.employer.address)
       if (parsed) {

@@ -82,14 +82,19 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase.from("user_profiles").select("full_name, email").eq("id", user.id).single()
 
-    if (profile && user.email && analysisResult.extractedData) {
-      await sendDocumentProcessedEmail(
-        user.email,
-        profile.full_name || "there",
-        document.file_name,
-        analysisResult.documentType,
-        analysisResult.extractedData,
-      )
+    if (profile?.email && analysisResult.extractedData) {
+      try {
+        await sendDocumentProcessedEmail(
+          profile.email,
+          profile.full_name || "there",
+          document.file_name,
+          analysisResult.documentType,
+          analysisResult.extractedData,
+        )
+      } catch (emailError) {
+        console.log("[v0] Email sending failed (non-critical):", emailError)
+        // Continue processing even if email fails
+      }
     }
 
     const { data: taxDoc, error: taxDocError } = await supabase
@@ -98,11 +103,9 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         document_id: documentId,
         document_type: analysisResult.documentType,
-        document_subtype: analysisResult.subtype,
         tax_year: analysisResult.taxYear,
         taxpayer_name: analysisResult.extractedData?.employee_name || analysisResult.extractedData?.recipient_name,
         spouse_name: analysisResult.extractedData?.spouse_name,
-        filing_status: analysisResult.filingStatus || analysisResult.extractedData?.filing_status || "single",
         extracted_data: analysisResult.extractedData,
         ai_summary: analysisResult.summary,
         ai_confidence: analysisResult.confidence,
@@ -112,39 +115,53 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (taxDocError) {
-      console.log("[v0] Error storing tax document:", taxDocError)
+      console.log("[v0] Error storing tax document:", taxDocError.message)
+      // Continue processing even if tax_documents insert fails
     }
-
-    await supabase.from("agent_activities").insert({
-      user_id: user.id,
-      agent_name: "Sophie",
-      agent_role: "Document Analyst",
-      activity_type: "analysis",
-      title: `Analyzed your ${analysisResult.documentType.toUpperCase()} document`,
-      description: analysisResult.description,
-      document_id: documentId,
-      result_data: {
-        documentType: analysisResult.documentType,
-        confidence: analysisResult.confidence,
-        keyFindings: analysisResult.keyFindings,
-      },
-    })
 
     let processingResults: any = {}
 
     if (analysisResult.documentType === "w2") {
-      const { data: w2Data } = await supabase
+      const { data: w2Data, error: w2Error } = await supabase
         .from("w2_data")
         .insert({
           user_id: user.id,
           document_id: documentId,
-          ...analysisResult.extractedData,
+          employer_name: analysisResult.extractedData.employer_name,
+          employer_ein: analysisResult.extractedData.employer_ein,
+          employer_address: analysisResult.extractedData.employer_address,
+          employee_name: analysisResult.extractedData.employee_name,
+          employee_ssn: analysisResult.extractedData.employee_ssn,
+          employee_address: analysisResult.extractedData.employee_address,
+          state: analysisResult.extractedData.state,
+          wages: analysisResult.extractedData.wages,
+          federal_tax_withheld: analysisResult.extractedData.federal_tax_withheld,
+          social_security_wages: analysisResult.extractedData.social_security_wages,
+          social_security_tax_withheld: analysisResult.extractedData.social_security_tax_withheld,
+          medicare_wages: analysisResult.extractedData.medicare_wages,
+          medicare_tax_withheld: analysisResult.extractedData.medicare_tax_withheld,
+          state_wages: analysisResult.extractedData.state_wages,
+          state_tax_withheld: analysisResult.extractedData.state_tax_withheld,
+          box_12_codes: analysisResult.extractedData.box_12_codes,
+          other_data: analysisResult.extractedData.other_data,
           extraction_confidence: analysisResult.confidence,
         })
         .select()
         .single()
 
-      processingResults = await processW2Document(user.id, w2Data, supabase)
+      if (w2Error || !w2Data) {
+        console.log("[v0] Error storing W-2 data:", w2Error?.message)
+        return NextResponse.json({
+          success: true,
+          documentType: analysisResult.documentType,
+          analysis: analysisResult,
+          warning: "Document analyzed but W-2 data storage failed. Please try again or contact support.",
+        })
+      }
+
+      if (w2Data) {
+        processingResults = await processW2Document(user.id, w2Data, supabase)
+      }
     } else if (analysisResult.documentType === "1099") {
       const { data: taxData } = await supabase
         .from("tax_data")
@@ -157,7 +174,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      processingResults = await process1099Document(user.id, taxData, supabase)
+      if (taxData) {
+        processingResults = await process1099Document(user.id, taxData, supabase)
+      }
     } else if (analysisResult.documentType === "1040") {
       const { data: taxReturnData } = await supabase
         .from("tax_return_data")
@@ -170,7 +189,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      processingResults = await process1040Document(user.id, taxReturnData, supabase)
+      if (taxReturnData) {
+        processingResults = await process1040Document(user.id, taxReturnData, supabase)
+      }
     } else {
       processingResults = await processGeneralDocument(user.id, analysisResult, supabase)
     }
@@ -735,7 +756,6 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
       type: "deduction",
       category: "education",
       name: "Student Loan Interest Deduction",
-      description: "Deduct up to $2,500 in student loan interest paid",
       amount: 2500,
       recommended_by: "Riley",
       confidence: 85,
@@ -747,7 +767,6 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
       type: "credit",
       category: "retirement",
       name: "Saver's Credit",
-      description: "Credit for contributions to retirement accounts",
       amount: 1000,
       recommended_by: "Riley",
       confidence: 75,
@@ -759,7 +778,6 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
       type: "deduction",
       category: "health",
       name: "Health Savings Account (HSA) Deduction",
-      description: "Deduct HSA contributions up to annual limit",
       amount: 3850,
       recommended_by: "Riley",
       confidence: 80,
@@ -768,9 +786,13 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
     },
   ]
 
-  const { data } = await supabase.from("deductions_credits").insert(deductions).select()
-
-  return data || deductions
+  try {
+    const { data } = await supabase.from("deductions_credits").insert(deductions).select()
+    return data || deductions
+  } catch (error) {
+    console.log("[v0] Error inserting deductions (non-critical):", error)
+    return deductions
+  }
 }
 
 async function assessAuditRisk(w2Data: any, taxCalc: any) {

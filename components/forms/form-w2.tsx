@@ -500,7 +500,9 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log("[v0] Submit clicked, validationResult:", validationResult)
+    console.log("[v0] Submit button clicked")
+    console.log("[v0] Current validation result:", validationResult)
+    console.log("[v0] Is paper filing required:", isPaperFilingRequired)
 
     if (isPaperFilingRequired) {
       console.log("[v0] Paper filing required, generating PDF package...")
@@ -509,8 +511,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
     }
 
     if (!validationResult) {
-      console.log("[v0] No validation result, validating first...")
+      console.log("[v0] No validation result yet, running validation first...")
       await handleValidateForm()
+      toast({
+        title: "Validation Complete",
+        description: "Review the results and click 'Submit to IRS' again to file.",
+      })
       return
     }
 
@@ -535,10 +541,19 @@ export default function FormW2({ extractedData }: FormW2Props) {
       setOverrideValidation(true)
     }
 
-    console.log("[v0] Submitting W-2 to TaxBandits/IRS...", overrideValidation ? "(with validation override)" : "")
+    console.log("[v0] Starting W-2 submission to TaxBandits/IRS...")
+    console.log("[v0] Form data:", {
+      employer: formData.employerName,
+      employee: `${formData.employeeFirstName} ${formData.employeeLastName}`,
+      wages: formData.wages,
+      taxYear: formData.taxYear,
+    })
+
     setLoading(true)
 
     try {
+      console.log("[v0] Calling /api/filing/submit-w2...")
+
       const response = await fetch("/api/filing/submit-w2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -549,14 +564,18 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }),
       })
 
+      console.log("[v0] API response status:", response.status)
+      console.log("[v0] API response headers:", Object.fromEntries(response.headers.entries()))
+
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text()
-        console.error("[v0] Non-JSON response from server:", text)
+        console.error("[v0] Non-JSON response from server:", text.substring(0, 500))
         throw new Error("Server returned an invalid response. Please try again.")
       }
 
       const result = await response.json()
+      console.log("[v0] API response data:", result)
 
       if (result.isDemoMode) {
         toast({
@@ -579,7 +598,9 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
 
       if (result.success) {
-        console.log("[v0] W-2 submitted successfully to IRS via TaxBandits:", result.submissionId)
+        console.log("[v0] ✅ W-2 submitted successfully to IRS via TaxBandits!")
+        console.log("[v0] Submission ID:", result.submissionId)
+        console.log("[v0] Filing ID:", result.filingId)
 
         toast({
           title: "✓ W-2 Submitted to IRS",
@@ -593,16 +614,24 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
         setTimeout(() => {
           if (result.filingId) {
+            console.log("[v0] Redirecting to filing details:", result.filingId)
             router.push(`/dashboard/filing/${result.filingId}`)
           } else {
+            console.log("[v0] Redirecting to filing list")
             router.push("/dashboard/filing")
           }
         }, 2000)
       } else {
+        console.error("[v0] ❌ Submission failed:", result.error)
         throw new Error(result.error || "Failed to submit W-2 to IRS")
       }
     } catch (error: any) {
-      console.error("[v0] TaxBandits submission error:", error)
+      console.error("[v0] ❌ TaxBandits submission error:", error)
+      console.error("[v0] Error details:", {
+        message: error.message,
+        stack: error.stack,
+      })
+
       toast({
         title: "IRS Submission Failed",
         description: error.message || "Could not submit to TaxBandits. Please try again.",
