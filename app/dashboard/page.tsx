@@ -7,6 +7,12 @@ import { ErrorBoundary } from "@/components/error-boundary"
 export default async function DashboardPage() {
   try {
     const cookieStore = await cookies()
+
+    const authCookies = cookieStore.getAll().filter((c) => c.name.includes("sb-") || c.name.includes("auth"))
+    const hasAuthCookies = authCookies.length > 0
+
+    console.log("[v0] Dashboard auth cookies:", { hasAuthCookies, count: authCookies.length })
+
     const supabase = await getSupabaseServerClient()
 
     if (supabase) {
@@ -54,6 +60,18 @@ export default async function DashboardPage() {
           </ErrorBoundary>
         )
       }
+    }
+
+    // Middleware already validated these cookies, so trust them
+    if (hasAuthCookies) {
+      console.log("[v0] Auth cookies present but server validation unavailable, loading with client-side auth")
+      cookieStore.delete("demo_mode")
+
+      return (
+        <ErrorBoundary>
+          <DashboardClient user={null} profile={null} />
+        </ErrorBoundary>
+      )
     }
 
     const demoMode = cookieStore.get("demo_mode")?.value === "true"

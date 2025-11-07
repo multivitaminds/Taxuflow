@@ -167,7 +167,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
           if (!clientUser) {
             console.log("[v0] No authenticated user found, redirecting to login")
-            router.push("/login")
+            window.location.replace("/login")
             return
           }
 

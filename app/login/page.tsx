@@ -102,6 +102,10 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
 
+      if (!supabase) {
+        throw new Error("Authentication service is not configured. Please try again later.")
+      }
+
       console.log("[v0] Login attempt:", { email })
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -120,8 +124,15 @@ export default function LoginPage() {
         throw error
       }
 
-      console.log("[v0] Login successful, redirecting to dashboard")
-      window.location.href = "/dashboard"
+      if (data?.session) {
+        console.log("[v0] Login successful, session created")
+
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        window.location.replace("/dashboard")
+      } else {
+        throw new Error("No session returned from login")
+      }
     } catch (err: any) {
       console.log("[v0] Login failed:", err)
       setError(err.message || "Invalid email or password")
