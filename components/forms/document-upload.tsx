@@ -10,7 +10,7 @@ import { Upload, FileText, Loader2, CheckCircle2, X, AlertCircle } from "lucide-
 import { useRouter } from "next/navigation"
 
 interface DocumentUploadProps {
-  userId: string
+  userId?: string
   onExtractComplete?: (data: any) => void
 }
 
@@ -39,6 +39,15 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
   }, [])
 
   const handleFiles = async (fileList: File[]) => {
+    if (!userId) {
+      toast({
+        title: "Authentication Required",
+        description: "Please wait for authentication to complete, then try uploading again.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const newFiles: UploadedFile[] = fileList.map((file) => ({
       id: Date.now().toString() + Math.random(),
       name: file.name,

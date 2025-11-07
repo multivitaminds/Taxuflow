@@ -34,5 +34,7 @@ export async function POST() {
     }
   })
 
+  cookieStore.delete("demo_mode")
+
   return NextResponse.json({ success: true })
 }
