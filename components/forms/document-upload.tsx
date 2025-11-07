@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 
 interface DocumentUploadProps {
   userId?: string
-  onExtractComplete?: (data: any) => void
+  onExtractComplete?: (data: any, metadata: any) => void
 }
 
 interface UploadedFile {
@@ -113,14 +113,24 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
               ),
             )
 
-            toast({
-              title: "✅ Document Processed",
-              description: `Successfully extracted data from ${file.name}`,
-            })
+            if (extractData.warning === "template_data_detected") {
+              toast({
+                title: "📋 Sample Document Extracted",
+                description: `Extracted data from ${file.name}. This appears to be a demo/sample document.`,
+              })
+            } else {
+              toast({
+                title: "✅ Document Processed",
+                description: `Successfully extracted data from ${file.name}`,
+              })
+            }
 
-            // Notify parent component
+            // Notify parent component with metadata
             if (onExtractComplete) {
-              onExtractComplete(extractData.data)
+              onExtractComplete(extractData.data, {
+                warning: extractData.warning,
+                message: extractData.message,
+              })
             }
           } else {
             throw new Error(extractData.error || "Extraction failed")

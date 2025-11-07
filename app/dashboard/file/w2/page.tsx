@@ -29,7 +29,7 @@ export default function FileW2Page() {
     getUserId()
   }, [])
 
-  const handleExtractComplete = (data: any) => {
+  const handleExtractComplete = (data: any, metadata?: any) => {
     console.log("[v0] Extracted data received in page:", data)
 
     if (!data || !data.employer || !data.income) {
@@ -39,47 +39,36 @@ export default function FileW2Page() {
         description: "Could not extract W-2 data. Please enter manually.",
         variant: "destructive",
       })
-      setActiveTab("manual") // Switch to manual entry tab
+      setActiveTab("manual")
       return
     }
 
-    const templatePatterns = [
-      "Company Name",
-      "John Doe",
-      "Jane Doe",
-      "TechNova Solutions",
-      "ABC Corporation",
-      "XYZ Company",
-      "Sample Company",
-      "Example Corp",
-      "Test Company",
-      "Demo Company",
-      "Template",
-      "Placeholder",
-      "123-45-6789",
-      "12-3456789",
-      "000-00-0000",
-      "00-0000000",
-      "XX-XXXXXXX",
-      "XXX-XX-XXXX",
-    ]
-
-    const hasTemplateData = templatePatterns.some(
-      (pattern) =>
-        data.employer?.name?.includes(pattern) ||
-        data.employee?.name?.includes(pattern) ||
-        data.employee?.ssn?.includes(pattern) ||
-        data.employer?.ein?.includes(pattern),
-    )
-
-    if (hasTemplateData) {
-      console.error("[v0] AI returned template/placeholder data")
+    if (data.isTemplateData === true || metadata?.warning === "template_data_detected") {
+      console.log("[v0] Template/demo document detected")
       toast({
-        title: "⚠️ Template Data Detected",
-        description: "AI returned placeholder values instead of real data. Please enter your information manually.",
+        title: "📋 Sample Document Detected",
+        description:
+          "This appears to be a demo/sample W-2. The data has been pre-filled as a starting point. Please update with your actual information before submitting.",
+        duration: 8000,
+      })
+      setExtractedData(data)
+      setActiveTab("manual")
+      return
+    }
+
+    // Only keep basic validation
+    const hasMinimumData =
+      data.employer?.name && data.employee?.name && (data.income?.wages !== undefined || data.income?.wages !== null)
+
+    if (!hasMinimumData) {
+      console.error("[v0] Incomplete extraction data")
+      toast({
+        title: "⚠️ Incomplete Extraction",
+        description: "Some required fields could not be extracted. Please complete the missing information manually.",
         variant: "destructive",
       })
-      setActiveTab("manual") // Switch to manual entry tab
+      setExtractedData(data)
+      setActiveTab("manual")
       return
     }
 
@@ -88,7 +77,7 @@ export default function FileW2Page() {
 
     toast({
       title: "✅ Extraction Successful",
-      description: `Data extracted for ${data.employee?.name || "employee"}. Review and complete any missing fields.`,
+      description: `Data extracted for ${data.employee?.name || "employee"}. Review and complete any missing fields before submitting.`,
     })
   }
 

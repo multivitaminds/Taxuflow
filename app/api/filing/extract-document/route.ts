@@ -80,7 +80,10 @@ export async function POST(request: NextRequest) {
 
 Analyze this tax document image/PDF and extract ALL relevant information.
 
-IMPORTANT: This may be a demo, sample, or test document. Extract the data regardless of whether it says "DEMO", "SAMPLE", or "NOT A VALID TAX DOCUMENT". Your job is to extract the visible data accurately.
+CRITICAL INSTRUCTIONS:
+1. If the document contains PLACEHOLDER/TEMPLATE data (like "John Doe", "Test Company", "123-45-6789", "Sample Corp", etc.), you MUST set "isTemplateData": true in your response
+2. If the document appears to be a real tax document with actual taxpayer information, set "isTemplateData": false
+3. Extract the actual values you see, but flag if they appear to be examples/templates
 
 Identify the document type:
 - "w2" for W-2 Wage and Tax Statement
@@ -126,6 +129,8 @@ Return this exact JSON structure:
 {
   "documentType": "w2",
   "taxYear": 2024,
+  "isTemplateData": false,
+  "confidence": 0.95,
   "employer": {
     "name": "Company Name",
     "ein": "12-3456789",
@@ -150,10 +155,12 @@ Return this exact JSON structure:
 }
 
 Rules:
-- Extract REAL values from the document, not placeholders
+- Set "isTemplateData": true if the document contains placeholder/sample values like "John Doe", "Jane Smith", "Test Company", "Sample Corp", "123-45-6789", "00-0000000", etc.
+- Set "confidence" between 0 and 1 based on how confident you are in the extraction quality
+- Extract REAL values from the document exactly as they appear
 - If you can't read a field clearly, omit it from the JSON
 - Be accurate with numbers - these are used for tax filing
-- Always include documentType and taxYear
+- Always include documentType, taxYear, isTemplateData, and confidence
 - Return ONLY the JSON object, nothing else
 - Do NOT wrap in markdown code blocks
 - Do NOT add any explanatory text`
@@ -264,6 +271,18 @@ Rules:
         extractedData.recipient.state = parsed.state
         extractedData.recipient.zipCode = parsed.zipCode
       }
+    }
+
+    // Check if AI flagged this as template data
+    if (extractedData.isTemplateData === true) {
+      console.log("[v0] AI detected template/placeholder data in document")
+      return NextResponse.json({
+        success: true,
+        data: extractedData,
+        warning: "template_data_detected",
+        message:
+          "This appears to be a sample/demo document. The extracted data can be used as a starting point, but please verify and update with your actual information.",
+      })
     }
 
     console.log("[v0] Extracted document type:", extractedData.documentType)

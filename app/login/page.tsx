@@ -168,7 +168,7 @@ export default function LoginPage() {
 
   if (magicLinkSent) {
     return (
-      <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4 pt-24">
         <div className="w-full max-w-md">
           <Link href="/" className="flex items-center justify-center gap-2 mb-8">
             <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
@@ -196,7 +196,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4 pt-24">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
           <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
