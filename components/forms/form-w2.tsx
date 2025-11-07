@@ -564,6 +564,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
       filingType: filingType,
     })
 
+    const progressToast = toast({
+      title: "Submitting to IRS",
+      description: "Authenticating with TaxBandits...",
+      duration: Number.POSITIVE_INFINITY, // Keep toast visible until we dismiss it
+    })
+
     setLoading(true)
 
     try {
@@ -575,6 +581,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
         wages: formData.wages,
         taxYear: formData.taxYear,
         filingType: filingType,
+      })
+
+      progressToast.update({
+        id: progressToast.id,
+        title: "Submitting to IRS",
+        description: "Creating/verifying business entity...",
       })
 
       const response = await fetch("/api/filing/submit-w2", {
@@ -592,6 +604,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
       console.log("[v0] Response status text:", response.statusText)
       console.log("[v0] Response headers:", Object.fromEntries(response.headers.entries()))
 
+      progressToast.update({
+        id: progressToast.id,
+        title: "Submitting to IRS",
+        description: "Submitting W-2 form to IRS...",
+      })
+
       const contentType = response.headers.get("content-type")
       console.log("[v0] Content-Type:", contentType)
 
@@ -603,6 +621,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
       const result = await response.json()
       console.log("[v0] API response data:", result)
+
+      progressToast.dismiss()
 
       if (result.isDemoMode) {
         console.log("[v0] Demo mode restriction")
@@ -634,7 +654,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         console.log("[v0] Status:", result.status)
 
         toast({
-          title: "✓ W-2 Submitted to IRS",
+          title: "W-2 Submitted to IRS",
           description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours.`,
           duration: 5000,
         })
@@ -663,6 +683,10 @@ export default function FormW2({ extractedData }: FormW2Props) {
       console.error("[v0] ========================================")
       console.error("[v0] Error message:", error.message)
       console.error("[v0] Error stack:", error.stack)
+
+      if (progressToast) {
+        progressToast.dismiss()
+      }
 
       toast({
         title: "IRS Submission Failed",
