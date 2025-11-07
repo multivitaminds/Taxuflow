@@ -35,15 +35,11 @@ export async function updateSession(request: NextRequest) {
     const {
       data: { user },
       error,
-    } = await Promise.race([
-      supabase.auth.getUser(),
-      new Promise<{ data: { user: null }; error: Error }>((_, reject) =>
-        setTimeout(() => reject(new Error("Auth check timeout")), 5000),
-      ),
-    ]).catch((err) => {
-      console.log("[v0] Middleware auth check failed:", err.message)
-      return { data: { user: null }, error: err }
-    })
+    } = await supabase.auth.getUser()
+
+    if (error) {
+      console.log("[v0] Middleware auth error:", error.message)
+    }
 
     // Protect dashboard and other authenticated routes
     const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]

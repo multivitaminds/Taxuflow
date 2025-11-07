@@ -21,7 +21,6 @@ import {
   Info,
   CheckCircle2,
   AlertTriangle,
-  Activity,
 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -767,40 +766,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const isEfileEligible = canEfile(selectedYear)
   const isPaperFilingRequired = !isEfileEligible
 
-  const testTaxBanditsAPI = async () => {
-    console.log("[v0] Testing TaxBandits API connection...")
-    setLoading(true)
-
-    try {
-      const response = await fetch("/api/filing/test-taxbandits")
-      const data = await response.json()
-
-      console.log("[v0] TaxBandits API test result:", data)
-
-      if (data.success) {
-        toast({
-          title: "✓ TaxBandits API Connected",
-          description: `Successfully authenticated with TaxBandits ${data.environment} environment.`,
-        })
-      } else {
-        toast({
-          title: "✗ TaxBandits API Error",
-          description: data.error || "Failed to connect to TaxBandits API",
-          variant: "destructive",
-        })
-      }
-    } catch (error: any) {
-      console.error("[v0] TaxBandits API test failed:", error)
-      toast({
-        title: "✗ Connection Failed",
-        description: "Could not reach TaxBandits API. Check console for details.",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
@@ -1430,17 +1395,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 pt-6 border-t border-border">
             <div className="flex gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={testTaxBanditsAPI}
-                disabled={loading}
-                className="flex-1 bg-transparent border-green-500/20 hover:bg-green-500/5"
-              >
-                <Activity className="mr-2 h-4 w-4" />
-                Test TaxBandits API
-              </Button>
-
+              {/* Removed testTaxBanditsAPI button */}
               <Button
                 type="button"
                 variant="outline"

@@ -11,7 +11,35 @@ export function createClient() {
     throw new Error("Supabase configuration error: Missing environment variables")
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: "pkce",
+      storageKey: "taxu-auth",
+    },
+    global: {
+      fetch: async (url, options = {}) => {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
+
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+            credentials: "include",
+          })
+          clearTimeout(timeoutId)
+          return response
+        } catch (error) {
+          clearTimeout(timeoutId)
+          console.error("[v0] Supabase fetch error:", error)
+          throw error
+        }
+      },
+    },
+  })
 }
 
 // Keep singleton for backward compatibility
