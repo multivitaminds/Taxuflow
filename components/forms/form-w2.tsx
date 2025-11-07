@@ -543,23 +543,20 @@ export default function FormW2({ extractedData }: FormW2Props) {
     console.log("[v0] ========================================")
     console.log("[v0] STARTING W-2 SUBMISSION TO IRS")
     console.log("[v0] ========================================")
-    console.log("[v0] Form data:", {
-      employer: formData.employerName,
-      employee: `${formData.employeeFirstName} ${formData.employeeLastName}`,
-      wages: formData.wages,
-      taxYear: formData.taxYear,
-      filingType: filingType,
-    })
 
     setLoading(true)
 
+    let progressToastId: any = null
+
     try {
-      const progressToast = toast({
-        title: "🔄 Step 1 of 3: Authenticating...",
-        description: "Connecting to IRS e-filing service...",
+      // Step 1: Authenticating
+      progressToastId = toast({
+        title: "🔐 Step 1 of 3: Authenticating...",
+        description: "Securely connecting to IRS e-filing service",
         duration: Number.POSITIVE_INFINITY,
       })
 
+      console.log("[v0] Starting API call to /api/filing/submit-w2")
       const response = await fetch("/api/filing/submit-w2", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -570,41 +567,50 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }),
       })
 
+      // Step 2: Creating business entity
       toast({
-        ...progressToast,
-        title: "🔄 Step 2 of 3: Creating business entity...",
-        description: "Setting up your employer profile...",
+        ...progressToastId,
+        title: "🏢 Step 2 of 3: Verifying business entity...",
+        description: "Setting up your employer profile with the IRS",
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 800))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
+      // Step 3: Submitting W-2
       toast({
-        ...progressToast,
-        title: "🔄 Step 3 of 3: Submitting W-2 to IRS...",
-        description: "Transmitting your form securely...",
+        ...progressToastId,
+        title: "📄 Step 3 of 3: Submitting W-2 form...",
+        description: "Transmitting your tax data securely to the IRS",
       })
 
       const contentType = response.headers.get("content-type")
-      console.log("[v0] Content-Type:", contentType)
+      console.log("[v0] Response Content-Type:", contentType)
 
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text()
         console.error("[v0] ❌ Non-JSON response from server:", text.substring(0, 500))
 
-        toast({ ...progressToast, duration: 0 })
+        toast({
+          ...progressToastId,
+          duration: 0,
+        })
 
         throw new Error("Server returned an invalid response. Please try again.")
       }
 
       const result = await response.json()
-      console.log("[v0] API response data:", result)
+      console.log("[v0] API response:", result)
 
-      toast({ ...progressToast, duration: 0 })
+      // Dismiss progress toast
+      toast({
+        ...progressToastId,
+        duration: 0,
+      })
 
       if (result.isDemoMode) {
         console.log("[v0] Demo mode restriction")
         toast({
-          title: "Demo Mode Restriction",
+          title: "⚠️ Demo Mode Restriction",
           description: result.error,
           variant: "destructive",
           action: (
@@ -623,14 +629,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
 
       if (result.success) {
-        console.log("[v0] ========================================")
-        console.log("[v0] ✅ W-2 SUBMITTED SUCCESSFULLY TO IRS!")
-        console.log("[v0] ========================================")
+        console.log("[v0] ✅ W-2 SUBMITTED SUCCESSFULLY!")
         console.log("[v0] Submission ID:", result.submissionId)
 
+        // Success toast with submission details
         toast({
-          title: "✓ W-2 Submitted to IRS",
-          description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours.`,
+          title: "✓ W-2 Successfully Submitted to IRS",
+          description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours. You'll receive status updates via email.`,
           duration: 5000,
         })
 
@@ -638,6 +643,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         setValidationResult(null)
         setOverrideValidation(false)
 
+        // Redirect after 2 seconds
         console.log("[v0] Redirecting in 2 seconds...")
         setTimeout(() => {
           if (result.filingId) {
@@ -650,17 +656,31 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }, 2000)
       } else {
         console.error("[v0] ❌ Submission failed:", result.error)
-        throw new Error(result.error || "Failed to submit W-2 to IRS")
+
+        // Show detailed error message
+        toast({
+          title: "❌ IRS Submission Failed",
+          description: result.error || "Could not submit to the IRS. Please verify your information and try again.",
+          variant: "destructive",
+          duration: 7000,
+        })
       }
     } catch (error: any) {
-      console.error("[v0] ========================================")
-      console.error("[v0] ❌ SUBMISSION ERROR")
-      console.error("[v0] ========================================")
-      console.error("[v0] Error message:", error.message)
+      console.error("[v0] ❌ SUBMISSION ERROR:", error.message)
 
+      // Dismiss progress toast if still showing
+      if (progressToastId) {
+        toast({
+          ...progressToastId,
+          duration: 0,
+        })
+      }
+
+      // Show error toast with helpful message
       toast({
-        title: "IRS Submission Failed",
-        description: error.message || "Could not submit to TaxBandits. Please try again.",
+        title: "❌ Submission Error",
+        description:
+          error.message || "An unexpected error occurred. Please check your internet connection and try again.",
         variant: "destructive",
         duration: 7000,
       })

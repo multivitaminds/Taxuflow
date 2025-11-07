@@ -200,13 +200,16 @@ export async function POST(request: Request) {
     console.log("[v0] STEP 2: CREATING/VERIFYING BUSINESS ENTITY")
     console.log("[v0] ========================================")
 
+    const rawEIN = formData.employerEIN.replace(/[^0-9]/g, "")
+    const formattedEIN = `${rawEIN.substring(0, 2)}-${rawEIN.substring(2)}`
+
     const businessPayload = {
       BusinessNm: formData.employerName.trim(),
       IsEIN: true,
-      EINorSSN: formData.employerEIN.replace(/[^0-9]/g, ""), // Strip all non-numeric
+      EINorSSN: formattedEIN, // Use hyphenated format: "12-3456789"
     }
 
-    console.log("[v0] Creating business with minimal payload:", businessPayload)
+    console.log("[v0] Creating business with formatted EIN:", businessPayload)
 
     const businessResponse = await fetch(`${apiBaseUrl}/Business/Create`, {
       method: "POST",
@@ -242,9 +245,7 @@ export async function POST(request: Request) {
         console.log("[v0] Business list result:", JSON.stringify(listResult, null, 2))
 
         if (listResult.Businesses && listResult.Businesses.length > 0) {
-          const matchingBusiness = listResult.Businesses.find(
-            (b: any) => b.EINorSSN === formData.employerEIN.replace(/[^0-9]/g, ""),
-          )
+          const matchingBusiness = listResult.Businesses.find((b: any) => b.EINorSSN === formattedEIN)
           businessId = matchingBusiness?.BusinessId || listResult.Businesses[0].BusinessId
           console.log("[v0] ✅ Using existing business, ID:", businessId)
         }
@@ -371,30 +372,58 @@ export async function POST(request: Request) {
     const encryptedSSN = await safeEncrypt(formData.employeeSSN)
     const encryptedEIN = await safeEncrypt(formData.employerEIN)
 
-    const sanitizedFormData = {
-      ...formData,
-      employeeSSN: encryptedSSN,
-      employerEIN: encryptedEIN,
-    }
-
     const { data: filing, error: filingError } = await supabase
-      .from("tax_filings")
+      .from("w2_filings")
       .insert({
         user_id: user.id,
-        form_type: "W-2",
-        tax_year: Number.parseInt(formData.taxYear),
-        status: "submitted",
+        organization_id: null,
         submission_id: result.SubmissionId || result.submissionId || `W2-${Date.now()}`,
-        form_data: sanitizedFormData,
-        provider: "taxbandits",
+        business_id: businessId,
+        taxbandits_status: result.Status || "submitted",
+        irs_status: result.IRSStatus || null,
+        filing_type: "original",
+        tax_year: Number.parseInt(formData.taxYear),
+        employer_name: formData.employerName,
+        employer_ein: encryptedEIN,
+        employer_address: formData.employerAddress,
+        employer_city: formData.employerCity,
+        employer_state: formData.employerState,
+        employer_zip: formData.employerZip,
+        employee_first_name: formData.employeeFirstName,
+        employee_middle_initial: formData.employeeMiddleInitial || null,
+        employee_last_name: formData.employeeLastName,
+        employee_ssn_encrypted: encryptedSSN,
+        employee_address: formData.employeeAddress || formData.employerAddress,
+        employee_city: formData.employeeCity || formData.employerCity,
+        employee_state: formData.employeeState || formData.employerState,
+        employee_zip: formData.employeeZip || formData.employerZip,
+        wages: Number.parseFloat(formData.wages || "0"),
+        federal_tax_withheld: Number.parseFloat(formData.federalWithholding || "0"),
+        social_security_wages: Number.parseFloat(formData.socialSecurityWages || "0"),
+        social_security_tax: Number.parseFloat(formData.socialSecurityWithholding || "0"),
+        medicare_wages: Number.parseFloat(formData.medicareWages || "0"),
+        medicare_tax: Number.parseFloat(formData.medicareWithholding || "0"),
+        social_security_tips: Number.parseFloat(formData.socialSecurityTips || "0"),
+        allocated_tips: Number.parseFloat(formData.allocatedTips || "0"),
+        dependent_care_benefits: Number.parseFloat(formData.dependentCareBenefits || "0"),
+        nonqualified_plans: Number.parseFloat(formData.nonqualifiedPlans || "0"),
+        box_12_codes: formData.box12Codes || [],
+        state_wages: Number.parseFloat(formData.stateWages || "0"),
+        state_tax: Number.parseFloat(formData.stateTax || "0"),
+        local_wages: Number.parseFloat(formData.localWages || "0"),
+        local_tax: Number.parseFloat(formData.localTax || "0"),
+        locality_name: formData.localityName || null,
+        submitted_at: new Date().toISOString(),
       })
       .select()
       .single()
 
     if (filingError) {
-      console.error("[v0] ⚠️ Error storing filing:", filingError)
+      console.error("[v0] ⚠️ Error storing W-2 filing:", filingError)
+      // Don't fail the whole submission if database save fails
+      console.error("[v0] W-2 was still submitted to IRS successfully")
     } else {
-      console.log("[v0] ✅ Filing saved to database:", filing?.id)
+      console.log("[v0] ✅ W-2 filing saved to database:", filing?.id)
     }
 
     console.log("[v0] ========================================")

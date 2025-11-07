@@ -1,10 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
-const getEnvVar = (key: string): string | undefined => {
-  return process.env[key]
-}
-
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -12,13 +8,16 @@ export async function updateSession(request: NextRequest) {
 
   const demoMode = request.cookies.get("demo_mode")?.value === "true"
 
-  const supabaseUrl = getEnvVar("NEXT_PUBLIC_SUPABASE_URL")
-  const supabaseAnonKey = getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  console.log("[v0] Middleware env check:", {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+  })
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.log("[v0] Supabase not configured in middleware")
-    console.log("[v0] NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "present" : "missing")
-    console.log("[v0] NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "present" : "missing")
+    console.log("[v0] Supabase not configured in middleware - skipping auth")
     return supabaseResponse
   }
 

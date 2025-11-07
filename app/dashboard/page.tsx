@@ -37,8 +37,12 @@ export default async function DashboardPage() {
     const supabase = await getSupabaseServerClient()
 
     if (!supabase) {
-      console.log("[v0] Supabase not configured, redirecting to login")
-      redirect("/login")
+      console.log("[v0] Server env vars not ready, using client-side auth")
+      return (
+        <ErrorBoundary>
+          <DashboardClient user={null} profile={null} />
+        </ErrorBoundary>
+      )
     }
 
     const {
@@ -86,7 +90,11 @@ export default async function DashboardPage() {
       </ErrorBoundary>
     )
   } catch (error) {
-    console.log("[v0] Auth error caught, redirecting to login:", error)
-    redirect("/login")
+    console.log("[v0] Dashboard error:", error)
+    return (
+      <ErrorBoundary>
+        <DashboardClient user={null} profile={null} />
+      </ErrorBoundary>
+    )
   }
 }

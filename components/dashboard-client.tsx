@@ -31,7 +31,7 @@ import { agents } from "@/data/agents"
 import { DashboardHeader } from "@/components/dashboard-header"
 
 interface DashboardClientProps {
-  user: User
+  user: User | null // Allow null for client-side auth fallback
   profile: {
     full_name: string | null
     preferred_agent: string
@@ -71,15 +71,23 @@ interface Deduction {
   status: string
 }
 
-export function DashboardClient({ user, profile }: DashboardClientProps) {
+export function DashboardClient({ user: initialUser, profile: initialProfile }: DashboardClientProps) {
   const router = useRouter()
-  const [selectedAgent, setSelectedAgent] = useState(profile?.preferred_agent || "Sam")
+  const [selectedAgent, setSelectedAgent] = useState(initialProfile?.preferred_agent || "Sam")
+  const [user, setUser] = useState(initialUser)
+  const [profile, setProfile] = useState(initialProfile)
+  const [loading, setLoading] = useState(!initialUser)
+
   const userName =
-    profile?.full_name?.split(" ")[0] ||
-    user.user_metadata?.full_name?.split(" ")[0] ||
-    user.email?.split("@")[0] ||
+    (profile || initialProfile)?.full_name?.split(" ")[0] ||
+    (user || initialUser)?.user_metadata?.full_name?.split(" ")[0] ||
+    (user || initialUser)?.email?.split("@")[0] ||
     "there"
-  const fullUserName = profile?.full_name || user.user_metadata?.full_name || user.email?.split("@")[0] || "User"
+  const fullUserName =
+    (profile || initialProfile)?.full_name ||
+    (user || initialUser)?.user_metadata?.full_name ||
+    (user || initialUser)?.email?.split("@")[0] ||
+    "User"
 
   const [documents, setDocuments] = useState<Document[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)
@@ -139,6 +147,48 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   const [supabaseError, setSupabaseError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!initialUser) {
+      const checkAuth = async () => {
+        console.log("[v0] No server user, checking client-side auth")
+        try {
+          const {
+            data: { user: clientUser },
+          } = await supabase.auth.getUser()
+
+          if (!clientUser) {
+            console.log("[v0] No authenticated user found, redirecting to login")
+            router.push("/login")
+            return
+          }
+
+          console.log("[v0] Client-side auth successful:", clientUser.email)
+          setUser(clientUser)
+
+          // Fetch profile
+          const { data: clientProfile } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .eq("id", clientUser.id)
+            .maybeSingle()
+
+          setProfile(clientProfile)
+          setLoading(false)
+        } catch (error) {
+          console.log("[v0] Client auth check failed:", error)
+          router.push("/login")
+        }
+      }
+
+      checkAuth()
+    } else {
+      // Server auth worked
+      setUser(initialUser)
+      setProfile(initialProfile)
+      setLoading(false)
+    }
+  }, [initialUser, router])
+
+  useEffect(() => {
     if (!supabase) {
       console.error("[v0] Supabase client is not configured")
       setSupabaseError("Database connection error. Please check your configuration.")
@@ -148,6 +198,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }, [supabase])
 
   const fetchDashboardData = async () => {
+    if (!user) {
+      console.log("[v0] No user available yet, skipping data fetch")
+      return
+    }
+
     if (user.id === "demo-user-id") {
       console.log("[v0] Loading demo data")
       setDocuments([
@@ -319,11 +374,13 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [user.id])
+    if (user) {
+      fetchDashboardData()
+    }
+  }, [user]) // Depend on user state
 
   useEffect(() => {
-    if (autoRefresh) {
+    if (autoRefresh && user) {
       console.log("[v0] Auto-refresh enabled, will refresh every 3 seconds")
       const interval = setInterval(() => {
         console.log("[v0] Auto-refreshing dashboard data...")
@@ -335,7 +392,18 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         clearInterval(interval)
       }
     }
-  }, [autoRefresh, user.id])
+  }, [autoRefresh, user]) // Depend on user state
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleStatCardClick = (type: string) => {
     console.log(`[v0] Navigating to ${type} details`)
