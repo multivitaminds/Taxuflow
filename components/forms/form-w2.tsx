@@ -400,96 +400,88 @@ export default function FormW2({ extractedData }: FormW2Props) {
     setValidationResult(null)
 
     try {
-      console.log("[v0] Running client-side validation...")
+      console.log("[v0] Running AI-powered validation...")
 
-      const errors: any[] = []
-      const warnings: any[] = []
+      // First, do basic client-side checks
+      const clientErrors: any[] = []
 
-      // Check required fields
-      if (!formData.employerName) errors.push({ field: "employerName", message: "Employer name is required" })
-      if (!formData.employerEIN) errors.push({ field: "employerEIN", message: "Employer EIN is required" })
+      if (!formData.employerName) clientErrors.push({ field: "employerName", message: "Employer name is required" })
+      if (!formData.employerEIN) clientErrors.push({ field: "employerEIN", message: "Employer EIN is required" })
       if (!formData.employeeFirstName)
-        errors.push({ field: "employeeFirstName", message: "Employee first name is required" })
+        clientErrors.push({ field: "employeeFirstName", message: "Employee first name is required" })
       if (!formData.employeeLastName)
-        errors.push({ field: "employeeLastName", message: "Employee last name is required" })
-      if (!formData.employeeSSN) errors.push({ field: "employeeSSN", message: "Employee SSN is required" })
-      if (!formData.wages) errors.push({ field: "wages", message: "Wages are required" })
+        clientErrors.push({ field: "employeeLastName", message: "Employee last name is required" })
+      if (!formData.employeeSSN) clientErrors.push({ field: "employeeSSN", message: "Employee SSN is required" })
+      if (!formData.wages) clientErrors.push({ field: "wages", message: "Wages are required" })
 
-      // Basic math validation
-      const wages = Number.parseFloat(formData.wages) || 0
-      const federalWithholding = Number.parseFloat(formData.federalWithholding) || 0
-      const socialSecurityWages = Number.parseFloat(formData.socialSecurityWages) || 0
-      const socialSecurityWithholding = Number.parseFloat(formData.socialSecurityWithholding) || 0
-      const medicareWages = Number.parseFloat(formData.medicareWages) || 0
-      const medicareWithholding = Number.parseFloat(formData.medicareWithholding) || 0
-
-      // Federal withholding should not exceed wages
-      if (federalWithholding > wages) {
-        errors.push({ field: "federalWithholding", message: "Federal withholding cannot exceed total wages" })
-      }
-
-      // Social Security withholding should be approximately 6.2% (allow 0-10% range)
-      if (socialSecurityWages > 0) {
-        const ssRate = (socialSecurityWithholding / socialSecurityWages) * 100
-        if (ssRate > 10) {
-          warnings.push({
-            field: "socialSecurityWithholding",
-            message: `Social Security withholding rate is ${ssRate.toFixed(1)}% (expected ~6.2%)`,
-          })
+      // If critical fields are missing, return early
+      if (clientErrors.length > 0) {
+        const result = {
+          valid: false,
+          errors: clientErrors,
+          warnings: [],
+          suggestions: [],
         }
+        setValidationResult(result)
+        toast({
+          title: "Validation Failed",
+          description: `Please fill in ${clientErrors.length} required field(s)`,
+          variant: "destructive",
+        })
+        setValidating(false)
+        return
       }
 
-      // Medicare withholding should be approximately 1.45% (allow 0-5% range)
-      if (medicareWages > 0) {
-        const medicareRate = (medicareWithholding / medicareWages) * 100
-        if (medicareRate > 5) {
-          warnings.push({
-            field: "medicareWithholding",
-            message: `Medicare withholding rate is ${medicareRate.toFixed(1)}% (expected ~1.45%)`,
-          })
-        }
-      }
-
-      const result = {
-        valid: errors.length === 0,
-        errors,
-        warnings,
-        suggestions: [],
-      }
-
-      setValidationResult(result)
-
-      const hasErrors = errors.length > 0
-      const hasWarnings = warnings.length > 0
-
-      console.log("[v0] Validation result:", {
-        valid: result.valid,
-        errors: hasErrors ? errors.length : 0,
-        warnings: hasWarnings ? warnings.length : 0,
+      // Call AI validation API
+      const response = await fetch("/api/filing/validate-w2", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          filingType,
+        }),
       })
 
-      if (!hasErrors && !hasWarnings) {
+      if (!response.ok) {
+        throw new Error("AI validation service unavailable")
+      }
+
+      const result = await response.json()
+      setValidationResult(result)
+
+      const hasErrors = result.errors?.length > 0
+      const hasWarnings = result.warnings?.length > 0
+      const hasSuggestions = result.suggestions?.length > 0
+
+      console.log("[v0] AI Validation result:", {
+        valid: result.valid,
+        errors: hasErrors ? result.errors.length : 0,
+        warnings: hasWarnings ? result.warnings.length : 0,
+        suggestions: hasSuggestions ? result.suggestions.length : 0,
+      })
+
+      if (!hasErrors && !hasWarnings && !hasSuggestions) {
         toast({
-          title: "✓ Validation Passed",
-          description: "Your form looks great! Click 'Submit to IRS' to file.",
+          title: "✓ Perfect!",
+          description: "Your W-2 passed all AI validation checks. Ready to submit!",
         })
       } else if (hasErrors) {
         toast({
-          title: "Validation Issues Found",
-          description: `Found ${errors.length} error(s) that need attention`,
+          title: "Issues Found",
+          description: `AI found ${result.errors.length} error(s) and ${result.warnings.length} warning(s)`,
           variant: "destructive",
         })
       } else {
         toast({
           title: "Validation Complete",
-          description: `Found ${warnings.length} warning(s) to review`,
+          description: `${result.warnings.length} warning(s) and ${result.suggestions.length} suggestion(s) to review`,
         })
       }
     } catch (error: any) {
-      console.error("[v0] Validation error:", error)
+      console.error("[v0] AI Validation error:", error)
       toast({
         title: "Validation Failed",
-        description: error.message,
+        description: error.message || "Could not complete AI validation",
         variant: "destructive",
       })
     } finally {
