@@ -11,13 +11,15 @@ export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  console.log("[v0] Middleware env check:", {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey,
-  })
-
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.log("[v0] Supabase not configured in middleware - skipping auth")
+    const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
+    const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+
+    if (isProtectedPath && !demoMode) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      return NextResponse.redirect(url)
+    }
     return supabaseResponse
   }
 
@@ -37,14 +39,13 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
-    // Do not run code between createServerClient and getUser()
     const {
       data: { user },
       error,
     } = await supabase.auth.getUser()
 
-    if (error && error.message !== "Auth session missing!") {
-      console.log("[v0] Middleware auth error:", error.message)
+    if (error) {
+      console.log("[v0] Middleware auth error - treating as unauthenticated:", error.message)
     }
 
     // Protect dashboard and other authenticated routes
@@ -52,15 +53,12 @@ export async function updateSession(request: NextRequest) {
     const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
     if (isProtectedPath && !user && !demoMode) {
-      console.log("[v0] Middleware: No user found, redirecting to login")
       const url = request.nextUrl.clone()
       url.pathname = "/login"
       return NextResponse.redirect(url)
     }
 
-    // Redirect authenticated users away from auth pages
     if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && user) {
-      console.log("[v0] Middleware: User authenticated, redirecting to dashboard")
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
       return NextResponse.redirect(url)
@@ -68,8 +66,15 @@ export async function updateSession(request: NextRequest) {
 
     return supabaseResponse
   } catch (error) {
-    // The page-level auth check will handle it
-    console.log("[v0] Middleware error, allowing request to continue:", error)
+    console.log("[v0] Middleware critical error:", error)
+    const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
+    const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+
+    if (isProtectedPath && !demoMode) {
+      const url = request.nextUrl.clone()
+      url.pathname = "/login"
+      return NextResponse.redirect(url)
+    }
     return supabaseResponse
   }
 }

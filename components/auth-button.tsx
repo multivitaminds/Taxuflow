@@ -62,31 +62,24 @@ export function AuthButton() {
 
   const handleSignOut = async () => {
     try {
-      const response = await fetch("/api/auth/signout", {
+      if (typeof window !== "undefined") {
+        localStorage.clear()
+        sessionStorage.clear()
+
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+        })
+      }
+
+      await fetch("/api/auth/signout", {
         method: "POST",
         credentials: "include",
       })
 
-      if (!response.ok) {
-        throw new Error("Sign out failed")
-      }
-
-      // Clear client-side storage
-      if (typeof window !== "undefined") {
-        localStorage.clear()
-        sessionStorage.clear()
-      }
-
-      // Force full page reload to clear all state and cookies
-      window.location.href = "/"
+      window.location.replace("/")
     } catch (error) {
       console.error("[v0] Sign out error:", error)
-      // Force redirect even on error to ensure user is logged out
-      if (typeof window !== "undefined") {
-        localStorage.clear()
-        sessionStorage.clear()
-      }
-      window.location.href = "/"
+      window.location.replace("/")
     }
   }
 
