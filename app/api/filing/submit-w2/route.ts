@@ -160,7 +160,88 @@ export async function POST(request: Request) {
     console.log("[v0] Access token (first 20 chars):", accessToken.substring(0, 20) + "...")
 
     console.log("[v0] ========================================")
-    console.log("[v0] STEP 2: SUBMITTING W-2 TO TAXBANDITS")
+    console.log("[v0] STEP 2: CREATING/VERIFYING BUSINESS ENTITY")
+    console.log("[v0] ========================================")
+
+    const businessPayload = {
+      BusinessNm: formData.employerName,
+      EINorSSN: formData.employerEIN.replace(/-/g, ""),
+      IsEIN: true,
+      Email: user.email || "",
+      USAddress: {
+        Address1: formData.employerAddress,
+        City: formData.employerCity,
+        State: formData.employerState,
+        ZipCd: formData.employerZip,
+      },
+      KindOfEmployer: "NONEAPPLY",
+      KindOfPayer: "REGULAR941",
+      IsDefaultBusiness: true,
+    }
+
+    console.log("[v0] Creating business entity...")
+    console.log("[v0] Business name:", formData.employerName)
+    console.log("[v0] Business EIN:", formData.employerEIN)
+
+    const businessResponse = await fetch(`${apiBaseUrl}/Business/Create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(businessPayload),
+    })
+
+    console.log("[v0] Business creation response status:", businessResponse.status)
+
+    const businessResult = await businessResponse.json()
+    console.log("[v0] Business creation result:", JSON.stringify(businessResult, null, 2))
+
+    let businessId: string | null = null
+
+    if (businessResponse.ok && businessResult.BusinessId) {
+      businessId = businessResult.BusinessId
+      console.log("[v0] ✅ Business created successfully, ID:", businessId)
+    } else if (businessResult.Errors && businessResult.Errors.some((e: any) => e.Message?.includes("already exists"))) {
+      // Business already exists, try to get it from the list
+      console.log("[v0] Business already exists, fetching from list...")
+
+      const listResponse = await fetch(`${apiBaseUrl}/Business/List`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
+      if (listResponse.ok) {
+        const listResult = await listResponse.json()
+        console.log("[v0] Business list result:", JSON.stringify(listResult, null, 2))
+
+        if (listResult.Businesses && listResult.Businesses.length > 0) {
+          // Find the business with matching EIN or use the first one
+          const matchingBusiness = listResult.Businesses.find(
+            (b: any) => b.EINorSSN === formData.employerEIN.replace(/-/g, ""),
+          )
+          businessId = matchingBusiness?.BusinessId || listResult.Businesses[0].BusinessId
+          console.log("[v0] ✅ Using existing business, ID:", businessId)
+        }
+      }
+    }
+
+    if (!businessId) {
+      console.error("[v0] ❌ Failed to create or retrieve business entity")
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to create business entity in TaxBandits",
+          details: businessResult,
+        },
+        { status: 500 },
+      )
+    }
+
+    console.log("[v0] ========================================")
+    console.log("[v0] STEP 3: SUBMITTING W-2 TO TAXBANDITS")
     console.log("[v0] ========================================")
 
     const taxbanditsPayload = {
@@ -172,8 +253,9 @@ export async function POST(request: Request) {
       },
       ReturnHeader: {
         Business: {
+          BusinessId: businessId, // Use the BusinessId from creation/retrieval
           BusinessNm: formData.employerName,
-          EIN: formData.employerEIN,
+          EIN: formData.employerEIN.replace(/-/g, ""),
           BusinessType: "ESTE",
           USAddress: {
             Address1: formData.employerAddress,
@@ -262,7 +344,7 @@ export async function POST(request: Request) {
     console.log("[v0] Submission ID:", result.SubmissionId || result.submissionId)
 
     console.log("[v0] ========================================")
-    console.log("[v0] STEP 3: SAVING TO DATABASE")
+    console.log("[v0] STEP 4: SAVING TO DATABASE")
     console.log("[v0] ========================================")
 
     const encryptedSSN = await safeEncrypt(formData.employeeSSN)
