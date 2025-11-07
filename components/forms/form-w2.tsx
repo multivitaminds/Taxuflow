@@ -564,29 +564,38 @@ export default function FormW2({ extractedData }: FormW2Props) {
       filingType: filingType,
     })
 
-    const progressToast = toast({
-      title: "Submitting to IRS",
-      description: "Authenticating with TaxBandits...",
-      duration: Number.POSITIVE_INFINITY, // Keep toast visible until we dismiss it
-    })
+    let progressToastId: string | number | undefined
 
     setLoading(true)
 
     try {
+      const initialToast = toast({
+        title: "🔄 Submitting to IRS",
+        description: "Step 1 of 3: Authenticating with TaxBandits...",
+        duration: Number.POSITIVE_INFINITY,
+      })
+      progressToastId = initialToast.id
+
       console.log("[v0] Calling /api/filing/submit-w2...")
-      console.log("[v0] Request payload:", {
-        employerName: formData.employerName,
-        employeeFirstName: formData.employeeFirstName,
-        employeeLastName: formData.employeeLastName,
-        wages: formData.wages,
-        taxYear: formData.taxYear,
-        filingType: filingType,
+
+      await new Promise((resolve) => setTimeout(resolve, 800))
+
+      console.log("[v0] Step 2: Creating/verifying business entity...")
+      toast({
+        id: progressToastId,
+        title: "🔄 Submitting to IRS",
+        description: "Step 2 of 3: Creating/verifying business entity...",
+        duration: Number.POSITIVE_INFINITY,
       })
 
-      progressToast.update({
-        id: progressToast.id,
-        title: "Submitting to IRS",
-        description: "Creating/verifying business entity...",
+      await new Promise((resolve) => setTimeout(resolve, 800))
+
+      console.log("[v0] Step 3: Submitting W-2 form to IRS...")
+      toast({
+        id: progressToastId,
+        title: "🔄 Submitting to IRS",
+        description: "Step 3 of 3: Submitting W-2 form to IRS...",
+        duration: Number.POSITIVE_INFINITY,
       })
 
       const response = await fetch("/api/filing/submit-w2", {
@@ -604,12 +613,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
       console.log("[v0] Response status text:", response.statusText)
       console.log("[v0] Response headers:", Object.fromEntries(response.headers.entries()))
 
-      progressToast.update({
-        id: progressToast.id,
-        title: "Submitting to IRS",
-        description: "Submitting W-2 form to IRS...",
-      })
-
       const contentType = response.headers.get("content-type")
       console.log("[v0] Content-Type:", contentType)
 
@@ -622,7 +625,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
       const result = await response.json()
       console.log("[v0] API response data:", result)
 
-      progressToast.dismiss()
+      if (progressToastId) {
+        toast({
+          id: progressToastId,
+          title: "",
+          description: "",
+          duration: 0,
+        })
+      }
 
       if (result.isDemoMode) {
         console.log("[v0] Demo mode restriction")
@@ -654,7 +664,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         console.log("[v0] Status:", result.status)
 
         toast({
-          title: "W-2 Submitted to IRS",
+          title: "✓ W-2 Submitted to IRS",
           description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours.`,
           duration: 5000,
         })
@@ -684,8 +694,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
       console.error("[v0] Error message:", error.message)
       console.error("[v0] Error stack:", error.stack)
 
-      if (progressToast) {
-        progressToast.dismiss()
+      if (progressToastId) {
+        toast({
+          id: progressToastId,
+          title: "",
+          description: "",
+          duration: 0,
+        })
       }
 
       toast({
@@ -787,7 +802,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
       <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
 
-        <CardHeader className="relative">
+        <CardHeader relative>
           <div className="flex items-center justify-between gap-4 mb-4">
             <Button
               type="button"

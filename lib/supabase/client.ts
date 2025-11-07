@@ -19,26 +19,6 @@ export function createClient() {
       flowType: "pkce",
       storageKey: "taxu-auth",
     },
-    global: {
-      fetch: async (url, options = {}) => {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10s timeout
-
-        try {
-          const response = await fetch(url, {
-            ...options,
-            signal: controller.signal,
-            credentials: "include",
-          })
-          clearTimeout(timeoutId)
-          return response
-        } catch (error) {
-          clearTimeout(timeoutId)
-          console.error("[v0] Supabase fetch error:", error)
-          throw error
-        }
-      },
-    },
   })
 }
 

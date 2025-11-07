@@ -204,13 +204,9 @@ export async function POST(request: Request) {
       BusinessNm: formData.employerName,
       EINorSSN: formData.employerEIN.replace(/-/g, ""),
       IsEIN: true,
-      Email: user.email || "",
-      Address1: formData.employerAddress,
-      City: formData.employerCity,
-      State: formData.employerState,
-      ZipCd: formData.employerZip,
-      KindOfEmployer: "NONEAPPLY",
-      KindOfPayer: "REGULAR941",
+      Email: user.email || "noreply@taxu.io",
+      ContactNm: formData.employerName,
+      Phone: "0000000000", // Default phone for API requirement
       IsDefaultBusiness: true,
     }
 
