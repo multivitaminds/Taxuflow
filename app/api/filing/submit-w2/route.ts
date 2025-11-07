@@ -68,6 +68,43 @@ export async function POST(request: Request) {
     console.log("[v0] - Tax Year:", formData.taxYear)
     console.log("[v0] - Filing Type:", formData.filingType)
 
+    const requiredFields = {
+      employerName: "Employer Name",
+      employerEIN: "Employer EIN",
+      employerAddress: "Employer Address",
+      employerCity: "Employer City",
+      employerState: "Employer State",
+      employerZip: "Employer ZIP Code",
+      employeeFirstName: "Employee First Name",
+      employeeLastName: "Employee Last Name",
+      employeeSSN: "Employee SSN",
+      wages: "Wages",
+      federalWithholding: "Federal Withholding",
+      socialSecurityWages: "Social Security Wages",
+      socialSecurityWithholding: "Social Security Withholding",
+      medicareWages: "Medicare Wages",
+      medicareWithholding: "Medicare Withholding",
+    }
+
+    const missingFields: string[] = []
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!formData[field] || formData[field].toString().trim() === "") {
+        missingFields.push(label)
+      }
+    }
+
+    if (missingFields.length > 0) {
+      console.error("[v0] ❌ Missing required fields:", missingFields)
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Missing required fields: ${missingFields.join(", ")}. Please complete the form and try again.`,
+          missingFields,
+        },
+        { status: 400 },
+      )
+    }
+
     const apiKey = process.env.TAXBANDITS_API_KEY
     const apiSecret = process.env.TAXBANDITS_API_SECRET
     const clientId = process.env.TAXBANDITS_CLIENT_ID
@@ -106,10 +143,10 @@ export async function POST(request: Request) {
     console.log("[v0] OAuth URL:", oauthUrl)
 
     const jwtPayload = {
-      iss: clientId, // Issuer: Client ID
-      sub: clientId, // Subject: Client ID
-      aud: apiKey, // Audience: User Token
-      iat: Math.floor(Date.now() / 1000), // Issued At: Current timestamp
+      iss: clientId,
+      sub: clientId,
+      aud: apiKey,
+      iat: Math.floor(Date.now() / 1000),
     }
 
     console.log("[v0] Generating JWS for OAuth...")
@@ -119,7 +156,7 @@ export async function POST(request: Request) {
     const authResponse = await fetch(oauthUrl, {
       method: "GET",
       headers: {
-        Authentication: jws, // TaxBandits uses "Authentication" not "Authorization"
+        Authentication: jws,
       },
     })
 
@@ -203,7 +240,6 @@ export async function POST(request: Request) {
       businessId = businessResult.BusinessId
       console.log("[v0] ✅ Business created successfully, ID:", businessId)
     } else if (businessResult.Errors && businessResult.Errors.some((e: any) => e.Message?.includes("already exists"))) {
-      // Business already exists, try to get it from the list
       console.log("[v0] Business already exists, fetching from list...")
 
       const listResponse = await fetch(`${apiBaseUrl}/Business/List`, {
@@ -218,7 +254,6 @@ export async function POST(request: Request) {
         console.log("[v0] Business list result:", JSON.stringify(listResult, null, 2))
 
         if (listResult.Businesses && listResult.Businesses.length > 0) {
-          // Find the business with matching EIN or use the first one
           const matchingBusiness = listResult.Businesses.find(
             (b: any) => b.EINorSSN === formData.employerEIN.replace(/-/g, ""),
           )
@@ -244,16 +279,16 @@ export async function POST(request: Request) {
     console.log("[v0] STEP 3: SUBMITTING W-2 TO TAXBANDITS")
     console.log("[v0] ========================================")
 
-    const taxbanditsPayload = {
+    const w2Payload = {
       SubmissionManifest: {
         SubmissionId: `W2-${user.id}-${Date.now()}`,
         TaxYear: formData.taxYear,
         IsFederalFiling: true,
-        IsStateFiling: formData.stateWages && Number.parseFloat(formData.stateWages) > 0,
+        IsStateFiling: formData.stateWages && Number.parseFloat(formData.stateWages || "0") > 0,
       },
       ReturnHeader: {
         Business: {
-          BusinessId: businessId, // Use the BusinessId from creation/retrieval
+          BusinessId: businessId,
           BusinessNm: formData.employerName,
           EIN: formData.employerEIN.replace(/-/g, ""),
           BusinessType: "ESTE",
@@ -269,78 +304,76 @@ export async function POST(request: Request) {
         {
           RecordId: `W2-${Date.now()}`,
           SequenceId: "1",
-          FormW2: {
-            EmployeeUSAddress: {
-              Address1: formData.employeeAddress || formData.employerAddress,
-              City: formData.employeeCity || formData.employerCity,
-              State: formData.employeeState || formData.employerState,
-              ZipCd: formData.employeeZip || formData.employerZip,
-            },
-            EmployeeName: {
-              FirstNm: formData.employeeFirstName,
-              MiddleInitial: formData.employeeMiddleInitial || "",
-              LastNm: formData.employeeLastName,
-            },
-            SSN: formData.employeeSSN.replace(/-/g, ""),
-            Wages: Number.parseFloat(formData.wages) || 0,
-            FedIncomeTaxWH: Number.parseFloat(formData.federalWithholding) || 0,
-            SocialSecurityWages: Number.parseFloat(formData.socialSecurityWages) || 0,
-            SocialSecurityTaxWH: Number.parseFloat(formData.socialSecurityWithholding) || 0,
-            MedicareWages: Number.parseFloat(formData.medicareWages) || 0,
-            MedicareTaxWH: Number.parseFloat(formData.medicareWithholding) || 0,
-            SocialSecurityTips: Number.parseFloat(formData.socialSecurityTips) || 0,
-            AllocatedTips: Number.parseFloat(formData.allocatedTips) || 0,
-            DependentCareBenefits: Number.parseFloat(formData.dependentCareBenefits) || 0,
-            NonQualifiedPlans: Number.parseFloat(formData.nonqualifiedPlans) || 0,
+          EmployeeUSAddress: {
+            Address1: formData.employeeAddress || formData.employerAddress,
+            City: formData.employeeCity || formData.employerCity,
+            State: formData.employeeState || formData.employerState,
+            ZipCd: formData.employeeZip || formData.employerZip,
           },
+          EmployeeName: {
+            FirstNm: formData.employeeFirstName,
+            MiddleInitial: formData.employeeMiddleInitial || "",
+            LastNm: formData.employeeLastName,
+          },
+          SSN: formData.employeeSSN.replace(/-/g, ""),
+          Wages: Number.parseFloat(formData.wages || "0"),
+          FedIncomeTaxWH: Number.parseFloat(formData.federalWithholding || "0"),
+          SocialSecurityWages: Number.parseFloat(formData.socialSecurityWages || "0"),
+          SocialSecurityTaxWH: Number.parseFloat(formData.socialSecurityWithholding || "0"),
+          MedicareWages: Number.parseFloat(formData.medicareWages || "0"),
+          MedicareTaxWH: Number.parseFloat(formData.medicareWithholding || "0"),
+          SocialSecurityTips: Number.parseFloat(formData.socialSecurityTips || "0"),
+          AllocatedTips: Number.parseFloat(formData.allocatedTips || "0"),
+          DependentCareBenefits: Number.parseFloat(formData.dependentCareBenefits || "0"),
+          NonQualifiedPlans: Number.parseFloat(formData.nonqualifiedPlans || "0"),
         },
       ],
     }
 
-    console.log("[v0] TaxBandits payload:", JSON.stringify(taxbanditsPayload, null, 2))
-    console.log("[v0] Sending request to:", `${apiBaseUrl}/Form/W2`)
+    console.log("[v0] W-2 payload:", JSON.stringify(w2Payload, null, 2))
+    console.log("[v0] Sending request to:", `${apiBaseUrl}/FormW2/Create`)
 
-    const taxbanditsResponse = await fetch(`${apiBaseUrl}/Form/W2`, {
+    const w2Response = await fetch(`${apiBaseUrl}/FormW2/Create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(taxbanditsPayload),
+      body: JSON.stringify(w2Payload),
     })
 
-    console.log("[v0] TaxBandits response status:", taxbanditsResponse.status)
+    console.log("[v0] W-2 response status:", w2Response.status)
 
-    const responseText = await taxbanditsResponse.text()
-    console.log("[v0] TaxBandits response body:", responseText.substring(0, 500))
+    const responseText = await w2Response.text()
+    console.log("[v0] W-2 response body:", responseText.substring(0, 500))
 
     let result: any
     try {
       result = JSON.parse(responseText)
     } catch (e) {
-      console.error("[v0] ❌ Failed to parse TaxBandits response as JSON")
+      console.error("[v0] ❌ Failed to parse W-2 response as JSON")
       return NextResponse.json(
         {
           success: false,
-          error: `TaxBandits API returned invalid response: ${responseText.substring(0, 200)}`,
+          error: `W-2 API returned invalid response: ${responseText.substring(0, 200)}`,
         },
         { status: 500 },
       )
     }
 
-    if (!taxbanditsResponse.ok) {
-      console.error("[v0] ❌ TaxBandits submission failed:", result)
+    if (!w2Response.ok) {
+      console.error("[v0] ❌ W-2 submission failed:", result)
       return NextResponse.json(
         {
           success: false,
-          error: result.StatusMessage || result.message || "TaxBandits API error",
+          error: result.StatusMessage || result.message || "W-2 API error",
           details: result,
         },
         { status: 500 },
       )
     }
 
-    console.log("[v0] ✅ TaxBandits submission successful!")
+    console.log("[v0] ✅ W-2 submission successful!")
     console.log("[v0] Submission ID:", result.SubmissionId || result.submissionId)
 
     console.log("[v0] ========================================")

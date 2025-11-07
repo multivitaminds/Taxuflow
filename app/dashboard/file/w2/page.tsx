@@ -15,23 +15,54 @@ export default function FileW2Page() {
   const handleExtractComplete = (data: any) => {
     console.log("[v0] Extracted data received in page:", data)
 
-    if (!data || !data.employer || !data.employee || !data.income) {
+    if (!data || !data.employer || !data.income) {
       console.error("[v0] Invalid extraction data structure:", data)
       toast({
         title: "⚠️ Extraction Failed",
-        description: "Could not extract W-2 data. Please try again or enter manually.",
+        description: "Could not extract W-2 data. Please enter manually.",
         variant: "destructive",
       })
+      setActiveTab("manual") // Switch to manual entry tab
       return
     }
 
-    if (data.employer.name === "Company Name" || data.employee.name === "John Doe") {
-      console.error("[v0] AI returned template data instead of real extraction")
+    const templatePatterns = [
+      "Company Name",
+      "John Doe",
+      "Jane Doe",
+      "TechNova Solutions",
+      "ABC Corporation",
+      "XYZ Company",
+      "Sample Company",
+      "Example Corp",
+      "Test Company",
+      "Demo Company",
+      "Template",
+      "Placeholder",
+      "123-45-6789",
+      "12-3456789",
+      "000-00-0000",
+      "00-0000000",
+      "XX-XXXXXXX",
+      "XXX-XX-XXXX",
+    ]
+
+    const hasTemplateData = templatePatterns.some(
+      (pattern) =>
+        data.employer?.name?.includes(pattern) ||
+        data.employee?.name?.includes(pattern) ||
+        data.employee?.ssn?.includes(pattern) ||
+        data.employer?.ein?.includes(pattern),
+    )
+
+    if (hasTemplateData) {
+      console.error("[v0] AI returned template/placeholder data")
       toast({
-        title: "⚠️ Extraction Incomplete",
-        description: "AI could not read the document clearly. Please try a clearer image or enter manually.",
+        title: "⚠️ Template Data Detected",
+        description: "AI returned placeholder values instead of real data. Please enter your information manually.",
         variant: "destructive",
       })
+      setActiveTab("manual") // Switch to manual entry tab
       return
     }
 
@@ -40,7 +71,7 @@ export default function FileW2Page() {
 
     toast({
       title: "✅ Extraction Successful",
-      description: `Extracted data for ${data.employee.name} from ${data.employer.name}`,
+      description: `Data extracted for ${data.employee?.name || "employee"}. Review and complete any missing fields.`,
     })
   }
 

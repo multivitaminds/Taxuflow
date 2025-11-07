@@ -193,14 +193,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
       const extracted: ExtractedW2Data = extractedData
 
-      if (!extracted.employer?.name || !extracted.employee?.name || !extracted.income?.wages) {
-        console.error("[v0] Extracted data is incomplete or invalid:", extracted)
+      if (!extracted.employer?.name || !extracted.income?.wages) {
+        console.error("[v0] Critical data missing - need at least employer and wages")
         toast({
-          title: "⚠️ Extraction Incomplete",
-          description: "Some data could not be extracted. Please fill in the missing fields manually.",
+          title: "⚠️ Partial Extraction",
+          description: "Some required data is missing. Please complete the form manually.",
           variant: "destructive",
         })
-        return
+        // Don't return - still populate what we have
       }
 
       const employeeName = extracted.employee?.name || ""
@@ -311,14 +311,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
       if (extractData.success && extractData.data.documentType === "w2") {
         const extracted: ExtractedW2Data = extractData.data
 
-        if (!extracted.employer?.name || !extracted.employee?.name || !extracted.income?.wages) {
-          console.error("[v0] Extracted data is incomplete or invalid:", extracted)
+        if (!extracted.employer?.name || !extracted.income?.wages) {
+          console.error("[v0] Critical data missing - need at least employer and wages")
           toast({
-            title: "⚠️ Extraction Incomplete",
-            description: "Some data could not be extracted. Please fill in the missing fields manually.",
+            title: "⚠️ Partial Extraction",
+            description: "Some required data is missing. Please complete the form manually.",
             variant: "destructive",
           })
-          return
+          // Don't return - still populate what we have
         }
 
         const employeeName = extracted.employee?.name || ""
