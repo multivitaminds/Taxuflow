@@ -201,18 +201,12 @@ export async function POST(request: Request) {
     console.log("[v0] ========================================")
 
     const businessPayload = {
-      BusinessNm: formData.employerName,
-      EINorSSN: formData.employerEIN.replace(/-/g, ""),
+      BusinessNm: formData.employerName.trim(),
       IsEIN: true,
-      Email: user.email || "noreply@taxu.io",
-      ContactNm: formData.employerName,
-      Phone: "0000000000", // Default phone for API requirement
-      IsDefaultBusiness: true,
+      EINorSSN: formData.employerEIN.replace(/[^0-9]/g, ""), // Strip all non-numeric
     }
 
-    console.log("[v0] Creating business entity...")
-    console.log("[v0] Business name:", formData.employerName)
-    console.log("[v0] Business EIN:", formData.employerEIN)
+    console.log("[v0] Creating business with minimal payload:", businessPayload)
 
     const businessResponse = await fetch(`${apiBaseUrl}/Business/Create`, {
       method: "POST",
@@ -249,7 +243,7 @@ export async function POST(request: Request) {
 
         if (listResult.Businesses && listResult.Businesses.length > 0) {
           const matchingBusiness = listResult.Businesses.find(
-            (b: any) => b.EINorSSN === formData.employerEIN.replace(/-/g, ""),
+            (b: any) => b.EINorSSN === formData.employerEIN.replace(/[^0-9]/g, ""),
           )
           businessId = matchingBusiness?.BusinessId || listResult.Businesses[0].BusinessId
           console.log("[v0] ✅ Using existing business, ID:", businessId)

@@ -78,11 +78,17 @@ export default function LoginPage() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
         },
       })
 
       if (error) throw error
+      // Note: The redirect happens automatically, so no manual redirect needed here
     } catch (err: any) {
+      console.log("[v0] Google OAuth error:", err)
       setError(err.message || "Failed to sign in with Google")
       setLoading(false)
     }
@@ -115,8 +121,7 @@ export default function LoginPage() {
       }
 
       console.log("[v0] Login successful, redirecting to dashboard")
-      router.push("/dashboard")
-      router.refresh()
+      window.location.href = "/dashboard"
     } catch (err: any) {
       console.log("[v0] Login failed:", err)
       setError(err.message || "Invalid email or password")

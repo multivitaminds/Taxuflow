@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   const error_description = requestUrl.searchParams.get("error_description")
 
   if (error) {
+    console.log("[v0] OAuth error:", error, error_description)
     return NextResponse.redirect(
       new URL(
         `/login?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(error_description || error)}`,
@@ -19,6 +20,7 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = await cookies()
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -47,9 +49,14 @@ export async function GET(request: Request) {
       )
     }
 
-    // The handle_new_user() trigger function will create the profile when the user is created
+    if (data?.user) {
+      console.log("[v0] OAuth successful for user:", data.user.email)
 
-    console.log("[v0] Auth successful for user:", data.user?.email)
+      // The trigger function will create the profile automatically
+      // No need to manually create it here
+    }
+
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   return NextResponse.redirect(new URL("/dashboard", request.url))

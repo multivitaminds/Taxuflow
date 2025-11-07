@@ -1,11 +1,19 @@
 import { createBrowserClient } from "@supabase/ssr"
 
+const getEnvVar = (key: string): string | undefined => {
+  if (typeof window !== "undefined") {
+    // Client-side: check window and process.env
+    return (window as any)[key] || process.env[key]
+  }
+  return process.env[key]
+}
+
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = getEnvVar("NEXT_PUBLIC_SUPABASE_URL")
+  const supabaseAnonKey = getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY")
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("[v0] Missing Supabase environment variables in browser client")
+    console.error("[v0] Supabase not configured. Auth features will be disabled.")
     console.error("[v0] NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl ? "present" : "missing")
     console.error("[v0] NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseAnonKey ? "present" : "missing")
     throw new Error("Supabase configuration error: Missing environment variables")
@@ -38,5 +46,7 @@ export function getSupabaseBrowserClient() {
 }
 
 export function isSupabaseConfigured() {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  const supabaseUrl = getEnvVar("NEXT_PUBLIC_SUPABASE_URL")
+  const supabaseAnonKey = getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+  return !!(supabaseUrl && supabaseAnonKey)
 }

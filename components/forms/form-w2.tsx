@@ -496,19 +496,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
     console.log("[v0] ========================================")
     console.log("[v0] SUBMIT BUTTON CLICKED - HANDLER EXECUTING")
     console.log("[v0] ========================================")
-    console.log("[v0] Event type:", e.type)
-    console.log("[v0] Event target:", e.target)
-    console.log("[v0] Current validation result:", validationResult)
-    console.log("[v0] Is paper filing required:", isPaperFilingRequired)
-    console.log("[v0] Override validation:", overrideValidation)
-    console.log("[v0] Loading state:", loading)
-    console.log("[v0] Form data summary:", {
-      employerName: formData.employerName,
-      employeeFirstName: formData.employeeFirstName,
-      employeeLastName: formData.employeeLastName,
-      wages: formData.wages,
-      taxYear: formData.taxYear,
-    })
 
     if (loading) {
       console.log("[v0] Already submitting, ignoring duplicate click")
@@ -564,37 +551,12 @@ export default function FormW2({ extractedData }: FormW2Props) {
       filingType: filingType,
     })
 
-    let progressToastId: string | number | undefined
-
     setLoading(true)
 
     try {
-      const initialToast = toast({
-        title: "🔄 Submitting to IRS",
-        description: "Step 1 of 3: Authenticating with TaxBandits...",
-        duration: Number.POSITIVE_INFINITY,
-      })
-      progressToastId = initialToast.id
-
-      console.log("[v0] Calling /api/filing/submit-w2...")
-
-      await new Promise((resolve) => setTimeout(resolve, 800))
-
-      console.log("[v0] Step 2: Creating/verifying business entity...")
-      toast({
-        id: progressToastId,
-        title: "🔄 Submitting to IRS",
-        description: "Step 2 of 3: Creating/verifying business entity...",
-        duration: Number.POSITIVE_INFINITY,
-      })
-
-      await new Promise((resolve) => setTimeout(resolve, 800))
-
-      console.log("[v0] Step 3: Submitting W-2 form to IRS...")
-      toast({
-        id: progressToastId,
-        title: "🔄 Submitting to IRS",
-        description: "Step 3 of 3: Submitting W-2 form to IRS...",
+      const progressToast = toast({
+        title: "🔄 Step 1 of 3: Authenticating...",
+        description: "Connecting to IRS e-filing service...",
         duration: Number.POSITIVE_INFINITY,
       })
 
@@ -608,10 +570,19 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }),
       })
 
-      console.log("[v0] API response received")
-      console.log("[v0] Response status:", response.status)
-      console.log("[v0] Response status text:", response.statusText)
-      console.log("[v0] Response headers:", Object.fromEntries(response.headers.entries()))
+      toast({
+        ...progressToast,
+        title: "🔄 Step 2 of 3: Creating business entity...",
+        description: "Setting up your employer profile...",
+      })
+
+      await new Promise((resolve) => setTimeout(resolve, 800))
+
+      toast({
+        ...progressToast,
+        title: "🔄 Step 3 of 3: Submitting W-2 to IRS...",
+        description: "Transmitting your form securely...",
+      })
 
       const contentType = response.headers.get("content-type")
       console.log("[v0] Content-Type:", contentType)
@@ -619,20 +590,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text()
         console.error("[v0] ❌ Non-JSON response from server:", text.substring(0, 500))
+
+        toast({ ...progressToast, duration: 0 })
+
         throw new Error("Server returned an invalid response. Please try again.")
       }
 
       const result = await response.json()
       console.log("[v0] API response data:", result)
 
-      if (progressToastId) {
-        toast({
-          id: progressToastId,
-          title: "",
-          description: "",
-          duration: 0,
-        })
-      }
+      toast({ ...progressToast, duration: 0 })
 
       if (result.isDemoMode) {
         console.log("[v0] Demo mode restriction")
@@ -660,8 +627,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
         console.log("[v0] ✅ W-2 SUBMITTED SUCCESSFULLY TO IRS!")
         console.log("[v0] ========================================")
         console.log("[v0] Submission ID:", result.submissionId)
-        console.log("[v0] Filing ID:", result.filingId)
-        console.log("[v0] Status:", result.status)
 
         toast({
           title: "✓ W-2 Submitted to IRS",
@@ -692,16 +657,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
       console.error("[v0] ❌ SUBMISSION ERROR")
       console.error("[v0] ========================================")
       console.error("[v0] Error message:", error.message)
-      console.error("[v0] Error stack:", error.stack)
-
-      if (progressToastId) {
-        toast({
-          id: progressToastId,
-          title: "",
-          description: "",
-          duration: 0,
-        })
-      }
 
       toast({
         title: "IRS Submission Failed",
@@ -1426,7 +1381,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 pt-6 border-t border-border">
             <div className="flex gap-4">
-              {/* Removed testTaxBanditsAPI button */}
               <Button
                 type="button"
                 variant="outline"
