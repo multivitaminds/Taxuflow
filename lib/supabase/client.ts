@@ -1,48 +1,63 @@
 import { createBrowserClient } from "@supabase/ssr"
 
-export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  console.log("[v0] Client env check:", {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey,
-    url: supabaseUrl?.substring(0, 20) + "...",
-  })
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("[v0] Supabase not configured. Missing environment variables.")
-    throw new Error("Supabase configuration error: Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY")
-  }
-
-  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      flowType: "pkce",
-      storageKey: "taxu-auth",
-    },
-  })
-}
-
-// Keep singleton for backward compatibility
 let client: ReturnType<typeof createBrowserClient> | null = null
 
-export function getSupabaseBrowserClient() {
-  if (client) return client
+function getEnvVars() {
+  return {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  }
+}
+
+export function createClient() {
+  const { url, key } = getEnvVars()
+
+  if (!url || !key) {
+    return null
+  }
 
   try {
-    client = createClient()
-    return client
+    return createBrowserClient(url, key, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: "pkce",
+        storageKey: "taxu-auth",
+      },
+    })
   } catch (error) {
-    console.error("[v0] Failed to create Supabase browser client:", error)
+    console.error("[v0] Error creating Supabase client:", error)
     return null
   }
 }
 
+export function getSupabaseBrowserClient() {
+  if (client) return client
+  client = createClient()
+  return client
+}
+
 export function isSupabaseConfigured() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  return !!(supabaseUrl && supabaseAnonKey)
+  const { url, key } = getEnvVars()
+  return !!(url && key)
+}
+
+export function resetSupabaseClient() {
+  client = null
+}
+
+export async function waitForSupabase(timeoutMs = 5000): Promise<ReturnType<typeof createBrowserClient> | null> {
+  const startTime = Date.now()
+
+  while (Date.now() - startTime < timeoutMs) {
+    const supabase = getSupabaseBrowserClient()
+    if (supabase) {
+      return supabase
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+
+  console.error("[v0] Timeout waiting for Supabase environment variables")
+  return null
 }

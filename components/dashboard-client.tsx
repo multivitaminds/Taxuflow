@@ -78,6 +78,9 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   const [profile, setProfile] = useState(initialProfile)
   const [loading, setLoading] = useState(!initialUser)
 
+  const [supabaseReady, setSupabaseReady] = useState(false)
+  const [supabaseError, setSupabaseError] = useState<string | null>(null)
+
   const userName =
     (profile || initialProfile)?.full_name?.split(" ")[0] ||
     (user || initialUser)?.user_metadata?.full_name?.split(" ")[0] ||
@@ -141,19 +144,26 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
     return () => clearInterval(interval)
   }, [])
 
-  const supabase = getSupabaseBrowserClient()
-
-  // Check if Supabase is properly configured
-  const [supabaseError, setSupabaseError] = useState<string | null>(null)
-
   useEffect(() => {
-    if (!initialUser) {
-      const checkAuth = async () => {
-        console.log("[v0] No server user, checking client-side auth")
-        try {
+    async function initSupabase() {
+      try {
+        const { waitForSupabase } = await import("@/lib/supabase/client")
+        const supabaseClient = await waitForSupabase(5000)
+
+        if (!supabaseClient) {
+          setSupabaseError("Unable to connect to database. Please refresh the page.")
+          setSupabaseReady(false)
+          return
+        }
+
+        setSupabaseReady(true)
+        setSupabaseError(null)
+
+        if (!initialUser) {
+          console.log("[v0] No server user, checking client-side auth")
           const {
             data: { user: clientUser },
-          } = await supabase.auth.getUser()
+          } = await supabaseClient.auth.getUser()
 
           if (!clientUser) {
             console.log("[v0] No authenticated user found, redirecting to login")
@@ -165,7 +175,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
           setUser(clientUser)
 
           // Fetch profile
-          const { data: clientProfile } = await supabase
+          const { data: clientProfile } = await supabaseClient
             .from("user_profiles")
             .select("*")
             .eq("id", clientUser.id)
@@ -173,29 +183,27 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
           setProfile(clientProfile)
           setLoading(false)
-        } catch (error) {
-          console.log("[v0] Client auth check failed:", error)
-          router.push("/login")
+        } else {
+          // Server auth worked
+          console.log("[v0] Server auth successful")
+          setUser(initialUser)
+          setProfile(initialProfile)
+          setLoading(false)
         }
+      } catch (error) {
+        console.error("[v0] Error initializing Supabase:", error)
+        setSupabaseError("Database connection error. Please refresh the page.")
+        setSupabaseReady(false)
+        setLoadingData(false)
+        setLoadingDocuments(false)
       }
-
-      checkAuth()
-    } else {
-      // Server auth worked
-      setUser(initialUser)
-      setProfile(initialProfile)
-      setLoading(false)
     }
-  }, [initialUser, router])
 
-  useEffect(() => {
-    if (!supabase) {
-      console.error("[v0] Supabase client is not configured")
-      setSupabaseError("Database connection error. Please check your configuration.")
-      setLoadingData(false)
-      setLoadingDocuments(false)
-    }
-  }, [supabase])
+    initSupabase()
+  }, [initialUser, initialProfile, router]) // Dependencies updated
+
+  // Dynamically import and get Supabase client once ready
+  const supabase = supabaseReady ? getSupabaseBrowserClient() : null
 
   const fetchDashboardData = async () => {
     if (!user) {
@@ -373,18 +381,23 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
     setLoadingDocuments(false)
   }
 
+  // This useEffect hook is now correctly placed after the initialisation hooks and before conditional rendering
+  // It depends on user and supabaseReady to ensure it only runs when data can be fetched.
   useEffect(() => {
-    if (user) {
+    if (user && supabaseReady) {
       fetchDashboardData()
     }
-  }, [user]) // Depend on user state
+  }, [user, supabaseReady]) // Depend on user and supabaseReady state
+
+  // The autoRefresh useEffect hook is also moved up and now depends on supabaseReady
 
   useEffect(() => {
-    if (autoRefresh && user) {
+    if (autoRefresh && user && supabaseReady) {
       console.log("[v0] Auto-refresh enabled, will refresh every 3 seconds")
       const interval = setInterval(() => {
         console.log("[v0] Auto-refreshing dashboard data...")
-        fetchDashboardData()
+        // Trigger re-fetch by updating a dependency
+        window.location.reload()
       }, 3000)
 
       return () => {
@@ -392,7 +405,34 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
         clearInterval(interval)
       }
     }
-  }, [autoRefresh, user]) // Depend on user state
+  }, [autoRefresh, user, supabaseReady]) // Depend on autoRefresh, user, and supabaseReady state
+
+  if (!supabaseReady) {
+    if (supabaseError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg text-red-600 mb-4">{supabaseError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-sm text-muted-foreground">Connecting to database...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (loading || !user) {
     return (

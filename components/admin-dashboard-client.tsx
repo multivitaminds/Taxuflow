@@ -81,8 +81,23 @@ export default function AdminDashboardClient({ adminUser }: { adminUser: AdminUs
 
   const handleLogout = async () => {
     const supabase = getSupabaseBrowserClient()
-    await supabase.auth.signOut()
-    router.push("/admin/login")
+
+    try {
+      await supabase.auth.signOut({ scope: "local" })
+
+      // Clear any cached session data
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("supabase.auth.token")
+        sessionStorage.clear()
+      }
+
+      // Force a full page reload to clear all state
+      window.location.href = "/admin/login"
+    } catch (error) {
+      console.error("[v0] Sign out error:", error)
+      // Force redirect even on error
+      window.location.href = "/admin/login"
+    }
   }
 
   return (

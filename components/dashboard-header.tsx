@@ -18,9 +18,22 @@ export function DashboardHeader({ userName, userEmail }: DashboardHeaderProps) {
     const supabase = getSupabaseBrowserClient()
     if (!supabase) return
 
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
+    try {
+      await supabase.auth.signOut({ scope: "local" })
+
+      // Clear any cached session data
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("supabase.auth.token")
+        sessionStorage.clear()
+      }
+
+      // Force a full page reload to clear all state
+      window.location.href = "/login"
+    } catch (error) {
+      console.error("[v0] Sign out error:", error)
+      // Force redirect even on error
+      window.location.href = "/login"
+    }
   }
 
   return (
