@@ -828,7 +828,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
         <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
 
-          <CardHeader relative>
+          <CardHeader className="relative">
             <div className="flex items-center justify-between gap-4 mb-4">
               <Button
                 type="button"
