@@ -564,6 +564,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
       // Step 3: Submitting
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        const textResponse = await response.text()
+        console.error("[v0] NON-JSON RESPONSE:", textResponse.substring(0, 200))
+        throw new Error(`Server returned non-JSON response: ${response.status} ${response.statusText}`)
+      }
+
       const result = await response.json()
       console.log("[v0] API response:", result)
 

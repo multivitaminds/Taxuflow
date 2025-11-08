@@ -59,7 +59,19 @@ export async function POST(request: Request) {
 
     console.log("[v0] User authenticated:", user.id)
 
-    const formData = await request.json()
+    let formData: any
+    try {
+      formData = await request.json()
+    } catch (parseError: any) {
+      console.error("[v0] Failed to parse request body:", parseError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid request format. Please refresh and try again.",
+        },
+        { status: 400 },
+      )
+    }
 
     console.log("[v0] Form data received:")
     console.log("[v0] - Employer:", formData.employerName)

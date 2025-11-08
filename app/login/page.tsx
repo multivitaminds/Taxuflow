@@ -100,10 +100,16 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      console.log("[v0] Environment check:", {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      })
+
       const supabase = createClient()
 
       if (!supabase) {
-        throw new Error("Authentication service is not configured. Please try again later.")
+        console.error("[v0] Supabase client is null - environment variables missing")
+        throw new Error("Authentication service is not configured. Please contact support.")
       }
 
       console.log("[v0] Login attempt:", { email })
@@ -113,10 +119,15 @@ export default function LoginPage() {
         password,
       })
 
-      console.log("[v0] Login response:", { data, error })
+      console.log("[v0] Login response:", {
+        hasData: !!data,
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+        error: error?.message,
+      })
 
       if (error) {
-        console.log("[v0] Error details:", {
+        console.error("[v0] Login error:", {
           message: error.message,
           status: error.status,
           name: error.name,
@@ -127,14 +138,23 @@ export default function LoginPage() {
       if (data?.session) {
         console.log("[v0] Login successful, session created")
 
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1500))
 
-        window.location.replace("/dashboard")
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (session) {
+          console.log("[v0] Session verified, redirecting to dashboard")
+          window.location.replace("/dashboard")
+        } else {
+          console.error("[v0] Session not found after login")
+          throw new Error("Session verification failed. Please try again.")
+        }
       } else {
         throw new Error("No session returned from login")
       }
     } catch (err: any) {
-      console.log("[v0] Login failed:", err)
+      console.error("[v0] Login failed:", err)
       setError(err.message || "Invalid email or password")
       setLoading(false)
     }
