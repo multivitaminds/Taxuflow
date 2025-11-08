@@ -5,13 +5,27 @@ import { jsPDF } from "jspdf"
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createServerClient()
+
+    if (!supabase) {
+      console.error("[v0] Paper package error: Supabase server client unavailable")
+      return NextResponse.json(
+        {
+          error: "Authentication service unavailable. Please try again.",
+        },
+        { status: 500 },
+      )
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
+      console.error("[v0] Paper package error: No authenticated user")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    console.log("[v0] Paper package: Authenticated user:", user.email)
 
     const { formType, filingType, formData, taxYear } = await request.json()
 

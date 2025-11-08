@@ -1508,14 +1508,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
         isError={false}
       />
 
-      {showPenaltyDialog && (
-        <PenaltyAbatementDialog
-          businessName={formData.employerName}
-          ein={formData.employerEIN}
-          taxYear={Number.parseInt(formData.taxYear)}
-          formType="W-2"
-        />
-      )}
+      <PenaltyAbatementDialog
+        open={showPenaltyDialog}
+        onOpenChange={setShowPenaltyDialog}
+        businessName={formData.employerName}
+        ein={formData.employerEIN}
+        taxYear={Number.parseInt(formData.taxYear)}
+        formType="W-2"
+      />
     </form>
   )
 }
