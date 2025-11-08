@@ -138,18 +138,7 @@ export default function LoginPage() {
       if (data?.session) {
         console.log("[v0] Login successful, session created")
 
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (session) {
-          console.log("[v0] Session verified, redirecting to dashboard")
-          window.location.replace("/dashboard")
-        } else {
-          console.error("[v0] Session not found after login")
-          throw new Error("Session verification failed. Please try again.")
-        }
+        router.push("/dashboard")
       } else {
         throw new Error("No session returned from login")
       }

@@ -8,10 +8,8 @@ export async function updateSession(request: NextRequest) {
 
   const demoMode = request.cookies.get("demo_mode")?.value === "true"
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"
-  const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.placeholder"
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   const authCookies = request.cookies
     .getAll()
@@ -19,12 +17,13 @@ export async function updateSession(request: NextRequest) {
 
   const hasAuthCookies = authCookies.length > 0
 
-  console.log("[v0] Middleware auth check:", {
-    path: request.nextUrl.pathname,
-    hasAuthCookies,
-    cookieCount: authCookies.length,
-    demoMode,
-  })
+  const publicPaths = ["/", "/login", "/signup", "/forgot-password", "/_vercel", "/api/webhooks"]
+  const isPublicPath = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.log("[v0] Middleware: Missing Supabase config, allowing through")
+    return supabaseResponse
+  }
 
   try {
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -43,45 +42,44 @@ export async function updateSession(request: NextRequest) {
     })
 
     let user = null
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      user = session?.user || null
-    } catch (sessionError) {
-      console.log("[v0] Session fetch error (non-fatal):", sessionError)
+    if (!isPublicPath) {
+      try {
+        const {
+          data: { user: fetchedUser },
+        } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise<{ data: { user: null } }>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1000)),
+        ])
+        user = fetchedUser
+      } catch (error) {
+        console.log("[v0] Middleware: User fetch failed (non-fatal):", error)
+      }
     }
 
-    const isAuthenticated = user || (hasAuthCookies && !demoMode)
+    const isAuthenticated = user || (hasAuthCookies && !demoMode) || demoMode
+
+    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && isAuthenticated) {
+      console.log("[v0] Middleware: Authenticated user accessing auth page, redirecting to dashboard")
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
 
     const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
     const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
-    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && isAuthenticated) {
-      console.log("[v0] Middleware: User already authenticated, redirecting to dashboard")
-      const url = request.nextUrl.clone()
-      url.pathname = "/dashboard"
-      return NextResponse.redirect(url)
-    }
-
-    if (isProtectedPath && !isAuthenticated && !demoMode) {
-      console.log("[v0] Middleware: Blocking unauthenticated access to protected path")
-      const url = request.nextUrl.clone()
-      url.pathname = "/login"
-      return NextResponse.redirect(url)
+    if (isProtectedPath && !isAuthenticated) {
+      console.log("[v0] Middleware: Unauthenticated access to protected path, redirecting to login")
+      return NextResponse.redirect(new URL("/login", request.url))
     }
 
     return supabaseResponse
   } catch (error) {
-    console.log("[v0] Middleware error (allowing through):", error)
+    console.log("[v0] Middleware error (non-fatal):", error)
+
     const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
     const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
     if (isProtectedPath && !hasAuthCookies && !demoMode) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/login"
-      return NextResponse.redirect(url)
+      return NextResponse.redirect(new URL("/login", request.url))
     }
 
     return supabaseResponse

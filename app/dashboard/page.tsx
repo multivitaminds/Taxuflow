@@ -11,69 +11,6 @@ export default async function DashboardPage() {
     const authCookies = cookieStore.getAll().filter((c) => c.name.includes("sb-") || c.name.includes("auth"))
     const hasAuthCookies = authCookies.length > 0
 
-    console.log("[v0] Dashboard auth cookies:", { hasAuthCookies, count: authCookies.length })
-
-    const supabase = await getSupabaseServerClient()
-
-    if (supabase) {
-      const {
-        data: { user },
-        error,
-      } = await Promise.race([
-        supabase.auth.getUser(),
-        new Promise<{ data: { user: null }; error: Error }>((_, reject) =>
-          setTimeout(() => reject(new Error("Auth check timeout")), 5000),
-        ),
-      ]).catch((err) => {
-        console.log("[v0] Dashboard auth check failed:", err.message)
-        return { data: { user: null }, error: err }
-      })
-
-      if (!error && user) {
-        console.log("[v0] Real user authenticated, clearing demo mode")
-        cookieStore.delete("demo_mode")
-
-        const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
-
-        if (!profile) {
-          console.log("[v0] User profile not found, creating new profile")
-          const { data: newProfile } = await supabase
-            .from("user_profiles")
-            .insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
-            })
-            .select()
-            .single()
-
-          return (
-            <ErrorBoundary>
-              <DashboardClient user={user} profile={newProfile} />
-            </ErrorBoundary>
-          )
-        }
-
-        return (
-          <ErrorBoundary>
-            <DashboardClient user={user} profile={profile} />
-          </ErrorBoundary>
-        )
-      }
-    }
-
-    // Middleware already validated these cookies, so trust them
-    if (hasAuthCookies) {
-      console.log("[v0] Auth cookies present but server validation unavailable, loading with client-side auth")
-      cookieStore.delete("demo_mode")
-
-      return (
-        <ErrorBoundary>
-          <DashboardClient user={null} profile={null} />
-        </ErrorBoundary>
-      )
-    }
-
     const demoMode = cookieStore.get("demo_mode")?.value === "true"
 
     if (demoMode) {
@@ -101,7 +38,67 @@ export default async function DashboardPage() {
       )
     }
 
-    console.log("[v0] No authenticated user, redirecting to login")
+    const supabase = await getSupabaseServerClient()
+
+    if (supabase && hasAuthCookies) {
+      try {
+        const {
+          data: { user },
+        } = await Promise.race([
+          supabase.auth.getUser(),
+          new Promise<{ data: { user: null } }>((_, reject) =>
+            setTimeout(() => reject(new Error("Auth check timeout")), 2000),
+          ),
+        ])
+
+        if (user) {
+          console.log("[v0] Server auth successful for:", user.email)
+          cookieStore.delete("demo_mode")
+
+          const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
+
+          if (!profile) {
+            console.log("[v0] Creating user profile...")
+            const { data: newProfile } = await supabase
+              .from("user_profiles")
+              .insert({
+                id: user.id,
+                email: user.email,
+                full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+              })
+              .select()
+              .single()
+
+            return (
+              <ErrorBoundary>
+                <DashboardClient user={user} profile={newProfile} />
+              </ErrorBoundary>
+            )
+          }
+
+          return (
+            <ErrorBoundary>
+              <DashboardClient user={user} profile={profile} />
+            </ErrorBoundary>
+          )
+        }
+      } catch (error) {
+        console.log("[v0] Server auth failed, falling back to client-side auth:", error)
+      }
+    }
+
+    if (hasAuthCookies) {
+      console.log("[v0] Auth cookies present, loading with client-side auth")
+      cookieStore.delete("demo_mode")
+
+      return (
+        <ErrorBoundary>
+          <DashboardClient user={null} profile={null} />
+        </ErrorBoundary>
+      )
+    }
+
+    console.log("[v0] No authentication found, redirecting to login")
     redirect("/login")
   } catch (error) {
     console.log("[v0] Dashboard error:", error)
