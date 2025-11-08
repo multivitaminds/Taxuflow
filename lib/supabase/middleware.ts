@@ -58,17 +58,17 @@ export async function updateSession(request: NextRequest) {
     const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
     const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
+    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && isAuthenticated) {
+      console.log("[v0] Middleware: User already authenticated, redirecting to dashboard")
+      const url = request.nextUrl.clone()
+      url.pathname = "/dashboard"
+      return NextResponse.redirect(url)
+    }
+
     if (isProtectedPath && !isAuthenticated && !demoMode) {
       console.log("[v0] Middleware: Blocking unauthenticated access to protected path")
       const url = request.nextUrl.clone()
       url.pathname = "/login"
-      return NextResponse.redirect(url)
-    }
-
-    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && user) {
-      console.log("[v0] Middleware: User already authenticated, redirecting to dashboard")
-      const url = request.nextUrl.clone()
-      url.pathname = "/dashboard"
       return NextResponse.redirect(url)
     }
 
