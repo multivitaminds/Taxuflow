@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { LogOut, Settings } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
 interface DashboardHeaderProps {
   userName: string
@@ -15,10 +16,16 @@ export function DashboardHeader({ userName, userEmail }: DashboardHeaderProps) {
 
   const handleSignOut = async () => {
     try {
+      console.log("[v0] Sign out initiated")
+
+      const supabase = createClient()
+      await supabase.auth.signOut()
+
       if (typeof window !== "undefined") {
         localStorage.clear()
         sessionStorage.clear()
 
+        // Clear all cookies
         document.cookie.split(";").forEach((c) => {
           document.cookie = c.replace(/^ +/, "").replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
         })
@@ -29,10 +36,13 @@ export function DashboardHeader({ userName, userEmail }: DashboardHeaderProps) {
         credentials: "include",
       })
 
-      window.location.replace("/login")
+      console.log("[v0] Sign out complete, redirecting to login")
+
+      window.location.href = "/login"
     } catch (error) {
       console.error("[v0] Sign out error:", error)
-      window.location.replace("/login")
+      // Force redirect even on error
+      window.location.href = "/login"
     }
   }
 

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -21,6 +21,33 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    const clearSession = async () => {
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("demo_mode")
+          localStorage.removeItem("demo_user")
+          sessionStorage.clear()
+          document.cookie = "demo_mode=; path=/; max-age=0"
+        }
+
+        const supabase = createClient()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (session) {
+          console.log("[v0] Clearing existing session on signup page")
+          await supabase.auth.signOut()
+        }
+      } catch (error) {
+        console.log("[v0] Error clearing session:", error)
+      }
+    }
+
+    clearSession()
+  }, [])
 
   const handleGoogleSignup = async () => {
     setLoading(true)
