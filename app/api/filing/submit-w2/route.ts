@@ -41,16 +41,50 @@ export async function POST(request: Request) {
       )
     }
 
-    const supabase = await getSupabaseServerClient()
+    let supabase
+    try {
+      supabase = await getSupabaseServerClient()
+    } catch (authError: any) {
+      console.error("[v0] Failed to create Supabase client:", authError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Authentication service unavailable. Please try again.",
+          details: process.env.NODE_ENV === "development" ? authError.message : undefined,
+        },
+        { status: 500 },
+      )
+    }
 
     if (!supabase) {
       console.error("[v0] Supabase client not available")
       return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 })
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    let user
+    try {
+      const {
+        data: { user: authUser },
+        error: authError,
+      } = await supabase.auth.getUser()
+
+      if (authError) {
+        console.error("[v0] Auth error:", authError)
+        return NextResponse.json({ success: false, error: "Authentication failed" }, { status: 401 })
+      }
+
+      user = authUser
+    } catch (authError: any) {
+      console.error("[v0] Exception during auth check:", authError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Authentication check failed",
+          details: process.env.NODE_ENV === "development" ? authError.message : undefined,
+        },
+        { status: 500 },
+      )
+    }
 
     if (!user) {
       console.error("[v0] User not authenticated")

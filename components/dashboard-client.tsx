@@ -785,57 +785,57 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <button
-                    onClick={() => router.push("/accounting/invoices/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/invoices")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <Receipt className="w-6 h-6 text-blue-500" />
                     <span className="text-xs font-medium">Invoices</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/expenses/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/expenses")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <Wallet className="w-6 h-6 text-green-500" />
                     <span className="text-xs font-medium">Expenses</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/customers/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/customers")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <Users className="w-6 h-6 text-purple-500" />
                     <span className="text-xs font-medium">Customers</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/reports/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/reports")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <BarChart3 className="w-6 h-6 text-orange-500" />
                     <span className="text-xs font-medium">Reports</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/vendors/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/vendors")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <Building2 className="w-6 h-6 text-red-500" />
                     <span className="text-xs font-medium">Vendors</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/banking/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/banking")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <CreditCard className="w-6 h-6 text-cyan-500" />
                     <span className="text-xs font-medium">Banking</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/products/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/products")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <FileText className="w-6 h-6 text-yellow-500" />
                     <span className="text-xs font-medium">Products</span>
                   </button>
                   <button
-                    onClick={() => router.push("/accounting/projects/dashboard")}
-                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                    onClick={() => router.push("/accounting/projects")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
                     <TrendingUp className="w-6 h-6 text-pink-500" />
                     <span className="text-xs font-medium">Projects</span>
