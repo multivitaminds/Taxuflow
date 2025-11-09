@@ -17,7 +17,7 @@ export async function updateSession(request: NextRequest) {
 
   const hasAuthCookies = authCookies.length > 0
 
-  const publicPaths = ["/", "/login", "/signup", "/forgot-password", "/auth/callback", "/_vercel", "/api/webhooks"]
+  const publicPaths = ["/", "/login", "/signup", "/forgot-password", "/_vercel", "/api/webhooks"]
   const isPublicPath = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -42,10 +42,7 @@ export async function updateSession(request: NextRequest) {
     })
 
     let user = null
-    const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
-    const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
-
-    if (isProtectedPath || request.nextUrl.pathname === "/auth/callback") {
+    if (!isPublicPath) {
       try {
         const {
           data: { user: fetchedUser },
@@ -55,11 +52,19 @@ export async function updateSession(request: NextRequest) {
         ])
         user = fetchedUser
       } catch (error) {
-        console.log("[v0] Middleware: User fetch timeout (non-fatal)")
+        console.log("[v0] Middleware: User fetch failed (non-fatal):", error)
       }
     }
 
-    const isAuthenticated = user || hasAuthCookies || demoMode
+    const isAuthenticated = user || (hasAuthCookies && !demoMode) || demoMode
+
+    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && isAuthenticated) {
+      console.log("[v0] Middleware: Authenticated user accessing auth page, redirecting to dashboard")
+      return NextResponse.redirect(new URL("/dashboard", request.url))
+    }
+
+    const protectedPaths = ["/dashboard", "/chat", "/documents", "/settings"]
+    const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path))
 
     if (isProtectedPath && !isAuthenticated) {
       console.log("[v0] Middleware: Unauthenticated access to protected path, redirecting to login")

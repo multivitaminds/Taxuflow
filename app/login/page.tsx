@@ -21,35 +21,6 @@ export default function LoginPage() {
   const [magicLinkSent, setMagicLinkSent] = useState(false)
 
   useEffect(() => {
-    const clearSession = async () => {
-      try {
-        // Clear local storage
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("demo_mode")
-          localStorage.removeItem("demo_user")
-          sessionStorage.clear()
-        }
-
-        // Clear demo mode cookie
-        document.cookie = "demo_mode=; path=/; max-age=0"
-
-        // Clear Supabase session if exists
-        const supabase = createClient()
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-
-        if (session) {
-          console.log("[v0] Clearing existing session on login page")
-          await supabase.auth.signOut()
-        }
-      } catch (error) {
-        console.log("[v0] Error clearing session:", error)
-      }
-    }
-
-    clearSession()
-
     const errorParam = searchParams.get("error")
     const errorDescription = searchParams.get("error_description")
 
@@ -129,6 +100,11 @@ export default function LoginPage() {
     setError(null)
 
     try {
+      console.log("[v0] Environment check:", {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      })
+
       const supabase = createClient()
 
       if (!supabase) {
@@ -160,8 +136,9 @@ export default function LoginPage() {
       }
 
       if (data?.session) {
-        console.log("[v0] Login successful, session created, redirecting to dashboard")
-        window.location.href = "/dashboard"
+        console.log("[v0] Login successful, session created")
+
+        router.push("/dashboard")
       } else {
         throw new Error("No session returned from login")
       }
