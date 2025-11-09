@@ -132,18 +132,22 @@ export default function LoginPage() {
           status: error.status,
           name: error.name,
         })
+
+        if (error.message === "Invalid login credentials") {
+          throw new Error("Invalid email or password. Don't have an account yet? Sign up to get started.")
+        }
+
         throw error
       }
 
       if (data?.session) {
         console.log("[v0] Login successful, session created")
-
         router.push("/dashboard")
       } else {
         throw new Error("No session returned from login")
       }
     } catch (err: any) {
-      console.error("[v0] Login failed:", err)
+      console.error("[v0] Login failed:", err.message)
       setError(err.message || "Invalid email or password")
       setLoading(false)
     }

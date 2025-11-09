@@ -113,10 +113,16 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
               ),
             )
 
-            if (extractData.warning === "template_data_detected") {
+            if (extractData.warning === "demo_mode") {
               toast({
-                title: "📋 Sample Document Extracted",
-                description: `Extracted data from ${file.name}. This appears to be a demo/sample document.`,
+                title: "⚠️ Demo Mode Active",
+                description: "AI service unavailable. Demo data provided - please verify all information.",
+                variant: "default",
+              })
+            } else if (extractData.warning === "template_data_detected") {
+              toast({
+                title: "📋 Sample Document Detected",
+                description: `Extracted from ${file.name}. Please verify this is not a demo document.`,
               })
             } else {
               toast({

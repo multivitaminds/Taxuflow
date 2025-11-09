@@ -2,6 +2,98 @@ import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import { parseFullAddress } from "@/lib/address-parser"
 
+function createDemoExtraction(fileName: string): any {
+  const isW2 = fileName.toLowerCase().includes("w2") || fileName.toLowerCase().includes("w-2")
+  const is1099 = fileName.toLowerCase().includes("1099")
+
+  if (isW2) {
+    return {
+      documentType: "w2",
+      taxYear: 2024,
+      isTemplateData: true,
+      confidence: 0.85,
+      employer: {
+        name: "Demo Company Inc",
+        ein: "12-3456789",
+        address: "123 Business Park Dr, San Francisco, CA 94105",
+        street: "123 Business Park Dr",
+        city: "San Francisco",
+        state: "CA",
+        zipCode: "94105",
+      },
+      employee: {
+        name: "John Doe",
+        ssn: "XXX-XX-1234",
+        address: "456 Oak Avenue, San Francisco, CA 94102",
+        street: "456 Oak Avenue",
+        city: "San Francisco",
+        state: "CA",
+        zipCode: "94102",
+      },
+      income: {
+        wages: 75000.0,
+        federalWithholding: 8500.0,
+        socialSecurityWages: 75000.0,
+        socialSecurityTax: 4650.0,
+        medicareWages: 75000.0,
+        medicareTax: 1087.5,
+        stateWages: 75000.0,
+        stateTax: 3750.0,
+        state: "CA",
+      },
+    }
+  } else if (is1099) {
+    return {
+      documentType: "1099-nec",
+      taxYear: 2024,
+      isTemplateData: true,
+      confidence: 0.85,
+      payer: {
+        name: "Demo Client LLC",
+        ein: "98-7654321",
+        address: "789 Market Street, San Francisco, CA 94103",
+        street: "789 Market Street",
+        city: "San Francisco",
+        state: "CA",
+        zipCode: "94103",
+      },
+      recipient: {
+        name: "Jane Smith",
+        tin: "XXX-XX-5678",
+        address: "321 Pine Street, San Francisco, CA 94108",
+        street: "321 Pine Street",
+        city: "San Francisco",
+        state: "CA",
+        zipCode: "94108",
+      },
+      income: {
+        nonemployeeCompensation: 45000.0,
+        federalWithholding: 0.0,
+        stateTax: 0.0,
+        state: "CA",
+      },
+    }
+  }
+
+  // Default receipt
+  return {
+    documentType: "receipt",
+    taxYear: 2024,
+    isTemplateData: true,
+    confidence: 0.8,
+    merchant: {
+      name: "Demo Office Supplies",
+      address: "555 Supply Way, San Francisco, CA 94104",
+    },
+    transaction: {
+      date: new Date().toISOString().split("T")[0],
+      amount: 156.78,
+      category: "Office Supplies",
+      items: ["Paper", "Pens", "Folders"],
+    },
+  }
+}
+
 async function extractWithRetry(dataUrl: string, extractionInstructions: string, maxRetries = 2) {
   let lastError: Error | null = null
 
@@ -40,7 +132,8 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
         errorMessage.includes("Gateway") ||
         errorMessage.includes("timeout") ||
         errorMessage.includes("ECONNRESET") ||
-        errorMessage.includes("network")
+        errorMessage.includes("network") ||
+        errorMessage.includes("fetch failed")
 
       if (!isRetryable || attempt === maxRetries) {
         throw error
@@ -167,38 +260,65 @@ Rules:
 
     console.log("[v0] Calling AI model for extraction...")
 
-    const text = await extractWithRetry(dataUrl, extractionInstructions)
+    let extractedData: any
 
-    console.log("[v0] AI extraction complete, parsing response...")
-    console.log("[v0] Raw AI response:", text.substring(0, 200))
-
-    let cleanedText = text.trim()
-
-    // Remove markdown code blocks
-    if (cleanedText.startsWith("```")) {
-      cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
-      cleanedText = cleanedText.replace(/\n?```$/, "")
-      cleanedText = cleanedText.trim()
-    }
-
-    // Remove any leading text before the JSON object
-    const jsonStart = cleanedText.indexOf("{")
-    if (jsonStart > 0) {
-      cleanedText = cleanedText.substring(jsonStart)
-    }
-
-    // Remove any trailing text after the JSON object
-    const jsonEnd = cleanedText.lastIndexOf("}")
-    if (jsonEnd > 0 && jsonEnd < cleanedText.length - 1) {
-      cleanedText = cleanedText.substring(0, jsonEnd + 1)
-    }
-
-    let extractedData
     try {
-      extractedData = JSON.parse(cleanedText)
-    } catch (parseError) {
-      console.error("[v0] Failed to parse AI response as JSON:", cleanedText)
-      throw new Error(`AI returned invalid JSON. Response: ${cleanedText.substring(0, 100)}...`)
+      const text = await extractWithRetry(dataUrl, extractionInstructions)
+
+      console.log("[v0] AI extraction complete, parsing response...")
+      console.log("[v0] Raw AI response:", text.substring(0, 200))
+
+      let cleanedText = text.trim()
+
+      // Remove markdown code blocks
+      if (cleanedText.startsWith("```")) {
+        cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
+        cleanedText = cleanedText.replace(/\n?```$/, "")
+        cleanedText = cleanedText.trim()
+      }
+
+      // Remove any leading text before the JSON object
+      const jsonStart = cleanedText.indexOf("{")
+      if (jsonStart > 0) {
+        cleanedText = cleanedText.substring(jsonStart)
+      }
+
+      // Remove any trailing text after the JSON object
+      const jsonEnd = cleanedText.lastIndexOf("}")
+      if (jsonEnd > 0 && jsonEnd < cleanedText.length - 1) {
+        cleanedText = cleanedText.substring(0, jsonEnd + 1)
+      }
+
+      try {
+        extractedData = JSON.parse(cleanedText)
+      } catch (parseError) {
+        console.error("[v0] Failed to parse AI response as JSON:", cleanedText)
+        throw new Error(`AI returned invalid JSON. Response: ${cleanedText.substring(0, 100)}...`)
+      }
+    } catch (aiError) {
+      const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
+
+      if (
+        errorMessage.includes("Gateway") ||
+        errorMessage.includes("fetch failed") ||
+        errorMessage.includes("network")
+      ) {
+        console.log("[v0] AI service unavailable, using demo extraction mode")
+
+        extractedData = createDemoExtraction(fileName)
+
+        // Return demo data with a clear warning
+        return NextResponse.json({
+          success: true,
+          data: extractedData,
+          warning: "demo_mode",
+          message:
+            "AI extraction service is temporarily unavailable. Demo data has been provided as a starting point. Please verify and update all information before filing.",
+        })
+      }
+
+      // Re-throw if it's not a network issue
+      throw aiError
     }
 
     // Validate that we have the minimum required data for the document type
@@ -301,9 +421,9 @@ Rules:
     let userMessage = "Failed to extract document data"
     const errorMessage = error instanceof Error ? error.message : String(error)
 
-    if (errorMessage.includes("Gateway") || errorMessage.includes("timeout")) {
+    if (errorMessage.includes("Gateway") || errorMessage.includes("timeout") || errorMessage.includes("fetch failed")) {
       userMessage =
-        "The AI service is temporarily unavailable or the request timed out. Please try again in a moment or try with a smaller/clearer document."
+        "The AI service is temporarily unavailable. Please try again in a moment or contact support if the issue persists."
     } else if (errorMessage.includes("File too large")) {
       userMessage = errorMessage
     } else if (errorMessage.includes("invalid JSON")) {

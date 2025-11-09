@@ -147,8 +147,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   useEffect(() => {
     async function initSupabase() {
       try {
-        const { waitForSupabase } = await import("@/lib/supabase/client")
-        const supabaseClient = await waitForSupabase(5000)
+        const supabaseClient = getSupabaseBrowserClient()
 
         if (!supabaseClient) {
           setSupabaseError("Unable to connect to database. Please refresh the page.")
@@ -720,7 +719,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card
               onClick={() => handleStatCardClick("refund")}
-              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
             >
               <div className="flex items-center justify-between mb-2">
                 <TrendingUp className="w-5 h-5 text-neon" />
@@ -732,7 +731,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
             <Card
               onClick={() => handleStatCardClick("audit-risk")}
-              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
             >
               <div className="flex items-center justify-between mb-2">
                 <Shield className="w-5 h-5 text-green-500" />
@@ -746,7 +745,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
             <Card
               onClick={() => handleStatCardClick("documents")}
-              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
             >
               <div className="flex items-center justify-between mb-2">
                 <FileText className="w-5 h-5 text-blue-500" />
@@ -758,7 +757,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
             <Card
               onClick={() => handleStatCardClick("deadline")}
-              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
             >
               <div className="flex items-center justify-between mb-2">
                 <Calendar className="w-5 h-5 text-orange-500" />

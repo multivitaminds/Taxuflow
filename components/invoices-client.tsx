@@ -21,22 +21,37 @@ export function InvoicesClient() {
 
   async function loadInvoices() {
     try {
+      console.log("[v0] Loading invoices...")
       const supabase = getSupabaseBooksClient()
 
       if (!supabase) {
+        console.log("[v0] No Supabase client available")
         setLoading(false)
         return
       }
 
       const { data, error } = await supabase
         .from("invoices")
-        .select("*, customers:contacts!invoices_contact_id_fkey(company_name, contact_name, email)")
+        .select(`
+          *,
+          contact:contacts(
+            company_name,
+            contact_name,
+            display_name,
+            email
+          )
+        `)
         .order("created_at", { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Error loading invoices:", error.message)
+        throw error
+      }
+
+      console.log("[v0] Invoices loaded:", data?.length || 0)
       setInvoices(data || [])
-    } catch (error) {
-      console.error("Error loading invoices:", error)
+    } catch (error: any) {
+      console.error("Error loading invoices:", error.message || error)
     } finally {
       setLoading(false)
     }
@@ -60,8 +75,8 @@ export function InvoicesClient() {
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
       invoice.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.customers?.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.customers?.contact_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      invoice.contact?.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.contact?.contact_name?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter = filterStatus === "all" || invoice.status === filterStatus
     return matchesSearch && matchesFilter
   })
@@ -234,7 +249,10 @@ export function InvoicesClient() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
                           <span className="text-foreground">
-                            {invoice.customers?.company_name || invoice.customers?.contact_name || "Unknown"}
+                            {invoice.contact?.company_name ||
+                              invoice.contact?.display_name ||
+                              invoice.contact?.contact_name ||
+                              "Unknown"}
                           </span>
                         </div>
                       </td>

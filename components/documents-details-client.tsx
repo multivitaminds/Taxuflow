@@ -20,16 +20,20 @@ export function DocumentsDetailsClient({ user, profile }: DocumentsDetailsClient
   const [loading, setLoading] = useState(true)
   const [showUploadModal, setShowUploadModal] = useState(false)
 
+  console.log("[v0] DocumentsDetailsClient rendering", { user: !!user, profile: !!profile })
+
   const supabase = createClient()
 
   const fetchDocuments = async () => {
     setLoading(true)
+    console.log("[v0] Fetching documents for user", user.id)
     const { data, error } = await supabase
       .from("documents")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
+    console.log("[v0] Documents fetched", { count: data?.length, error })
     if (data) {
       setDocuments(data)
     }

@@ -18,10 +18,14 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
   const [taxCalc, setTaxCalc] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
+  console.log("[v0] RefundDetailsClient rendering", { user: !!user, profile: !!profile })
+
   const supabase = createClient()
+  console.log("[v0] Supabase client created", { hasClient: !!supabase })
 
   useEffect(() => {
     const fetchRefundData = async () => {
+      console.log("[v0] Fetching refund data for user", user.id)
       const { data, error } = await supabase
         .from("tax_calculations")
         .select("*")
@@ -30,6 +34,7 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
         .limit(1)
         .maybeSingle()
 
+      console.log("[v0] Refund data fetched", { hasData: !!data, error })
       if (data) {
         setTaxCalc(data)
       }
@@ -40,6 +45,7 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
   }, [user.id])
 
   if (loading) {
+    console.log("[v0] RefundDetailsClient showing loading state")
     return (
       <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="text-center">
@@ -49,6 +55,8 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
       </div>
     )
   }
+
+  console.log("[v0] RefundDetailsClient rendering content", { taxCalc })
 
   const estimatedRefund = taxCalc?.estimated_refund || 0
   const totalIncome = taxCalc?.total_income || 0

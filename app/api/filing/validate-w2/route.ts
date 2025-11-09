@@ -116,14 +116,17 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Basic validation passed, calling AI validation...")
 
-    // Use AI to validate the W-2 form
-    const { object: validation } = await generateObject({
-      model: "openai/gpt-4o",
-      schema: validationSchema,
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert IRS tax form validator. Analyze the W-2 form data and identify:
+    let validation: any
+
+    try {
+      // Use AI to validate the W-2 form
+      const result = await generateObject({
+        model: "openai/gpt-4o",
+        schema: validationSchema,
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert IRS tax form validator. Analyze the W-2 form data and identify:
 
 1. ERRORS: Critical issues that will cause IRS rejection (invalid formats, impossible values, math errors)
 2. WARNINGS: Issues that may cause problems (unusual values, missing recommended fields)
@@ -145,20 +148,54 @@ Check for:
 - Math inconsistencies (withholding rates, wage calculations)
 - Year-specific limits and thresholds
 - Common mistakes (wrong box values, transposed numbers)`,
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            formData,
-            context: {
-              currentYear: new Date().getFullYear(),
-              filingType: formData.filingType,
-              taxYear: formData.taxYear,
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              formData,
+              context: {
+                currentYear: new Date().getFullYear(),
+                filingType: formData.filingType,
+                taxYear: formData.taxYear,
+              },
+            }),
+          },
+        ],
+        abortSignal: AbortSignal.timeout(15000), // 15 second timeout
+      })
+
+      validation = result.object
+    } catch (aiError) {
+      const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
+      console.log("[v0] AI validation failed:", errorMessage)
+
+      if (
+        errorMessage.includes("Gateway") ||
+        errorMessage.includes("fetch failed") ||
+        errorMessage.includes("network") ||
+        errorMessage.includes("timeout")
+      ) {
+        console.log("[v0] AI service unavailable, using basic validation only")
+
+        // Return basic validation with a warning that AI validation is unavailable
+        return NextResponse.json({
+          valid: errors.length === 0,
+          errors,
+          warnings: [
+            ...warnings,
+            {
+              field: "system",
+              message: "Advanced AI validation is temporarily unavailable. Basic validation has been performed.",
+              severity: "info",
             },
-          }),
-        },
-      ],
-    })
+          ],
+          suggestions,
+        })
+      }
+
+      // Re-throw other types of errors
+      throw aiError
+    }
 
     // Merge basic validation errors with AI validation
     const finalValidation = {
@@ -189,17 +226,17 @@ Check for:
     return NextResponse.json(
       {
         valid: false,
-        errors: [
+        errors: [],
+        warnings: [
           {
             field: "system",
-            message: `AI validation service error: ${error.message}`,
-            severity: "critical",
+            message: "AI validation service unavailable. Please proceed with caution and verify all fields carefully.",
+            severity: "warning",
           },
         ],
-        warnings: [],
         suggestions: [],
       },
-      { status: 500 },
+      { status: 200 }, // Changed to 200 so the form can still proceed
     )
   }
 }

@@ -18,8 +18,11 @@ export function DeadlineDetailsClient({ user, profile }: DeadlineDetailsClientPr
   const [deadlineDate, setDeadlineDate] = useState("")
   const [milestones, setMilestones] = useState<any[]>([])
 
+  console.log("[v0] DeadlineDetailsClient rendering", { user: !!user, profile: !!profile })
+
   useEffect(() => {
     const calculateDeadline = () => {
+      console.log("[v0] Calculating deadline")
       const now = new Date()
       const currentYear = now.getFullYear()
 
