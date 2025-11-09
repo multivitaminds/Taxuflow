@@ -14,7 +14,12 @@ interface AbatementRequest {
 
 export async function POST(req: Request) {
   try {
-    const supabase = getSupabaseServerClient()
+    const supabase = await getSupabaseServerClient()
+    console.log("[v0] Server env check:", {
+      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      hasClient: !!supabase,
+    })
 
     if (!supabase) {
       console.error("[v0] Supabase client unavailable")
@@ -24,9 +29,19 @@ export async function POST(req: Request) {
       )
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    let user
+    try {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
+      user = authUser
+    } catch (authError) {
+      console.error("[v0] Auth error:", authError)
+      return Response.json(
+        { error: "Authentication failed", details: "Unable to verify user session" },
+        { status: 401 },
+      )
+    }
 
     if (!user) {
       console.error("[v0] Unauthorized letter generation attempt")
