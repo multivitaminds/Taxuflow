@@ -1,5 +1,5 @@
 import { generateText } from "ai"
-import { createClient } from "@/lib/supabase/server"
+import { getSupabaseServerClient } from "@/lib/supabase/server"
 
 export const maxDuration = 30
 
@@ -14,19 +14,28 @@ interface AbatementRequest {
 
 export async function POST(req: Request) {
   try {
-    // Check authentication
-    const supabase = await createClient()
+    const supabase = getSupabaseServerClient()
+
+    if (!supabase) {
+      console.error("[v0] Supabase client unavailable")
+      return Response.json(
+        { error: "Service temporarily unavailable", details: "Database connection failed" },
+        { status: 503 },
+      )
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 })
+      console.error("[v0] Unauthorized letter generation attempt")
+      return Response.json({ error: "Unauthorized", details: "Please log in to generate letters" }, { status: 401 })
     }
 
     const { businessName, ein, taxYear, formType, reason, additionalContext }: AbatementRequest = await req.json()
 
-    console.log("[v0] Generating penalty abatement letter for:", businessName)
+    console.log("[v0] Generating penalty abatement letter for:", businessName, "User:", user.email)
 
     const { text } = await generateText({
       model: "openai/gpt-4o",
@@ -55,16 +64,20 @@ Make it persuasive but honest. Focus on reasonable cause arguments that the IRS 
       maxTokens: 1500,
     })
 
-    console.log("[v0] Generated abatement letter")
+    console.log("[v0] Generated abatement letter successfully")
 
-    // Log usage for billing
-    await supabase.from("ai_usage_logs").insert({
-      user_id: user.id,
-      feature: "penalty_abatement_letter",
-      model: "openai/gpt-4o",
-      tokens_used: text.length,
-      metadata: { taxYear, formType },
-    })
+    try {
+      await supabase.from("ai_usage_logs").insert({
+        user_id: user.id,
+        feature: "penalty_abatement_letter",
+        model: "openai/gpt-4o",
+        tokens_used: text.length,
+        metadata: { taxYear, formType },
+      })
+    } catch (logError) {
+      console.error("[v0] Failed to log usage:", logError)
+      // Don't fail the request if logging fails
+    }
 
     return Response.json({
       letter: text,
@@ -75,7 +88,7 @@ Make it persuasive but honest. Focus on reasonable cause arguments that the IRS 
     return Response.json(
       {
         error: "Failed to generate letter",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: error instanceof Error ? error.message : "Unknown error occurred",
       },
       { status: 500 },
     )

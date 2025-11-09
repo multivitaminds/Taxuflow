@@ -1482,7 +1482,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
                     className="flex-1 bg-transparent border-orange-500/20"
                   >
                     <FileText className="mr-2 h-4 w-4" />
-                    Generate Penalty Letter ($39)
+                    Generate Penalty Letter ($19)
                   </Button>
                 )}
               </div>

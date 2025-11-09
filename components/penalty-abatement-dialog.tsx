@@ -61,6 +61,7 @@ export function PenaltyAbatementDialog({
     }
 
     setIsGenerating(true)
+    console.log("[v0] Generating penalty letter with:", { businessName, ein, taxYear, formType, reason })
 
     try {
       const response = await fetch("/api/generate-abatement-letter", {
@@ -77,10 +78,13 @@ export function PenaltyAbatementDialog({
       })
 
       if (!response.ok) {
-        throw new Error("Failed to generate letter")
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+        console.error("[v0] Letter generation failed:", errorData)
+        throw new Error(errorData.details || errorData.error || "Failed to generate letter")
       }
 
       const data = await response.json()
+      console.log("[v0] Letter generated successfully")
       setGeneratedLetter(data.letter)
 
       toast.success("Penalty abatement letter generated!", {
@@ -174,7 +178,7 @@ export function PenaltyAbatementDialog({
 
             <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-4">
               <p className="text-sm text-orange-600 dark:text-orange-400">
-                <strong>Premium Feature:</strong> This service costs $39. The letter generation uses advanced AI and
+                <strong>Premium Feature:</strong> This service costs $19. The letter generation uses advanced AI and
                 typically saves users hundreds or thousands in penalties.
               </p>
             </div>
@@ -202,7 +206,7 @@ export function PenaltyAbatementDialog({
                 ) : (
                   <>
                     <Sparkles className="h-4 w-4 mr-2" />
-                    Generate Letter ($39)
+                    Generate Letter ($19)
                   </>
                 )}
               </Button>

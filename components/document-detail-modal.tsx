@@ -58,6 +58,12 @@ export function DocumentDetailModal({ document, isOpen, onClose }: DocumentDetai
   const extractedData = document.extracted_data || {}
   const processingStatus = document.processing_status || "pending"
 
+  const isPenaltyAbatementAvailable = () => {
+    const currentYear = new Date().getFullYear()
+    const docYear = document.tax_year || currentYear
+    return document.ai_document_type === "w2" && docYear < currentYear
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -166,23 +172,23 @@ export function DocumentDetailModal({ document, isOpen, onClose }: DocumentDetai
               <Download className="w-4 h-4 mr-2" />
               {downloading ? "Downloading..." : "Download Original"}
             </Button>
-            {document.ai_document_type === "w2" &&
-              document.tax_year &&
-              document.tax_year < new Date().getFullYear() && (
-                <Button
-                  variant="outline"
-                  className="flex-1 border-neon/50 text-neon hover:bg-neon/10 bg-transparent"
-                  onClick={() => setShowPenaltyDialog(true)}
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Generate Penalty Letter ($39)
-                </Button>
-              )}
+            {isPenaltyAbatementAvailable() && (
+              <Button
+                variant="outline"
+                className="flex-1 border-neon/50 text-neon hover:bg-neon/10 bg-transparent"
+                onClick={() => setShowPenaltyDialog(true)}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                Generate Penalty Letter ($39)
+              </Button>
+            )}
           </div>
         </div>
 
         {showPenaltyDialog && (
           <PenaltyAbatementDialog
+            open={showPenaltyDialog}
+            onOpenChange={setShowPenaltyDialog}
             businessName={extractedData?.employer?.name || "Your Business"}
             ein={extractedData?.employer?.ein || ""}
             taxYear={document.tax_year || new Date().getFullYear()}

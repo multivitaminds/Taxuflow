@@ -151,6 +151,18 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
   const { toast } = useToast()
   const router = useRouter()
 
+  const currentYear = new Date().getFullYear()
+  const taxYear = currentYear - 1 // 1099-NEC is for the previous year
+
+  const canEfile = (year: number) => {
+    const yearsBack = currentYear - year
+    // 1099-NEC e-filing deadline is January 31st
+    // Only current year (previous calendar year) can be e-filed
+    return yearsBack === 1
+  }
+
+  const isPaperFilingRequired = !canEfile(taxYear)
+
   const addContractor = () => {
     setContractors([
       ...contractors,
@@ -491,7 +503,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                 1099-NEC Filing
               </h2>
               <p className="mt-2 text-muted-foreground">
-                File 1099-NEC forms for contractors paid $600 or more in {new Date().getFullYear() - 1}
+                File 1099-NEC forms for contractors paid $600 or more in {taxYear}
               </p>
               <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -774,15 +786,17 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                 AI Validate Form
               </Button>
 
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => setShowPenaltyDialog(true)}
-                className="text-orange-500 hover:text-orange-600"
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Generate Penalty Abatement Letter ($39)
-              </Button>
+              {isPaperFilingRequired && (
+                <Button
+                  type="button"
+                  variant="link"
+                  onClick={() => setShowPenaltyDialog(true)}
+                  className="text-orange-500 hover:text-orange-600"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Penalty Abatement Letter ($19)
+                </Button>
+              )}
             </div>
 
             <Button
@@ -809,7 +823,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
         open={showPenaltyDialog}
         onOpenChange={setShowPenaltyDialog}
         formType="1099-NEC"
-        taxYear={new Date().getFullYear() - 1}
+        taxYear={taxYear}
         userId={userId}
       />
     </form>
