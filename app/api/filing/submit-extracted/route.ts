@@ -2,19 +2,57 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
 async function getTaxBanditsAccessToken(): Promise<string> {
-  const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
-  const apiUrl =
-    environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testapi.taxbandits.com/v1.7.3"
+  console.log("[v0] Server env check:", {
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  })
 
-  const response = await fetch(`${apiUrl}/tbsauth`, {
-    method: "POST",
+  const clientId = process.env.TAXBANDITS_CLIENT_ID
+  const clientSecret = process.env.TAXBANDITS_API_SECRET
+
+  if (!clientId || !clientSecret) {
+    console.log("[v0] TaxBandits credentials not configured, using demo mode")
+    throw new Error(
+      "TaxBandits credentials not configured. Please add TAXBANDITS_CLIENT_ID and TAXBANDITS_API_SECRET environment variables.",
+    )
+  }
+
+  const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
+
+  const oauthUrl =
+    environment === "production"
+      ? "https://oauth.expressauth.net/v2/tbsauth"
+      : "https://testoauth.expressauth.net/v2/tbsauth"
+
+  const now = Math.floor(Date.now() / 1000)
+  const payload = {
+    iss: clientId,
+    sub: clientId,
+    aud: "TaxBanditsAPI",
+    iat: now,
+    exp: now + 300, // 5 minutes expiration
+  }
+
+  const header = { alg: "HS256", typ: "JWT" }
+  const encodedHeader = Buffer.from(JSON.stringify(header)).toString("base64url")
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url")
+
+  // Create signature
+  const crypto = await import("crypto")
+  const signature = crypto
+    .createHmac("sha256", clientSecret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest("base64url")
+
+  const jws = `${encodedHeader}.${encodedPayload}.${signature}`
+
+  console.log("[v0] Requesting TaxBandits access token...")
+
+  const response = await fetch(oauthUrl, {
+    method: "GET",
     headers: {
-      "Content-Type": "application/json",
+      Authentication: jws,
     },
-    body: JSON.stringify({
-      ApiKey: process.env.TAXBANDITS_API_KEY,
-      ApiSecret: process.env.TAXBANDITS_API_SECRET,
-    }),
   })
 
   if (!response.ok) {
