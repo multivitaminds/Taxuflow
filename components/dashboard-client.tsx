@@ -76,7 +76,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   const [selectedAgent, setSelectedAgent] = useState(initialProfile?.preferred_agent || "Sam")
   const [user, setUser] = useState(initialUser)
   const [profile, setProfile] = useState(initialProfile)
-  const [loading, setLoading] = useState(!initialUser)
+  const [loading, setLoading] = useState(true) // Start as true to show loading state
 
   const [supabaseReady, setSupabaseReady] = useState(false)
   const [supabaseError, setSupabaseError] = useState<string | null>(null)
@@ -105,6 +105,29 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
   const [daysUntilDeadline, setDaysUntilDeadline] = useState(0)
   const [deadlineDate, setDeadlineDate] = useState("")
+
+  const getDeadlineInfo = () => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    let deadlineYear = currentYear + 1
+    if (now.getMonth() < 3 || (now.getMonth() === 3 && now.getDate() <= 15)) {
+      deadlineYear = currentYear
+    }
+    const deadline = new Date(deadlineYear, 3, 15)
+    const dayOfWeek = deadline.getDay()
+    if (dayOfWeek === 0) deadline.setDate(deadline.getDate() + 1)
+    else if (dayOfWeek === 6) deadline.setDate(deadline.getDate() + 2)
+
+    const timeDiff = deadline.getTime() - now.getTime()
+    const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+
+    return {
+      days,
+      date: deadline.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    }
+  }
+
+  const deadline = getDeadlineInfo()
 
   useEffect(() => {
     const calculateDeadline = () => {
@@ -181,13 +204,13 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
             .maybeSingle()
 
           setProfile(clientProfile)
-          setLoading(false)
+          setLoading(false) // Set loading to false after initial data fetch
         } else {
           // Server auth worked
           console.log("[v0] Server auth successful")
           setUser(initialUser)
           setProfile(initialProfile)
-          setLoading(false)
+          setLoading(false) // Set loading to false after initial data fetch
         }
       } catch (error) {
         console.error("[v0] Error initializing Supabase:", error)
@@ -195,6 +218,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
         setSupabaseReady(false)
         setLoadingData(false)
         setLoadingDocuments(false)
+        setLoading(false) // Ensure loading is set to false even on error
       }
     }
 
@@ -210,7 +234,12 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
       return
     }
 
-    if (user.id === "demo-user-id") {
+    if (!initialUser) {
+      // Handle case where initialUser is null (e.g., client-side auth)
+      // This logic will be covered by the initSupabase effect which fetches user and profile
+      // For now, we assume if we reach here with initialUser null, the user state is populated.
+      console.log("[v0] Fetching essential data for client-authenticated user")
+    } else if (initialUser.id === "demo-user-id") {
       console.log("[v0] Loading demo data")
       setDocuments([
         {
@@ -301,6 +330,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
     console.log("[v0] Fetching dashboard data for user:", user.id)
     setLoadingData(true)
+    setLoadingDocuments(true) // Set to true to show loading state for documents
 
     try {
       const fetchWithTimeout = async <T,>(promise: Promise<T>, timeoutMs = 10000): Promise<T> => {
@@ -374,10 +404,10 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
       } else {
         setDocumentError("Failed to load data. Please refresh the page.")
       }
+    } finally {
+      setLoadingData(false)
+      setLoadingDocuments(false)
     }
-
-    setLoadingData(false)
-    setLoadingDocuments(false)
   }
 
   // This useEffect hook is now correctly placed after the initialisation hooks and before conditional rendering
@@ -433,12 +463,13 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
     )
   }
 
-  if (loading || !user) {
+  // Simplified loading state
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     )

@@ -1,19 +1,10 @@
-import { redirect } from "next/navigation"
-import { createServerClient } from "@/lib/supabase/server"
+"use client"
+
+import { useDashboard } from "../layout"
 import { PersonalInfoClient } from "@/components/personal-info-client"
 
-export default async function PersonalInfoPage() {
-  const supabase = await createServerClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect("/login")
-  }
-
-  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
+export default function PersonalInfoPage() {
+  const { user, profile } = useDashboard()
 
   return <PersonalInfoClient user={user} profile={profile} />
 }

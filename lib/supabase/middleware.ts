@@ -2,6 +2,11 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function updateSession(request: NextRequest) {
+  if (request.nextUrl.pathname === "/auth/callback") {
+    console.log("[v0] Middleware: Skipping OAuth callback")
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -41,25 +46,11 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
-    let user = null
-    if (!isPublicPath) {
-      try {
-        const {
-          data: { user: fetchedUser },
-        } = await Promise.race([
-          supabase.auth.getUser(),
-          new Promise<{ data: { user: null } }>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1000)),
-        ])
-        user = fetchedUser
-      } catch (error) {
-        console.log("[v0] Middleware: User fetch failed (non-fatal):", error)
-      }
-    }
+    const isAuthenticated = hasAuthCookies || demoMode
 
-    const isAuthenticated = user || (hasAuthCookies && !demoMode) || demoMode
-
-    if ((request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") && isAuthenticated) {
-      console.log("[v0] Middleware: Authenticated user accessing auth page, redirecting to dashboard")
+    // This prevents middleware from fighting with client-side redirects
+    if (request.nextUrl.pathname === "/signup" && isAuthenticated) {
+      console.log("[v0] Middleware: Authenticated user accessing signup page, redirecting to dashboard")
       return NextResponse.redirect(new URL("/dashboard", request.url))
     }
 

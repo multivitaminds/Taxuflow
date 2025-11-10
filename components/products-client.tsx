@@ -41,15 +41,20 @@ export function ProductsClient() {
 
   async function loadProducts() {
     try {
+      console.log("[v0] Loading products from database")
       const supabase = getSupabaseBooksClient()
-      if (!supabase) return
+      if (!supabase) {
+        console.error("[v0] Supabase client not available")
+        return
+      }
 
-      const { data, error } = await supabase
-        .from("products_services")
-        .select("*")
-        .order("created_at", { ascending: false })
+      const { data, error } = await supabase.from("products").select("*").order("created_at", { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error("[v0] Error loading products:", error)
+        throw error
+      }
+      console.log("[v0] Products loaded successfully:", data?.length || 0)
       setProducts(data || [])
     } catch (error) {
       console.error("Error loading products:", error)
@@ -65,7 +70,7 @@ export function ProductsClient() {
       const supabase = getSupabaseBooksClient()
       if (!supabase) throw new Error("Supabase not available")
 
-      const { error } = await supabase.from("products_services").delete().eq("id", productId)
+      const { error } = await supabase.from("products").delete().eq("id", productId)
 
       if (error) throw error
       setProducts(products.filter((p) => p.id !== productId))
@@ -332,11 +337,11 @@ function ProductForm({ onClose, initialProduct }: { onClose: () => void; initial
       }
 
       if (initialProduct) {
-        const { error } = await supabase.from("products_services").update(payload).eq("id", initialProduct.id)
+        const { error } = await supabase.from("products").update(payload).eq("id", initialProduct.id)
 
         if (error) throw error
       } else {
-        const { error } = await supabase.from("products_services").insert(payload)
+        const { error } = await supabase.from("products").insert(payload)
 
         if (error) throw error
       }

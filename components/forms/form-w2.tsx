@@ -846,16 +846,18 @@ export default function FormW2({ extractedData }: FormW2Props) {
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
                   onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   disabled={uploading || extracting}
                 />
                 <Button
                   type="button"
-                  variant="outline"
                   size="sm"
                   disabled={uploading || extracting}
-                  className="bg-gradient-to-r from-purple-600 to-orange-600/10 border-purple-500/20"
+                  className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 border-0 group"
                 >
+                  {/* Shimmer effect overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+
                   {extracting ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -863,7 +865,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4 mr-2" />
+                      <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
                       Upload W-2 (AI Extract)
                     </>
                   )}

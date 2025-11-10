@@ -66,7 +66,7 @@ export default function SignupPage() {
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
           },
@@ -95,17 +95,17 @@ export default function SignupPage() {
         throw new Error("Failed to create account. Please try again.")
       }
 
-      try {
-        const profileResult = await createUserProfile(data.user.id, email, fullName)
-
-        if (!profileResult.success) {
-          console.error("[v0] Profile creation failed:", profileResult.error)
-          // Don't throw error - user is created, profile can be created later
-        }
-      } catch (profileError) {
-        console.error("[v0] Profile creation error:", profileError)
-        // Continue anyway - user account is created
-      }
+      // These don't need to block the user experience
+      Promise.all([
+        createUserProfile(data.user.id, email, fullName).catch((err) =>
+          console.error("[v0] Background profile creation failed:", err),
+        ),
+        fetch("/api/auth/send-verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, userId: data.user.id, fullName }),
+        }).catch((err) => console.error("[v0] Background email send failed:", err)),
+      ])
 
       setSuccess(true)
       setLoading(false)

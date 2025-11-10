@@ -52,8 +52,45 @@ export async function GET(request: Request) {
     if (data?.user) {
       console.log("[v0] OAuth successful for user:", data.user.email)
 
-      // The trigger function will create the profile automatically
-      // No need to manually create it here
+      const { data: existingProfile } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle()
+
+      if (!existingProfile) {
+        // Create profile for OAuth users
+        await supabase.from("user_profiles").insert({
+          id: data.user.id,
+          email: data.user.email,
+          full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
+        })
+      }
+
+      const response = NextResponse.redirect(new URL("/dashboard", request.url))
+
+      // Set session cookies explicitly
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        response.cookies.set("sb-access-token", session.access_token, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+        })
+        response.cookies.set("sb-refresh-token", session.refresh_token, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+        })
+      }
+
+      return response
     }
 
     return NextResponse.redirect(new URL("/dashboard", request.url))
