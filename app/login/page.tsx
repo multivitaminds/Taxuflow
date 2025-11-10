@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
+import { signInWithPassword } from "@/app/actions/auth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -105,51 +106,27 @@ export default function LoginPage() {
         hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       })
 
-      const supabase = createClient()
+      console.log("[v0] Login attempt (server action):", { email })
 
-      if (!supabase) {
-        console.error("[v0] Supabase client is null - environment variables missing")
-        throw new Error("Authentication service is not configured. Please contact support.")
+      const result = await signInWithPassword(email, password)
+
+      if (result?.error) {
+        console.error("[v0] Login failed:", result.error)
+        setError(result.error)
+        setLoading(false)
+        return
       }
 
-      console.log("[v0] Login attempt:", { email })
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      console.log("[v0] Login response:", {
-        hasData: !!data,
-        hasSession: !!data?.session,
-        hasUser: !!data?.user,
-        error: error?.message,
-      })
-
-      if (error) {
-        console.error("[v0] Login error:", {
-          message: error.message,
-          status: error.status,
-          name: error.name,
-        })
-
-        if (error.message === "Invalid login credentials") {
-          throw new Error("Invalid email or password. Don't have an account yet? Sign up to get started.")
-        }
-
-        throw error
-      }
-
-      if (data?.session) {
-        console.log("[v0] Login successful, session created")
-        router.push("/dashboard")
-      } else {
-        throw new Error("No session returned from login")
-      }
+      // If no error and no redirect happened, the server action redirected successfully
+      console.log("[v0] Login successful via server action")
     } catch (err: any) {
-      console.error("[v0] Login failed:", err.message)
-      setError(err.message || "Invalid email or password")
-      setLoading(false)
+      console.error("[v0] Login error:", err)
+      // If we get here without a redirect, something went wrong
+      if (!err.message?.includes("NEXT_REDIRECT")) {
+        setError(err.message || "An unexpected error occurred")
+        setLoading(false)
+      }
+      // If it's a NEXT_REDIRECT error, that's actually success (server action redirected)
     }
   }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useDashboard } from "../layout"
+import { useDashboard } from "@/components/dashboard-provider"
 import { SettingsClient } from "@/components/settings-client"
 
 export default function SettingsPage() {

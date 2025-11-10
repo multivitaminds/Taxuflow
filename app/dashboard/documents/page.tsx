@@ -1,6 +1,6 @@
 "use client"
 
-import { useDashboard } from "../layout"
+import { useDashboard } from "@/components/dashboard-provider"
 import { DocumentsDetailsClient } from "@/components/documents-details-client"
 
 export default function DocumentsDetailsPage() {

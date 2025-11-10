@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useDashboard } from "../layout"
+import { useDashboard } from "@/components/dashboard-provider"
 import { IncomeClient } from "@/components/income-client"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
