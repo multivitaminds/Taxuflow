@@ -1,33 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import FormW2 from "@/components/forms/form-w2"
 import { DocumentUpload } from "@/components/forms/document-upload"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
 import { PayrollIntegration } from "@/components/payroll-integration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
-import { getSupabaseBrowserClient } from "@/lib/supabase/client"
+import { useDashboard } from "@/components/dashboard-provider"
 
 export default function FileW2Page() {
   const [extractedData, setExtractedData] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("upload")
-  const [userId, setUserId] = useState<string>("")
-
-  useEffect(() => {
-    const getUserId = async () => {
-      const supabase = await getSupabaseBrowserClient()
-      if (supabase) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        if (user) {
-          setUserId(user.id)
-        }
-      }
-    }
-    getUserId()
-  }, [])
+  const { user } = useDashboard()
+  const userId = user?.id || ""
 
   const handleExtractComplete = (data: any, metadata?: any) => {
     console.log("[v0] Extracted data received in page:", data)

@@ -30,26 +30,43 @@ export function InvoicesClient() {
         return
       }
 
-      const { data, error } = await supabase
+      const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select(`
-          *,
-          contact:contacts(
-            company_name,
-            contact_name,
-            display_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
 
-      if (error) {
-        console.error("[v0] Error loading invoices:", error.message)
-        throw error
+      if (invoicesError) {
+        console.error("[v0] Error loading invoices:", invoicesError.message)
+        throw invoicesError
       }
 
-      console.log("[v0] Invoices loaded:", data?.length || 0)
-      setInvoices(data || [])
+      // Get unique contact IDs
+      const contactIds = [...new Set(invoicesData?.map((inv) => inv.contact_id).filter(Boolean))]
+
+      // Fetch contacts separately if there are any
+      const contactsMap = new Map()
+      if (contactIds.length > 0) {
+        const { data: contactsData, error: contactsError } = await supabase
+          .from("contacts")
+          .select("*")
+          .in("id", contactIds)
+
+        if (!contactsError && contactsData) {
+          contactsData.forEach((contact) => {
+            contactsMap.set(contact.id, contact)
+          })
+        }
+      }
+
+      // Merge invoices with their contacts
+      const invoicesWithContacts =
+        invoicesData?.map((invoice) => ({
+          ...invoice,
+          contact: contactsMap.get(invoice.contact_id) || null,
+        })) || []
+
+      console.log("[v0] Invoices loaded:", invoicesWithContacts.length)
+      setInvoices(invoicesWithContacts)
     } catch (error: any) {
       console.error("Error loading invoices:", error.message || error)
     } finally {

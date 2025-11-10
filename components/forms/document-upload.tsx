@@ -30,6 +30,8 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
   const { toast } = useToast()
   const router = useRouter()
 
+  console.log("[v0] DocumentUpload userId:", userId)
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
@@ -39,6 +41,8 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
   }, [])
 
   const handleFiles = async (fileList: File[]) => {
+    console.log("[v0] handleFiles called with", fileList.length, "files, userId:", userId)
+
     if (!userId) {
       toast({
         title: "Authentication Required",
@@ -48,7 +52,39 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
       return
     }
 
-    const newFiles: UploadedFile[] = fileList.map((file) => ({
+    const validFiles: File[] = []
+    const invalidFiles: string[] = []
+
+    for (const file of fileList) {
+      const validTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
+      const maxSize = 10 * 1024 * 1024 // 10MB
+
+      if (!validTypes.includes(file.type) && !file.name.match(/\.(pdf|jpg|jpeg|png)$/i)) {
+        invalidFiles.push(`${file.name} (invalid type)`)
+        continue
+      }
+
+      if (file.size > maxSize) {
+        invalidFiles.push(`${file.name} (exceeds 10MB)`)
+        continue
+      }
+
+      validFiles.push(file)
+    }
+
+    if (invalidFiles.length > 0) {
+      toast({
+        title: "Invalid Files",
+        description: `The following files cannot be uploaded: ${invalidFiles.join(", ")}`,
+        variant: "destructive",
+      })
+    }
+
+    if (validFiles.length === 0) {
+      return
+    }
+
+    const newFiles: UploadedFile[] = validFiles.map((file) => ({
       id: Date.now().toString() + Math.random(),
       name: file.name,
       size: file.size,
@@ -58,8 +94,8 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
 
     setFiles((prev) => [...prev, ...newFiles])
 
-    for (let i = 0; i < fileList.length; i++) {
-      const file = fileList[i]
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i]
       const fileId = newFiles[i].id
 
       try {
