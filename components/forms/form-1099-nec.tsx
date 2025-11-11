@@ -527,6 +527,17 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
     if (extractedData) {
       console.log("[v0] Auto-filling 1099-NEC form with extracted data:", extractedData)
 
+      if (extractedData.isTemplateData === true) {
+        console.log("[v0] Rejected template data in form initialization")
+        toast({
+          title: "⚠️ Template Document Rejected",
+          description:
+            "The uploaded document appears to be a sample/demo form. Please upload real tax documents with actual taxpayer information.",
+          variant: "destructive",
+        })
+        return
+      }
+
       if (extractedData.contractors && Array.isArray(extractedData.contractors)) {
         console.log("[v0] Processing multiple contractors:", extractedData.contractors.length)
 
@@ -569,7 +580,8 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
         if (newContractors.length === 0) {
           toast({
             title: "⚠️ No Valid Contractors",
-            description: "All uploaded documents were templates/demos. Please upload real 1099-NEC forms.",
+            description:
+              "All uploaded documents were templates/demos. Please upload real 1099-NEC forms with actual taxpayer information.",
             variant: "destructive",
           })
           return

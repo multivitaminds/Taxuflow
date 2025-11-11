@@ -154,6 +154,31 @@ export function DocumentUpload({
               )
             }
 
+            if (extractData.data.isTemplateData === true || extractData.warning === "template_data_detected") {
+              console.log("[v0] Template data detected, rejecting file:", file.name)
+
+              setFiles((prev) =>
+                prev.map((f) =>
+                  f.id === fileId
+                    ? {
+                        ...f,
+                        status: "error",
+                        errorMessage:
+                          "Template/demo document detected. Please upload real tax documents with actual taxpayer information.",
+                      }
+                    : f,
+                ),
+              )
+
+              toast({
+                title: "Template Document Detected",
+                description: `${file.name} appears to be a sample/demo form. Please upload real tax documents.`,
+                variant: "destructive",
+              })
+
+              continue
+            }
+
             setFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
@@ -168,18 +193,13 @@ export function DocumentUpload({
 
             if (extractData.warning === "demo_mode") {
               toast({
-                title: "⚠️ Demo Mode Active",
+                title: "Demo Mode Active",
                 description: "AI service unavailable. Demo data provided - please verify all information.",
                 variant: "default",
               })
-            } else if (extractData.warning === "template_data_detected") {
-              toast({
-                title: "📋 Sample Document Detected",
-                description: `Extracted from ${file.name}. Please verify this is not a demo document.`,
-              })
             } else {
               toast({
-                title: "✅ Document Processed",
+                title: "Document Processed",
                 description: `Successfully extracted ${extractData.data.documentType?.toUpperCase() || "data"} from ${file.name}`,
               })
             }
@@ -220,7 +240,7 @@ export function DocumentUpload({
         )
 
         toast({
-          title: "❌ Processing Failed",
+          title: "Processing Failed",
           description: errorMessage,
           variant: "destructive",
         })
@@ -253,7 +273,7 @@ export function DocumentUpload({
       const allContractorData = completedFiles.map((f) => f.extractedData)
 
       toast({
-        title: "✨ Documents Ready",
+        title: "Documents Ready",
         description: `${completedFiles.length} contractor document${completedFiles.length > 1 ? "s" : ""} extracted successfully`,
       })
 

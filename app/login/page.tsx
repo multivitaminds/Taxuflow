@@ -158,22 +158,22 @@ export default function LoginPage() {
 
   if (magicLinkSent) {
     return (
-      <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4 pt-24">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 pt-24">
         <div className="w-full max-w-md">
           <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#635BFF] to-[#7C66FF] rounded-lg flex items-center justify-center">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">Taxu</span>
+            <span className="text-2xl font-bold text-gray-900">Taxu</span>
           </Link>
 
-          <div className="bg-[#1F1F1F] border border-white/10 rounded-2xl p-8 text-center">
-            <div className="w-16 h-16 bg-[#2ACBFF]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-8 h-8 text-[#2ACBFF]" />
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center shadow-lg">
+            <div className="w-16 h-16 bg-[#635BFF]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Sparkles className="w-8 h-8 text-[#635BFF]" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-3">Check your email</h1>
-            <p className="text-gray-400 mb-6">
-              We sent a magic link to <strong className="text-white">{email}</strong>. Click the link to sign in
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">Check your email</h1>
+            <p className="text-gray-600 mb-6">
+              We sent a magic link to <strong className="text-gray-900">{email}</strong>. Click the link to sign in
               instantly.
             </p>
             <Button onClick={() => setMagicLinkSent(false)} variant="outline" className="w-full">
@@ -186,24 +186,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0B0C0E] flex items-center justify-center px-4 pt-24">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 pt-24">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#2ACBFF] to-[#0EA5E9] rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#635BFF] to-[#7C66FF] rounded-lg flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white">Taxu</span>
+          <span className="text-2xl font-bold text-gray-900">Taxu</span>
         </Link>
 
-        <div className="bg-[#1F1F1F] border border-white/10 rounded-2xl p-8">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
-            <p className="text-gray-400">Sign in to your Taxu account</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back</h1>
+            <p className="text-gray-600">Sign in to your Taxu account</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 
@@ -212,12 +212,12 @@ export default function LoginPage() {
               type="button"
               onClick={handleDemoLogin}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold h-12 text-base shadow-lg shadow-purple-500/20 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-[#635BFF] to-[#7C66FF] hover:from-[#5046E5] hover:to-[#6B5AE5] text-white font-semibold h-12 text-base shadow-lg shadow-purple-500/20 disabled:opacity-50"
             >
               {loading ? "Loading Demo..." : "🚀 Try Demo Account - Instant Access"}
             </Button>
-            <p className="text-xs text-gray-400 text-center mt-2">
-              <span className="text-green-400 font-semibold">No signup or email required</span> • Explore all features
+            <p className="text-xs text-gray-500 text-center mt-2">
+              <span className="text-green-600 font-semibold">No signup or email required</span> • Explore all features
               with sample data
             </p>
           </div>
@@ -227,7 +227,7 @@ export default function LoginPage() {
             onClick={handleGoogleLogin}
             disabled={loading}
             variant="outline"
-            className="w-full h-12 mb-4 bg-white hover:bg-gray-100 text-gray-900 border-white/20 disabled:opacity-50"
+            className="w-full h-12 mb-4 bg-white hover:bg-gray-50 text-gray-900 border-gray-300 disabled:opacity-50"
           >
             {loading ? (
               "Connecting..."
@@ -258,16 +258,16 @@ export default function LoginPage() {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-[#1F1F1F] text-gray-500">Or sign in with email</span>
+              <span className="px-4 bg-white text-gray-500">Or sign in with email</span>
             </div>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <Label htmlFor="email" className="text-white mb-2 block">
+              <Label htmlFor="email" className="text-gray-900 mb-2 block">
                 Email
               </Label>
               <Input
@@ -278,16 +278,16 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 required
                 disabled={loading}
-                className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12"
+                className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 h-12 pr-12 focus:border-[#635BFF] focus:ring-[#635BFF]"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="password" className="text-white">
+                <Label htmlFor="password" className="text-gray-900">
                   Password
                 </Label>
-                <Link href="/forgot-password" className="text-sm text-[#2ACBFF] hover:text-[#0EA5E9]">
+                <Link href="/forgot-password" className="text-sm text-[#635BFF] hover:text-[#5046E5]">
                   Forgot password?
                 </Link>
               </div>
@@ -300,13 +300,13 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   required
                   disabled={loading}
-                  className="bg-[#0B0C0E] border-white/10 text-white placeholder:text-gray-500 h-12 pr-12"
+                  className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400 h-12 pr-12 focus:border-[#635BFF] focus:ring-[#635BFF]"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={loading}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -316,7 +316,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold h-12 group"
+              className="w-full bg-[#635BFF] hover:bg-[#5046E5] text-white font-semibold h-12 group"
             >
               {loading ? (
                 "Signing in..."
@@ -330,9 +330,9 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-gray-400">
+            <p className="text-gray-600">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-[#2ACBFF] hover:text-[#0EA5E9] font-semibold">
+              <Link href="/signup" className="text-[#635BFF] hover:text-[#5046E5] font-semibold">
                 Sign up
               </Link>
             </p>
