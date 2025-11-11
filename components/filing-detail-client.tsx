@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, FileText, CheckCircle2, XCircle, Clock } from "lucide-react"
+import { ArrowLeft, Download, FileText, CheckCircle2, XCircle, Clock, RefreshCw, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 
@@ -28,6 +28,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
   const router = useRouter()
   const { toast } = useToast()
   const [downloading, setDownloading] = useState(false)
+  const [checkingStatus, setCheckingStatus] = useState(false)
 
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -87,6 +88,40 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
     }
   }
 
+  const handleCheckStatus = async () => {
+    setCheckingStatus(true)
+    try {
+      const response = await fetch(`/api/filing/check-status/${filing.id}`)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to check status")
+      }
+
+      toast({
+        title: "Status Updated",
+        description: `Current status: ${data.status.toUpperCase()}`,
+      })
+
+      // Refresh the page to show updated status
+      router.refresh()
+    } catch (error) {
+      console.error("[v0] Status check error:", error)
+      toast({
+        title: "Status Check Failed",
+        description: error instanceof Error ? error.message : "Unable to check status. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setCheckingStatus(false)
+    }
+  }
+
+  const getTaxBanditsDashboardUrl = () => {
+    const environment = process.env.NEXT_PUBLIC_TAXBANDITS_ENVIRONMENT || "sandbox"
+    return environment === "production" ? "https://www.taxbandits.com" : "https://sandbox.taxbandits.com"
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-orange-50/20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -105,18 +140,69 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
               <p className="text-slate-600 mt-1">Submission ID: {filing.submission_id}</p>
             </div>
 
-            {filing.irs_status === "accepted" && (
+            <div className="flex gap-2">
               <Button
-                onClick={handleDownload}
-                disabled={downloading}
-                className="bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white shadow-lg shadow-purple-500/20"
+                onClick={handleCheckStatus}
+                disabled={checkingStatus}
+                variant="outline"
+                className="border-purple-200 hover:bg-purple-50 bg-transparent"
               >
-                <Download className="h-4 w-4 mr-2" />
-                {downloading ? "Downloading..." : "Download Return"}
+                <RefreshCw className={`h-4 w-4 mr-2 ${checkingStatus ? "animate-spin" : ""}`} />
+                {checkingStatus ? "Checking..." : "Check Status"}
               </Button>
-            )}
+
+              {filing.irs_status === "accepted" && (
+                <Button
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600 text-white shadow-lg shadow-purple-500/20"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {downloading ? "Downloading..." : "Download Return"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Verification Info Card */}
+        {filing.irs_status === "pending" && (
+          <Card className="p-4 mb-6 bg-blue-50/50 backdrop-blur-sm border-blue-200/50">
+            <div className="flex items-start gap-3">
+              <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900 mb-1">Filing Status: Processing</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  Your filing is being processed by TaxBandits. This typically takes 2-5 minutes in the sandbox
+                  environment, but can occasionally take longer.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    onClick={handleCheckStatus}
+                    disabled={checkingStatus}
+                    size="sm"
+                    className="bg-blue-600 hover:bg-blue-700 text-white w-fit"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${checkingStatus ? "animate-spin" : ""}`} />
+                    Refresh Status Now
+                  </Button>
+                  <a
+                    href={getTaxBanditsDashboardUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 w-fit"
+                  >
+                    Verify in TaxBandits Dashboard
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                  <p className="text-xs text-blue-600">
+                    Search for: <code className="bg-blue-100 px-1 py-0.5 rounded">{filing.submission_id}</code>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Status Card */}
         <Card className="p-6 mb-6 bg-white/80 backdrop-blur-sm border-slate-200/50 shadow-xl">

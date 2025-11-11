@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
 :root {
   /* Stripe-inspired color system with purple-to-orange gradient palette */
   --background: #ffffff;

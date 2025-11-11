@@ -48,7 +48,7 @@ export function AccountingDashboardClient({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-card">
+      <div className="border-b bg-card pt-24">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">

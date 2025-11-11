@@ -1,11 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Spinner } from "@/components/ui/spinner"
+import { useToast } from "@/hooks/use-toast"
+import { useRouter } from "next/navigation"
 import {
   CheckCircle2,
   XCircle,
@@ -47,8 +51,10 @@ interface FilingDashboardClientProps {
 export function FilingDashboardClient({ user, filings, isLoading = false }: FilingDashboardClientProps) {
   const [selectedTab, setSelectedTab] = useState("all")
   const [refreshing, setRefreshing] = useState(false)
+  const [refreshingFilingId, setRefreshingFilingId] = useState<string | null>(null)
+  const { toast } = useToast()
+  const router = useRouter()
 
-  // Calculate stats
   const totalFilings = filings.length
   const acceptedFilings = filings.filter((f) => f.filing_status === "accepted").length
   const pendingFilings = filings.filter((f) => f.filing_status === "submitted" || f.filing_status === "pending").length
@@ -56,7 +62,6 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
     .filter((f) => f.refund_amount && f.filing_status === "accepted" && f.form_type === "W-2")
     .reduce((sum, f) => sum + (f.refund_amount || 0), 0)
 
-  // Filter filings based on selected tab
   const filteredFilings = filings.filter((filing) => {
     if (selectedTab === "all") return true
     if (selectedTab === "accepted") return filing.filing_status === "accepted"
@@ -67,26 +72,85 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    // Trigger a page refresh to fetch latest data
     window.location.reload()
   }
 
-  const scrollToFilings = (tab: string) => {
-    setSelectedTab(tab)
-    // Scroll to the filing history section smoothly
-    setTimeout(() => {
-      const filingSection = document.getElementById("filing-history")
-      if (filingSection) {
-        filingSection.scrollIntoView({ behavior: "smooth", block: "start" })
+  const handleRefreshFiling = async (filingId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setRefreshingFilingId(filingId)
+
+    try {
+      console.log("[v0] Checking status for filing:", filingId)
+      const response = await fetch(`/api/filing/check-status/${filingId}`)
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text()
+        console.error("[v0] Received non-JSON response:", text)
+        throw new Error("Server returned invalid response. Please try again.")
       }
-    }, 100)
+
+      const data = await response.json()
+      console.log("[v0] Status check response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to check status")
+      }
+
+      toast({
+        title: "Status Updated",
+        description: `Current status: ${data.status.toUpperCase()}`,
+      })
+
+      // Refresh the page data
+      router.refresh()
+    } catch (error) {
+      console.error("[v0] Status refresh error:", error)
+      toast({
+        title: "Status Check Failed",
+        description: error instanceof Error ? error.message : "Unable to refresh status. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setRefreshingFilingId(null)
+    }
   }
+
+  useEffect(() => {
+    const hasPendingFilings = filings.some((f) => f.filing_status === "pending" || f.filing_status === "submitted")
+
+    if (hasPendingFilings) {
+      console.log("[v0] Detected pending filings, will auto-refresh status in 10 seconds...")
+
+      const timer = setTimeout(async () => {
+        console.log("[v0] Auto-refreshing pending filing statuses...")
+
+        const pendingFilings = filings.filter((f) => f.filing_status === "pending" || f.filing_status === "submitted")
+
+        for (const filing of pendingFilings) {
+          try {
+            const response = await fetch(`/api/filing/check-status/${filing.id}`)
+            console.log("[v0] Auto-refreshed status for:", filing.id, response.ok ? "✓" : "✗")
+          } catch (error) {
+            console.error("[v0] Auto-refresh failed for:", filing.id, error)
+          }
+        }
+
+        // Reload the page to show updated statuses
+        console.log("[v0] Reloading page to show updated statuses...")
+        window.location.reload()
+      }, 10000) // Wait 10 seconds before checking
+
+      return () => clearTimeout(timer)
+    }
+  }, [filings])
 
   if (isLoading) {
     return (
       <div className="min-h-screen gradient-mesh p-6">
         <div className="mx-auto max-w-7xl space-y-6">
-          {/* Header Skeleton */}
           <div className="flex items-center justify-between">
             <div>
               <div className="h-9 w-64 bg-muted/50 animate-pulse rounded-lg" />
@@ -98,7 +162,6 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
             </div>
           </div>
 
-          {/* Stats Grid Skeleton */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
               <Card key={i} className="glass-effect border-0 hover-lift">
@@ -114,7 +177,6 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
             ))}
           </div>
 
-          {/* Filings List Skeleton */}
           <Card className="glass-effect border-0">
             <CardHeader>
               <div className="h-6 w-32 bg-muted/50 animate-pulse rounded mb-2" />
@@ -137,7 +199,6 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   return (
     <div className="min-h-screen gradient-mesh p-6">
       <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -169,11 +230,10 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card
             className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => scrollToFilings("all")}
+            onClick={() => setSelectedTab("all")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Filings</CardTitle>
@@ -189,7 +249,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
           <Card
             className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => scrollToFilings("accepted")}
+            onClick={() => setSelectedTab("accepted")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Accepted</CardTitle>
@@ -207,7 +267,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
           <Card
             className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => scrollToFilings("pending")}
+            onClick={() => setSelectedTab("pending")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending</CardTitle>
@@ -223,7 +283,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
           <Card
             className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
-            onClick={() => scrollToFilings("accepted")}
+            onClick={() => setSelectedTab("accepted")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Refunds</CardTitle>
@@ -240,7 +300,6 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
           </Card>
         </div>
 
-        {/* Filings List */}
         <Card className="glass-effect border-0" id="filing-history">
           <CardHeader>
             <CardTitle className="text-2xl">Filing History</CardTitle>
@@ -281,7 +340,12 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
                 ) : (
                   <div className="space-y-4">
                     {filteredFilings.map((filing) => (
-                      <FilingCard key={filing.id} filing={filing} />
+                      <FilingCard
+                        key={filing.id}
+                        filing={filing}
+                        onRefresh={handleRefreshFiling}
+                        isRefreshing={refreshingFilingId === filing.id}
+                      />
                     ))}
                   </div>
                 )}
@@ -294,7 +358,15 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   )
 }
 
-function FilingCard({ filing }: { filing: Filing }) {
+function FilingCard({
+  filing,
+  onRefresh,
+  isRefreshing,
+}: {
+  filing: Filing
+  onRefresh: (id: string, e: React.MouseEvent) => void
+  isRefreshing: boolean
+}) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "accepted":
@@ -336,7 +408,6 @@ function FilingCard({ filing }: { filing: Filing }) {
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-3">
-            {/* Header Row */}
             <div className="flex items-center gap-3">
               <h3 className="text-lg font-semibold">
                 {filing.form_type} - Tax Year {filing.tax_year}
@@ -349,7 +420,6 @@ function FilingCard({ filing }: { filing: Filing }) {
               )}
             </div>
 
-            {/* Details Grid */}
             <div className="grid gap-4 md:grid-cols-3 text-sm">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -382,7 +452,6 @@ function FilingCard({ filing }: { filing: Filing }) {
               )}
             </div>
 
-            {/* Rejection Reasons */}
             {filing.rejection_reasons && filing.rejection_reasons.length > 0 && (
               <div className="flex items-start gap-2 p-3 bg-red-50 rounded-md border border-red-200">
                 <AlertCircle className="h-4 w-4 text-red-600 mt-0.5" />
@@ -397,7 +466,6 @@ function FilingCard({ filing }: { filing: Filing }) {
               </div>
             )}
 
-            {/* Acceptance Info */}
             {filing.accepted_at && (
               <div className="flex items-center gap-2 text-sm text-green-700">
                 <CheckCircle2 className="h-4 w-4" />
@@ -406,8 +474,13 @@ function FilingCard({ filing }: { filing: Filing }) {
             )}
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col gap-2 ml-4">
+            {(filing.filing_status === "pending" || filing.filing_status === "submitted") && (
+              <Button variant="outline" size="sm" onClick={(e) => onRefresh(filing.id, e)} disabled={isRefreshing}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                {isRefreshing ? "Checking..." : "Check Status"}
+              </Button>
+            )}
             <Button variant="outline" size="sm" asChild>
               <Link href={`/dashboard/filing/${filing.id}`}>
                 <FileText className="mr-2 h-4 w-4" />

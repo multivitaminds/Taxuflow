@@ -596,9 +596,10 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
         localStorage.removeItem("w2_draft")
 
-        setTimeout(() => {
-          router.push(result.filingId ? `/dashboard/filing/${result.filingId}` : "/dashboard/filing")
-        }, 3000)
+        // The dialog now stays open until the user clicks the X button
+        // setTimeout(() => {
+        //   router.push(result.filingId ? `/dashboard/filing/${result.filingId}` : "/dashboard/filing")
+        // }, 3000)
       } else {
         toast({
           title: "IRS Submission Failed",
@@ -1505,6 +1506,9 @@ export default function FormW2({ extractedData }: FormW2Props) {
         onClose={() => {
           setShowProgressDialog(false)
           setFilingProgress(0)
+          if (filingProgress === 4) {
+            router.push("/dashboard/filing")
+          }
         }}
       />
 

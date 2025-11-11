@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -45,85 +45,10 @@ interface Contractor {
 
 interface Form1099NECProps {
   userId: string
+  extractedData?: any // Added extractedData prop
 }
 
-const formatSSN = (value: string) => {
-  const numbers = value.replace(/\D/g, "")
-  if (numbers.length <= 3) return numbers
-  if (numbers.length <= 5) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`
-  return `${numbers.slice(0, 3)}-${numbers.slice(3, 5)}-${numbers.slice(5, 9)}`
-}
-
-const formatEIN = (value: string) => {
-  const numbers = value.replace(/\D/g, "")
-  if (numbers.length <= 2) return numbers
-  return `${numbers.slice(0, 2)}-${numbers.slice(2, 9)}`
-}
-
-const validateSSN = (ssn: string) => {
-  const numbers = ssn.replace(/\D/g, "")
-  return numbers.length === 9
-}
-
-const validateEIN = (ein: string) => {
-  const numbers = ein.replace(/\D/g, "")
-  return numbers.length === 9
-}
-
-const US_STATES = [
-  "AL",
-  "AK",
-  "AZ",
-  "AR",
-  "CA",
-  "CO",
-  "CT",
-  "DE",
-  "FL",
-  "GA",
-  "HI",
-  "ID",
-  "IL",
-  "IN",
-  "IA",
-  "KS",
-  "KY",
-  "LA",
-  "ME",
-  "MD",
-  "MA",
-  "MI",
-  "MN",
-  "MS",
-  "MO",
-  "MT",
-  "NE",
-  "NV",
-  "NH",
-  "NJ",
-  "NM",
-  "NY",
-  "NC",
-  "ND",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VT",
-  "VA",
-  "WA",
-  "WV",
-  "WI",
-  "WY",
-]
-
-export function Form1099NEC({ userId }: Form1099NECProps) {
+export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
   const [contractors, setContractors] = useState<Contractor[]>([
     {
       id: "1",
@@ -149,6 +74,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
   const [showProgressDialog, setShowProgressDialog] = useState(false)
   const [filingProgress, setFilingProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadingContractorId, setUploadingContractorId] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -303,6 +229,96 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
       })
     } finally {
       setIsValidating(false)
+    }
+  }
+
+  const handleContractorFileUpload = async (contractorId: string, file: File) => {
+    setUploadingContractorId(contractorId)
+
+    try {
+      // Upload file to blob storage
+      const uploadFormData = new FormData()
+      uploadFormData.append("file", file)
+
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadFormData,
+      })
+
+      if (!uploadResponse.ok) throw new Error("Upload failed")
+
+      const { url } = await uploadResponse.json()
+
+      // Extract data from document
+      const extractResponse = await fetch("/api/filing/extract-document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileId: url }),
+      })
+
+      const extractData = await extractResponse.json()
+
+      if (extractData.success && extractData.data.documentType === "1099-nec") {
+        const extracted = extractData.data
+
+        // Parse recipient name
+        const recipientName = extracted.recipient?.name || ""
+        const nameParts = recipientName.split(" ")
+        const firstName = nameParts[0] || ""
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""
+        const middleInitial = nameParts.length > 2 ? nameParts[1].charAt(0).toUpperCase() : ""
+
+        // Parse recipient address
+        const recipientAddress = extracted.recipient?.address || ""
+        const parseAddress = (addr: string) => {
+          const parts = addr.split(",").map((p) => p.trim())
+          return {
+            street: parts[0] || "",
+            city: parts[1] || "",
+            state: parts[2] || "",
+            zip: parts[3] || "",
+          }
+        }
+        const recipientParsed = parseAddress(recipientAddress)
+
+        // Update only the specific contractor
+        setContractors((prev) =>
+          prev.map((c) =>
+            c.id === contractorId
+              ? {
+                  ...c,
+                  firstName,
+                  middleInitial,
+                  lastName,
+                  ssn: extracted.recipient?.ssn || extracted.recipient?.tin || "",
+                  ein: extracted.recipient?.ein || "",
+                  address: recipientParsed.street,
+                  city: recipientParsed.city,
+                  state: recipientParsed.state,
+                  zipCode: recipientParsed.zip,
+                  compensation:
+                    extracted.nonemployeeCompensation?.toString() || extracted.compensation?.toString() || "",
+                  email: extracted.recipient?.email || "",
+                }
+              : c,
+          ),
+        )
+
+        toast({
+          title: "✨ Contractor Data Auto-Filled",
+          description: `${firstName} ${lastName}'s information has been extracted. Please review before submitting.`,
+        })
+      } else {
+        throw new Error("Could not extract 1099-NEC data from document")
+      }
+    } catch (error: any) {
+      toast({
+        title: "Extraction Failed",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
+      setUploadingContractorId(null)
     }
   }
 
@@ -506,6 +522,180 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
       { label: "Nonemployee Compensation", value: `$${Number.parseFloat(contractor.compensation || "0").toFixed(2)}` },
     ],
   }))
+
+  useEffect(() => {
+    if (extractedData) {
+      console.log("[v0] Auto-filling 1099-NEC form with extracted data:", extractedData)
+
+      if (extractedData.contractors && Array.isArray(extractedData.contractors)) {
+        console.log("[v0] Processing multiple contractors:", extractedData.contractors.length)
+
+        const newContractors = extractedData.contractors
+          .filter((contractorData: any) => {
+            // Filter out template data in bulk uploads
+            if (contractorData.isTemplateData === true) {
+              console.log("[v0] Skipping template contractor:", contractorData.recipient?.name)
+              return false
+            }
+            return contractorData.documentType === "1099-nec"
+          })
+          .map((contractorData: any, index: number) => {
+            const recipientName = contractorData.recipient?.name || ""
+            const nameParts = recipientName.split(" ")
+            const firstName = nameParts[0] || ""
+            const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""
+            const middleInitial = nameParts.length > 2 ? nameParts[1].charAt(0).toUpperCase() : ""
+
+            return {
+              id: `${Date.now()}-${index}`,
+              firstName,
+              middleInitial,
+              lastName,
+              ssn: contractorData.recipient?.ssn || contractorData.recipient?.tin || "",
+              ein: contractorData.recipient?.ein || "",
+              address: contractorData.recipient?.street || "",
+              city: contractorData.recipient?.city || "",
+              state: contractorData.recipient?.state || "",
+              zipCode: contractorData.recipient?.zipCode || "",
+              compensation:
+                contractorData.income?.nonemployeeCompensation?.toString() ||
+                contractorData.nonemployeeCompensation?.toString() ||
+                contractorData.compensation?.toString() ||
+                "",
+              email: contractorData.recipient?.email || "",
+            }
+          })
+
+        if (newContractors.length === 0) {
+          toast({
+            title: "⚠️ No Valid Contractors",
+            description: "All uploaded documents were templates/demos. Please upload real 1099-NEC forms.",
+            variant: "destructive",
+          })
+          return
+        }
+
+        setContractors(newContractors)
+
+        toast({
+          title: "✨ Multiple Contractors Auto-Filled",
+          description: `${newContractors.length} contractor form${newContractors.length > 1 ? "s" : ""} populated. Please review before submitting.`,
+        })
+        return
+      }
+
+      const extracted = extractedData
+
+      // Parse recipient name
+      const recipientName = extracted.recipient?.name || ""
+      const nameParts = recipientName.split(" ")
+      const firstName = nameParts[0] || ""
+      const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""
+      const middleInitial = nameParts.length > 2 ? nameParts[1].charAt(0).toUpperCase() : ""
+
+      setContractors([
+        {
+          id: "1",
+          firstName,
+          middleInitial,
+          lastName,
+          ssn: extracted.recipient?.ssn || extracted.recipient?.tin || "",
+          ein: extracted.recipient?.ein || "",
+          address: extracted.recipient?.street || "",
+          city: extracted.recipient?.city || "",
+          state: extracted.recipient?.state || "",
+          zipCode: extracted.recipient?.zipCode || "",
+          compensation:
+            extracted.income?.nonemployeeCompensation?.toString() ||
+            extracted.nonemployeeCompensation?.toString() ||
+            extracted.compensation?.toString() ||
+            "",
+          email: extracted.recipient?.email || "",
+        },
+      ])
+
+      toast({
+        title: "✨ Form Auto-Filled",
+        description: "Your 1099-NEC data has been automatically populated. Please review before submitting.",
+      })
+    }
+  }, [extractedData])
+
+  const US_STATES = [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+  ]
+
+  const formatSSN = (value: string) => {
+    const numbers = value.replace(/\D/g, "")
+    if (numbers.length <= 3) return numbers
+    if (numbers.length <= 5) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 5)}-${numbers.slice(5, 9)}`
+  }
+
+  const formatEIN = (value: string) => {
+    const numbers = value.replace(/\D/g, "")
+    if (numbers.length <= 2) return numbers
+    return `${numbers.slice(0, 2)}-${numbers.slice(2, 9)}`
+  }
+
+  const validateSSN = (ssn: string) => {
+    const numbers = ssn.replace(/\D/g, "")
+    return numbers.length === 9
+  }
+
+  const validateEIN = (ein: string) => {
+    const numbers = ein.replace(/\D/g, "")
+    return numbers.length === 9
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -716,17 +906,56 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                       <CardDescription>Enter contractor information</CardDescription>
                     </div>
                   </div>
-                  {contractors.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeContractor(contractor.id)}
-                      className="hover:bg-red-500/10 hover:text-red-500"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            handleContractorFileUpload(contractor.id, file)
+                          }
+                          e.target.value = "" // Reset input
+                        }}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        disabled={uploadingContractorId !== null}
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={uploadingContractorId !== null}
+                        className="relative overflow-hidden bg-gradient-to-r from-purple-600 via-purple-500 to-pink-500 hover:from-purple-700 hover:via-purple-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl hover:shadow-purple-500/50 transition-all duration-300 border-0 group"
+                      >
+                        {/* Shimmer effect overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+
+                        {uploadingContractorId === contractor.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Extracting...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2 animate-pulse" />
+                            Upload 1099-NEC (AI Extract)
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {contractors.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeContractor(contractor.id)}
+                        className="hover:bg-red-500/10 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -815,7 +1044,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     />
                     {validationErrors[`${contractor.id}-ein`] && (
                       <p className="text-sm text-red-500 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
+                        <AlertCircle className="h-4 w-4" />
                         {validationErrors[`${contractor.id}-ein`]}
                       </p>
                     )}
@@ -848,7 +1077,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                   />
                   {validationErrors[`${contractor.id}-address`] && (
                     <p className="text-sm text-red-500 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" />
+                      <AlertCircle className="h-4 w-4" />
                       {validationErrors[`${contractor.id}-address`]}
                     </p>
                   )}
@@ -866,7 +1095,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     />
                     {validationErrors[`${contractor.id}-city`] && (
                       <p className="text-sm text-red-500 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
+                        <AlertCircle className="h-4 w-4" />
                         {validationErrors[`${contractor.id}-city`]}
                       </p>
                     )}

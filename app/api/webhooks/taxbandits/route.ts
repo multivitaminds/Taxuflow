@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { sendFilingAcceptedEmail, sendFilingRejectedEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    console.log("[v0] TaxBandits webhook received:", body)
+    console.log("[v0] TaxBandits webhook received:", JSON.stringify(body, null, 2))
 
     // Verify webhook signature
     const signature = request.headers.get("x-taxbandits-signature")
@@ -20,65 +20,117 @@ export async function POST(request: NextRequest) {
     // TODO: Verify signature properly
     // For now, just check if it exists
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
-    // Update filing status based on webhook event
-    const { submission_id, status, rejection_reasons } = body
+    // Extract data from webhook - TaxBandits sends different formats
+    const { submission_id, SubmissionId, status, Status, rejection_reasons, Errors, FormType } = body
 
-    const { data: filing, error: filingError } = await supabase
-      .from("tax_filings")
-      .select("*, user_profiles!inner(email, full_name)")
-      .eq("submission_id", submission_id)
-      .single()
+    const submissionId = submission_id || SubmissionId
+    const filingStatus = (status || Status || "").toLowerCase()
+    const rejectionReasons = rejection_reasons || Errors || []
+    const formType = FormType || ""
 
-    if (filingError || !filing) {
-      console.error("[v0] Filing not found:", submission_id)
+    console.log("[v0] Parsed webhook data:", { submissionId, filingStatus, formType })
+
+    if (!submissionId) {
+      console.error("[v0] No submission ID in webhook")
+      return NextResponse.json({ error: "No submission ID" }, { status: 400 })
+    }
+
+    // Determine which table to update based on form type or try both
+    let filing: any = null
+    let tableName = ""
+
+    if (formType.includes("W2") || formType.includes("W-2") || !formType) {
+      const { data: w2Filing } = await supabase
+        .from("w2_filings")
+        .select("*, user_profiles!inner(email, full_name)")
+        .eq("submission_id", submissionId)
+        .single()
+
+      if (w2Filing) {
+        filing = w2Filing
+        tableName = "w2_filings"
+        console.log("[v0] Found W-2 filing")
+      }
+    }
+
+    if (!filing && (formType.includes("1099") || !formType)) {
+      const { data: necFiling } = await supabase
+        .from("nec_1099_filings")
+        .select("*, user_profiles!inner(email, full_name)")
+        .eq("submission_id", submissionId)
+        .single()
+
+      if (necFiling) {
+        filing = necFiling
+        tableName = "nec_1099_filings"
+        console.log("[v0] Found 1099-NEC filing")
+      }
+    }
+
+    if (!filing) {
+      console.error("[v0] Filing not found for submission ID:", submissionId)
       return NextResponse.json({ error: "Filing not found" }, { status: 404 })
     }
 
-    // Update filing status
+    console.log("[v0] Updating filing in table:", tableName)
+
     const updates: any = {
-      irs_status: status,
+      irs_status: filingStatus,
+      taxbandits_status: filingStatus,
       updated_at: new Date().toISOString(),
     }
 
-    if (status === "accepted") {
+    if (filingStatus === "accepted") {
       updates.accepted_at = new Date().toISOString()
-      updates.filing_status = "accepted"
+
+      // Calculate refund for W-2 filings
+      if (tableName === "w2_filings" && !filing.refund_amount) {
+        const wages = filing.wages || 0
+        const federalWithheld = filing.federal_tax_withheld || 0
+        const standardDeduction = 13850
+        const taxableIncome = Math.max(0, wages - standardDeduction)
+        const estimatedTaxLiability = taxableIncome * 0.1
+        const refundAmount = federalWithheld - estimatedTaxLiability
+
+        updates.refund_amount = refundAmount
+        updates.estimated_refund = refundAmount
+        updates.refund_calculated_at = new Date().toISOString()
+      }
 
       // Send acceptance email
       await sendFilingAcceptedEmail(
         filing.user_profiles.email,
         filing.user_profiles.full_name || "there",
         filing.tax_year,
-        filing.refund_or_owed,
-        submission_id,
+        filing.refund_amount || filing.estimated_refund || 0,
+        submissionId,
       )
-    } else if (status === "rejected") {
+    } else if (filingStatus === "rejected") {
       updates.rejected_at = new Date().toISOString()
-      updates.filing_status = "rejected"
-      updates.rejection_reasons = rejection_reasons || []
+      updates.rejection_reasons = rejectionReasons
 
       // Send rejection email
       await sendFilingRejectedEmail(
         filing.user_profiles.email,
         filing.user_profiles.full_name || "there",
         filing.tax_year,
-        rejection_reasons || ["Unknown error"],
-        submission_id,
+        rejectionReasons.length > 0 ? rejectionReasons : ["Unknown error"],
+        submissionId,
       )
     }
 
-    const { error: updateError } = await supabase.from("tax_filings").update(updates).eq("submission_id", submission_id)
+    const { error: updateError } = await supabase.from(tableName).update(updates).eq("submission_id", submissionId)
 
     if (updateError) {
       console.error("[v0] Error updating filing:", updateError)
       return NextResponse.json({ error: "Update failed" }, { status: 500 })
     }
 
-    console.log("[v0] Filing status updated and email sent:", submission_id, status)
+    console.log("[v0] Filing status updated successfully to:", filingStatus)
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, status: filingStatus })
   } catch (error) {
     console.error("[v0] Webhook error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

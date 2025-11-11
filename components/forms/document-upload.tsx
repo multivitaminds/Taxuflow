@@ -12,6 +12,10 @@ import { useRouter } from "next/navigation"
 interface DocumentUploadProps {
   userId?: string
   onExtractComplete?: (data: any, metadata: any) => void
+  formType?: string
+  expectedDocType?: string
+  title?: string
+  description?: string
 }
 
 interface UploadedFile {
@@ -24,7 +28,14 @@ interface UploadedFile {
   errorMessage?: string
 }
 
-export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProps) {
+export function DocumentUpload({
+  userId,
+  onExtractComplete,
+  formType = "all",
+  expectedDocType,
+  title = "Upload Tax Documents",
+  description = "Upload W-2s, 1099s, receipts, and other tax documents for AI extraction",
+}: DocumentUploadProps) {
   const [files, setFiles] = useState<UploadedFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
   const { toast } = useToast()
@@ -137,6 +148,12 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
           console.log("[v0] Extraction response:", JSON.stringify(extractData).substring(0, 200))
 
           if (extractData.success && extractData.data) {
+            if (expectedDocType && extractData.data.documentType !== expectedDocType) {
+              throw new Error(
+                `Expected ${expectedDocType.toUpperCase()} but received ${(extractData.data.documentType || "unknown").toUpperCase()}. Please upload the correct form type.`,
+              )
+            }
+
             setFiles((prev) =>
               prev.map((f) =>
                 f.id === fileId
@@ -163,7 +180,7 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
             } else {
               toast({
                 title: "✅ Document Processed",
-                description: `Successfully extracted data from ${file.name}`,
+                description: `Successfully extracted ${extractData.data.documentType?.toUpperCase() || "data"} from ${file.name}`,
               })
             }
 
@@ -228,6 +245,20 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
         description: "Please wait for documents to finish processing",
         variant: "destructive",
       })
+      return
+    }
+
+    if (expectedDocType === "1099-nec" && onExtractComplete) {
+      // Pass all extracted contractor data to parent component
+      const allContractorData = completedFiles.map((f) => f.extractedData)
+
+      toast({
+        title: "✨ Documents Ready",
+        description: `${completedFiles.length} contractor document${completedFiles.length > 1 ? "s" : ""} extracted successfully`,
+      })
+
+      // Call the callback with multiple contractor data
+      onExtractComplete({ contractors: allContractorData }, { isMultiple: true })
       return
     }
 
@@ -311,8 +342,8 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Upload Tax Documents</CardTitle>
-          <CardDescription>Upload W-2s, 1099s, receipts, and other tax documents for AI extraction</CardDescription>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent>
           <div
