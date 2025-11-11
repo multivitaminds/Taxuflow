@@ -8,6 +8,11 @@ export default async function FilingDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+
+  if (id === "new") {
+    redirect("/dashboard/filing")
+  }
+
   const supabase = await createClient()
 
   if (!supabase) {

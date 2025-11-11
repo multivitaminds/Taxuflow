@@ -517,7 +517,9 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
       { label: "Email", value: contractor.email || "Not provided" },
       {
         label: "Address",
-        value: `${contractor.address}, ${contractor.city}, ${contractor.state} ${contractor.zipCode}`,
+        value: contractor.address.includes(",")
+          ? contractor.address
+          : `${contractor.address}, ${contractor.city}, ${contractor.state} ${contractor.zipCode}`,
       },
       { label: "Nonemployee Compensation", value: `$${Number.parseFloat(contractor.compensation || "0").toFixed(2)}` },
     ],
@@ -527,15 +529,15 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
     if (extractedData) {
       console.log("[v0] Auto-filling 1099-NEC form with extracted data:", extractedData)
 
+      // The AI extraction now shows a warning toast but doesn't block the data
       if (extractedData.isTemplateData === true) {
-        console.log("[v0] Rejected template data in form initialization")
+        console.log("[v0] Detected template data in form initialization, showing warning.")
         toast({
-          title: "⚠️ Template Document Rejected",
+          title: "⚠️ Template Document Detected",
           description:
-            "The uploaded document appears to be a sample/demo form. Please upload real tax documents with actual taxpayer information.",
-          variant: "destructive",
+            "The uploaded document appears to be a sample/demo form. Please upload real tax documents with actual taxpayer information. Data may be inaccurate.",
+          variant: "warning",
         })
-        return
       }
 
       if (extractedData.contractors && Array.isArray(extractedData.contractors)) {
@@ -543,10 +545,15 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
 
         const newContractors = extractedData.contractors
           .filter((contractorData: any) => {
-            // Filter out template data in bulk uploads
+            // Allow all contractors for testing, even if they are template data
             if (contractorData.isTemplateData === true) {
-              console.log("[v0] Skipping template contractor:", contractorData.recipient?.name)
-              return false
+              console.log("[v0] Including template contractor data for testing:", contractorData.recipient?.name)
+              // Optionally, show a warning for individual template contractors here as well
+              toast({
+                title: "⚠️ Template Contractor Data Included",
+                description: `Contractor ${contractorData.recipient?.name || "Unknown"} appears to be from a template. Data accuracy is not guaranteed.`,
+                variant: "warning",
+              })
             }
             return contractorData.documentType === "1099-nec"
           })
@@ -579,9 +586,8 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
 
         if (newContractors.length === 0) {
           toast({
-            title: "⚠️ No Valid Contractors",
-            description:
-              "All uploaded documents were templates/demos. Please upload real 1099-NEC forms with actual taxpayer information.",
+            title: "⚠️ No Valid 1099-NEC Forms",
+            description: "The uploaded documents are not 1099-NEC forms. Please upload valid 1099-NEC tax documents.",
             variant: "destructive",
           })
           return

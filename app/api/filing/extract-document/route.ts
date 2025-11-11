@@ -181,11 +181,14 @@ CRITICAL INSTRUCTIONS:
 Identify the document type:
 - "w2" for W-2 Wage and Tax Statement
 - "1099-nec" for 1099-NEC (Nonemployee Compensation)
-- "1099-misc" for 1099-MISC
+- "1099-misc" for 1099-MISC (Miscellaneous Income)
 - "1099-int" for 1099-INT (Interest Income)
-- "1099-div" for 1099-DIV (Dividends)
+- "1099-div" for 1099-DIV (Dividends and Distributions)
+- "1099-g" for 1099-G (Government Payments/Unemployment Compensation)
+- "1099-r" for 1099-R (Retirement Distributions)
+- "1099-k" for 1099-K (Payment Card and Third Party Network Transactions)
 - "receipt" for expense receipts
-- "other" if it doesn't match
+- "other" if it doesn't match any of the above
 
 Extract ALL visible data from the document:
 
@@ -212,6 +215,15 @@ For 1099-MISC:
 - tax_year
 - rents (Box 1), royalties (Box 2), other_income (Box 3)
 - federal_tax_withheld (Box 4)
+
+For 1099-G (Government Payments):
+- payer_name, payer_ein, payer_address (often a state agency like "Department of Labor")
+- recipient_name, recipient_tin, recipient_address
+- tax_year
+- unemployment_compensation (Box 1)
+- state_local_income_tax_refunds (Box 2)
+- federal_tax_withheld (Box 4)
+- state, state_tax_withheld
 
 For receipts:
 - merchant_name, date, amount, category, items
@@ -342,6 +354,21 @@ Rules:
         extractedData.payer?.ein &&
         extractedData.recipient?.name &&
         extractedData.recipient?.tin
+
+      if (!hasRequired1099Data) {
+        console.error("[v0] 1099 extraction missing required fields")
+        throw new Error(
+          "Could not extract all required 1099 data. Please ensure the document is clear and all fields are visible.",
+        )
+      }
+    } else if (
+      extractedData.documentType === "1099-g" ||
+      extractedData.documentType === "1099-int" ||
+      extractedData.documentType === "1099-div" ||
+      extractedData.documentType === "1099-r" ||
+      extractedData.documentType === "1099-k"
+    ) {
+      const hasRequired1099Data = extractedData.payer?.name && extractedData.recipient?.name
 
       if (!hasRequired1099Data) {
         console.error("[v0] 1099 extraction missing required fields")

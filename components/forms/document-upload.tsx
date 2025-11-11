@@ -148,35 +148,16 @@ export function DocumentUpload({
           console.log("[v0] Extraction response:", JSON.stringify(extractData).substring(0, 200))
 
           if (extractData.success && extractData.data) {
+            // Previously rejected mismatched form types, now only shows a warning toast
             if (expectedDocType && extractData.data.documentType !== expectedDocType) {
-              throw new Error(
-                `Expected ${expectedDocType.toUpperCase()} but received ${(extractData.data.documentType || "unknown").toUpperCase()}. Please upload the correct form type.`,
-              )
-            }
-
-            if (extractData.data.isTemplateData === true || extractData.warning === "template_data_detected") {
-              console.log("[v0] Template data detected, rejecting file:", file.name)
-
-              setFiles((prev) =>
-                prev.map((f) =>
-                  f.id === fileId
-                    ? {
-                        ...f,
-                        status: "error",
-                        errorMessage:
-                          "Template/demo document detected. Please upload real tax documents with actual taxpayer information.",
-                      }
-                    : f,
-                ),
-              )
+              const detectedType = (extractData.data.documentType || "unknown").toUpperCase()
+              const expectedType = expectedDocType.toUpperCase()
 
               toast({
-                title: "Template Document Detected",
-                description: `${file.name} appears to be a sample/demo form. Please upload real tax documents.`,
-                variant: "destructive",
+                title: "Different Form Type Detected",
+                description: `Uploaded ${detectedType} form to ${expectedType} page. Please verify this is correct.`,
+                variant: "default",
               })
-
-              continue
             }
 
             setFiles((prev) =>
@@ -195,6 +176,12 @@ export function DocumentUpload({
               toast({
                 title: "Demo Mode Active",
                 description: "AI service unavailable. Demo data provided - please verify all information.",
+                variant: "default",
+              })
+            } else if (extractData.warning === "template_data_detected") {
+              toast({
+                title: "Demo Document Detected",
+                description: `${file.name} appears to be a demo/template. Data extracted - please verify before submitting.`,
                 variant: "default",
               })
             } else {
