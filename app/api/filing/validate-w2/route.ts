@@ -119,18 +119,29 @@ export async function POST(request: NextRequest) {
     let validation: any
 
     try {
-      // Use AI to validate the W-2 form
       const result = await generateObject({
         model: "openai/gpt-4o",
         schema: validationSchema,
         messages: [
           {
             role: "system",
-            content: `You are an expert IRS tax form validator. Analyze the W-2 form data and identify:
+            content: `You are an expert IRS tax form validator. You MUST respond in valid JSON format matching this exact structure:
+
+{
+  "valid": boolean,
+  "errors": [{ "field": "string", "message": "string", "severity": "critical" | "error" }],
+  "warnings": [{ "field": "string", "message": "string", "severity": "warning" | "info" }],
+  "suggestions": [{ "field": "string", "message": "string", "type": "optimization" | "best-practice" | "tip" }]
+}
+
+Analyze the W-2 form data and identify:
 
 1. ERRORS: Critical issues that will cause IRS rejection (invalid formats, impossible values, math errors)
+   - Use severity "critical" for must-fix issues, "error" for important issues
 2. WARNINGS: Issues that may cause problems (unusual values, missing recommended fields)
+   - Use severity "warning" for important notices, "info" for FYI items
 3. SUGGESTIONS: Optimizations and best practices
+   - Use type "optimization" for efficiency, "best-practice" for IRS guidelines, "tip" for helpful hints
 
 IRS W-2 Rules:
 - EIN format: XX-XXXXXXX (9 digits with hyphen after 2nd digit)
@@ -142,12 +153,7 @@ IRS W-2 Rules:
 - Box 5 (Medicare wages) usually equals Box 1 (wages)
 - State wages typically equal federal wages unless state-specific rules apply
 
-Check for:
-- Missing required fields
-- Invalid formats (EIN, SSN, addresses)
-- Math inconsistencies (withholding rates, wage calculations)
-- Year-specific limits and thresholds
-- Common mistakes (wrong box values, transposed numbers)`,
+IMPORTANT: Always return valid JSON. If there are no issues in a category, return an empty array for that category.`,
           },
           {
             role: "user",
@@ -161,13 +167,33 @@ Check for:
             }),
           },
         ],
-        abortSignal: AbortSignal.timeout(15000), // 15 second timeout
+        temperature: 0.3, // Lower temperature for more consistent structured output
+        abortSignal: AbortSignal.timeout(20000), // 20 second timeout
       })
 
       validation = result.object
     } catch (aiError) {
       const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
       console.log("[v0] AI validation failed:", errorMessage)
+
+      if (errorMessage.includes("No object generated") || errorMessage.includes("schema")) {
+        console.log("[v0] AI response schema mismatch, using basic validation only")
+
+        return NextResponse.json({
+          valid: errors.length === 0,
+          errors,
+          warnings: [
+            ...warnings,
+            {
+              field: "system",
+              message:
+                "Advanced AI validation experienced a temporary issue. Basic validation has been performed successfully.",
+              severity: "info",
+            },
+          ],
+          suggestions,
+        })
+      }
 
       if (
         errorMessage.includes("Gateway") ||
@@ -177,7 +203,6 @@ Check for:
       ) {
         console.log("[v0] AI service unavailable, using basic validation only")
 
-        // Return basic validation with a warning that AI validation is unavailable
         return NextResponse.json({
           valid: errors.length === 0,
           errors,
@@ -236,7 +261,7 @@ Check for:
         ],
         suggestions: [],
       },
-      { status: 200 }, // Changed to 200 so the form can still proceed
+      { status: 200 },
     )
   }
 }

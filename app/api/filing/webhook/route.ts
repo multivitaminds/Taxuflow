@@ -76,7 +76,7 @@ async function processWebhook(req: NextRequest) {
     console.log("[v0] - Records:", Records?.length || 0)
 
     // Process records
-    await processWebhookRecords(SubmissionId, Records)
+    await processWebhookRecords(SubmissionId, FormType, Records)
 
     console.log("[v0] ✅ Webhook processed successfully")
   } catch (error) {
@@ -88,18 +88,21 @@ async function processWebhook(req: NextRequest) {
   }
 }
 
-async function processWebhookRecords(submissionId: string, records: any[]) {
+async function processWebhookRecords(submissionId: string, formType: string, records: any[]) {
   try {
     const supabase = createAdminClient()
+
+    const tableName = formType === "Form W-2" || formType === "W2" ? "w2_filings" : "tax_filings"
+    console.log("[v0] Using table:", tableName)
 
     for (const record of records || []) {
       const { RecordId, Status, StatusCode, StatusTime, Errors } = record
 
-      console.log("[v0] Processing record:", RecordId, "Status:", Status)
+      console.log("[v0] Processing record:", RecordId, "Status:", Status, "StatusCode:", StatusCode)
 
       // Find the filing by submission ID
       const { data: filing, error: findError } = await supabase
-        .from("tax_filings")
+        .from(tableName)
         .select("*")
         .eq("submission_id", submissionId)
         .single()
@@ -109,28 +112,63 @@ async function processWebhookRecords(submissionId: string, records: any[]) {
         continue
       }
 
-      // Map TaxBandits status to our status
-      const filingStatus = Status === "Accepted" ? "accepted" : Status === "Rejected" ? "rejected" : "processing"
+      const taxbanditsStatus = Status?.toLowerCase() || "pending"
 
-      // Update filing status
-      const { error: updateError } = await supabase
-        .from("tax_filings")
-        .update({
-          filing_status: filingStatus,
-          irs_status: Status,
-          rejection_reasons: Errors,
-          accepted_at: filingStatus === "accepted" ? StatusTime : filing.accepted_at,
-          rejected_at: filingStatus === "rejected" ? StatusTime : filing.rejected_at,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", filing.id)
+      // Calculate refund for W-2 filings
+      let refundAmount = null
+      if (tableName === "w2_filings" && taxbanditsStatus === "accepted") {
+        // Refund = Total withheld - Estimated tax liability
+        const wages = filing.wages || 0
+        const federalWithheld = filing.federal_tax_withheld || 0
+        const ssWithheld = filing.social_security_tax || 0
+        const medicareWithheld = filing.medicare_tax || 0
+
+        const totalWithheld = federalWithheld + ssWithheld + medicareWithheld
+
+        // Rough estimate: Standard deduction is ~$13,850 for single filers
+        // Tax on remaining is approximately 10-12%
+        const standardDeduction = 13850
+        const taxableIncome = Math.max(0, wages - standardDeduction)
+        const estimatedTaxLiability = taxableIncome * 0.1 // 10% bracket for simplicity
+
+        refundAmount = federalWithheld - estimatedTaxLiability
+
+        console.log("[v0] Calculated refund:")
+        console.log("[v0] - Wages:", wages)
+        console.log("[v0] - Federal Withheld:", federalWithheld)
+        console.log("[v0] - Estimated Tax:", estimatedTaxLiability)
+        console.log("[v0] - Calculated Refund:", refundAmount)
+      }
+
+      const updateData: any = {
+        taxbandits_status: taxbanditsStatus,
+        irs_status: Status, // Keep original status from TaxBandits
+        rejection_reasons: Errors || null,
+        updated_at: new Date().toISOString(),
+      }
+
+      // Set timestamp fields based on status
+      if (taxbanditsStatus === "accepted") {
+        updateData.accepted_at = StatusTime || new Date().toISOString()
+        if (refundAmount !== null) {
+          updateData.refund_amount = refundAmount
+          updateData.refund_calculated_at = new Date().toISOString()
+        }
+      } else if (taxbanditsStatus === "rejected") {
+        updateData.rejected_at = StatusTime || new Date().toISOString()
+      }
+
+      const { error: updateError } = await supabase.from(tableName).update(updateData).eq("id", filing.id)
 
       if (updateError) {
         console.error("[v0] Failed to update filing:", updateError)
         continue
       }
 
-      console.log("[v0] ✅ Filing updated:", filing.id, "→", filingStatus)
+      console.log("[v0] ✅ Filing updated:", filing.id, "→", taxbanditsStatus)
+      if (refundAmount !== null) {
+        console.log("[v0] ✅ Refund saved to database:", refundAmount)
+      }
 
       // Send AI notification to user
       try {

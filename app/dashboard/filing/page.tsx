@@ -27,21 +27,41 @@ export default async function FilingDashboardPage() {
 
   console.log(`[v0] Fetched ${filings?.length || 0} W-2 filings for user ${user.id}`)
 
-  const transformedFilings = (filings || []).map((filing) => ({
-    id: filing.id,
-    tax_year: filing.tax_year,
-    filing_status: filing.taxbandits_status || "pending",
-    submission_id: filing.submission_id || "",
-    irs_status: filing.irs_status,
-    refund_amount: null, // W-2s don't have refunds
-    filed_at: filing.submitted_at,
-    accepted_at: filing.accepted_at,
-    rejected_at: filing.rejected_at,
-    rejection_reasons: filing.rejection_reasons,
-    provider_name: "TaxBandits",
-    created_at: filing.created_at,
-    updated_at: filing.updated_at,
-  }))
+  const transformedFilings = (filings || []).map((filing) => {
+    let refundAmount = null
+    if (filing.taxbandits_status === "accepted") {
+      const wages = filing.wages || 0
+      const federalWithheld = filing.federal_tax_withheld || 0
+
+      // Simple refund calculation
+      const standardDeduction = 13850
+      const taxableIncome = Math.max(0, wages - standardDeduction)
+      const estimatedTax = taxableIncome * 0.1 // 10% bracket
+
+      refundAmount = Math.max(0, Math.round(federalWithheld - estimatedTax))
+    }
+
+    return {
+      id: filing.id,
+      tax_year: filing.tax_year,
+      filing_status:
+        filing.taxbandits_status === "accepted"
+          ? "accepted"
+          : filing.taxbandits_status === "rejected"
+            ? "rejected"
+            : "pending",
+      submission_id: filing.submission_id || "",
+      irs_status: filing.irs_status,
+      refund_amount: refundAmount, // Include calculated refund
+      filed_at: filing.submitted_at,
+      accepted_at: filing.accepted_at,
+      rejected_at: filing.rejected_at,
+      rejection_reasons: filing.rejection_reasons,
+      provider_name: "TaxBandits",
+      created_at: filing.created_at,
+      updated_at: filing.updated_at,
+    }
+  })
 
   return <FilingDashboardClient user={user} filings={transformedFilings} />
 }

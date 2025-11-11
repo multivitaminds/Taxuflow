@@ -70,6 +70,17 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
     window.location.reload()
   }
 
+  const scrollToFilings = (tab: string) => {
+    setSelectedTab(tab)
+    // Scroll to the filing history section smoothly
+    setTimeout(() => {
+      const filingSection = document.getElementById("filing-history")
+      if (filingSection) {
+        filingSection.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+    }, 100)
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen gradient-mesh p-6">
@@ -159,7 +170,10 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="glass-effect border-0 hover-lift hover:shadow-xl transition-all">
+          <Card
+            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            onClick={() => scrollToFilings("all")}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Filings</CardTitle>
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -172,7 +186,10 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
             </CardContent>
           </Card>
 
-          <Card className="glass-effect border-0 hover-lift hover:shadow-xl transition-all">
+          <Card
+            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            onClick={() => scrollToFilings("accepted")}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Accepted</CardTitle>
               <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
@@ -187,7 +204,10 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
             </CardContent>
           </Card>
 
-          <Card className="glass-effect border-0 hover-lift hover:shadow-xl transition-all">
+          <Card
+            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            onClick={() => scrollToFilings("pending")}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending</CardTitle>
               <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
@@ -200,7 +220,10 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
             </CardContent>
           </Card>
 
-          <Card className="glass-effect border-0 hover-lift hover:shadow-xl transition-all">
+          <Card
+            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            onClick={() => scrollToFilings("accepted")}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Refunds</CardTitle>
               <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
@@ -217,7 +240,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
         </div>
 
         {/* Filings List */}
-        <Card className="glass-effect border-0">
+        <Card className="glass-effect border-0" id="filing-history">
           <CardHeader>
             <CardTitle className="text-2xl">Filing History</CardTitle>
             <CardDescription className="text-base">View and manage all your tax return submissions</CardDescription>
