@@ -92,8 +92,17 @@ async function processWebhookRecords(submissionId: string, formType: string, rec
   try {
     const supabase = createAdminClient()
 
-    const tableName = formType === "Form W-2" || formType === "W2" ? "w2_filings" : "tax_filings"
-    console.log("[v0] Using table:", tableName)
+    const isW2 = submissionId.startsWith("W2-") || formType === "Form W-2" || formType === "W2"
+    const is1099NEC = submissionId.startsWith("1099NEC-") || formType === "Form 1099-NEC" || formType === "1099-NEC"
+
+    let tableName = "tax_filings" // default fallback
+    if (isW2) {
+      tableName = "w2_filings"
+    } else if (is1099NEC) {
+      tableName = "nec_1099_filings"
+    }
+
+    console.log("[v0] Using table:", tableName, "for form type:", formType)
 
     for (const record of records || []) {
       const { RecordId, Status, StatusCode, StatusTime, Errors } = record
@@ -114,10 +123,8 @@ async function processWebhookRecords(submissionId: string, formType: string, rec
 
       const taxbanditsStatus = Status?.toLowerCase() || "pending"
 
-      // Calculate refund for W-2 filings
       let refundAmount = null
       if (tableName === "w2_filings" && taxbanditsStatus === "accepted") {
-        // Refund = Total withheld - Estimated tax liability
         const wages = filing.wages || 0
         const federalWithheld = filing.federal_tax_withheld || 0
         const ssWithheld = filing.social_security_tax || 0
@@ -125,11 +132,9 @@ async function processWebhookRecords(submissionId: string, formType: string, rec
 
         const totalWithheld = federalWithheld + ssWithheld + medicareWithheld
 
-        // Rough estimate: Standard deduction is ~$13,850 for single filers
-        // Tax on remaining is approximately 10-12%
         const standardDeduction = 13850
         const taxableIncome = Math.max(0, wages - standardDeduction)
-        const estimatedTaxLiability = taxableIncome * 0.1 // 10% bracket for simplicity
+        const estimatedTaxLiability = taxableIncome * 0.1
 
         refundAmount = federalWithheld - estimatedTaxLiability
 
@@ -142,12 +147,11 @@ async function processWebhookRecords(submissionId: string, formType: string, rec
 
       const updateData: any = {
         taxbandits_status: taxbanditsStatus,
-        irs_status: Status, // Keep original status from TaxBandits
+        irs_status: Status,
         rejection_reasons: Errors || null,
         updated_at: new Date().toISOString(),
       }
 
-      // Set timestamp fields based on status
       if (taxbanditsStatus === "accepted") {
         updateData.accepted_at = StatusTime || new Date().toISOString()
         if (refundAmount !== null) {

@@ -22,33 +22,60 @@ export default async function FilingDetailPage({
     redirect("/login")
   }
 
-  const { data: w2Filing, error } = await supabase
-    .from("w2_filings")
-    .select("*")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single()
+  let filing = null
+  let formType = "W-2"
 
-  if (error || !w2Filing) {
-    console.error("[v0] Filing not found:", error)
+  const { data: w2Filing } = await supabase.from("w2_filings").select("*").eq("id", id).eq("user_id", user.id).single()
+
+  if (w2Filing) {
+    filing = {
+      id: w2Filing.id,
+      tax_year: w2Filing.tax_year,
+      filing_status: w2Filing.taxbandits_status || "pending",
+      provider_name: "TaxBandits",
+      submission_id: w2Filing.submission_id || "",
+      irs_status: w2Filing.irs_status || "pending",
+      state_status: null,
+      rejection_reasons: w2Filing.rejection_reasons || [],
+      refund_amount: w2Filing.refund_amount || null,
+      filed_at: w2Filing.submitted_at,
+      accepted_at: w2Filing.accepted_at,
+      rejected_at: w2Filing.rejected_at,
+      provider_response: null,
+    }
+    formType = "W-2"
+  } else {
+    const { data: nec1099Filing } = await supabase
+      .from("nec_1099_filings")
+      .select("*")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single()
+
+    if (nec1099Filing) {
+      filing = {
+        id: nec1099Filing.id,
+        tax_year: nec1099Filing.tax_year,
+        filing_status: nec1099Filing.taxbandits_status || "pending",
+        provider_name: "TaxBandits",
+        submission_id: nec1099Filing.submission_id || "",
+        irs_status: nec1099Filing.irs_status || "pending",
+        state_status: null,
+        rejection_reasons: nec1099Filing.rejection_reasons || [],
+        refund_amount: null, // 1099-NEC doesn't have refunds
+        filed_at: nec1099Filing.submitted_at,
+        accepted_at: nec1099Filing.accepted_at,
+        rejected_at: nec1099Filing.rejected_at,
+        provider_response: null,
+      }
+      formType = "1099-NEC"
+    }
+  }
+
+  if (!filing) {
+    console.error("[v0] Filing not found:", id)
     notFound()
   }
 
-  const filing = {
-    id: w2Filing.id,
-    tax_year: w2Filing.tax_year,
-    filing_status: w2Filing.taxbandits_status || "pending",
-    provider_name: "TaxBandits",
-    submission_id: w2Filing.submission_id || "",
-    irs_status: w2Filing.irs_status || "pending",
-    state_status: null,
-    rejection_reasons: w2Filing.rejection_reasons || [],
-    refund_amount: null, // W-2s don't have refunds
-    filed_at: w2Filing.submitted_at,
-    accepted_at: w2Filing.accepted_at,
-    rejected_at: w2Filing.rejected_at,
-    provider_response: w2Filing.provider_response,
-  }
-
-  return <FilingDetailClient filing={filing} />
+  return <FilingDetailClient filing={filing} formType={formType} />
 }

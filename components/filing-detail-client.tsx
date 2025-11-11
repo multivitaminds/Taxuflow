@@ -15,16 +15,16 @@ interface Filing {
   provider_name: string
   submission_id: string
   irs_status: string
-  state_status: string
+  state_status: string | null
   rejection_reasons: string[]
-  refund_amount: number
+  refund_amount: number | null
   filed_at: string
   accepted_at: string
   rejected_at: string
   provider_response: any
 }
 
-export default function FilingDetailClient({ filing }: { filing: Filing }) {
+export default function FilingDetailClient({ filing, formType = "W-2" }: { filing: Filing; formType?: string }) {
   const router = useRouter()
   const { toast } = useToast()
   const [downloading, setDownloading] = useState(false)
@@ -65,7 +65,7 @@ export default function FilingDetailClient({ filing }: { filing: Filing }) {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `tax-return-${filing.tax_year}-${filing.submission_id}.pdf`
+      a.download = `tax-return-${formType}-${filing.tax_year}-${filing.submission_id}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -100,7 +100,7 @@ export default function FilingDetailClient({ filing }: { filing: Filing }) {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-orange-500 bg-clip-text text-transparent">
-                Filing Details
+                {formType} Filing Details
               </h1>
               <p className="text-slate-600 mt-1">Submission ID: {filing.submission_id}</p>
             </div>
@@ -124,14 +124,56 @@ export default function FilingDetailClient({ filing }: { filing: Filing }) {
             <div className="flex items-center gap-3">
               {getStatusIcon(filing.irs_status)}
               <div>
-                <h2 className="text-xl font-semibold">Filing Status</h2>
+                <h2 className="text-xl font-semibold">{formType} Filing Status</h2>
                 <p className="text-sm text-slate-600">Tax Year {filing.tax_year}</p>
               </div>
             </div>
             <Badge className={getStatusColor(filing.irs_status)}>{filing.irs_status?.toUpperCase() || "PENDING"}</Badge>
           </div>
 
+          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+            <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Filing Timeline
+            </h3>
+            <div className="space-y-2">
+              {filing.filed_at && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-blue-700">Submitted:</span>
+                  <span className="font-medium text-blue-900">{new Date(filing.filed_at).toLocaleString()}</span>
+                </div>
+              )}
+              {filing.accepted_at && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-green-700">Accepted:</span>
+                  <span className="font-medium text-green-900">{new Date(filing.accepted_at).toLocaleString()}</span>
+                </div>
+              )}
+              {filing.rejected_at && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-red-700">Rejected:</span>
+                  <span className="font-medium text-red-900">{new Date(filing.rejected_at).toLocaleString()}</span>
+                </div>
+              )}
+              {filing.irs_status === "accepted" && (
+                <div className="mt-3 pt-3 border-t border-blue-200">
+                  <p className="text-xs text-blue-600">
+                    Processing time:{" "}
+                    {Math.round(
+                      (new Date(filing.accepted_at).getTime() - new Date(filing.filed_at).getTime()) / (1000 * 60),
+                    )}{" "}
+                    minutes
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4 mt-6">
+            <div>
+              <p className="text-sm text-slate-600">Form Type</p>
+              <p className="font-semibold">{formType}</p>
+            </div>
             <div>
               <p className="text-sm text-slate-600">Filing Status</p>
               <p className="font-semibold">{filing.filing_status}</p>
@@ -154,7 +196,7 @@ export default function FilingDetailClient({ filing }: { filing: Filing }) {
             </div>
           </div>
 
-          {filing.refund_amount && (
+          {filing.refund_amount && formType === "W-2" && (
             <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-700 font-medium">Expected Refund</p>
               <p className="text-2xl font-bold text-green-600">${filing.refund_amount.toLocaleString()}</p>

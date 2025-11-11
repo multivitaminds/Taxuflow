@@ -15,11 +15,6 @@ interface AbatementRequest {
 export async function POST(req: Request) {
   try {
     const supabase = await getSupabaseServerClient()
-    console.log("[v0] Server env check:", {
-      hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      hasClient: !!supabase,
-    })
 
     if (!supabase) {
       console.error("[v0] Supabase client unavailable")
@@ -52,7 +47,9 @@ export async function POST(req: Request) {
 
     console.log("[v0] Generating penalty abatement letter for:", businessName, "User:", user.email)
 
-    const { text } = await generateText({
+    const startTime = Date.now()
+
+    const { text, usage } = await generateText({
       model: "openai/gpt-4o",
       prompt: `Generate a professional IRS penalty abatement request letter.
 
@@ -79,19 +76,33 @@ Make it persuasive but honest. Focus on reasonable cause arguments that the IRS 
       maxTokens: 1500,
     })
 
+    const duration = Date.now() - startTime
+
     console.log("[v0] Generated abatement letter successfully")
 
     try {
-      await supabase.from("ai_usage_logs").insert({
+      const { error: logError } = await supabase.from("ai_usage_logs").insert({
         user_id: user.id,
         feature: "penalty_abatement_letter",
-        model: "openai/gpt-4o",
-        tokens_used: text.length,
-        metadata: { taxYear, formType },
+        model: "gpt-4o",
+        provider: "openai",
+        tokens_used: usage?.totalTokens || 0,
+        input_tokens: usage?.promptTokens || 0,
+        output_tokens: usage?.completionTokens || 0,
+        estimated_cost: (usage?.totalTokens || 0) * 0.00003, // GPT-4o pricing: $0.03 per 1K tokens
+        request_data: { businessName, formType, taxYear, reason },
+        response_data: { letterLength: text.length },
+        prompt_length: 500,
+        response_length: text.length,
+        duration_ms: duration,
+        status: "success",
       })
+
+      if (logError) {
+        console.error("[v0] Failed to log AI usage:", logError)
+      }
     } catch (logError) {
-      console.error("[v0] Failed to log usage:", logError)
-      // Don't fail the request if logging fails
+      console.error("[v0] AI usage logging error:", logError)
     }
 
     return Response.json({
@@ -100,6 +111,27 @@ Make it persuasive but honest. Focus on reasonable cause arguments that the IRS 
     })
   } catch (error) {
     console.error("[v0] Abatement letter generation error:", error)
+
+    try {
+      const supabase = await getSupabaseServerClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (user) {
+        await supabase.from("ai_usage_logs").insert({
+          user_id: user.id,
+          feature: "penalty_abatement_letter",
+          model: "gpt-4o",
+          provider: "openai",
+          status: "error",
+          error_message: error instanceof Error ? error.message : "Unknown error",
+        })
+      }
+    } catch {
+      // Ignore logging errors for failed requests
+    }
+
     return Response.json(
       {
         error: "Failed to generate letter",

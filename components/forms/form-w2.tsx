@@ -575,7 +575,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
       console.log("[v0] API response:", result)
 
       if (result.isDemoMode) {
-        setShowProgressDialog(false)
         toast({
           title: "Demo Mode Restriction",
           description: result.error,
@@ -589,9 +588,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
         console.log("[v0] ✅ W-2 SUBMITTED SUCCESSFULLY!")
         setFilingProgress(4) // Complete
 
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        setShowProgressDialog(false)
-
         toast({
           title: "W-2 Successfully Submitted to IRS",
           description: `Submission ID: ${result.submissionId}. The IRS will process your filing within 24-48 hours.`,
@@ -602,9 +598,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
         setTimeout(() => {
           router.push(result.filingId ? `/dashboard/filing/${result.filingId}` : "/dashboard/filing")
-        }, 2000)
+        }, 3000)
       } else {
-        setShowProgressDialog(false)
         toast({
           title: "IRS Submission Failed",
           description: result.error || "Could not submit to the IRS.",
@@ -613,7 +608,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
     } catch (error: any) {
       console.error("[v0] SUBMISSION ERROR:", error.message)
-      setShowProgressDialog(false)
       toast({
         title: "Submission Error",
         description: error.message || "An unexpected error occurred.",
@@ -1508,6 +1502,10 @@ export default function FormW2({ extractedData }: FormW2Props) {
         steps={progressSteps}
         isComplete={filingProgress === 4}
         isError={false}
+        onClose={() => {
+          setShowProgressDialog(false)
+          setFilingProgress(0)
+        }}
       />
 
       <PenaltyAbatementDialog

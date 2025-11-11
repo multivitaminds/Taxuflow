@@ -428,7 +428,6 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
       const data = await response.json()
 
       if (data.isDemoMode) {
-        setShowProgressDialog(false)
         toast({
           title: "Demo Mode Restriction",
           description: data.error,
@@ -441,9 +440,6 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
       if (data.success) {
         setFilingProgress(4)
 
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        setShowProgressDialog(false)
-
         toast({
           title: "1099-NEC Successfully Submitted to IRS",
           description: `Submission ID: ${data.submissionId}. The IRS will process your filing within 24-48 hours.`,
@@ -452,12 +448,11 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
 
         setTimeout(() => {
           router.push("/dashboard/filing")
-        }, 2000)
+        }, 3000)
       } else {
         throw new Error(data.error || "Failed to submit filing")
       }
     } catch (error) {
-      setShowProgressDialog(false)
       toast({
         title: "Submission Failed",
         description: error instanceof Error ? error.message : "An error occurred",
@@ -895,7 +890,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     </Select>
                     {validationErrors[`${contractor.id}-state`] && (
                       <p className="text-sm text-red-500 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
+                        <AlertCircle className="h-4 w-4" />
                         {validationErrors[`${contractor.id}-state`]}
                       </p>
                     )}
@@ -912,7 +907,7 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
                     />
                     {validationErrors[`${contractor.id}-zipCode`] && (
                       <p className="text-sm text-red-500 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
+                        <AlertCircle className="h-4 w-4" />
                         {validationErrors[`${contractor.id}-zipCode`]}
                       </p>
                     )}
@@ -1008,6 +1003,10 @@ export function Form1099NEC({ userId }: Form1099NECProps) {
         steps={progressSteps}
         isComplete={filingProgress === 4}
         isError={false}
+        onClose={() => {
+          setShowProgressDialog(false)
+          setFilingProgress(0)
+        }}
       />
 
       <PenaltyAbatementDialog

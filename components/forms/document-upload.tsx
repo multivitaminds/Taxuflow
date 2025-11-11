@@ -216,7 +216,11 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
   }
 
   const handleSubmit = async () => {
+    console.log("[v0] handleSubmit called, files:", files.length)
+
     const completedFiles = files.filter((f) => f.status === "complete")
+
+    console.log("[v0] Completed files:", completedFiles.length)
 
     if (completedFiles.length === 0) {
       toast({
@@ -228,6 +232,9 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
     }
 
     try {
+      console.log("[v0] Submitting to /api/filing/submit-extracted with userId:", userId)
+      console.log("[v0] Documents data:", JSON.stringify(completedFiles.map((f) => f.extractedData)).substring(0, 500))
+
       const response = await fetch("/api/filing/submit-extracted", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -237,7 +244,20 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
         }),
       })
 
-      const data = await response.json()
+      console.log("[v0] Response status:", response.status)
+
+      let data
+      const contentType = response.headers.get("content-type")
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json()
+        console.log("[v0] Response data:", JSON.stringify(data).substring(0, 300))
+      } else {
+        // Handle non-JSON response (like HTML error pages)
+        const text = await response.text()
+        console.error("[v0] Received non-JSON response:", text.substring(0, 300))
+        throw new Error("Server returned an invalid response. Please try again or contact support.")
+      }
 
       if (data.success) {
         toast({
@@ -245,11 +265,14 @@ export function DocumentUpload({ userId, onExtractComplete }: DocumentUploadProp
           description: "Your tax documents have been filed successfully",
         })
         router.push("/dashboard/filing")
+      } else {
+        throw new Error(data.error || "Failed to submit filing")
       }
     } catch (error) {
+      console.error("[v0] Submission error:", error)
       toast({
         title: "Submission Failed",
-        description: "Failed to submit tax filing",
+        description: error instanceof Error ? error.message : "Failed to submit tax filing",
         variant: "destructive",
       })
     }

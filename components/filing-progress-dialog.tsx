@@ -1,7 +1,8 @@
 "use client"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { CheckCircle, Loader2 } from "lucide-react"
+import { CheckCircle, Loader2, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 interface ProgressStep {
   id: string
@@ -16,12 +17,39 @@ interface FilingProgressDialogProps {
   steps: ProgressStep[]
   isComplete: boolean
   isError: boolean
+  onClose?: () => void
 }
 
-export function FilingProgressDialog({ open, currentStep, steps, isComplete, isError }: FilingProgressDialogProps) {
+export function FilingProgressDialog({
+  open,
+  currentStep,
+  steps,
+  isComplete,
+  isError,
+  onClose,
+}: FilingProgressDialogProps) {
   return (
-    <Dialog open={open}>
-      <DialogContent className="max-w-2xl" hideCloseButton>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen && onClose) {
+          onClose()
+        }
+      }}
+    >
+      <DialogContent className="max-w-2xl" hideCloseButton={!isComplete && !isError}>
+        {(isComplete || isError) && onClose && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-4 top-4 rounded-full hover:bg-muted"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
+        )}
+
         <div className="py-8">
           <div className="space-y-6">
             {steps.map((step, index) => {

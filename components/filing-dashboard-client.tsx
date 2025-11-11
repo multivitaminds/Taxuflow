@@ -24,6 +24,7 @@ import Link from "next/link"
 interface Filing {
   id: string
   tax_year: number
+  form_type: "W-2" | "1099-NEC" // Added form_type to distinguish filing types
   filing_status: string
   submission_id: string
   irs_status: string | null
@@ -52,7 +53,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   const acceptedFilings = filings.filter((f) => f.filing_status === "accepted").length
   const pendingFilings = filings.filter((f) => f.filing_status === "submitted" || f.filing_status === "pending").length
   const totalRefunds = filings
-    .filter((f) => f.refund_amount && f.filing_status === "accepted")
+    .filter((f) => f.refund_amount && f.filing_status === "accepted" && f.form_type === "W-2")
     .reduce((sum, f) => sum + (f.refund_amount || 0), 0)
 
   // Filter filings based on selected tab
@@ -337,7 +338,9 @@ function FilingCard({ filing }: { filing: Filing }) {
           <div className="flex-1 space-y-3">
             {/* Header Row */}
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold">Tax Year {filing.tax_year}</h3>
+              <h3 className="text-lg font-semibold">
+                {filing.form_type} - Tax Year {filing.tax_year}
+              </h3>
               {getStatusBadge(filing.filing_status)}
               {filing.irs_status && (
                 <Badge variant="outline" className="text-xs">
@@ -368,7 +371,7 @@ function FilingCard({ filing }: { filing: Filing }) {
                 </div>
               </div>
 
-              {filing.refund_amount && (
+              {filing.refund_amount && filing.form_type === "W-2" && (
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-green-600" />
                   <div>
