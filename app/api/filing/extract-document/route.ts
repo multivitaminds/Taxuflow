@@ -66,12 +66,11 @@ function createDemoExtraction(fileName: string): any {
         state: "CA",
         zipCode: "94108",
       },
-      income: {
-        nonemployeeCompensation: 45000.0,
-        federalWithholding: 0.0,
-        stateTax: 0.0,
-        state: "CA",
-      },
+      compensation: 45000.0,
+      federalTaxWithheld: 0.0,
+      stateTaxWithheld: 0.0,
+      state: "CA",
+      stateIncome: 45000.0,
     }
   }
 
@@ -205,9 +204,11 @@ For 1099-NEC:
 - payer_name, payer_ein, payer_address
 - recipient_name, recipient_tin, recipient_address
 - tax_year
-- nonemployee_compensation (Box 1)
+- compensation (Box 1) - REQUIRED, this is the nonemployee compensation amount
 - federal_tax_withheld (Box 4)
-- state, state_tax_withheld
+- state_tax_withheld (Box 5)
+- state_payers_state_no (Box 6)
+- state_income (Box 7)
 
 For 1099-MISC:
 - payer_name, payer_ein, payer_address
@@ -230,7 +231,30 @@ For receipts:
 
 CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no apologies, no text before or after the JSON.
 
-Return this exact JSON structure:
+For 1099-NEC, return this structure:
+{
+  "documentType": "1099-nec",
+  "taxYear": 2024,
+  "isTemplateData": false,
+  "confidence": 0.95,
+  "payer": {
+    "name": "Company Name LLC",
+    "ein": "12-3456789",
+    "address": "123 Main St, City, ST 12345"
+  },
+  "recipient": {
+    "name": "John Doe",
+    "tin": "XXX-XX-1234",
+    "address": "456 Oak Ave, City, ST 12345"
+  },
+  "compensation": 50000.00,
+  "federalTaxWithheld": 0.00,
+  "stateTaxWithheld": 0.00,
+  "state": "CA",
+  "stateIncome": 50000.00
+}
+
+For W-2, return this structure:
 {
   "documentType": "w2",
   "taxYear": 2024,
@@ -266,6 +290,7 @@ Rules:
 - If you can't read a field clearly, omit it from the JSON
 - Be accurate with numbers - these are used for tax filing
 - Always include documentType, taxYear, isTemplateData, and confidence
+- For 1099-NEC: ALWAYS include "compensation" field at the root level (Box 1)
 - Return ONLY the JSON object, nothing else
 - Do NOT wrap in markdown code blocks
 - Do NOT add any explanatory text`
@@ -353,12 +378,16 @@ Rules:
         extractedData.payer?.name &&
         extractedData.payer?.ein &&
         extractedData.recipient?.name &&
-        extractedData.recipient?.tin
+        extractedData.recipient?.tin &&
+        (extractedData.compensation !== undefined || extractedData.income?.nonemployeeCompensation !== undefined)
 
       if (!hasRequired1099Data) {
         console.error("[v0] 1099 extraction missing required fields")
+        console.error("[v0] Payer:", extractedData.payer?.name)
+        console.error("[v0] Recipient:", extractedData.recipient?.name)
+        console.error("[v0] Compensation:", extractedData.compensation)
         throw new Error(
-          "Could not extract all required 1099 data. Please ensure the document is clear and all fields are visible.",
+          "Could not extract all required 1099 data. Please ensure the document is clear and all fields are visible, especially Box 1 (Nonemployee Compensation).",
         )
       }
     } else if (

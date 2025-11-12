@@ -74,18 +74,28 @@ export default function File1099NECPage() {
       return
     }
 
-    // Validate minimum required data for 1099-NEC
     const hasMinimumData =
       data.payer?.name &&
       data.recipient?.name &&
-      (data.compensation !== undefined || data.nonemployeeCompensation !== undefined)
+      (data.compensation !== undefined ||
+        data.nonemployeeCompensation !== undefined ||
+        data.income?.nonemployeeCompensation !== undefined)
 
     if (!hasMinimumData) {
-      console.error("[v0] Incomplete extraction data")
+      console.error("[v0] Incomplete extraction data - missing required fields")
+      console.log("[v0] Payer name:", data.payer?.name)
+      console.log("[v0] Recipient name:", data.recipient?.name)
+      console.log(
+        "[v0] Compensation:",
+        data.compensation || data.nonemployeeCompensation || data.income?.nonemployeeCompensation,
+      )
+
       toast({
         title: "⚠️ Incomplete Extraction",
-        description: "Some required fields could not be extracted. Please complete the missing information manually.",
+        description:
+          "Some required fields could not be extracted from the document. The data has been loaded - please complete missing information (especially compensation amount) manually.",
         variant: "destructive",
+        duration: 8000,
       })
       setExtractedData(data)
       setActiveTab("manual")

@@ -41,6 +41,16 @@ interface Contractor {
   zipCode: string
   compensation: string
   email: string
+  accountNumber: string
+  secondTinNotification: boolean
+  directSales5000Plus: boolean
+  federalTaxWithheld: string
+  stateTaxWithheld: string
+  statePayerNumber: string
+  stateIncome: string
+  isVoid: boolean
+  isCorrected: boolean
+  isFatcaFiling: boolean
 }
 
 interface Form1099NECProps {
@@ -63,6 +73,16 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
       zipCode: "",
       compensation: "",
       email: "",
+      accountNumber: "",
+      secondTinNotification: false,
+      directSales5000Plus: false,
+      federalTaxWithheld: "",
+      stateTaxWithheld: "",
+      statePayerNumber: "",
+      stateIncome: "",
+      isVoid: false,
+      isCorrected: false,
+      isFatcaFiling: false,
     },
   ])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -106,6 +126,16 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
         zipCode: "",
         compensation: "",
         email: "",
+        accountNumber: "",
+        secondTinNotification: false,
+        directSales5000Plus: false,
+        federalTaxWithheld: "",
+        stateTaxWithheld: "",
+        statePayerNumber: "",
+        stateIncome: "",
+        isVoid: false,
+        isCorrected: false,
+        isFatcaFiling: false,
       },
     ])
   }
@@ -122,6 +152,18 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
       formattedValue = formatEIN(value)
     } else if (field === "state") {
       formattedValue = value.toUpperCase()
+    } else if (field === "federalTaxWithheld" || field === "stateTaxWithheld" || field === "stateIncome") {
+      // Ensure currency fields only accept numbers and decimals
+      formattedValue = value.replace(/[^0-9.]/g, "")
+    } else if (
+      field === "secondTinNotification" ||
+      field === "directSales5000Plus" ||
+      field === "isVoid" ||
+      field === "isCorrected" ||
+      field === "isFatcaFiling"
+    ) {
+      // Handle boolean checkbox values
+      formattedValue = (value === "true").toString()
     }
 
     if (field === "city" && value.includes(" ")) {
@@ -189,6 +231,22 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
       const compensation = Number.parseFloat(contractor.compensation)
       if (!contractor.compensation || isNaN(compensation) || compensation < 600) {
         errors[`${contractor.id}-compensation`] = "Compensation must be at least $600"
+      }
+
+      // Optional field validations
+      const federalTaxWithheld = Number.parseFloat(contractor.federalTaxWithheld)
+      if (contractor.federalTaxWithheld && (isNaN(federalTaxWithheld) || federalTaxWithheld < 0)) {
+        errors[`${contractor.id}-federalTaxWithheld`] = "Federal tax withheld must be a non-negative number"
+      }
+
+      const stateTaxWithheld = Number.parseFloat(contractor.stateTaxWithheld)
+      if (contractor.stateTaxWithheld && (isNaN(stateTaxWithheld) || stateTaxWithheld < 0)) {
+        errors[`${contractor.id}-stateTaxWithheld`] = "State tax withheld must be a non-negative number"
+      }
+
+      const stateIncome = Number.parseFloat(contractor.stateIncome)
+      if (contractor.stateIncome && (isNaN(stateIncome) || stateIncome < 0)) {
+        errors[`${contractor.id}-stateIncome`] = "State income must be a non-negative number"
       }
     })
 
@@ -299,6 +357,15 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
                   compensation:
                     extracted.nonemployeeCompensation?.toString() || extracted.compensation?.toString() || "",
                   email: extracted.recipient?.email || "",
+                  // New fields extracted from document (if available)
+                  federalTaxWithheld: extracted.federalTaxWithheld?.toString() || "",
+                  stateTaxWithheld: extracted.stateTaxWithheld?.toString() || "",
+                  stateIncome: extracted.stateIncome?.toString() || "",
+                  directSales5000Plus: extracted.directSales5000Plus || false,
+                  isCorrected: extracted.isCorrected || false,
+                  isVoid: extracted.isVoid || false,
+                  secondTinNotification: extracted.secondTinNotification || false,
+                  accountNumber: extracted.accountNumber || "",
                 }
               : c,
           ),
@@ -355,6 +422,8 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
           description: "Your 1099-NEC has been automatically filled. Please review the data.",
         })
         // Auto-fill logic here
+        // NOTE: The extracted data here is for the entire form, not per contractor.
+        // The `useEffect` hook handles processing `extractedData` for initial form population.
       } else {
         throw new Error("Could not extract 1099-NEC data from document")
       }
@@ -372,7 +441,18 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log("[v0] handleSubmit called, currentFormStep:", currentFormStep)
+
     if (currentFormStep === 1) {
+      if (!validateForm()) {
+        toast({
+          title: "Validation Error",
+          description: "Please fix the errors in the form before continuing",
+          variant: "destructive",
+        })
+        return
+      }
+
       if (!validationResults) {
         await handleAIValidation()
       }
@@ -381,17 +461,27 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
       return
     }
 
+    console.log("[v0] Attempting to submit to IRS...")
+    console.log("[v0] Validation results:", validationResults)
+
     if (!validationResults) {
+      toast({
+        title: "Please Validate Form",
+        description: "Click 'AI Validate Form' before submitting",
+        variant: "destructive",
+      })
       await handleAIValidation()
       return
     }
 
-    if (validationResults.errors.length > 0) {
+    if (validationResults.errors && validationResults.errors.length > 0) {
+      const errorMessages = validationResults.errors.map((e: any) => e.message || e.field).join(", ")
       toast({
         title: "Please Fix Errors",
-        description: "Your form has validation errors that must be fixed before submission",
+        description: `Your form has validation errors: ${errorMessages.substring(0, 100)}...`,
         variant: "destructive",
       })
+      setCurrentFormStep(1)
       return
     }
 
@@ -401,12 +491,15 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
         description: "Please fix the errors in the form",
         variant: "destructive",
       })
+      setCurrentFormStep(1)
       return
     }
 
     setIsSubmitting(true)
     setShowProgressDialog(true)
     setFilingProgress(1)
+
+    console.log("[v0] Starting IRS submission...")
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -432,6 +525,17 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
               zipCode: c.zipCode,
             },
             compensation: Number.parseFloat(c.compensation),
+            // Map new fields to IRS submission payload
+            accountNumber: c.accountNumber,
+            secondTinNotification: c.secondTinNotification,
+            directSales5000Plus: c.directSales5000Plus,
+            federalTaxWithheld: Number.parseFloat(c.federalTaxWithheld || "0"),
+            stateTaxWithheld: Number.parseFloat(c.stateTaxWithheld || "0"),
+            statePayerNumber: c.statePayerNumber,
+            stateIncome: Number.parseFloat(c.stateIncome || "0"),
+            isVoid: c.isVoid,
+            isCorrected: c.isCorrected,
+            isFatcaFiling: c.isFatcaFiling,
           })),
         }),
       })
@@ -505,9 +609,8 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
     },
   ]
 
-  const reviewSections = contractors.map((contractor, index) => ({
-    title: `Contractor ${index + 1}: ${contractor.firstName} ${contractor.lastName}`,
-    fields: [
+  const reviewSections = contractors.map((contractor, index) => {
+    const fields = [
       {
         label: "Full Name",
         value: `${contractor.firstName} ${contractor.middleInitial ? contractor.middleInitial + ". " : ""}${contractor.lastName}`,
@@ -522,8 +625,51 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
           : `${contractor.address}, ${contractor.city}, ${contractor.state} ${contractor.zipCode}`,
       },
       { label: "Nonemployee Compensation", value: `$${Number.parseFloat(contractor.compensation || "0").toFixed(2)}` },
-    ],
-  }))
+    ]
+
+    // Conditionally add optional fields to review section if they have values
+    if (contractor.accountNumber) {
+      fields.push({ label: "Account Number", value: contractor.accountNumber })
+    }
+    if (contractor.directSales5000Plus) {
+      fields.push({ label: "Direct Sales (Box 2)", value: "Yes" })
+    }
+    if (Number.parseFloat(contractor.federalTaxWithheld || "0") > 0) {
+      fields.push({
+        label: "Federal Tax Withheld (Box 4)",
+        value: `$${Number.parseFloat(contractor.federalTaxWithheld).toFixed(2)}`,
+      })
+    }
+    if (Number.parseFloat(contractor.stateTaxWithheld || "0") > 0) {
+      fields.push({
+        label: "State Tax Withheld (Box 5)",
+        value: `$${Number.parseFloat(contractor.stateTaxWithheld).toFixed(2)}`,
+      })
+    }
+    if (contractor.statePayerNumber) {
+      fields.push({ label: "State/Payer's State No. (Box 6)", value: contractor.statePayerNumber })
+    }
+    if (Number.parseFloat(contractor.stateIncome || "0") > 0) {
+      fields.push({ label: "State Income (Box 7)", value: `$${Number.parseFloat(contractor.stateIncome).toFixed(2)}` })
+    }
+    if (contractor.isVoid) {
+      fields.push({ label: "Form Status", value: "VOID" })
+    }
+    if (contractor.isCorrected) {
+      fields.push({ label: "Form Status", value: "CORRECTED" })
+    }
+    if (contractor.secondTinNotification) {
+      fields.push({ label: "2nd TIN Notification", value: "Yes" })
+    }
+    if (contractor.isFatcaFiling) {
+      fields.push({ label: "FATCA Filing", value: "Yes" })
+    }
+
+    return {
+      title: `Contractor ${index + 1}: ${contractor.firstName} ${contractor.lastName}`,
+      fields: fields,
+    }
+  })
 
   useEffect(() => {
     if (extractedData) {
@@ -539,6 +685,7 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
         })
       }
 
+      // Check if extractedData.contractors is an array and contains multiple contractor entries
       if (extractedData.contractors && Array.isArray(extractedData.contractors)) {
         console.log("[v0] Processing multiple contractors:", extractedData.contractors.length)
 
@@ -552,6 +699,7 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
                 variant: "warning",
               })
             }
+            // Ensure we only process 1099-NEC documents if specified by the extractor
             return contractorData.documentType === "1099-nec"
           })
           .map((contractorData: any, index: number) => {
@@ -561,23 +709,40 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
             const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""
             const middleInitial = nameParts.length > 2 ? nameParts[1].charAt(0).toUpperCase() : ""
 
+            // Extract address parts
+            const street = contractorData.recipient?.address || ""
+            const city = contractorData.recipient?.city || ""
+            const state = contractorData.recipient?.state || ""
+            const zipCode = contractorData.recipient?.zipCode || ""
+
             return {
-              id: `${Date.now()}-${index}`,
+              id: `${Date.now()}-${index}`, // Unique ID for each contractor
               firstName,
               middleInitial,
               lastName,
               ssn: contractorData.recipient?.ssn || contractorData.recipient?.tin || "",
               ein: contractorData.recipient?.ein || "",
-              address: contractorData.recipient?.street || "",
-              city: contractorData.recipient?.city || "",
-              state: contractorData.recipient?.state || "",
-              zipCode: contractorData.recipient?.zipCode || "",
+              address: street,
+              city: city,
+              state: state,
+              zipCode: zipCode,
               compensation:
                 contractorData.income?.nonemployeeCompensation?.toString() ||
                 contractorData.nonemployeeCompensation?.toString() ||
                 contractorData.compensation?.toString() ||
                 "",
               email: contractorData.recipient?.email || "",
+              // New fields extracted from document (if available)
+              accountNumber: contractorData.accountNumber || "",
+              secondTinNotification: contractorData.secondTinNotification || false,
+              directSales5000Plus: contractorData.directSales5000Plus || false,
+              federalTaxWithheld: contractorData.federalTaxWithheld?.toString() || "",
+              stateTaxWithheld: contractorData.stateTaxWithheld?.toString() || "",
+              statePayerNumber: contractorData.statePayerNumber || "",
+              stateIncome: contractorData.stateIncome?.toString() || "",
+              isVoid: contractorData.isVoid || false,
+              isCorrected: contractorData.isCorrected || false,
+              isFatcaFiling: contractorData.isFatcaFiling || false,
             }
           })
 
@@ -599,6 +764,7 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
         return
       }
 
+      // Handle single contractor extraction if not an array of contractors
       const extracted = extractedData
 
       const recipientName = extracted.recipient?.name || ""
@@ -624,6 +790,17 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
           extracted.compensation?.toString() ||
           "",
         email: extracted.recipient?.email || "",
+        // New fields extracted from document (if available)
+        accountNumber: extracted.accountNumber || "",
+        secondTinNotification: extracted.secondTinNotification || false,
+        directSales5000Plus: extracted.directSales5000Plus || false,
+        federalTaxWithheld: extracted.federalTaxWithheld?.toString() || "",
+        stateTaxWithheld: extracted.stateTaxWithheld?.toString() || "",
+        statePayerNumber: extracted.statePayerNumber || "",
+        stateIncome: extracted.stateIncome?.toString() || "",
+        isVoid: extracted.isVoid || false,
+        isCorrected: extracted.isCorrected || false,
+        isFatcaFiling: extracted.isFatcaFiling || false,
       }
 
       setContractors((prev) => {
@@ -761,7 +938,7 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
           <Card className="relative overflow-hidden border-2 border-purple-500/20 bg-gradient-to-br from-background via-background to-purple-500/5">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
 
-            <CardHeader className="relative">
+            <CardHeader relative>
               <div className="flex items-center justify-between gap-4 mb-4">
                 <Button
                   type="button"
@@ -1193,6 +1370,150 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground">Minimum $600 required for 1099-NEC filing</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`directSales-${contractor.id}`}
+                      checked={contractor.directSales5000Plus}
+                      onChange={(e) =>
+                        updateContractor(contractor.id, "directSales5000Plus", e.target.checked.toString())
+                      }
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor={`directSales-${contractor.id}`} className="text-sm font-normal">
+                      Payer made direct sales totaling $5,000 or more of consumer products to recipient for resale (Box
+                      2)
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`federalTaxWithheld-${contractor.id}`}>Federal Income Tax Withheld (Box 4)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input
+                      id={`federalTaxWithheld-${contractor.id}`}
+                      type="number"
+                      step="0.01"
+                      value={contractor.federalTaxWithheld}
+                      onChange={(e) => updateContractor(contractor.id, "federalTaxWithheld", e.target.value)}
+                      className="pl-7"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Backup withholding or voluntary federal tax withheld</p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor={`stateTaxWithheld-${contractor.id}`}>State Tax Withheld (Box 5)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        id={`stateTaxWithheld-${contractor.id}`}
+                        type="number"
+                        step="0.01"
+                        value={contractor.stateTaxWithheld}
+                        onChange={(e) => updateContractor(contractor.id, "stateTaxWithheld", e.target.value)}
+                        className="pl-7"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`statePayerNumber-${contractor.id}`}>State/Payer's State No. (Box 6)</Label>
+                    <Input
+                      id={`statePayerNumber-${contractor.id}`}
+                      value={contractor.statePayerNumber}
+                      onChange={(e) => updateContractor(contractor.id, "statePayerNumber", e.target.value)}
+                      placeholder="State ID number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`stateIncome-${contractor.id}`}>State Income (Box 7)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                      <Input
+                        id={`stateIncome-${contractor.id}`}
+                        type="number"
+                        step="0.01"
+                        value={contractor.stateIncome}
+                        onChange={(e) => updateContractor(contractor.id, "stateIncome", e.target.value)}
+                        className="pl-7"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor={`accountNumber-${contractor.id}`}>Account Number (optional)</Label>
+                  <Input
+                    id={`accountNumber-${contractor.id}`}
+                    value={contractor.accountNumber}
+                    onChange={(e) => updateContractor(contractor.id, "accountNumber", e.target.value)}
+                    placeholder="For internal tracking"
+                  />
+                  <p className="text-xs text-muted-foreground">Use if you file multiple 1099s for this contractor</p>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <p className="text-sm font-medium">Additional Options</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`void-${contractor.id}`}
+                        checked={contractor.isVoid}
+                        onChange={(e) => updateContractor(contractor.id, "isVoid", e.target.checked.toString())}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor={`void-${contractor.id}`} className="text-sm font-normal">
+                        VOID (mark if this form should be voided)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`corrected-${contractor.id}`}
+                        checked={contractor.isCorrected}
+                        onChange={(e) => updateContractor(contractor.id, "isCorrected", e.target.checked.toString())}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor={`corrected-${contractor.id}`} className="text-sm font-normal">
+                        CORRECTED (mark if correcting a previously filed form)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`secondTin-${contractor.id}`}
+                        checked={contractor.secondTinNotification}
+                        onChange={(e) =>
+                          updateContractor(contractor.id, "secondTinNotification", e.target.checked.toString())
+                        }
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor={`secondTin-${contractor.id}`} className="text-sm font-normal">
+                        2nd TIN not. (IRS notified twice about incorrect TIN)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`fatca-${contractor.id}`}
+                        checked={contractor.isFatcaFiling}
+                        onChange={(e) => updateContractor(contractor.id, "isFatcaFiling", e.target.checked.toString())}
+                        className="h-4 w-4 rounded border-gray-300"
+                      />
+                      <Label htmlFor={`fatca-${contractor.id}`} className="text-sm font-normal">
+                        FATCA filing requirement
+                      </Label>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
