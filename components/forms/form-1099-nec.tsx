@@ -529,7 +529,6 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
     if (extractedData) {
       console.log("[v0] Auto-filling 1099-NEC form with extracted data:", extractedData)
 
-      // The AI extraction now shows a warning toast but doesn't block the data
       if (extractedData.isTemplateData === true) {
         console.log("[v0] Detected template data in form initialization, showing warning.")
         toast({
@@ -545,10 +544,8 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
 
         const newContractors = extractedData.contractors
           .filter((contractorData: any) => {
-            // Allow all contractors for testing, even if they are template data
             if (contractorData.isTemplateData === true) {
               console.log("[v0] Including template contractor data for testing:", contractorData.recipient?.name)
-              // Optionally, show a warning for individual template contractors here as well
               toast({
                 title: "⚠️ Template Contractor Data Included",
                 description: `Contractor ${contractorData.recipient?.name || "Unknown"} appears to be from a template. Data accuracy is not guaranteed.`,
@@ -604,37 +601,51 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
 
       const extracted = extractedData
 
-      // Parse recipient name
       const recipientName = extracted.recipient?.name || ""
       const nameParts = recipientName.split(" ")
       const firstName = nameParts[0] || ""
       const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : ""
       const middleInitial = nameParts.length > 2 ? nameParts[1].charAt(0).toUpperCase() : ""
 
-      setContractors([
-        {
-          id: "1",
-          firstName,
-          middleInitial,
-          lastName,
-          ssn: extracted.recipient?.ssn || extracted.recipient?.tin || "",
-          ein: extracted.recipient?.ein || "",
-          address: extracted.recipient?.street || "",
-          city: extracted.recipient?.city || "",
-          state: extracted.recipient?.state || "",
-          zipCode: extracted.recipient?.zipCode || "",
-          compensation:
-            extracted.income?.nonemployeeCompensation?.toString() ||
-            extracted.nonemployeeCompensation?.toString() ||
-            extracted.compensation?.toString() ||
-            "",
-          email: extracted.recipient?.email || "",
-        },
-      ])
+      const newContractor: Contractor = {
+        id: Date.now().toString(),
+        firstName,
+        middleInitial,
+        lastName,
+        ssn: extracted.recipient?.ssn || extracted.recipient?.tin || "",
+        ein: extracted.recipient?.ein || "",
+        address: extracted.recipient?.street || "",
+        city: extracted.recipient?.city || "",
+        state: extracted.recipient?.state || "",
+        zipCode: extracted.recipient?.zipCode || "",
+        compensation:
+          extracted.income?.nonemployeeCompensation?.toString() ||
+          extracted.nonemployeeCompensation?.toString() ||
+          extracted.compensation?.toString() ||
+          "",
+        email: extracted.recipient?.email || "",
+      }
+
+      setContractors((prev) => {
+        const hasEmptyContractor = prev.some((c) => !c.firstName && !c.lastName && !c.ssn && !c.compensation)
+
+        if (hasEmptyContractor) {
+          // Replace the first empty contractor
+          const updatedContractors = [...prev]
+          const emptyIndex = updatedContractors.findIndex(
+            (c) => !c.firstName && !c.lastName && !c.ssn && !c.compensation,
+          )
+          updatedContractors[emptyIndex] = newContractor
+          return updatedContractors
+        } else {
+          // Append as a new contractor
+          return [...prev, newContractor]
+        }
+      })
 
       toast({
-        title: "✨ Form Auto-Filled",
-        description: "Your 1099-NEC data has been automatically populated. Please review before submitting.",
+        title: "✨ Contractor Auto-Filled",
+        description: `${firstName} ${lastName}'s information has been extracted. Please review before submitting.`,
       })
     }
   }, [extractedData])
