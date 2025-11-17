@@ -152,9 +152,17 @@ export async function POST(request: Request) {
 
     if (!hasTaxBanditsConfig) {
       console.log("[v0] ✅ W-2 saved successfully (Demo Mode)")
+      
+      const { data: savedFiling } = await supabase
+        .from("w2_filings")
+        .select("id")
+        .eq("submission_id", submissionId)
+        .single()
+      
       return NextResponse.json({
         success: true,
         submissionId,
+        filingId: savedFiling?.id,
         message: "W-2 form saved successfully",
         status: "Saved (Demo Mode)",
         isDemoMode: true,
@@ -162,9 +170,17 @@ export async function POST(request: Request) {
     }
 
     console.log("[v0] ✅ W-2 saved, TaxBandits submission pending")
+    
+    const { data: savedFiling } = await supabase
+      .from("w2_filings")
+      .select("id")
+      .eq("submission_id", submissionId)
+      .single()
+    
     return NextResponse.json({
       success: true,
       submissionId,
+      filingId: savedFiling?.id,
       message: "W-2 form saved successfully. E-filing will be processed in production.",
       status: "Pending E-filing",
     })

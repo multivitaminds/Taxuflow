@@ -41,20 +41,40 @@ export function DocumentUpload({
   const { toast } = useToast()
   const router = useRouter()
 
-  console.log("[v0] DocumentUpload userId:", userId)
+  console.log("[v0] DocumentUpload component mounted")
+  console.log("[v0] DocumentUpload props:", { userId, formType, expectedDocType })
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
 
+    console.log("[v0] Files dropped via drag-and-drop")
     const droppedFiles = Array.from(e.dataTransfer.files)
+    console.log("[v0] Number of files dropped:", droppedFiles.length)
     handleFiles(droppedFiles)
   }, [])
 
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("[v0] File input changed")
+    if (e.target.files) {
+      const selectedFiles = Array.from(e.target.files)
+      console.log("[v0] Number of files selected:", selectedFiles.length)
+      handleFiles(selectedFiles)
+    } else {
+      console.log("[v0] No files selected")
+    }
+  }
+
   const handleFiles = async (fileList: File[]) => {
-    console.log("[v0] handleFiles called with", fileList.length, "files, userId:", userId)
+    console.log("[v0] handleFiles called with", fileList.length, "files")
+    console.log("[v0] Current userId:", userId)
+    console.log(
+      "[v0] File names:",
+      fileList.map((f) => f.name),
+    )
 
     if (!userId) {
+      console.error("[v0] No userId provided, showing authentication error")
       toast({
         title: "Authentication Required",
         description: "Please wait for authentication to complete, then try uploading again.",
@@ -111,6 +131,8 @@ export function DocumentUpload({
 
       try {
         console.log("[v0] Starting AI extraction for:", file.name)
+        console.log("[v0] File size:", file.size / (1024 * 1024).toFixed(2), "MB")
+        console.log("[v0] File type:", file.type)
 
         const fileSizeMB = file.size / (1024 * 1024)
         if (fileSizeMB > 10) {
@@ -120,14 +142,17 @@ export function DocumentUpload({
         // Update status to processing
         setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, status: "processing" } : f)))
 
+        console.log("[v0] Converting file to base64...")
         // Convert file to base64 for AI processing
         const arrayBuffer = await file.arrayBuffer()
         const base64 = Buffer.from(arrayBuffer).toString("base64")
+        console.log("[v0] Base64 length:", base64.length)
 
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 45000) // 45 second timeout
 
         try {
+          console.log("[v0] Calling /api/filing/extract-document...")
           // Extract data using AI directly from file
           const extractResponse = await fetch("/api/filing/extract-document", {
             method: "POST",
@@ -143,15 +168,22 @@ export function DocumentUpload({
 
           clearTimeout(timeoutId)
 
+          console.log("[v0] Extract API response status:", extractResponse.status)
           const extractData = await extractResponse.json()
 
-          console.log("[v0] Extraction response:", JSON.stringify(extractData).substring(0, 200))
+          console.log("[v0] Extraction response success:", extractData.success)
+          console.log("[v0] Extraction response data type:", extractData.data?.documentType)
+          console.log("[v0] Full extraction response:", JSON.stringify(extractData).substring(0, 300))
 
           if (extractData.success && extractData.data) {
+            console.log("[v0] Extraction successful, processing results...")
+
             // Previously rejected mismatched form types, now only shows a warning toast
             if (expectedDocType && extractData.data.documentType !== expectedDocType) {
               const detectedType = (extractData.data.documentType || "unknown").toUpperCase()
               const expectedType = expectedDocType.toUpperCase()
+
+              console.log("[v0] Form type mismatch:", { detected: detectedType, expected: expectedType })
 
               toast({
                 title: "Different Form Type Detected",
@@ -171,6 +203,9 @@ export function DocumentUpload({
                   : f,
               ),
             )
+
+            console.log("[v0] Calling onExtractComplete callback...")
+            console.log("[v0] Callback data:", JSON.stringify(extractData.data).substring(0, 200))
 
             if (extractData.warning === "demo_mode") {
               toast({
@@ -193,16 +228,21 @@ export function DocumentUpload({
 
             // Notify parent component with metadata
             if (onExtractComplete) {
+              console.log("[v0] Executing onExtractComplete callback")
               onExtractComplete(extractData.data, {
                 warning: extractData.warning,
                 message: extractData.message,
               })
+            } else {
+              console.log("[v0] No onExtractComplete callback provided")
             }
           } else {
+            console.error("[v0] Extraction failed:", extractData.error)
             throw new Error(extractData.error || "Extraction failed")
           }
         } catch (fetchError) {
           clearTimeout(timeoutId)
+          console.error("[v0] Fetch error:", fetchError)
           if (fetchError instanceof Error && fetchError.name === "AbortError") {
             throw new Error(
               "Request timed out. The document may be too large or complex. Please try with a smaller/clearer document.",
@@ -368,7 +408,7 @@ export function DocumentUpload({
               type="file"
               multiple
               accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => e.target.files && handleFiles(Array.from(e.target.files))}
+              onChange={handleFileInputChange}
               className="absolute inset-0 cursor-pointer opacity-0"
             />
             <Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />

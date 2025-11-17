@@ -43,6 +43,12 @@ TAXBANDITS_USER_TOKEN=your_user_token_here
 TAXBANDITS_ENVIRONMENT=sandbox  # or 'production'
 EFILE_PROVIDER=taxbandits
 EFILE_WEBHOOK_SECRET=your_webhook_secret
+
+# TaxBandits AWS S3 for PDF Storage
+TAXBANDITS_AWS_ACCESS_KEY=your_aws_access_key_id
+TAXBANDITS_AWS_SECRET_KEY=your_aws_secret_access_key
+TAXBANDITS_AWS_S3_BUCKET=expressirsforms
+TAXBANDITS_AWS_REGION=us-east-1
 \`\`\`
 
 ### 3. Set Up Webhooks

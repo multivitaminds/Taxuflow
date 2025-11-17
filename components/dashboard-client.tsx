@@ -1,29 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import {
-  FileText,
-  TrendingUp,
-  Shield,
-  Calendar,
-  Upload,
-  MessageSquare,
-  Settings,
-  CreditCard,
-  Download,
-  CheckCircle2,
-  AlertCircle,
-  Trash2,
-  Loader2,
-  Receipt,
-  Users,
-  Building2,
-  BarChart3,
-  Wallet,
-} from "lucide-react"
+import { FileText, TrendingUp, Shield, Calendar, Upload, MessageSquare, Settings, CreditCard, Download, CheckCircle2, AlertCircle, Trash2, Loader2, Receipt, Users, Building2, BarChart3, Wallet } from 'lucide-react'
 import type { User } from "@supabase/ssr"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { DocumentUpload } from "@/components/document-upload"
@@ -76,9 +57,9 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   const [selectedAgent, setSelectedAgent] = useState(initialProfile?.preferred_agent || "Sam")
   const [user, setUser] = useState(initialUser)
   const [profile, setProfile] = useState(initialProfile)
-  const [loading, setLoading] = useState(true) // Start as true to show loading state
+  const [loading, setLoading] = useState(false)
 
-  const [supabaseReady, setSupabaseReady] = useState(false)
+  const [supabaseReady, setSupabaseReady] = useState(!!initialUser)
   const [supabaseError, setSupabaseError] = useState<string | null>(null)
 
   const userName =
@@ -169,61 +150,69 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
   useEffect(() => {
     async function initSupabase() {
-      try {
-        const supabaseClient = getSupabaseBrowserClient()
-
-        if (!supabaseClient) {
-          setSupabaseError("Unable to connect to database. Please refresh the page.")
-          setSupabaseReady(false)
-          return
-        }
-
-        setSupabaseReady(true)
-        setSupabaseError(null)
-
-        if (!initialUser) {
-          console.log("[v0] No server user, checking client-side auth")
-          const {
-            data: { user: clientUser },
-          } = await supabaseClient.auth.getUser()
-
-          if (!clientUser) {
-            console.log("[v0] No authenticated user found, redirecting to login")
-            window.location.replace("/login")
-            return
+      if (initialUser?.id === "demo-user-id") {
+        console.log("[v0] Demo mode detected, checking for real client-side session")
+        const supabase = getSupabaseBrowserClient()
+        
+        if (supabase) {
+          try {
+            const { data: { user: clientUser }, error } = await supabase.auth.getUser()
+            
+            if (!error && clientUser && clientUser.id !== "demo-user-id") {
+              console.log("[v0] Found real authenticated user:", clientUser.email)
+              
+              // Fetch real user profile
+              const { data: realProfile } = await supabase
+                .from("user_profiles")
+                .select("*")
+                .eq("id", clientUser.id)
+                .maybeSingle()
+              
+              const userProfile = realProfile || {
+                id: clientUser.id,
+                email: clientUser.email || "",
+                full_name: clientUser.user_metadata?.full_name || clientUser.email?.split("@")[0] || "User",
+                created_at: clientUser.created_at,
+                updated_at: clientUser.updated_at || clientUser.created_at,
+                preferred_agent: "Sam",
+                subscription_tier: "Free",
+              }
+              
+              console.log("[v0] Using real user data:", { email: clientUser.email, name: userProfile.full_name })
+              setUser(clientUser)
+              setProfile(userProfile)
+              setSupabaseReady(true)
+              setLoading(false)
+              return
+            }
+          } catch (err) {
+            console.error("[v0] Error checking client-side session:", err)
           }
-
-          console.log("[v0] Client-side auth successful:", clientUser.email)
-          setUser(clientUser)
-
-          // Fetch profile
-          const { data: clientProfile } = await supabaseClient
-            .from("user_profiles")
-            .select("*")
-            .eq("id", clientUser.id)
-            .maybeSingle()
-
-          setProfile(clientProfile)
-          setLoading(false) // Set loading to false after initial data fetch
-        } else {
-          // Server auth worked
-          console.log("[v0] Server auth successful")
-          setUser(initialUser)
-          setProfile(initialProfile)
-          setLoading(false) // Set loading to false after initial data fetch
         }
-      } catch (error) {
-        console.error("[v0] Error initializing Supabase:", error)
-        setSupabaseError("Database connection error. Please refresh the page.")
-        setSupabaseReady(false)
-        setLoadingData(false)
-        setLoadingDocuments(false)
-        setLoading(false) // Ensure loading is set to false even on error
+        
+        console.log("[v0] No real session found, using demo mode")
+        setUser(initialUser)
+        setProfile(initialProfile)
+        setSupabaseReady(true)
+        setLoading(false)
+        return
       }
+
+      if (initialUser) {
+        console.log("[v0] Using server-provided user:", initialUser.email)
+        setUser(initialUser)
+        setProfile(initialProfile)
+        setSupabaseReady(true)
+        setLoading(false)
+        return
+      }
+
+      console.log("[v0] No server user provided, redirecting to login")
+      window.location.href = "/login"
     }
 
     initSupabase()
-  }, [initialUser, initialProfile, router]) // Dependencies updated
+  }, [initialUser, initialProfile]) // Dependencies updated
 
   // Dynamically import and get Supabase client once ready
   const supabase = supabaseReady ? getSupabaseBrowserClient() : null
@@ -234,13 +223,8 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
       return
     }
 
-    if (!initialUser) {
-      // Handle case where initialUser is null (e.g., client-side auth)
-      // This logic will be covered by the initSupabase effect which fetches user and profile
-      // For now, we assume if we reach here with initialUser null, the user state is populated.
-      console.log("[v0] Fetching essential data for client-authenticated user")
-    } else if (initialUser.id === "demo-user-id") {
-      console.log("[v0] Loading demo data")
+    if (user.id === "demo-user-id" || user.id === "authenticated-user-id") {
+      console.log("[v0] Loading demo data for", user.id)
       setDocuments([
         {
           id: "demo-1",
@@ -321,8 +305,8 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
     }
 
     if (!supabase) {
-      console.error("[v0] Cannot fetch data: Supabase client is not configured")
-      setDocumentError("Database connection error. Please refresh the page.")
+      console.error("[v0] Cannot fetch data: Supabase client not available")
+      setDocumentError("Database connection unavailable in preview mode. Try demo account for full functionality.")
       setLoadingData(false)
       setLoadingDocuments(false)
       return
@@ -439,7 +423,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   if (!supabaseReady) {
     if (supabaseError) {
       return (
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="text-center">
             <p className="text-lg text-red-600 mb-4">{supabaseError}</p>
             <button
@@ -454,7 +438,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
     }
 
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-sm text-muted-foreground">Connecting to database...</p>
@@ -463,13 +447,30 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
     )
   }
 
-  // Simplified loading state
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user && !loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center max-w-md px-4">
+          <p className="text-lg text-red-600 mb-4">Session expired or authentication failed</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => window.location.href = "/login"}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 w-full"
+            >
+              Back to Login
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -736,7 +737,11 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
   return (
     <>
-      <DashboardHeader userName={fullUserName} userEmail={user.email || ""} />
+      <DashboardHeader
+        userName={fullUserName}
+        userEmail={user?.email || ""}
+        userId={user?.id}
+      />
 
       <div className="min-h-screen bg-background pt-20">
         <div className="container mx-auto px-4 py-12">

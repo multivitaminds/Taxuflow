@@ -93,7 +93,7 @@ function createDemoExtraction(fileName: string): any {
   }
 }
 
-async function extractWithRetry(dataUrl: string, extractionInstructions: string, maxRetries = 2) {
+async function extractWithRetry(dataUrl: string, extractionInstructions: string, maxRetries = 1) {
   let lastError: Error | null = null
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -118,27 +118,38 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
           },
         ],
         maxTokens: 2000,
-        abortSignal: AbortSignal.timeout(30000), // 30 second timeout
+        abortSignal: AbortSignal.timeout(10000),
       })
 
+      console.log("[v0] AI extraction successful")
       return text
     } catch (error) {
       lastError = error as Error
-      console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, error)
-
       const errorMessage = error instanceof Error ? error.message : String(error)
-      const isRetryable =
+      
+      console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, errorMessage)
+
+      const isNetworkError =
         errorMessage.includes("Gateway") ||
         errorMessage.includes("timeout") ||
         errorMessage.includes("ECONNRESET") ||
         errorMessage.includes("network") ||
-        errorMessage.includes("fetch failed")
+        errorMessage.includes("fetch failed") ||
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("NetworkError") ||
+        errorMessage.includes("ENOTFOUND") ||
+        errorMessage.includes("ETIMEDOUT")
 
-      if (!isRetryable || attempt === maxRetries) {
+      if (isNetworkError) {
+        console.log("[v0] Network/Gateway error detected, will use demo mode fallback")
         throw error
       }
 
-      const waitTime = Math.min(1000 * Math.pow(2, attempt), 5000)
+      if (attempt === maxRetries) {
+        throw error
+      }
+
+      const waitTime = Math.min(500 * Math.pow(2, attempt), 2000)
       console.log(`[v0] Waiting ${waitTime}ms before retry...`)
       await new Promise((resolve) => setTimeout(resolve, waitTime))
     }
@@ -158,7 +169,7 @@ export async function POST(request: NextRequest) {
       throw new Error("No file data provided")
     }
 
-    const fileSizeBytes = (fileData.length * 3) / 4 // Approximate base64 to bytes
+    const fileSizeBytes = (fileData.length * 3) / 4
     const fileSizeMB = fileSizeBytes / (1024 * 1024)
     console.log(`[v0] File size: ${fileSizeMB.toFixed(2)} MB`)
 
@@ -307,20 +318,17 @@ Rules:
 
       let cleanedText = text.trim()
 
-      // Remove markdown code blocks
-      if (cleanedText.startsWith("```")) {
-        cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
-        cleanedText = cleanedText.replace(/\n?```$/, "")
+      if (cleanedText.startsWith("`")) {
+        cleanedText = cleanedText.replace(/^\`\`\`(?:json)?\n?/, "")
+        cleanedText = cleanedText.replace(/\n?\`\`\`$/, "")
         cleanedText = cleanedText.trim()
       }
 
-      // Remove any leading text before the JSON object
       const jsonStart = cleanedText.indexOf("{")
       if (jsonStart > 0) {
         cleanedText = cleanedText.substring(jsonStart)
       }
 
-      // Remove any trailing text after the JSON object
       const jsonEnd = cleanedText.lastIndexOf("}")
       if (jsonEnd > 0 && jsonEnd < cleanedText.length - 1) {
         cleanedText = cleanedText.substring(0, jsonEnd + 1)
@@ -328,9 +336,10 @@ Rules:
 
       try {
         extractedData = JSON.parse(cleanedText)
+        console.log("[v0] Successfully parsed AI response")
       } catch (parseError) {
-        console.error("[v0] Failed to parse AI response as JSON:", cleanedText)
-        throw new Error(`AI returned invalid JSON. Response: ${cleanedText.substring(0, 100)}...`)
+        console.error("[v0] Failed to parse AI response as JSON")
+        throw new Error(`AI returned invalid JSON format`)
       }
     } catch (aiError) {
       const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
@@ -338,27 +347,30 @@ Rules:
       if (
         errorMessage.includes("Gateway") ||
         errorMessage.includes("fetch failed") ||
-        errorMessage.includes("network")
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("network") ||
+        errorMessage.includes("timeout") ||
+        errorMessage.includes("NetworkError") ||
+        errorMessage.includes("ENOTFOUND") ||
+        errorMessage.includes("ETIMEDOUT") ||
+        errorMessage.includes("ECONNRESET")
       ) {
-        console.log("[v0] AI service unavailable, using demo extraction mode")
+        console.log("[v0] AI extraction unavailable - using intelligent demo mode")
 
         extractedData = createDemoExtraction(fileName)
 
-        // Return demo data with a clear warning
         return NextResponse.json({
           success: true,
           data: extractedData,
-          warning: "demo_mode",
+          mode: "demo",
           message:
-            "AI extraction service is temporarily unavailable. Demo data has been provided as a starting point. Please verify and update all information before filing.",
+            "AI service temporarily unavailable. Demo values have been pre-filled as a starting point. Please review and update all information before submitting.",
         })
       }
 
-      // Re-throw if it's not a network issue
       throw aiError
     }
 
-    // Validate that we have the minimum required data for the document type
     if (extractedData.documentType === "w2") {
       const hasRequiredW2Data =
         extractedData.employer?.name &&
@@ -407,7 +419,6 @@ Rules:
       }
     }
 
-    // Parse addresses for better structure
     if (extractedData.employer?.address) {
       const parsed = parseFullAddress(extractedData.employer.address)
       if (parsed) {
@@ -428,7 +439,6 @@ Rules:
       }
     }
 
-    // Also handle payer/recipient for 1099 forms
     if (extractedData.payer?.address) {
       const parsed = parseFullAddress(extractedData.payer.address)
       if (parsed) {
@@ -449,27 +459,25 @@ Rules:
       }
     }
 
-    // Check if AI flagged this as template data
     if (extractedData.isTemplateData === true) {
-      console.log("[v0] AI detected template/placeholder data in document")
+      console.log("[v0] Template/demo document detected by AI")
       return NextResponse.json({
         success: true,
         data: extractedData,
-        warning: "template_data_detected",
+        mode: "template",
         message:
-          "This appears to be a sample/demo document. The extracted data can be used as a starting point, but please verify and update with your actual information.",
+          "This appears to be a sample document with template data. Please review and update with actual information before filing.",
       })
     }
 
-    console.log("[v0] Extracted document type:", extractedData.documentType)
-    console.log("[v0] Extracted tax year:", extractedData.taxYear)
-    console.log("[v0] Extracted employer:", extractedData.employer?.name)
-    console.log("[v0] Extracted employee:", extractedData.employee?.name)
-    console.log("[v0] Extracted wages:", extractedData.income?.wages)
+    console.log("[v0] Real document data extracted successfully")
+    console.log("[v0] Document type:", extractedData.documentType)
+    console.log("[v0] Tax year:", extractedData.taxYear)
 
     return NextResponse.json({
       success: true,
       data: extractedData,
+      mode: "ai",
     })
   } catch (error) {
     console.error("[v0] Document extraction error:", error)
@@ -477,23 +485,20 @@ Rules:
     let userMessage = "Failed to extract document data"
     const errorMessage = error instanceof Error ? error.message : String(error)
 
-    if (errorMessage.includes("Gateway") || errorMessage.includes("timeout") || errorMessage.includes("fetch failed")) {
+    if (errorMessage.includes("Gateway") || errorMessage.includes("timeout") || errorMessage.includes("fetch failed") || errorMessage.includes("network")) {
       userMessage =
-        "The AI service is temporarily unavailable. Please try again in a moment or contact support if the issue persists."
+        "Unable to connect to AI service. The system will use demo data as a starting point - please review and update all fields."
     } else if (errorMessage.includes("File too large")) {
       userMessage = errorMessage
     } else if (errorMessage.includes("invalid JSON")) {
       userMessage =
-        "Could not understand the document format. Please ensure it's a valid tax document (W-2, 1099, etc.)"
-    } else if (errorMessage.includes("placeholder data")) {
-      userMessage = "Could not extract real data from the document. Please ensure the image is clear and readable."
+        "Could not understand the document format. Please ensure it's a clear, readable tax document (W-2, 1099, etc.)"
     }
 
     return NextResponse.json(
       {
         success: false,
         error: userMessage,
-        technicalDetails: error instanceof Error ? error.message : undefined,
       },
       { status: 500 },
     )

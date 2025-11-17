@@ -1,9 +1,63 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { redirect } from 'next/navigation'
+import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import { FilingDashboardClient } from "@/components/filing-dashboard-client"
 
 export default async function FilingDashboardPage() {
-  const supabase = await createClient()
+  const cookieStore = await cookies()
+  const isDemoMode = cookieStore.get("demo_mode")?.value === "true"
+  
+  if (isDemoMode) {
+    console.log("[v0] Filing page: Using demo mode, showing demo filings")
+    const demoUser = {
+      id: "demo-user-id",
+      email: "demo@taxu.com",
+    }
+    
+    const demoFilings = [
+      {
+        id: "demo-filing-1",
+        tax_year: 2024,
+        form_type: "W-2" as const,
+        filing_status: "accepted" as const,
+        submission_id: "DEMO-W2-2024-001",
+        irs_status: "accepted",
+        refund_amount: 1250,
+        filed_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        accepted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        rejected_at: null,
+        rejection_reasons: null,
+        provider_name: "TaxBandits",
+        created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        id: "demo-filing-2",
+        tax_year: 2024,
+        form_type: "1099-NEC" as const,
+        filing_status: "pending" as const,
+        submission_id: "DEMO-1099-2024-001",
+        irs_status: "pending",
+        refund_amount: null,
+        filed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        accepted_at: null,
+        rejected_at: null,
+        rejection_reasons: null,
+        provider_name: "TaxBandits",
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ]
+    
+    return <FilingDashboardClient user={demoUser as any} filings={demoFilings} />
+  }
+
+  const supabase = await createServerClient()
+
+  if (!supabase) {
+    console.log("[v0] Filing page: No Supabase client, redirecting to login")
+    redirect("/login?redirect=/dashboard/filing")
+  }
 
   const {
     data: { user },
@@ -11,6 +65,7 @@ export default async function FilingDashboardPage() {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
+    console.log("[v0] Filing page: No authenticated user, redirecting to login")
     redirect("/login?redirect=/dashboard/filing")
   }
 

@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { ConditionalNavigation } from "@/components/conditional-navigation"
@@ -37,7 +37,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ErrorBoundary>
           <ConditionalNavigation />
-          <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+          {children}
           <AIChatWidget />
         </ErrorBoundary>
         <Analytics />

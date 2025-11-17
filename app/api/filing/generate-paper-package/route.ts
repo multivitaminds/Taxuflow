@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 import { jsPDF } from "jspdf"
+import { uploadToS3, isS3Configured } from "@/lib/aws-s3"
+import { put } from "@vercel/blob"
 
 export async function POST(request: NextRequest) {
   try {
@@ -160,20 +162,36 @@ export async function POST(request: NextRequest) {
     // Generate PDF as blob
     const pdfBlob = doc.output("blob")
 
-    // Upload to Vercel Blob
-    const formDataBlob = new FormData()
-    formDataBlob.append("file", pdfBlob, `w2-paper-package-${taxYear}.pdf`)
+    let url: string
 
-    const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/upload`, {
-      method: "POST",
-      body: formDataBlob,
-    })
+    if (isS3Configured()) {
+      console.log("[v0] Using AWS S3 for PDF storage (TaxBandits)")
+      const s3Key = `tax-forms/${user.id}/${formType.toLowerCase()}-paper-package-${taxYear}-${Date.now()}.pdf`
 
-    if (!uploadResponse.ok) {
-      throw new Error("Failed to upload PDF")
+      url = await uploadToS3({
+        file: pdfBlob,
+        key: s3Key,
+        contentType: "application/pdf",
+      })
+
+      console.log("[v0] PDF uploaded to TaxBandits S3 bucket:", url)
+    } else {
+      console.log("[v0] AWS S3 not configured, using Vercel Blob as fallback")
+      const formDataBlob = new FormData()
+      formDataBlob.append("file", pdfBlob, `w2-paper-package-${taxYear}.pdf`)
+
+      const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/upload`, {
+        method: "POST",
+        body: formDataBlob,
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error("Failed to upload PDF")
+      }
+
+      const uploadResult = await uploadResponse.json()
+      url = uploadResult.url
     }
-
-    const { url } = await uploadResponse.json()
 
     console.log("[v0] Paper package generated and uploaded:", url)
 

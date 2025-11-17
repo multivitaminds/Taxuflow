@@ -39,6 +39,10 @@ export function DashboardProvider({
     if (user) {
       try {
         const supabase = getSupabaseBrowserClient()
+        if (!supabase) {
+          console.error("[v0] Supabase client not available")
+          return
+        }
         const { data } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
         if (data) {
           setProfile(data)

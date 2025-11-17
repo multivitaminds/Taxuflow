@@ -1,19 +1,26 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import Link from "next/link"
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { User, LogOut } from "lucide-react"
+import { User, LogOut } from 'lucide-react'
 import type { User as SupabaseUser } from "@supabase/ssr"
 
 export function AuthButton() {
   const router = useRouter()
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     if (!isSupabaseConfigured()) {
       console.warn("[v0] Supabase not configured. Auth features will be disabled.")
       setLoading(false)
@@ -27,13 +34,11 @@ export function AuthButton() {
       return
     }
 
-    // Get initial session with error handling
     supabase.auth
       .getSession()
       .then(({ data: { session }, error }) => {
         if (error) {
           console.error("[v0] Session error:", error.message)
-          // If refresh token is invalid, sign out to clear stale tokens
           if (error.message.includes("Invalid Refresh Token") || error.message.includes("Refresh Token Not Found")) {
             console.log("[v0] Clearing invalid session tokens")
             supabase.auth.signOut().catch(console.error)
@@ -50,7 +55,6 @@ export function AuthButton() {
         setLoading(false)
       })
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -58,7 +62,7 @@ export function AuthButton() {
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [mounted])
 
   const handleSignOut = async () => {
     try {
@@ -83,7 +87,7 @@ export function AuthButton() {
     }
   }
 
-  if (loading) {
+  if (!mounted || loading) {
     return null
   }
 

@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { handleSupabaseError } from "@/lib/supabase/error-handler"
 
 export async function GET(request: Request) {
   try {
@@ -23,7 +24,13 @@ export async function GET(request: Request) {
       .eq("user_id", user.id)
       .eq("is_active", true)
 
-    if (recipientsError) throw recipientsError
+    if (recipientsError) {
+      return handleSupabaseError(recipientsError, {
+        operation: "fetch contractors",
+        resource: "contractor",
+        userId: user.id,
+      })
+    }
 
     // Get payments for each contractor for the specified year
     const { data: payments, error: paymentsError } = await supabase
@@ -33,12 +40,24 @@ export async function GET(request: Request) {
       .gte("payment_date", `${year}-01-01`)
       .lte("payment_date", `${year}-12-31`)
 
-    if (paymentsError) throw paymentsError
+    if (paymentsError) {
+      return handleSupabaseError(paymentsError, {
+        operation: "fetch contractor payments",
+        resource: "payment",
+        userId: user.id,
+      })
+    }
 
     // Get W-9 status for each contractor
     const { data: w9Forms, error: w9Error } = await supabase.from("w9_forms").select("*").eq("user_id", user.id)
 
-    if (w9Error) throw w9Error
+    if (w9Error) {
+      return handleSupabaseError(w9Error, {
+        operation: "fetch W-9 forms",
+        resource: "W-9 form",
+        userId: user.id,
+      })
+    }
 
     // Combine data
     const contractors = recipients.map((recipient) => {

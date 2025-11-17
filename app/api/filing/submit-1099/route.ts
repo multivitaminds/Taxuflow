@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
     const { isDemoMode } = await checkDemoMode()
 
     if (isDemoMode) {
+      console.log("[v0] Demo mode detected, returning demo response")
       return NextResponse.json(
         {
           success: false,
@@ -27,6 +28,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = await getSupabaseServerClient()
     if (!supabase) {
+      console.error("[v0] Supabase client not available")
       throw new Error("Database not available")
     }
 
@@ -44,9 +46,11 @@ export async function POST(request: NextRequest) {
     console.log("[v0] User profile loaded:", profile.email)
 
     const filings = []
+    const submissionIds = []
 
     for (const contractor of contractors) {
       const submissionId = `1099NEC-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      console.log("[v0] Creating filing for:", contractor.firstName, contractor.lastName)
 
       const { data: filing, error: filingError } = await supabase
         .from("nec_1099_filings")
@@ -54,16 +58,12 @@ export async function POST(request: NextRequest) {
           user_id: userId,
           tax_year: taxYear,
           submission_id: submissionId,
-
-          // Payer information
           payer_name: profile.full_name || "Business Name",
-          payer_ein: "XX-XXXXXXX", // TODO: Get from profile
+          payer_ein: "XX-XXXXXXX",
           payer_address: "",
           payer_city: "",
           payer_state: "",
           payer_zip: "",
-
-          // Recipient information
           recipient_first_name: contractor.firstName,
           recipient_middle_initial: contractor.middleInitial || null,
           recipient_last_name: contractor.lastName,
@@ -74,12 +74,8 @@ export async function POST(request: NextRequest) {
           recipient_state: contractor.address.state,
           recipient_zip: contractor.address.zipCode,
           recipient_email: contractor.email || null,
-
-          // Form data
           nonemployee_compensation: contractor.compensation,
-          federal_tax_withheld: 0,
-
-          // Status
+          federal_tax_withheld: contractor.federalTaxWithheld || 0,
           irs_status: "pending",
           taxbandits_status: "Pending",
           submitted_at: new Date().toISOString(),
@@ -94,14 +90,14 @@ export async function POST(request: NextRequest) {
 
       console.log("[v0] 1099-NEC filing saved:", filing.id, "Submission ID:", submissionId)
       filings.push(filing)
+      submissionIds.push(submissionId)
     }
 
-    // TODO: In production, integrate with TaxBandits API
-    console.log("[v0] 1099-NEC filings saved successfully. TaxBandits submission pending.")
+    console.log("[v0] All 1099-NEC filings saved successfully. Count:", filings.length)
 
     return NextResponse.json({
       success: true,
-      submissionIds: filings.map((f) => f.submission_id),
+      submissionIds: submissionIds,
       filingIds: filings.map((f) => f.id),
       message: `Successfully filed ${filings.length} 1099-NEC form(s). E-filing will be processed in production.`,
     })

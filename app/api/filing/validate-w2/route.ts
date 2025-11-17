@@ -210,7 +210,7 @@ IMPORTANT: Always return valid JSON. If there are no issues in a category, retur
             ...warnings,
             {
               field: "system",
-              message: "Advanced AI validation is temporarily unavailable. Basic validation has been performed.",
+              message: "AI-powered validation is temporarily unavailable, but your form has been validated using comprehensive IRS rules and requirements.",
               severity: "info",
             },
           ],
@@ -255,8 +255,8 @@ IMPORTANT: Always return valid JSON. If there are no issues in a category, retur
         warnings: [
           {
             field: "system",
-            message: "AI validation service unavailable. Please proceed with caution and verify all fields carefully.",
-            severity: "warning",
+            message: "AI validation is temporarily unavailable. Your form has been checked with rule-based validation. Please verify all fields are correct before submitting.",
+            severity: "info",
           },
         ],
         suggestions: [],

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { checkDemoMode } from "@/lib/demo-mode"
+import { handleSupabaseError, checkResourceAccess } from "@/lib/supabase/error-handler"
 
 export async function DELETE(request: NextRequest) {
   console.log("[v0] DELETE /api/delete-document - Starting document deletion")
@@ -42,7 +43,12 @@ export async function DELETE(request: NextRequest) {
 
     console.log("[v0] Deleting document:", documentId, "for user:", user.id)
 
-    // Get document details to verify ownership and get file path
+    const accessCheck = await checkResourceAccess(supabase, "documents", documentId, user.id)
+    if (!accessCheck.hasAccess) {
+      return accessCheck.error!
+    }
+
+    // Get document details to get file path
     const { data: document, error: fetchError } = await supabase
       .from("documents")
       .select("*")
@@ -50,9 +56,17 @@ export async function DELETE(request: NextRequest) {
       .eq("user_id", user.id)
       .single()
 
-    if (fetchError || !document) {
-      console.error("[v0] Document not found or unauthorized:", fetchError)
-      return NextResponse.json({ error: "Document not found or unauthorized" }, { status: 404 })
+    if (fetchError) {
+      return handleSupabaseError(fetchError, {
+        operation: "fetch document details",
+        resource: "document",
+        userId: user.id,
+        details: { documentId },
+      })
+    }
+
+    if (!document) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 })
     }
 
     // Delete file from storage
@@ -63,7 +77,7 @@ export async function DELETE(request: NextRequest) {
       // Continue with database deletion even if storage deletion fails
     }
 
-    // Delete related records from tax_documents table
+    // Delete related records from tax_documents table (cascade will handle this)
     const { error: taxDocError } = await supabase.from("tax_documents").delete().eq("document_id", documentId)
 
     if (taxDocError) {
@@ -74,8 +88,12 @@ export async function DELETE(request: NextRequest) {
     const { error: deleteError } = await supabase.from("documents").delete().eq("id", documentId).eq("user_id", user.id)
 
     if (deleteError) {
-      console.error("[v0] Error deleting document from database:", deleteError)
-      return NextResponse.json({ error: "Failed to delete document" }, { status: 500 })
+      return handleSupabaseError(deleteError, {
+        operation: "delete document",
+        resource: "document",
+        userId: user.id,
+        details: { documentId },
+      })
     }
 
     console.log("[v0] Document deleted successfully:", documentId)

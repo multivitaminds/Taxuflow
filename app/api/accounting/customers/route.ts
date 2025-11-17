@@ -1,11 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createBooksServerClient } from "@/lib/supabase/books-server"
+import { handleSupabaseError } from "@/lib/supabase/error-handler"
+import { getOrganizationContext } from "@/lib/organization/context"
 
 export async function GET() {
   try {
+    const orgContext = await getOrganizationContext()
+    
+    if (!orgContext) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const supabase = await createBooksServerClient()
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("contacts")
       .select(`
         *,
@@ -18,7 +26,18 @@ export async function GET() {
       `)
       .order("created_at", { ascending: false })
 
-    if (error) throw error
+    if (orgContext.hasOrganizationAccess) {
+      query = query.in("org_id", orgContext.organizationIds)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      return handleSupabaseError(error, {
+        operation: "fetch customers",
+        resource: "customer",
+      })
+    }
 
     // Calculate customer stats
     const customersWithStats = data.map((customer: any) => {
@@ -31,37 +50,47 @@ export async function GET() {
         total_revenue: totalRevenue,
         outstanding_balance: outstandingBalance,
         invoice_count: invoiceCount,
+        is_organization: !!customer.org_id,
       }
     })
 
-    return NextResponse.json({ customers: customersWithStats })
+    return NextResponse.json({ 
+      customers: customersWithStats,
+      context: {
+        hasOrganizations: orgContext.hasOrganizationAccess,
+        organizationCount: orgContext.organizationIds.length,
+      }
+    })
   } catch (error: any) {
     console.error("[v0] Error fetching customers:", error)
-    return NextResponse.json({ error: error.message || "Failed to fetch customers" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to fetch customers" }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createBooksServerClient()
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    console.log("[v0] Creating customer - User:", user?.id)
-
-    if (authError || !user) {
-      console.error("[v0] Authentication error:", authError)
-      return NextResponse.json({ error: "You must be logged in to create a customer" }, { status: 401 })
+    const orgContext = await getOrganizationContext()
+    
+    if (!orgContext) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const supabase = await createBooksServerClient()
     const body = await request.json()
+    
+    console.log("[v0] Creating customer - User:", orgContext.userId)
     console.log("[v0] Customer data received:", body)
 
     if (!body.contact_name || !body.email) {
       return NextResponse.json({ error: "Customer name and email are required" }, { status: 400 })
+    }
+
+    const targetOrgId = body.org_id || orgContext.organizationId
+
+    if (!targetOrgId) {
+      return NextResponse.json({ 
+        error: "No organization context. Please create or join an organization first." 
+      }, { status: 400 })
     }
 
     const customerData = {
@@ -71,7 +100,8 @@ export async function POST(request: NextRequest) {
       phone: body.phone || null,
       tax_id: body.tax_id || null,
       contact_type: body.contact_type || "customer",
-      user_id: user.id,
+      org_id: targetOrgId,
+      user_id: orgContext.userId,
     }
 
     console.log("[v0] Inserting customer with data:", customerData)
@@ -79,14 +109,18 @@ export async function POST(request: NextRequest) {
     const { data: customer, error } = await supabase.from("contacts").insert(customerData).select().single()
 
     if (error) {
-      console.error("[v0] Database error:", error)
-      return NextResponse.json({ error: error.message || "Database error occurred" }, { status: 500 })
+      return handleSupabaseError(error, {
+        operation: "create customer",
+        resource: "customer",
+        userId: orgContext.userId,
+        details: { email: body.email, org_id: targetOrgId },
+      })
     }
 
     console.log("[v0] Customer created successfully:", customer)
     return NextResponse.json({ customer }, { status: 201 })
   } catch (error: any) {
     console.error("[v0] Error creating customer:", error)
-    return NextResponse.json({ error: error.message || "Failed to create customer" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to create customer" }, { status: 500 })
   }
 }

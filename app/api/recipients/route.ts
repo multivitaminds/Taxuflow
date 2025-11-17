@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { encrypt, decrypt } from "@/lib/crypto"
+import { handleSupabaseError } from "@/lib/supabase/error-handler"
 
 export async function GET(request: Request) {
   try {
@@ -24,7 +25,13 @@ export async function GET(request: Request) {
 
     const { data: recipients, error } = await query
 
-    if (error) throw error
+    if (error) {
+      return handleSupabaseError(error, {
+        operation: "fetch recipients",
+        resource: "recipient",
+        userId: user.id,
+      })
+    }
 
     // Decrypt sensitive data for display (masked)
     const recipientsWithMaskedData = recipients?.map((recipient) => ({
@@ -106,7 +113,14 @@ export async function POST(request: Request) {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      return handleSupabaseError(error, {
+        operation: "create recipient",
+        resource: "recipient",
+        userId: user.id,
+        details: { email },
+      })
+    }
 
     return NextResponse.json({ recipient, success: true })
   } catch (error) {

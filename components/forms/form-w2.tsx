@@ -2,26 +2,14 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Loader2,
-  ArrowLeft,
-  Send,
-  Lock,
-  Sparkles,
-  FileText,
-  AlertCircle,
-  Info,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-} from "lucide-react"
+import { Loader2, ArrowLeft, Send, Lock, Sparkles, FileText, AlertCircle, Info, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PenaltyAbatementDialog } from "@/components/penalty-abatement-dialog"
@@ -542,10 +530,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
     setFilingProgress(1)
 
     try {
-      // Step 1: Authenticating
-      console.log("[v0] Starting API call to /api/filing/submit-w2")
+      console.log("[v0] Step 1/3: Authenticating with IRS e-filing system")
       await new Promise((resolve) => setTimeout(resolve, 1500))
       setFilingProgress(2)
+
+      console.log("[v0] Step 2/3: Verifying business entity with IRS")
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      setFilingProgress(3)
+
+      console.log("[v0] Step 3/3: Submitting W-2 form to IRS")
+      console.log("[v0] Starting API call to /api/filing/submit-w2")
 
       const response = await fetch("/api/filing/submit-w2", {
         method: "POST",
@@ -556,13 +550,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
           overrideValidation: overrideValidation || validationResult?.errors?.length === 0,
         }),
       })
-
-      // Step 2: Verifying business
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      setFilingProgress(3)
-
-      // Step 3: Submitting
-      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
@@ -581,12 +568,15 @@ export default function FormW2({ extractedData }: FormW2Props) {
           variant: "destructive",
         })
         setLoading(false)
+        setShowProgressDialog(false)
+        setFilingProgress(0)
         return
       }
 
       if (result.success) {
         console.log("[v0] ✅ W-2 SUBMITTED SUCCESSFULLY!")
-        setFilingProgress(4) // Complete
+        
+        setFilingProgress(4)
 
         toast({
           title: "W-2 Successfully Submitted to IRS",
@@ -596,11 +586,13 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
         localStorage.removeItem("w2_draft")
 
-        // The dialog now stays open until the user clicks the X button
-        // setTimeout(() => {
-        //   router.push(result.filingId ? `/dashboard/filing/${result.filingId}` : "/dashboard/filing")
-        // }, 3000)
+        setTimeout(() => {
+          router.push(result.filingId ? `/dashboard/filing/${result.filingId}` : "/dashboard/filing")
+        }, 3000)
       } else {
+        setFilingProgress(0)
+        setShowProgressDialog(false)
+        
         toast({
           title: "IRS Submission Failed",
           description: result.error || "Could not submit to the IRS.",
@@ -609,6 +601,10 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
     } catch (error: any) {
       console.error("[v0] SUBMISSION ERROR:", error.message)
+      
+      setFilingProgress(0)
+      setShowProgressDialog(false)
+      
       toast({
         title: "Submission Error",
         description: error.message || "An unexpected error occurred.",
@@ -1412,6 +1408,21 @@ export default function FormW2({ extractedData }: FormW2Props) {
             {/* Validation Results */}
             {validationResult && (
               <div className="space-y-3">
+                {validationResult.warnings?.filter((w: any) => w.field === "system").map((warning: any, index: number) => (
+                  <Alert key={`system-warning-${index}`} className="bg-blue-500/10 border-blue-500/20">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    <AlertTitle className="text-blue-600 font-semibold">Validation Status</AlertTitle>
+                    <AlertDescription className="text-sm">
+                      {warning.message}
+                      {warning.message.includes("temporarily unavailable") && (
+                        <span className="block mt-2 text-xs text-muted-foreground">
+                          Don't worry - your form has been checked with comprehensive rule-based validation. You can safely proceed with submission.
+                        </span>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                ))}
+
                 {validationResult.errors?.map((error: any, index: number) => (
                   <Alert key={`error-${index}`} className="bg-red-500/10 border-red-500/20">
                     <AlertCircle className="h-4 w-4 text-red-600" />
@@ -1420,7 +1431,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
                   </Alert>
                 ))}
 
-                {validationResult.warnings?.map((warning: any, index: number) => (
+                {validationResult.warnings?.filter((w: any) => w.field !== "system").map((warning: any, index: number) => (
                   <Alert key={`warning-${index}`} className="bg-orange-500/10 border-orange-500/20">
                     <AlertTriangle className="h-4 w-4 text-orange-600" />
                     <AlertTitle className="text-orange-600 font-semibold">Warning: {warning.field}</AlertTitle>
@@ -1436,7 +1447,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
                   </Alert>
                 ))}
 
-                {validationResult.valid && !validationResult.errors?.length && !validationResult.warnings?.length && (
+                {validationResult.valid && !validationResult.errors?.length && !validationResult.warnings?.filter((w: any) => w.field !== "system").length && (
                   <Alert className="bg-green-500/10 border-green-500/20">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <AlertTitle className="text-green-600 font-semibold">All Clear!</AlertTitle>

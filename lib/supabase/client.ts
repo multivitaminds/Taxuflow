@@ -1,63 +1,30 @@
 import { createBrowserClient } from "@supabase/ssr"
 
-let client: ReturnType<typeof createBrowserClient> | null = null
-
-function getEnvVars() {
-  return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  }
-}
-
 export function createClient() {
-  const { url, key } = getEnvVars()
-
-  if (!url || !key) {
-    return null
+  // Don't create browser client on server
+  if (typeof window === "undefined") {
+    console.log("[v0] Supabase client: Cannot create browser client on server")
+    return null as any
   }
 
-  try {
-    return createBrowserClient(url, key, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        flowType: "pkce",
-        storageKey: "taxu-auth",
-      },
-    })
-  } catch (error) {
-    console.error("[v0] Error creating Supabase client:", error)
-    return null
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("[v0] Supabase config missing on client")
+    return null as any
   }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
 
 export function getSupabaseBrowserClient() {
-  if (client) return client
-  client = createClient()
-  return client
+  return createClient()
 }
 
 export function isSupabaseConfigured() {
-  const { url, key } = getEnvVars()
-  return !!(url && key)
-}
-
-export function resetSupabaseClient() {
-  client = null
-}
-
-export async function waitForSupabase(timeoutMs = 5000): Promise<ReturnType<typeof createBrowserClient> | null> {
-  const startTime = Date.now()
-
-  while (Date.now() - startTime < timeoutMs) {
-    const supabase = getSupabaseBrowserClient()
-    if (supabase) {
-      return supabase
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
-
-  console.error("[v0] Timeout waiting for Supabase environment variables")
-  return null
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
 }
