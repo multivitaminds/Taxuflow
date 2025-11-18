@@ -4,8 +4,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, FileText, CheckCircle2, XCircle, Clock, RefreshCw, ExternalLink } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { ArrowLeft, Download, FileText, CheckCircle2, XCircle, Clock, RefreshCw, ExternalLink } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useToast } from "@/hooks/use-toast"
 
 interface Filing {
@@ -117,11 +117,6 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
     }
   }
 
-  const getTaxBanditsDashboardUrl = () => {
-    const environment = process.env.NEXT_PUBLIC_TAXBANDITS_ENVIRONMENT || "sandbox"
-    return environment === "production" ? "https://www.taxbandits.com" : "https://sandbox.taxbandits.com"
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-orange-50/20">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -173,7 +168,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
               <div className="flex-1">
                 <h3 className="font-semibold text-blue-900 mb-1">Filing Status: Processing</h3>
                 <p className="text-sm text-blue-700 mb-3">
-                  Your filing is being processed by TaxBandits. This typically takes 2-5 minutes in the sandbox
+                  Your filing is being processed by the IRS e-file provider. This typically takes 2-5 minutes in the sandbox
                   environment, but can occasionally take longer.
                 </p>
                 <div className="flex flex-col gap-2">
@@ -186,17 +181,8 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
                     <RefreshCw className={`h-4 w-4 mr-2 ${checkingStatus ? "animate-spin" : ""}`} />
                     Refresh Status Now
                   </Button>
-                  <a
-                    href={getTaxBanditsDashboardUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 w-fit"
-                  >
-                    Verify in TaxBandits Dashboard
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
                   <p className="text-xs text-blue-600">
-                    Search for: <code className="bg-blue-100 px-1 py-0.5 rounded">{filing.submission_id}</code>
+                    Submission ID: <code className="bg-blue-100 px-1 py-0.5 rounded">{filing.submission_id}</code>
                   </p>
                 </div>
               </div>

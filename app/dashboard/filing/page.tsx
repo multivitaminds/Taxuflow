@@ -27,7 +27,7 @@ export default async function FilingDashboardPage() {
         accepted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         rejected_at: null,
         rejection_reasons: null,
-        provider_name: "TaxBandits",
+        provider_name: "IRS E-File", // Removed TaxBandits branding
         created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       },
@@ -43,7 +43,7 @@ export default async function FilingDashboardPage() {
         accepted_at: null,
         rejected_at: null,
         rejection_reasons: null,
-        provider_name: "TaxBandits",
+        provider_name: "IRS E-File", // Removed TaxBandits branding
         created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       },
@@ -125,7 +125,7 @@ export default async function FilingDashboardPage() {
       accepted_at: filing.accepted_at,
       rejected_at: filing.rejected_at,
       rejection_reasons: filing.rejection_reasons,
-      provider_name: "TaxBandits",
+      provider_name: "IRS E-File", // Removed TaxBandits branding
       created_at: filing.created_at,
       updated_at: filing.updated_at,
     }
@@ -144,7 +144,7 @@ export default async function FilingDashboardPage() {
     accepted_at: filing.accepted_at,
     rejected_at: filing.rejected_at,
     rejection_reasons: filing.rejection_reasons,
-    provider_name: "TaxBandits",
+    provider_name: "IRS E-File", // Removed TaxBandits branding
     created_at: filing.created_at,
     updated_at: filing.updated_at,
   }))

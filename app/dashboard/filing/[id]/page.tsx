@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { notFound, redirect } from "next/navigation"
+import { notFound, redirect } from 'next/navigation'
 import FilingDetailClient from "@/components/filing-detail-client"
 
 export default async function FilingDetailPage({
@@ -37,7 +37,7 @@ export default async function FilingDetailPage({
       id: w2Filing.id,
       tax_year: w2Filing.tax_year,
       filing_status: w2Filing.taxbandits_status || "pending",
-      provider_name: "TaxBandits",
+      provider_name: "IRS E-File", // Removed TaxBandits branding
       submission_id: w2Filing.submission_id || "",
       irs_status: w2Filing.irs_status || "pending",
       state_status: null,
@@ -62,12 +62,12 @@ export default async function FilingDetailPage({
         id: nec1099Filing.id,
         tax_year: nec1099Filing.tax_year,
         filing_status: nec1099Filing.taxbandits_status || "pending",
-        provider_name: "TaxBandits",
+        provider_name: "IRS E-File", // Removed TaxBandits branding
         submission_id: nec1099Filing.submission_id || "",
         irs_status: nec1099Filing.irs_status || "pending",
         state_status: null,
         rejection_reasons: nec1099Filing.rejection_reasons || [],
-        refund_amount: null, // 1099-NEC doesn't have refunds
+        refund_amount: null,
         filed_at: nec1099Filing.submitted_at,
         accepted_at: nec1099Filing.accepted_at,
         rejected_at: nec1099Filing.rejected_at,

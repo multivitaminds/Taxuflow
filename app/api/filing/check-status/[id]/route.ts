@@ -104,35 +104,37 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json(
         {
           error: "No submission ID found",
-          message: "This filing has not been submitted to TaxBandits yet",
+          message: "This filing has not been submitted to the IRS e-file provider yet",
         },
         { status: 400 },
       )
     }
 
-    // Get TaxBandits credentials
+    // Get provider credentials
     const apiKey = process.env.TAXBANDITS_API_KEY
     const apiSecret = process.env.TAXBANDITS_API_SECRET
     const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
 
     if (!apiKey || !apiSecret) {
-      return NextResponse.json({ error: "TaxBandits credentials not configured" }, { status: 500 })
+      return NextResponse.json({ error: "E-file provider credentials not configured" }, { status: 500 })
     }
 
-    // Generate TaxBandits auth token
+    console.log("[v0] E-file provider credentials configured")
+
+    // Generate provider auth token
     const timestamp = Date.now().toString()
     const message = apiKey + timestamp
     const hmac = crypto.createHmac("sha256", apiSecret)
     hmac.update(message)
     const signature = base64UrlEncode(hmac.digest())
 
-    // Call TaxBandits API to get filing status
+    // Call provider API to get filing status
     const baseUrl = environment === "production" ? "https://api.taxbandits.com" : "https://testsandbox.taxbandits.com"
 
     const formType = tableName === "w2_filings" ? "FormW2" : "Form1099NEC"
     const statusUrl = `${baseUrl}/v1/${formType}/Status?submissionId=${filing.submission_id}`
 
-    console.log("[v0] Calling TaxBandits status API:", statusUrl)
+    console.log("[v0] Calling provider status API:", statusUrl)
 
     const response = await fetch(statusUrl, {
       method: "GET",
@@ -151,24 +153,24 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       data = await response.json()
     } else {
       const textResponse = await response.text()
-      console.error("[v0] TaxBandits returned non-JSON response:", textResponse)
+      console.error("[v0] Provider returned non-JSON response:", textResponse)
       return NextResponse.json(
         {
-          error: "TaxBandits API error",
-          message: "Received invalid response from TaxBandits",
+          error: "E-file provider API error",
+          message: "Received invalid response from e-file provider",
           details: textResponse.substring(0, 200),
         },
         { status: 502 },
       )
     }
 
-    console.log("[v0] TaxBandits status response:", JSON.stringify(data, null, 2))
+    console.log("[v0] Provider status response:", JSON.stringify(data, null, 2))
 
     if (!response.ok) {
-      console.error("[v0] TaxBandits API error:", data)
+      console.error("[v0] Provider API error:", data)
       return NextResponse.json(
         {
-          error: "Failed to check status with TaxBandits",
+          error: "Failed to check status with e-file provider",
           details: data,
         },
         { status: response.status },
@@ -178,7 +180,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     // Extract status from response
     const records = data.Records || []
     if (records.length === 0) {
-      return NextResponse.json({ error: "No records found in TaxBandits response" }, { status: 404 })
+      return NextResponse.json({ error: "No records found in provider response" }, { status: 404 })
     }
 
     const record = records[0]
@@ -187,7 +189,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     const statusTime = record.StatusTime
     const errors = record.Errors || null
 
-    console.log("[v0] Status from TaxBandits:", status, "StatusCode:", statusCode)
+    console.log("[v0] Status from provider:", status, "StatusCode:", statusCode)
 
     // Update the filing in the database
     const adminSupabase = createAdminClient()
