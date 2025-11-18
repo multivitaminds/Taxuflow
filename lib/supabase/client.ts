@@ -1,4 +1,4 @@
-import { createBrowserClient } from "@supabase/ssr"
+import { createBrowserClient as createBrowserClientOriginal } from "@supabase/ssr"
 
 export function createClient() {
   // Don't create browser client on server
@@ -15,7 +15,7 @@ export function createClient() {
     return null as any
   }
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey)
+  return createBrowserClientOriginal(supabaseUrl, supabaseAnonKey)
 }
 
 export function getSupabaseBrowserClient() {
@@ -28,3 +28,5 @@ export function isSupabaseConfigured() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   )
 }
+
+export const createBrowserClient = createClient
