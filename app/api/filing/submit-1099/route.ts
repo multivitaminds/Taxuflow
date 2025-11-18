@@ -69,10 +69,10 @@ export async function POST(request: NextRequest) {
           recipient_last_name: contractor.lastName,
           recipient_ssn_encrypted: contractor.ssn ? encrypt(contractor.ssn) : null,
           recipient_ein_encrypted: contractor.ein ? encrypt(contractor.ein) : null,
-          recipient_address: contractor.address.street,
-          recipient_city: contractor.address.city,
-          recipient_state: contractor.address.state,
-          recipient_zip: contractor.address.zipCode,
+          recipient_address: contractor.address, // Fixed: was contractor.address.street
+          recipient_city: contractor.address.city, // Fixed: was nested
+          recipient_state: contractor.address.state, // Fixed: was nested
+          recipient_zip: contractor.address.zipCode, // Fixed: was nested, also changed from zip to zipCode
           recipient_email: contractor.email || null,
           nonemployee_compensation: contractor.compensation,
           federal_tax_withheld: contractor.federalTaxWithheld || 0,

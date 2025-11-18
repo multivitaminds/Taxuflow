@@ -344,9 +344,9 @@ Return ONLY valid JSON, no markdown or explanation.`
 
     let cleanedText = text.trim()
 
-    if (cleanedText.startsWith("```")) {
-      cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
-      cleanedText = cleanedText.replace(/\n?```$/, "")
+    if (cleanedText.startsWith("\`\`\`")) {
+      cleanedText = cleanedText.replace(/^\`\`\`(?:json)?\n?/, "")
+      cleanedText = cleanedText.replace(/\n?\`\`\`$/, "")
       cleanedText = cleanedText.trim()
     }
 
@@ -731,17 +731,25 @@ async function calculateTaxes(userId: string, w2Data: any, supabase: any) {
 
   const taxCalc = {
     user_id: userId,
+    tax_year: 2024,
     total_income: wages,
     adjusted_gross_income: wages,
     taxable_income: taxableIncome,
+    standard_deduction: standardDeduction,
+    itemized_deductions: 0,
+    total_deductions: standardDeduction,
+    total_credits: 0,
     federal_tax_liability: federalTax,
     state_tax_liability: stateTax,
+    tax_owed: totalTaxLiability,
     total_tax_withheld: totalWithheld,
+    federal_withholding: federalWithheld,
+    state_withholding: stateWithheld,
     estimated_refund: estimatedRefund > 0 ? estimatedRefund : 0,
     amount_owed: estimatedRefund < 0 ? Math.abs(estimatedRefund) : 0,
     confidence_level: "High",
     confidence_percentage: 96,
-    tax_year: 2024,
+    calculated_by: "Leo",
   }
 
   const { data } = await supabase.from("tax_calculations").upsert(taxCalc, { onConflict: "user_id" }).select().single()

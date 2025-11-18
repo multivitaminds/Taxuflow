@@ -2,18 +2,14 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Shield, Eye, EyeOff, ArrowRight } from "lucide-react"
+import { Shield, Eye, EyeOff, ArrowRight } from 'lucide-react'
 
-export default function AdminLoginClient() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirect = searchParams.get("redirect") || "/admin"
-
+function AdminLoginForm({ redirect }: { redirect: string }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -38,7 +34,6 @@ export default function AdminLoginClient() {
       if (contentType && contentType.includes("application/json")) {
         data = await response.json()
       } else {
-        // If response is not JSON, treat it as a server error
         const text = await response.text()
         console.error("[v0] Non-JSON response:", text)
         setError("Server configuration error. Please ensure database scripts are run.")
@@ -52,10 +47,7 @@ export default function AdminLoginClient() {
         return
       }
 
-      // Store admin session in localStorage
       localStorage.setItem("admin_session", JSON.stringify(data.admin))
-
-      // Redirect to admin dashboard
       window.location.href = redirect
     } catch (err) {
       console.error("[v0] Admin login error:", err)
@@ -163,4 +155,13 @@ export default function AdminLoginClient() {
       </div>
     </div>
   )
+}
+
+export default function AdminLoginClient() {
+  // This will be called on the client only after Suspense resolves
+  const redirect = typeof window !== 'undefined' 
+    ? new URLSearchParams(window.location.search).get("redirect") || "/admin"
+    : "/admin"
+
+  return <AdminLoginForm redirect={redirect} />
 }

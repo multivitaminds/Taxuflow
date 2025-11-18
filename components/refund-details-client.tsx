@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { ArrowLeft, TrendingUp, DollarSign, PieChart, Calendar, Download, Info } from "lucide-react"
+import { ArrowLeft, TrendingUp, DollarSign, PieChart, Calendar, Download, Info } from 'lucide-react'
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 
@@ -26,7 +26,8 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
   useEffect(() => {
     const fetchRefundData = async () => {
       console.log("[v0] Fetching refund data for user", user.id)
-      const { data, error } = await supabase
+      
+      const { data: existingCalc, error: calcError } = await supabase
         .from("tax_calculations")
         .select("*")
         .eq("user_id", user.id)
@@ -34,10 +35,95 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
         .limit(1)
         .maybeSingle()
 
-      console.log("[v0] Refund data fetched", { hasData: !!data, error })
-      if (data) {
-        setTaxCalc(data)
+      console.log("[v0] Existing tax calculation", { hasData: !!existingCalc, error: calcError })
+      
+      if (existingCalc) {
+        setTaxCalc(existingCalc)
+        setLoading(false)
+        return
       }
+
+      console.log("[v0] No tax calculation found, fetching W-2 data to calculate")
+      const { data: w2Data, error: w2Error } = await supabase
+        .from("w2_forms")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (w2Error || !w2Data) {
+        console.log("[v0] No W-2 data found", w2Error)
+        setLoading(false)
+        return
+      }
+
+      console.log("[v0] W-2 data found, calculating refund", { wages: w2Data.wages, withheld: w2Data.federal_tax_withheld })
+      
+      const wages = w2Data.wages || 0
+      const federalWithheld = w2Data.federal_tax_withheld || 0
+      const standardDeduction = 14600 // 2024 single filer standard deduction
+      const taxableIncome = Math.max(0, wages - standardDeduction)
+      
+      // Simple federal tax calculation (2024 tax brackets for single filer)
+      let federalTax = 0
+      if (taxableIncome <= 11600) {
+        federalTax = taxableIncome * 0.10
+      } else if (taxableIncome <= 47150) {
+        federalTax = 1160 + (taxableIncome - 11600) * 0.12
+      } else if (taxableIncome <= 100525) {
+        federalTax = 5426 + (taxableIncome - 47150) * 0.22
+      } else if (taxableIncome <= 191950) {
+        federalTax = 17168.50 + (taxableIncome - 100525) * 0.24
+      } else if (taxableIncome <= 243725) {
+        federalTax = 39110.50 + (taxableIncome - 191950) * 0.32
+      } else if (taxableIncome <= 609350) {
+        federalTax = 55678.50 + (taxableIncome - 243725) * 0.35
+      } else {
+        federalTax = 183647.25 + (taxableIncome - 609350) * 0.37
+      }
+      
+      const estimatedRefund = Math.round(federalWithheld - federalTax)
+      const confidencePercentage = 85 // Default confidence
+      
+      console.log("[v0] Calculated refund", {
+        wages,
+        standardDeduction,
+        taxableIncome,
+        federalTax,
+        federalWithheld,
+        estimatedRefund
+      })
+      
+      const calculatedTaxData = {
+        user_id: user.id,
+        estimated_refund: estimatedRefund,
+        total_income: wages,
+        total_deductions: standardDeduction,
+        taxable_income: taxableIncome,
+        federal_tax_liability: Math.round(federalTax),
+        state_tax_liability: 0,
+        total_tax_withheld: federalWithheld,
+        federal_withholding: federalWithheld,
+        tax_owed: Math.round(federalTax),
+        total_credits: 0,
+        confidence_percentage: confidencePercentage,
+        audit_risk_score: "Low",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { error: insertError } = await supabase
+        .from("tax_calculations")
+        .insert(calculatedTaxData)
+      
+      if (insertError) {
+        console.error("[v0] Error storing tax calculation", insertError)
+      } else {
+        console.log("[v0] Tax calculation stored successfully")
+      }
+      
+      setTaxCalc(calculatedTaxData)
       setLoading(false)
     }
 
@@ -60,11 +146,11 @@ export function RefundDetailsClient({ user, profile }: RefundDetailsClientProps)
 
   const estimatedRefund = taxCalc?.estimated_refund || 0
   const totalIncome = taxCalc?.total_income || 0
-  const totalDeductions = taxCalc?.total_deductions || 0
+  const totalDeductions = taxCalc?.total_deductions || taxCalc?.standard_deduction || 0
   const totalCredits = taxCalc?.total_credits || 0
-  const taxableIncome = totalIncome - totalDeductions
-  const taxOwed = taxCalc?.tax_owed || 0
-  const withheld = taxCalc?.federal_withholding || 0
+  const taxableIncome = taxCalc?.taxable_income || Math.max(0, totalIncome - totalDeductions)
+  const taxOwed = taxCalc?.tax_owed || taxCalc?.federal_tax_liability + taxCalc?.state_tax_liability || 0
+  const withheld = taxCalc?.federal_withholding || taxCalc?.total_tax_withheld || 0
 
   return (
     <div className="min-h-screen bg-background pt-20">
