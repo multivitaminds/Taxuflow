@@ -1,9 +1,13 @@
 import { redirect } from 'next/navigation'
 import { cookies } from "next/headers"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { FilingDashboardClient } from "@/components/filing-dashboard-client"
 
+export const dynamic = 'force-dynamic'
+
 export default async function FilingDashboardPage() {
+  console.log("[v0] Filing page: Starting to load")
+  
   const cookieStore = await cookies()
   const isDemoMode = cookieStore.get("demo_mode")?.value === "true"
   
@@ -27,7 +31,7 @@ export default async function FilingDashboardPage() {
         accepted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         rejected_at: null,
         rejection_reasons: null,
-        provider_name: "IRS E-File", // Removed TaxBandits branding
+        provider_name: "IRS E-File",
         created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
       },
@@ -43,7 +47,7 @@ export default async function FilingDashboardPage() {
         accepted_at: null,
         rejected_at: null,
         rejection_reasons: null,
-        provider_name: "IRS E-File", // Removed TaxBandits branding
+        provider_name: "IRS E-File",
         created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       },
@@ -52,48 +56,77 @@ export default async function FilingDashboardPage() {
     return <FilingDashboardClient user={demoUser as any} filings={demoFilings} />
   }
 
-  const supabase = await createServerClient()
+  let supabase
+  try {
+    supabase = await createClient()
+  } catch (error) {
+    console.error("[v0] Filing page: Error creating Supabase client:", error)
+    redirect("/login?redirect=/dashboard/filing")
+  }
 
   if (!supabase) {
     console.log("[v0] Filing page: No Supabase client, redirecting to login")
     redirect("/login?redirect=/dashboard/filing")
   }
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser()
+  let user
+  try {
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-  if (authError || !user) {
-    console.log("[v0] Filing page: No authenticated user, redirecting to login")
+    if (authError || !authUser) {
+      console.log("[v0] Filing page: No authenticated user, redirecting to login", authError)
+      redirect("/login?redirect=/dashboard/filing")
+    }
+    
+    user = authUser
+  } catch (error) {
+    console.error("[v0] Filing page: Error getting user:", error)
     redirect("/login?redirect=/dashboard/filing")
   }
 
-  const { data: w2Filings, error: w2Error } = await supabase
-    .from("w2_filings")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+  let w2Filings = []
+  let nec1099Filings = []
+  
+  try {
+    const { data: w2Data, error: w2Error } = await supabase
+      .from("w2_filings")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
 
-  const { data: nec1099Filings, error: necError } = await supabase
-    .from("nec_1099_filings")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-
-  if (w2Error) {
-    console.error("[v0] Error fetching W-2 filings:", w2Error)
+    if (w2Error) {
+      console.error("[v0] Error fetching W-2 filings:", w2Error)
+    } else {
+      w2Filings = w2Data || []
+    }
+  } catch (error) {
+    console.error("[v0] Exception fetching W-2 filings:", error)
   }
 
-  if (necError) {
-    console.error("[v0] Error fetching 1099-NEC filings:", necError)
+  try {
+    const { data: necData, error: necError } = await supabase
+      .from("nec_1099_filings")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+
+    if (necError) {
+      console.error("[v0] Error fetching 1099-NEC filings:", necError)
+    } else {
+      nec1099Filings = necData || []
+    }
+  } catch (error) {
+    console.error("[v0] Exception fetching 1099-NEC filings:", error)
   }
 
   console.log(
-    `[v0] Fetched ${w2Filings?.length || 0} W-2 filings and ${nec1099Filings?.length || 0} 1099-NEC filings for user ${user.id}`,
+    `[v0] Fetched ${w2Filings.length} W-2 filings and ${nec1099Filings.length} 1099-NEC filings for user ${user.id}`,
   )
 
-  const transformedW2Filings = (w2Filings || []).map((filing) => {
+  const transformedW2Filings = w2Filings.map((filing) => {
     // Use the refund_amount from database if it exists, otherwise calculate it
     let refundAmount = filing.refund_amount || null
 
@@ -125,13 +158,13 @@ export default async function FilingDashboardPage() {
       accepted_at: filing.accepted_at,
       rejected_at: filing.rejected_at,
       rejection_reasons: filing.rejection_reasons,
-      provider_name: "IRS E-File", // Removed TaxBandits branding
+      provider_name: "IRS E-File",
       created_at: filing.created_at,
       updated_at: filing.updated_at,
     }
   })
 
-  const transformedNecFilings = (nec1099Filings || []).map((filing) => ({
+  const transformedNecFilings = nec1099Filings.map((filing) => ({
     id: filing.id,
     tax_year: filing.tax_year,
     form_type: "1099-NEC" as const,
@@ -144,7 +177,7 @@ export default async function FilingDashboardPage() {
     accepted_at: filing.accepted_at,
     rejected_at: filing.rejected_at,
     rejection_reasons: filing.rejection_reasons,
-    provider_name: "IRS E-File", // Removed TaxBandits branding
+    provider_name: "IRS E-File",
     created_at: filing.created_at,
     updated_at: filing.updated_at,
   }))
@@ -153,5 +186,7 @@ export default async function FilingDashboardPage() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   )
 
+  console.log(`[v0] Filing page: Rendering with ${allFilings.length} total filings`)
+  
   return <FilingDashboardClient user={user} filings={allFilings} />
 }
