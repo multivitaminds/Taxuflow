@@ -33,8 +33,10 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
       case "accepted":
+      case "success":
         return <CheckCircle2 className="h-5 w-5 text-green-500" />
       case "rejected":
+      case "failed":
         return <XCircle className="h-5 w-5 text-red-500" />
       default:
         return <Clock className="h-5 w-5 text-yellow-500" />
@@ -42,10 +44,13 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
   }
 
   const getStatusColor = (status: string) => {
-    switch (status?.toLowerCase()) {
+    const normalizedStatus = status?.toLowerCase()
+    switch (normalizedStatus) {
       case "accepted":
+      case "success":
         return "bg-green-500/10 text-green-500 border-green-500/20"
       case "rejected":
+      case "failed":
         return "bg-red-500/10 text-red-500 border-red-500/20"
       default:
         return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
@@ -146,7 +151,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
                 {checkingStatus ? "Checking..." : "Check Status"}
               </Button>
 
-              {filing.irs_status === "accepted" && (
+              {(filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") && (
                 <Button
                   onClick={handleDownload}
                   disabled={downloading}
@@ -161,7 +166,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
         </div>
 
         {/* Verification Info Card */}
-        {filing.irs_status === "pending" && (
+        {(filing.irs_status?.toLowerCase() === "pending" || filing.irs_status?.toLowerCase() === "processing") && (
           <Card className="p-4 mb-6 bg-blue-50/50 backdrop-blur-sm border-blue-200/50">
             <div className="flex items-start gap-3">
               <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
@@ -227,7 +232,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
                   <span className="font-medium text-red-900">{new Date(filing.rejected_at).toLocaleString()}</span>
                 </div>
               )}
-              {filing.irs_status === "accepted" && (
+              {(filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") && filing.accepted_at && filing.filed_at && (
                 <div className="mt-3 pt-3 border-t border-blue-200">
                   <p className="text-xs text-blue-600">
                     Processing time:{" "}
@@ -268,7 +273,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
             </div>
           </div>
 
-          {filing.refund_amount && formType === "W-2" && (
+          {filing.refund_amount && formType === "W-2" && (filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") && (
             <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-700 font-medium">Expected Refund</p>
               <p className="text-2xl font-bold text-green-600">${filing.refund_amount.toLocaleString()}</p>

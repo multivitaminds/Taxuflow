@@ -191,16 +191,19 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     console.log("[v0] Status from provider:", status, "StatusCode:", statusCode)
 
+    const normalizedStatus = status.toLowerCase()
+    console.log("[v0] Normalized status:", normalizedStatus)
+
     // Update the filing in the database
     const adminSupabase = createAdminClient()
     const updateData: any = {
-      taxbandits_status: status,
-      irs_status: record.Status,
+      taxbandits_status: normalizedStatus,
+      irs_status: normalizedStatus, // Store as lowercase for consistency
       rejection_reasons: errors,
       updated_at: new Date().toISOString(),
     }
 
-    if (status === "accepted") {
+    if (normalizedStatus === "accepted" || normalizedStatus === "success") {
       updateData.accepted_at = statusTime || new Date().toISOString()
 
       // Calculate refund for W-2 filings
@@ -215,9 +218,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         updateData.refund_amount = refundAmount
         updateData.refund_calculated_at = new Date().toISOString()
       }
-    } else if (status === "rejected") {
+    } else if (normalizedStatus === "rejected" || normalizedStatus === "failed") {
       updateData.rejected_at = statusTime || new Date().toISOString()
     }
+
+    console.log("[v0] Updating filing with data:", updateData)
 
     const { error: updateError } = await adminSupabase.from(tableName).update(updateData).eq("id", filing.id)
 
@@ -226,15 +231,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: "Failed to update filing in database" }, { status: 500 })
     }
 
-    console.log("[v0] Filing status updated successfully:", status)
+    console.log("[v0] Filing status updated successfully:", normalizedStatus)
 
     return NextResponse.json({
       success: true,
-      status: status,
+      status: normalizedStatus,
       statusCode: statusCode,
       statusTime: statusTime,
       errors: errors,
-      message: `Status updated to: ${status}`,
+      message: `Status updated to: ${normalizedStatus}`,
     })
   } catch (error) {
     console.error("[v0] Error checking filing status:", error)

@@ -97,6 +97,7 @@ export async function POST(request: Request) {
     const supabase = await createClient()
     
     if (!supabase) {
+      console.error("[v0] Cannot create organization: Supabase client not available")
       return NextResponse.json(
         { error: "Database not configured" },
         { status: 503 }
@@ -108,11 +109,14 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser()
 
     if (!user) {
+      console.error("[v0] Cannot create organization: User not authenticated")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
     const { name, description } = body
+
+    console.log("[v0] Creating organization", { name, userId: user.id })
 
     if (!name || name.trim().length === 0) {
       return NextResponse.json(
@@ -121,7 +125,6 @@ export async function POST(request: Request) {
       )
     }
 
-    // Create organization in books.orgs
     const { data: org, error: orgError } = await supabase
       .from("orgs")
       .insert({
@@ -132,10 +135,18 @@ export async function POST(request: Request) {
       .single()
 
     if (orgError) {
+      console.error("[v0] Failed to create organization", { 
+        error: orgError,
+        code: orgError.code,
+        message: orgError.message,
+        details: orgError.details,
+        hint: orgError.hint
+      })
       return handleSupabaseError(orgError, "organization", "create")
     }
 
-    // Add user as owner/admin in books.org_members
+    console.log("[v0] Organization created successfully", { orgId: org.id })
+
     const { error: memberError } = await supabase
       .from("org_members")
       .insert({
@@ -145,10 +156,21 @@ export async function POST(request: Request) {
       })
 
     if (memberError) {
+      console.error("[v0] Failed to add user as org member", {
+        error: memberError,
+        code: memberError.code,
+        message: memberError.message,
+        details: memberError.details,
+        hint: memberError.hint,
+        orgId: org.id,
+        userId: user.id
+      })
       // Try to clean up the org if member creation fails
       await supabase.from("orgs").delete().eq("id", org.id)
       return handleSupabaseError(memberError, "organization member", "create")
     }
+
+    console.log("[v0] User added as org owner successfully")
 
     return NextResponse.json({
       organization: {
@@ -159,7 +181,7 @@ export async function POST(request: Request) {
       },
     })
   } catch (error) {
-    console.error("Error creating organization:", error)
+    console.error("[v0] Error creating organization:", error)
     return NextResponse.json(
       { error: "Failed to create organization" },
       { status: 500 }

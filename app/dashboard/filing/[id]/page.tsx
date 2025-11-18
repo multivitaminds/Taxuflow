@@ -36,10 +36,10 @@ export default async function FilingDetailPage({
     filing = {
       id: w2Filing.id,
       tax_year: w2Filing.tax_year,
-      filing_status: w2Filing.taxbandits_status || "pending",
-      provider_name: "IRS E-File", // Removed TaxBandits branding
+      filing_status: (w2Filing.taxbandits_status || w2Filing.irs_status || "pending").toLowerCase(),
+      provider_name: "IRS E-File",
       submission_id: w2Filing.submission_id || "",
-      irs_status: w2Filing.irs_status || "pending",
+      irs_status: (w2Filing.irs_status || w2Filing.taxbandits_status || "pending").toLowerCase(),
       state_status: null,
       rejection_reasons: w2Filing.rejection_reasons || [],
       refund_amount: w2Filing.refund_amount || null,
@@ -61,10 +61,10 @@ export default async function FilingDetailPage({
       filing = {
         id: nec1099Filing.id,
         tax_year: nec1099Filing.tax_year,
-        filing_status: nec1099Filing.taxbandits_status || "pending",
-        provider_name: "IRS E-File", // Removed TaxBandits branding
+        filing_status: (nec1099Filing.taxbandits_status || nec1099Filing.irs_status || "pending").toLowerCase(),
+        provider_name: "IRS E-File",
         submission_id: nec1099Filing.submission_id || "",
-        irs_status: nec1099Filing.irs_status || "pending",
+        irs_status: (nec1099Filing.irs_status || nec1099Filing.taxbandits_status || "pending").toLowerCase(),
         state_status: null,
         rejection_reasons: nec1099Filing.rejection_reasons || [],
         refund_amount: null,
