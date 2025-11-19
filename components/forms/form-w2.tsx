@@ -139,7 +139,6 @@ export default function FormW2({ extractedData }: FormW2Props) {
   const cleanAndParseAddress = (addressString: string) => {
     if (!addressString) return { street: "", city: "", state: "", zip: "" }
 
-    // Remove extra whitespace and normalize
     const normalized = addressString.replace(/\s+/g, " ").trim()
 
     // Extract ZIP code first (5 digits or 5+4 format)
@@ -156,7 +155,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
     // Remove state from string
     remaining = remaining.replace(/\b[A-Z]{2}\b/, "").trim()
 
-    // Split by comma to get street and city
+    // Split by comma to get parts
     const parts = remaining
       .split(",")
       .map((p) => p.trim())
@@ -165,7 +164,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
     let street = ""
     let city = ""
 
-    if (parts.length >= 2) {
+    if (parts.length >= 3) {
+      // If we have 3+ parts: "480 Cedar Lane", "Apt 2B", "Springfield"
+      // Everything except the last part is the street address (includes apt)
+      // The last part is the city
+      street = parts.slice(0, -1).join(", ")
+      city = parts[parts.length - 1]
+    } else if (parts.length === 2) {
+      // If we have 2 parts: first is street (with apt), second is city
       street = parts[0]
       city = parts[1]
     } else if (parts.length === 1) {
@@ -173,9 +179,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
       street = parts[0]
     }
 
-    // Clean up city (remove apartment numbers)
-    city = city.replace(/^(Apt|Apartment|Unit|Suite|#)\s*\d+\w*$/i, "").trim()
-    city = city.replace(/^(Apt|Apartment|Unit|Suite|#)\s*\d+\w*,?\s*/i, "").trim()
+    // Clean up city - remove any trailing commas or extra whitespace
+    city = city.replace(/[,;]/g, "").trim()
 
     console.log("[v0] Parsed address:", { input: addressString, output: { street, city, state, zip } })
 
@@ -186,10 +191,17 @@ export default function FormW2({ extractedData }: FormW2Props) {
     if (extractedData) {
       console.log("[v0] Auto-filling form with extracted data:", extractedData)
 
-      const extracted: ExtractedW2Data = extractedData
+      // Flat structure: { employer_name, employer_ein, wages, employee_name, ... }
+      // Nested structure: { employer: { name, ein }, income: { wages }, employee: { name } }
 
-      if (!extracted.employer?.name || !extracted.income?.wages) {
-        console.error("[v0] Critical data missing - need at least employer and wages")
+      // Check if we have the minimum required data in either format
+      const employerName = extractedData.employer_name || extractedData.employer?.name
+      const employerEIN = extractedData.employer_ein || extractedData.employer?.ein
+      const wages = extractedData.wages || extractedData.income?.wages
+
+      if (!employerName || wages === undefined || wages === null) {
+        console.error("[v0] Critical data missing - need at least employer name and wages")
+        console.log("[v0] Has employer name:", employerName, "Has wages:", wages)
         toast({
           title: "⚠️ Partial Extraction",
           description: "Some required data is missing. Please complete the form manually.",
@@ -198,58 +210,97 @@ export default function FormW2({ extractedData }: FormW2Props) {
         // Don't return - still populate what we have
       }
 
-      const employeeName = extracted.employee?.name || ""
+      const employeeName =
+        typeof extractedData.employee_name === 'string'
+          ? extractedData.employee_name
+          : extractedData.employee_name?.first && extractedData.employee_name?.last
+          ? `${extractedData.employee_name.first} ${extractedData.employee_name.last}`
+          : extractedData.employee?.name || ""
+
       const parsedName = parseName(employeeName)
 
-      let employeeFirstName = ""
-      let employeeMiddleInitial = ""
-      let employeeLastName = ""
+      let employeeFirstName = extractedData.employee_name?.first || ""
+      let employeeMiddleInitial = extractedData.employee_name?.middle || ""
+      let employeeLastName = extractedData.employee_name?.last || ""
 
-      if (parsedName) {
+      if (parsedName && !employeeFirstName) {
         employeeFirstName = parsedName.firstName
         employeeMiddleInitial = parsedName.middleInitial
         employeeLastName = parsedName.lastName
       }
 
-      const employerAddress = extracted.employer?.address || ""
-      const employeeAddress = extracted.employee?.address || ""
+      let employerAddr
+      let employeeAddr
 
-      const employerParsed = cleanAndParseAddress(employerAddress)
-      const employeeParsed = cleanAndParseAddress(employeeAddress)
+      if (typeof extractedData.employer_address === 'object' && extractedData.employer_address !== null) {
+        // AI already parsed it perfectly - use it directly
+        employerAddr = {
+          street: extractedData.employer_address.street || "",
+          city: extractedData.employer_address.city || "",
+          state: extractedData.employer_address.state || "",
+          zip: extractedData.employer_address.zipCode || extractedData.employer_address.zip || "",
+        }
+      } else {
+        // Fall back to string parsing
+        const employerAddress = extractedData.employer_address || extractedData.employer?.address || ""
+        employerAddr = cleanAndParseAddress(employerAddress)
+      }
 
-      console.log("[v0] Parsed addresses:", {
-        employer: employerParsed,
-        employee: employeeParsed,
+      if (typeof extractedData.employee_address === 'object' && extractedData.employee_address !== null) {
+        // AI already parsed it perfectly - use it directly
+        employeeAddr = {
+          street: extractedData.employee_address.street || "",
+          city: extractedData.employee_address.city || "",
+          state: extractedData.employee_address.state || "",
+          zip: extractedData.employee_address.zipCode || extractedData.employee_address.zip || "",
+        }
+      } else {
+        // Fall back to string parsing
+        const employeeAddress = extractedData.employee_address || extractedData.employee?.address || ""
+        employeeAddr = cleanAndParseAddress(employeeAddress)
+      }
+
+      console.log("[v0] Final addresses to populate:", {
+        employer: employerAddr,
+        employee: employeeAddr,
       })
 
       const newFormData = {
         ...formData,
-        employerName: extracted.employer?.name || "",
-        employerEIN: extracted.employer?.ein || "",
-        employerAddress: employerParsed.street,
-        employerCity: employerParsed.city,
-        employerState: employerParsed.state,
-        employerZip: employerParsed.zip,
+        employerName: employerName || "",
+        employerEIN: employerEIN || "",
+        employerAddress: employerAddr.street || "",
+        employerCity: employerAddr.city || "",
+        employerState: employerAddr.state || "",
+        employerZip: employerAddr.zip || "",
 
         employeeFirstName: employeeFirstName || "",
         employeeMiddleInitial: employeeMiddleInitial || "",
         employeeLastName: employeeLastName || "",
-        employeeSSN: extracted.employee?.ssn || "",
-        employeeAddress: employeeParsed.street,
-        employeeCity: employeeParsed.city,
-        employeeState: employeeParsed.state,
-        employeeZip: employeeParsed.zip,
+        employeeSSN: extractedData.employee_ssn || extractedData.employee?.ssn || "",
+        employeeAddress: employeeAddr.street || "",
+        employeeCity: employeeAddr.city || "",
+        employeeState: employeeAddr.state || "",
+        employeeZip: employeeAddr.zip || "",
 
-        wages: extracted.income?.wages?.toString() || "",
-        federalWithholding: extracted.income?.federalWithholding?.toString() || "",
-        socialSecurityWages: extracted.income?.socialSecurityWages?.toString() || "",
-        socialSecurityWithholding: extracted.income?.socialSecurityTax?.toString() || "",
-        medicareWages: extracted.income?.medicareWages?.toString() || "",
-        medicareWithholding: extracted.income?.medicareTax?.toString() || "",
-        stateWages: extracted.income?.stateWages?.toString() || "",
-        stateWithholding: extracted.income?.stateTax?.toString() || "",
+        wages: wages?.toString() || "",
+        federalWithholding: (extractedData.federal_tax_withheld || extractedData.federal_income_tax || extractedData.federal_withholding || extractedData.income?.federalWithholding)?.toString() || "",
+        socialSecurityWages: (extractedData.social_security_wages || extractedData.income?.socialSecurityWages)?.toString() || "",
+        socialSecurityWithholding: (extractedData.social_security_tax_withheld || extractedData.social_security_tax || extractedData.social_security_withholding || extractedData.income?.socialSecurityTax)?.toString() || "",
+        medicareWages: (extractedData.medicare_wages || extractedData.income?.medicareWages)?.toString() || "",
+        medicareWithholding: (extractedData.medicare_tax_withheld || extractedData.medicare_tax || extractedData.medicare_withholding || extractedData.income?.medicareTax)?.toString() || "",
+        socialSecurityTips: (extractedData.social_security_tips)?.toString() || "",
+        allocatedTips: (extractedData.allocated_tips)?.toString() || "",
+        dependentCareBenefits: (extractedData.dependent_care_benefits)?.toString() || "",
+        nonqualifiedPlans: (extractedData.nonqualified_plans)?.toString() || "",
+        box12Code: extractedData.box_12_code || extractedData.box12Code || "",
+        box12Amount: (extractedData.box_12_amount || extractedData.box12Amount)?.toString() || "",
+        stateWages: (extractedData.state_wages || extractedData.income?.stateWages)?.toString() || "",
+        stateWithholding: (extractedData.state_tax_withheld || extractedData.state_income_tax || extractedData.state_withholding || extractedData.income?.stateTax)?.toString() || "",
+        localWages: (extractedData.local_wages)?.toString() || "",
+        localWithholding: (extractedData.local_income_tax)?.toString() || "",
 
-        taxYear: extracted.taxYear?.toString() || new Date().getFullYear().toString(),
+        taxYear: extractedData.taxYear?.toString() || new Date().getFullYear().toString(),
       }
 
       setFormData(newFormData)
@@ -575,7 +626,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
 
       if (result.success) {
         console.log("[v0] ✅ W-2 SUBMITTED SUCCESSFULLY!")
-        
+
         setFilingProgress(4)
 
         toast({
@@ -592,7 +643,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
       } else {
         setFilingProgress(0)
         setShowProgressDialog(false)
-        
+
         toast({
           title: "IRS Submission Failed",
           description: result.error || "Could not submit to the IRS.",
@@ -601,10 +652,10 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
     } catch (error: any) {
       console.error("[v0] SUBMISSION ERROR:", error.message)
-      
+
       setFilingProgress(0)
       setShowProgressDialog(false)
-      
+
       toast({
         title: "Submission Error",
         description: error.message || "An unexpected error occurred.",

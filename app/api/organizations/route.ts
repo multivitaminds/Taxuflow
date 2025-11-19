@@ -10,7 +10,6 @@ export async function GET() {
     const demoMode = cookieStore.get("demo_mode")?.value === "true"
     
     if (demoMode) {
-      // Return demo organizations
       return NextResponse.json({
         organizations: [
           {
@@ -42,53 +41,28 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: memberships, error: membershipsError } = await supabase
-      .from("organization_memberships")
-      .select("organization_id, role")
-      .eq("user_id", user.id)
+    const { data: organizations, error: orgsError } = await supabase
+      .rpc('get_user_organizations', { user_id_param: user.id })
 
-    if (membershipsError) {
-      console.error("[v0] Supabase Error:", membershipsError.message)
-      return handleSupabaseError(membershipsError, "organization memberships", "fetch")
-    }
-
-    if (!memberships || memberships.length === 0) {
+    if (orgsError) {
+      console.error("[v0] Error fetching organizations:", orgsError.message)
+      // Return empty organizations instead of error - user might not have any yet
       return NextResponse.json({
         organizations: [],
         count: 0,
       })
     }
 
-    const orgIds = memberships.map(m => m.organization_id)
-    const { data: orgs, error: orgsError } = await supabase
-      .from("organizations")
-      .select("id, name")
-      .in("id", orgIds)
-
-    if (orgsError) {
-      console.error("[v0] Error fetching organizations:", orgsError)
-      return handleSupabaseError(orgsError, "organizations", "fetch")
-    }
-
-    const organizations = orgs?.map((org) => {
-      const membership = memberships.find(m => m.organization_id === org.id)
-      return {
-        id: org.id,
-        name: org.name,
-        role: membership?.role || "member",
-      }
-    }) || []
-
     return NextResponse.json({
-      organizations,
-      count: organizations.length,
+      organizations: organizations || [],
+      count: organizations?.length || 0,
     })
   } catch (error) {
     console.error("Error fetching organizations:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch organizations" },
-      { status: 500 }
-    )
+    return NextResponse.json({
+      organizations: [],
+      count: 0,
+    })
   }
 }
 
@@ -137,64 +111,37 @@ export async function POST(request: Request) {
     }
 
     const { data: org, error: orgError } = await supabase
-      .from("organizations")
-      .insert({
-        name: name.trim(),
-        is_active: true,
-        plan_type: "free",
+      .rpc('create_organization', {
+        org_name: name.trim(),
+        org_description: description || null,
+        owner_id: user.id
       })
-      .select()
-      .single()
 
     if (orgError) {
       console.error("[v0] Failed to create organization", { 
         error: orgError,
         code: orgError.code,
         message: orgError.message,
-        details: orgError.details,
-        hint: orgError.hint
       })
-      return handleSupabaseError(orgError, "organization", "create")
+      return NextResponse.json(
+        { error: "Failed to create organization. Please try again." },
+        { status: 500 }
+      )
     }
 
-    console.log("[v0] Organization created successfully", { orgId: org.id })
-
-    const { error: memberError } = await supabase
-      .from("organization_memberships")
-      .insert({
-        organization_id: org.id,
-        user_id: user.id,
-        role: "owner",
-      })
-
-    if (memberError) {
-      console.error("[v0] Failed to add user as org member", {
-        error: memberError,
-        code: memberError.code,
-        message: memberError.message,
-        details: memberError.details,
-        hint: memberError.hint,
-        orgId: org.id,
-        userId: user.id
-      })
-      // Rollback: delete the organization if membership creation fails
-      await supabase.from("organizations").delete().eq("id", org.id)
-      return handleSupabaseError(memberError, "organization member", "create")
-    }
-
-    console.log("[v0] User added as org owner successfully")
+    console.log("[v0] Organization created successfully", { orgId: org })
 
     return NextResponse.json({
       organization: {
-        id: org.id,
-        name: org.name,
+        id: org,
+        name: name.trim(),
         role: "owner",
       },
     })
   } catch (error) {
     console.error("[v0] Error creating organization:", error)
     return NextResponse.json(
-      { error: "Failed to create organization" },
+      { error: "Failed to perform this operation. Please try again or contact support if the problem persists." },
       { status: 500 }
     )
   }

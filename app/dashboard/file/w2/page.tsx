@@ -18,8 +18,11 @@ export default function FileW2Page() {
   const handleExtractComplete = (data: any, metadata?: any) => {
     console.log("[v0] Extracted data received in page:", data)
 
-    if (!data || !data.employer || !data.income) {
-      console.error("[v0] Invalid extraction data structure:", data)
+    // The extraction API returns flat structure: { employer_name, employer_ein, employee_name, wages, ... }
+    // Not nested structure: { employer: { name }, income: { wages } }
+    
+    if (!data) {
+      console.error("[v0] No data received from extraction")
       toast({
         title: "⚠️ Extraction Failed",
         description: "Could not extract W-2 data. Please enter manually.",
@@ -42,16 +45,17 @@ export default function FileW2Page() {
       return
     }
 
-    // Only keep basic validation
+    // Check for minimum required data using flat structure
     const hasMinimumData =
-      data.employer?.name && data.employee?.name && (data.income?.wages !== undefined || data.income?.wages !== null)
+      data.employer_name && 
+      (data.employee_name || (data.employee_name?.first && data.employee_name?.last)) && 
+      (data.wages !== undefined && data.wages !== null)
 
     if (!hasMinimumData) {
-      console.error("[v0] Incomplete extraction data")
+      console.log("[v0] Partial extraction - some fields missing, but allowing user to complete")
       toast({
-        title: "⚠️ Incomplete Extraction",
-        description: "Some required fields could not be extracted. Please complete the missing information manually.",
-        variant: "destructive",
+        title: "⚠️ Partial Extraction",
+        description: "Some fields could not be extracted. Please review and complete the missing information.",
       })
       setExtractedData(data)
       setActiveTab("manual")
@@ -61,9 +65,13 @@ export default function FileW2Page() {
     setExtractedData(data)
     setActiveTab("manual")
 
+    const employeeName = typeof data.employee_name === 'string' 
+      ? data.employee_name 
+      : `${data.employee_name?.first || ''} ${data.employee_name?.last || ''}`.trim()
+
     toast({
       title: "✅ Extraction Successful",
-      description: `Data extracted for ${data.employee?.name || "employee"}. Review and complete any missing fields before submitting.`,
+      description: `Data extracted for ${employeeName || "employee"}. Review and submit to IRS.`,
     })
   }
 

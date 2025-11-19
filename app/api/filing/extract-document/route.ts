@@ -258,7 +258,7 @@ Rules:
 - Always include documentType, taxYear, isTemplateData, and confidence
 - For 1099-NEC: ALWAYS include "compensation" field at root level (Box 1)
 - Return ONLY the JSON object, nothing else
-- Do NOT wrap in markdown code blocks
+- DO NOT wrap in markdown code blocks
 - DO NOT add any explanatory text`
 
     console.log("[v0] Calling AI model for extraction...")
@@ -388,58 +388,112 @@ Rules:
     }
 
     if (extractedData.employer?.address || extractedData.employer_address) {
-      const addressToParse = extractedData.employer?.address || extractedData.employer_address
-      const parsed = parseFullAddress(addressToParse)
-      if (parsed) {
+      const addressData = extractedData.employer?.address || extractedData.employer_address
+      
+      // Check if address is already an object (AI pre-parsed it)
+      if (typeof addressData === 'object' && addressData !== null) {
+        // Address is already parsed, use it directly
         if (extractedData.employer) {
-          extractedData.employer.street = parsed.street || addressToParse
-          extractedData.employer.city = parsed.city
-          extractedData.employer.state = parsed.state
-          extractedData.employer.zipCode = parsed.zipCode
+          extractedData.employer.street = addressData.street || addressData.address
+          extractedData.employer.city = addressData.city
+          extractedData.employer.state = addressData.state
+          extractedData.employer.zipCode = addressData.zipCode || addressData.zip
         } else {
-          extractedData.employer_street = parsed.street || addressToParse
-          extractedData.employer_city = parsed.city
-          extractedData.employer_state = parsed.state
-          extractedData.employer_zip = parsed.zipCode
+          extractedData.employer_street = addressData.street || addressData.address
+          extractedData.employer_city = addressData.city
+          extractedData.employer_state = addressData.state
+          extractedData.employer_zip = addressData.zipCode || addressData.zip
+        }
+      } else if (typeof addressData === 'string') {
+        // Address is a string, parse it
+        const parsed = parseFullAddress(addressData)
+        if (parsed) {
+          if (extractedData.employer) {
+            extractedData.employer.street = parsed.street || addressData
+            extractedData.employer.city = parsed.city
+            extractedData.employer.state = parsed.state
+            extractedData.employer.zipCode = parsed.zipCode
+          } else {
+            extractedData.employer_street = parsed.street || addressData
+            extractedData.employer_city = parsed.city
+            extractedData.employer_state = parsed.state
+            extractedData.employer_zip = parsed.zipCode
+          }
         }
       }
     }
 
     if (extractedData.employee?.address || extractedData.employee_address) {
-      const addressToParse = extractedData.employee?.address || extractedData.employee_address
-      const parsed = parseFullAddress(addressToParse)
-      if (parsed) {
+      const addressData = extractedData.employee?.address || extractedData.employee_address
+      
+      // Check if address is already an object (AI pre-parsed it)
+      if (typeof addressData === 'object' && addressData !== null) {
+        // Address is already parsed, use it directly
         if (extractedData.employee) {
-          extractedData.employee.street = parsed.street || addressToParse
-          extractedData.employee.city = parsed.city
-          extractedData.employee.state = parsed.state
-          extractedData.employee.zipCode = parsed.zipCode
+          extractedData.employee.street = addressData.street || addressData.address
+          extractedData.employee.city = addressData.city
+          extractedData.employee.state = addressData.state
+          extractedData.employee.zipCode = addressData.zipCode || addressData.zip
         } else {
-          extractedData.employee_street = parsed.street || addressToParse
-          extractedData.employee_city = parsed.city
-          extractedData.employee_state = parsed.state
-          extractedData.employee_zip = parsed.zipCode
+          extractedData.employee_street = addressData.street || addressData.address
+          extractedData.employee_city = addressData.city
+          extractedData.employee_state = addressData.state
+          extractedData.employee_zip = addressData.zipCode || addressData.zip
+        }
+      } else if (typeof addressData === 'string') {
+        // Address is a string, parse it
+        const parsed = parseFullAddress(addressData)
+        if (parsed) {
+          if (extractedData.employee) {
+            extractedData.employee.street = parsed.street || addressData
+            extractedData.employee.city = parsed.city
+            extractedData.employee.state = parsed.state
+            extractedData.employee.zipCode = parsed.zipCode
+          } else {
+            extractedData.employee_street = parsed.street || addressData
+            extractedData.employee_city = parsed.city
+            extractedData.employee_state = parsed.state
+            extractedData.employee_zip = parsed.zipCode
+          }
         }
       }
     }
 
     if (extractedData.payer?.address) {
-      const parsed = parseFullAddress(extractedData.payer.address)
-      if (parsed) {
-        extractedData.payer.street = parsed.street || extractedData.payer.address
-        extractedData.payer.city = parsed.city
-        extractedData.payer.state = parsed.state
-        extractedData.payer.zipCode = parsed.zipCode
+      const addressData = extractedData.payer.address
+      
+      if (typeof addressData === 'object' && addressData !== null) {
+        extractedData.payer.street = addressData.street || addressData.address
+        extractedData.payer.city = addressData.city
+        extractedData.payer.state = addressData.state
+        extractedData.payer.zipCode = addressData.zipCode || addressData.zip
+      } else if (typeof addressData === 'string') {
+        const parsed = parseFullAddress(addressData)
+        if (parsed) {
+          extractedData.payer.street = parsed.street || addressData
+          extractedData.payer.city = parsed.city
+          extractedData.payer.state = parsed.state
+          extractedData.payer.zipCode = parsed.zipCode
+        }
       }
     }
 
     if (extractedData.recipient?.address) {
-      const parsed = parseFullAddress(extractedData.recipient.address)
-      if (parsed) {
-        extractedData.recipient.street = parsed.street || extractedData.recipient.address
-        extractedData.recipient.city = parsed.city
-        extractedData.recipient.state = parsed.state
-        extractedData.recipient.zipCode = parsed.zipCode
+      const addressData = extractedData.recipient.address
+      
+      if (typeof addressData === 'object' && addressData !== null) {
+        extractedData.recipient.street = addressData.street || addressData.address
+        extractedData.recipient.city = addressData.city
+        extractedData.recipient.state = addressData.state
+        extractedData.recipient.zipCode = addressData.zipCode || addressData.zip
+      } else if (typeof addressData === 'string') {
+        const parsed = parseFullAddress(addressData)
+        if (parsed) {
+          extractedData.recipient.street = parsed.street || addressData
+          extractedData.recipient.city = parsed.city
+          extractedData.recipient.state = parsed.state
+          extractedData.recipient.zipCode = parsed.zipCode
+        }
       }
     }
 

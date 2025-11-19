@@ -97,10 +97,21 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
     setCheckingStatus(true)
     try {
       const response = await fetch(`/api/filing/check-status/${filing.id}`)
-      const data = await response.json()
-
+      
+      const contentType = response.headers.get("content-type")
+      let data: any
+      
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json()
+      } else {
+        // Handle non-JSON responses (like HTML error pages)
+        const text = await response.text()
+        console.error("[v0] Non-JSON response received:", text.substring(0, 200))
+        throw new Error("Received invalid response from server. Please try again.")
+      }
+      
       if (!response.ok) {
-        throw new Error(data.error || "Failed to check status")
+        throw new Error(data.error || data.message || "Failed to check status")
       }
 
       toast({
