@@ -100,6 +100,9 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[v0] Extraction attempt ${attempt + 1}/${maxRetries + 1}`)
+      
+      console.log(`[v0] Data URL prefix: ${dataUrl.substring(0, 50)}...`)
+      console.log(`[v0] Instructions length: ${extractionInstructions.length}`)
 
       const { text } = await generateText({
         model: "openai/gpt-4o",
@@ -119,16 +122,18 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
           },
         ],
         maxTokens: 2000,
-        abortSignal: AbortSignal.timeout(10000),
+        abortSignal: AbortSignal.timeout(30000),
       })
 
       console.log("[v0] AI extraction successful")
+      console.log("[v0] Response preview:", text.substring(0, 200))
       return text
     } catch (error) {
       lastError = error as Error
       const errorMessage = error instanceof Error ? error.message : String(error)
       
       console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, errorMessage)
+      console.error(`[v0] Error type:`, error instanceof Error ? error.constructor.name : typeof error)
 
       const isNetworkError =
         errorMessage.includes("Gateway") ||
@@ -165,6 +170,7 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Extracting data from document:", fileName)
     console.log("[v0] File type:", mimeType)
+    console.log("[v0] User ID:", userId || "(none)")
 
     if (!fileData) {
       throw new Error("No file data provided")
@@ -280,13 +286,15 @@ Rules:
 - DO NOT add any explanatory text`
 
     console.log("[v0] Calling AI model for extraction...")
+    const extractionStartTime = Date.now()
 
     let extractedData: any
 
     try {
-      const text = await extractWithRetry(dataUrl, extractionInstructions)
+      const text = await extractWithRetry(dataUrl, extractionInstructions, 2)
 
-      console.log("[v0] AI extraction complete, parsing response...")
+      const extractionDuration = Date.now() - extractionStartTime
+      console.log(`[v0] AI extraction complete in ${extractionDuration}ms, parsing response...`)
       console.log("[v0] Raw AI response:", text.substring(0, 200))
 
       let cleanedText = text.trim()
@@ -310,12 +318,18 @@ Rules:
       try {
         extractedData = JSON.parse(cleanedText)
         console.log("[v0] Successfully parsed AI response")
+        console.log("[v0] Extracted document type:", extractedData.documentType)
+        console.log("[v0] Is template data:", extractedData.isTemplateData)
       } catch (parseError) {
         console.error("[v0] Failed to parse AI response as JSON")
-        throw new Error(`AI returned invalid JSON format`)
+        console.error("[v0] Failed text preview:", cleanedText.substring(0, 300))
+        throw new Error(`AI returned invalid JSON format. Please try again or use manual entry.`)
       }
     } catch (aiError) {
       const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
+      
+      console.error("[v0] AI extraction error type:", aiError instanceof Error ? aiError.constructor.name : typeof aiError)
+      console.error("[v0] AI extraction error message:", errorMessage)
 
       if (
         errorMessage.includes("Gateway") ||
@@ -339,6 +353,12 @@ Rules:
           message:
             "AI service temporarily unavailable. Demo values have been pre-filled as a starting point. Please review and update all information before submitting.",
         })
+      }
+
+      if (errorMessage.includes("invalid JSON")) {
+        throw new Error("The AI could not understand the document format. Please ensure it's a clear, legible tax document (W-2 or 1099) and try again.")
+      } else if (errorMessage.includes("timeout") || errorMessage.includes("aborted")) {
+        throw new Error("The document took too long to process. Please try with a smaller or clearer document.")
       }
 
       throw aiError
@@ -454,6 +474,7 @@ Rules:
     console.log("[v0] Real document data extracted successfully")
     console.log("[v0] Document type:", extractedData.documentType)
     console.log("[v0] Tax year:", extractedData.taxYear)
+    console.log("[v0] Extraction confidence:", extractedData.confidence)
 
     return NextResponse.json({
       success: true,
@@ -462,6 +483,9 @@ Rules:
     })
   } catch (error) {
     console.error("[v0] Document extraction error:", error)
+    if (error instanceof Error && error.stack) {
+      console.error("[v0] Error stack:", error.stack.substring(0, 500))
+    }
 
     let userMessage = "Failed to extract document data"
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -471,9 +495,11 @@ Rules:
         "Unable to connect to AI service. The system will use demo data as a starting point - please review and update all fields."
     } else if (errorMessage.includes("File too large")) {
       userMessage = errorMessage
-    } else if (errorMessage.includes("invalid JSON")) {
+    } else if (errorMessage.includes("invalid JSON") || errorMessage.includes("understand the document format")) {
+      userMessage = errorMessage
+    } else {
       userMessage =
-        "Could not understand the document format. Please ensure it's a clear, readable tax document (W-2, 1099, etc.)"
+        "Could not extract data from this document. This may happen if the document is unclear, corrupted, or not a standard tax form. Please try: (1) Uploading a clearer scan/photo, (2) Using a different file format (PDF works best), or (3) Entering the data manually."
     }
 
     return NextResponse.json(
