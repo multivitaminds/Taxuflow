@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -43,6 +42,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   const [refreshingFilingId, setRefreshingFilingId] = useState<string | null>(null)
   const { toast } = useToast()
   const router = useRouter()
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
 
   const totalFilings = filings.length
   const acceptedFilings = filings.filter((f) => f.filing_status === "accepted").length
@@ -61,7 +61,16 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    window.location.reload()
+    router.refresh()
+    
+    // Reset refreshing state after a short delay since router.refresh is async but doesn't return a promise
+    setTimeout(() => {
+      setRefreshing(false)
+      toast({
+        title: "Dashboard Refreshed",
+        description: "Latest filing statuses loaded.",
+      })
+    }, 1000)
   }
 
   const handleRefreshFiling = async (filingId: string, e: React.MouseEvent) => {
@@ -108,16 +117,22 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   }
 
   useEffect(() => {
+    // Clear any existing timer
+    if (pollingRef.current) {
+      clearTimeout(pollingRef.current)
+    }
+
     const hasPendingFilings = filings.some((f) => f.filing_status === "pending" || f.filing_status === "submitted")
 
     if (hasPendingFilings) {
       console.log("[v0] Detected pending filings, will auto-refresh status in 3 seconds...")
 
-      const timer = setTimeout(async () => {
+      pollingRef.current = setTimeout(async () => {
         console.log("[v0] Auto-refreshing pending filing statuses...")
 
         const pendingFilings = filings.filter((f) => f.filing_status === "pending" || f.filing_status === "submitted")
 
+        // Run checks in parallel
         const statusChecks = pendingFilings.map((filing) =>
           fetch(`/api/filing/check-status/${filing.id}`)
             .then((response) => {
@@ -131,13 +146,17 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
         await Promise.all(statusChecks)
 
-        console.log("[v0] Reloading page to show updated statuses...")
-        window.location.reload()
+        console.log("[v0] Refreshing view to show updated statuses...")
+        router.refresh()
       }, 3000)
-
-      return () => clearTimeout(timer)
     }
-  }, [filings])
+
+    return () => {
+      if (pollingRef.current) {
+        clearTimeout(pollingRef.current)
+      }
+    }
+  }, [filings, router])
 
   if (isLoading) {
     return (

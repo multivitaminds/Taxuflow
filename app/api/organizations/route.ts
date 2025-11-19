@@ -43,54 +43,79 @@ export async function GET() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    if (!supabaseUrl || !serviceRoleKey) {
-      console.error("[v0] Missing Supabase credentials", { 
-        hasUrl: !!supabaseUrl, 
-        hasKey: !!serviceRoleKey 
-      })
-      return NextResponse.json({
-        organizations: [],
-        count: 0,
-      })
-    }
+    let members = []
+    let orgs = []
+    let fetchError = null
 
-    const serviceRoleClient = createServiceRoleClient(
-      supabaseUrl,
-      serviceRoleKey
-    )
-
-    // Query org_members and orgs using service role to bypass RLS
-    const { data: memberData, error: memberError } = await serviceRoleClient
-      .from('org_members')
-      .select(`
-        org_id,
-        role,
-        orgs:org_id (
-          id,
-          name
+    // Strategy 1: Try Service Role (Bypasses RLS)
+    if (supabaseUrl && serviceRoleKey) {
+      try {
+        const serviceRoleClient = createServiceRoleClient(
+          supabaseUrl,
+          serviceRoleKey
         )
-      `)
-      .eq('user_id', user.id)
 
-    if (memberError) {
-      console.error("[v0] Error fetching org memberships:", memberError.message)
-      return NextResponse.json({
-        organizations: [],
-        count: 0,
-      })
+        // Step 1: Get memberships
+        const { data: memberData, error: memberErr } = await serviceRoleClient
+          .from('org_members')
+          .select('org_id, role')
+          .eq('user_id', user.id)
+
+        if (memberErr) throw memberErr
+        members = memberData || []
+
+        // Step 2: Get org details (if any members found)
+        if (members.length > 0) {
+          const orgIds = members.map((m: any) => m.org_id)
+          const { data: orgData, error: orgErr } = await serviceRoleClient
+            .from('orgs')
+            .select('id, name')
+            .in('id', orgIds)
+
+          if (orgErr) throw orgErr
+          orgs = orgData || []
+        }
+      } catch (error) {
+        console.error("[v0] Service role query failed, falling back to user context:", error)
+        fetchError = error
+      }
     }
 
-    if (!memberData || memberData.length === 0) {
-      return NextResponse.json({
-        organizations: [],
-        count: 0,
-      })
+    // Strategy 2: Fallback to Authenticated User Client (if Service Role failed or missing)
+    // We use the split query approach here too to avoid RLS recursion
+    if ((!members.length && !fetchError) || (!serviceRoleKey && !members.length)) {
+      // Step 1: Get memberships
+      const { data: memberData, error: memberErr } = await supabase
+        .from('org_members')
+        .select('org_id, role')
+        .eq('user_id', user.id)
+
+      if (memberErr) {
+        console.error("[v0] Error fetching org memberships:", memberErr.message)
+      } else {
+        members = memberData || []
+
+        // Step 2: Get org details
+        if (members.length > 0) {
+          const orgIds = members.map((m: any) => m.org_id)
+          const { data: orgData, error: orgErr } = await supabase
+            .from('orgs')
+            .select('id, name')
+            .in('id', orgIds)
+
+          if (orgErr) {
+            console.error("[v0] Error fetching org details:", orgErr.message)
+          } else {
+            orgs = orgData || []
+          }
+        }
+      }
     }
 
     // Map the data to the expected format
-    const organizations = memberData.map((member: any) => ({
+    const organizations = members.map((member: any) => ({
       id: member.org_id,
-      name: member.orgs?.name || 'Unknown Organization',
+      name: orgs.find((o: any) => o.id === member.org_id)?.name || 'Unknown Organization',
       role: member.role,
     }))
 
