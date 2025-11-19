@@ -27,21 +27,11 @@ interface ExtractedW2Data {
     name?: string
     ein?: string
     address?: string
-    street?: string
-    city?: string
-    state?: string
-    zip?: string
-    zipCode?: string
   }
   employee?: {
     name?: string
     ssn?: string
     address?: string
-    street?: string
-    city?: string
-    state?: string
-    zip?: string
-    zipCode?: string
   }
   income?: {
     wages?: number
@@ -159,16 +149,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
     // Remove ZIP from string
     let remaining = normalized.replace(/\b\d{5}(?:-\d{4})?\b/, "").trim()
 
-    // Extract state (2 letter code) - match at word boundaries
-    const stateMatch = remaining.match(/,?\s*\b([A-Z]{2})\b\s*$/)
+    // Extract state (2 letter code)
+    const stateMatch = remaining.match(/\b([A-Z]{2})\b/)
     const state = stateMatch ? stateMatch[1] : ""
 
     // Remove state from string
-    if (state) {
-      remaining = remaining.replace(/,?\s*\b[A-Z]{2}\b\s*$/, "").trim()
-    }
+    remaining = remaining.replace(/\b[A-Z]{2}\b/, "").trim()
 
-    // Split by comma to get parts
+    // Split by comma to get street and city
     const parts = remaining
       .split(",")
       .map((p) => p.trim())
@@ -178,26 +166,16 @@ export default function FormW2({ extractedData }: FormW2Props) {
     let city = ""
 
     if (parts.length >= 2) {
-      const lastPart = parts[parts.length - 1]
-      const secondToLastPart = parts.length > 2 ? parts[parts.length - 2] : null
-      
-      // Check if last part is apartment-like (starts with Apt, Unit, Suite, #, or contains just numbers/letters)
-      const aptPattern = /^(Apt|Apartment|Unit|Suite|Ste|#|No\.?)\s/i
-      const isLastPartApt = aptPattern.test(lastPart) || /^[A-Z0-9]+$/i.test(lastPart)
-      
-      if (isLastPartApt && secondToLastPart) {
-        // Last part is apartment, second-to-last is city
-        city = secondToLastPart
-        street = parts.slice(0, parts.length - 2).join(", ") + ", " + lastPart
-      } else {
-        // Standard format: street, city
-        city = lastPart
-        street = parts.slice(0, parts.length - 1).join(", ")
-      }
+      street = parts[0]
+      city = parts[1]
     } else if (parts.length === 1) {
       // If only one part, assume it's the street
       street = parts[0]
     }
+
+    // Clean up city (remove apartment numbers)
+    city = city.replace(/^(Apt|Apartment|Unit|Suite|#)\s*\d+\w*$/i, "").trim()
+    city = city.replace(/^(Apt|Apartment|Unit|Suite|#)\s*\d+\w*,?\s*/i, "").trim()
 
     console.log("[v0] Parsed address:", { input: addressString, output: { street, city, state, zip } })
 
@@ -236,33 +214,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
       const employerAddress = extracted.employer?.address || ""
       const employeeAddress = extracted.employee?.address || ""
 
-      let employerParsed
-      if (extracted.employer?.street && extracted.employer?.city) {
-        // Use AI-provided separated fields
-        employerParsed = {
-          street: extracted.employer.street,
-          city: extracted.employer.city,
-          state: extracted.employer.state || "",
-          zip: extracted.employer.zipCode || extracted.employer.zip || "",
-        }
-      } else {
-        // Parse combined address string
-        employerParsed = cleanAndParseAddress(employerAddress)
-      }
-
-      let employeeParsed
-      if (extracted.employee?.street && extracted.employee?.city) {
-        // Use AI-provided separated fields  
-        employeeParsed = {
-          street: extracted.employee.street,
-          city: extracted.employee.city,
-          state: extracted.employee.state || "",
-          zip: extracted.employee.zipCode || extracted.employee.zip || "",
-        }
-      } else {
-        // Parse combined address string
-        employeeParsed = cleanAndParseAddress(employeeAddress)
-      }
+      const employerParsed = cleanAndParseAddress(employerAddress)
+      const employeeParsed = cleanAndParseAddress(employeeAddress)
 
       console.log("[v0] Parsed addresses:", {
         employer: employerParsed,
@@ -379,33 +332,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
         const employerAddress = extracted.employer?.address || ""
         const employeeAddress = extracted.employee?.address || ""
 
-        let employerParsed
-        if (extracted.employer?.street && extracted.employer?.city) {
-          // Use AI-provided separated fields
-          employerParsed = {
-            street: extracted.employer.street,
-            city: extracted.employer.city,
-            state: extracted.employer.state || "",
-            zip: extracted.employer.zipCode || extracted.employer.zip || "",
-          }
-        } else {
-          // Parse combined address string
-          employerParsed = cleanAndParseAddress(employerAddress)
-        }
-
-        let employeeParsed
-        if (extracted.employee?.street && extracted.employee?.city) {
-          // Use AI-provided separated fields  
-          employeeParsed = {
-            street: extracted.employee.street,
-            city: extracted.employee.city,
-            state: extracted.employee.state || "",
-            zip: extracted.employee.zipCode || extracted.employee.zip || "",
-          }
-        } else {
-          // Parse combined address string
-          employeeParsed = cleanAndParseAddress(employeeAddress)
-        }
+        const employerParsed = cleanAndParseAddress(employerAddress)
+        const employeeParsed = cleanAndParseAddress(employeeAddress)
 
         console.log("[v0] Parsed addresses from upload:", {
           employer: employerParsed,

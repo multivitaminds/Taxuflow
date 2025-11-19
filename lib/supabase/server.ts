@@ -52,3 +52,40 @@ export { createServerClient }
 export async function getSupabaseServerClient() {
   return createClient()
 }
+
+export async function createServiceRoleClient() {
+  const cookieStore = await cookies()
+
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("[v0] Supabase service role config missing:", { 
+      hasUrl: !!supabaseUrl, 
+      hasServiceKey: !!supabaseServiceKey
+    })
+    return null as any
+  }
+
+  // Service role client bypasses RLS - use only for trusted operations
+  return createServerClient(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Ignore
+          }
+        },
+      },
+    }
+  )
+}

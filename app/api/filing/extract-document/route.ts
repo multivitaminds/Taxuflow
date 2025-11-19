@@ -15,8 +15,8 @@ function createDemoExtraction(fileName: string): any {
       employer: {
         name: "Demo Company Inc",
         ein: "12-3456789",
-        address: "123 Business Park Dr, Suite 100, San Francisco, CA 94105",
-        street: "123 Business Park Dr, Suite 100",
+        address: "123 Business Park Dr, San Francisco, CA 94105",
+        street: "123 Business Park Dr",
         city: "San Francisco",
         state: "CA",
         zipCode: "94105",
@@ -24,8 +24,8 @@ function createDemoExtraction(fileName: string): any {
       employee: {
         name: "John Doe",
         ssn: "XXX-XX-1234",
-        address: "456 Oak Avenue, Apt 3B, San Francisco, CA 94102",
-        street: "456 Oak Avenue, Apt 3B",
+        address: "456 Oak Avenue, San Francisco, CA 94102",
+        street: "456 Oak Avenue",
         city: "San Francisco",
         state: "CA",
         zipCode: "94102",
@@ -51,8 +51,8 @@ function createDemoExtraction(fileName: string): any {
       payer: {
         name: "Demo Client LLC",
         ein: "98-7654321",
-        address: "789 Market Street, Suite 200, San Francisco, CA 94103",
-        street: "789 Market Street, Suite 200",
+        address: "789 Market Street, San Francisco, CA 94103",
+        street: "789 Market Street",
         city: "San Francisco",
         state: "CA",
         zipCode: "94103",
@@ -61,8 +61,8 @@ function createDemoExtraction(fileName: string): any {
         name: "Jane Smith",
         ssn: "XXX-XX-5678",
         ein: "",
-        address: "321 Pine Street, Apt 4C, San Francisco, CA 94108",
-        street: "321 Pine Street, Apt 4C",
+        address: "321 Pine Street, San Francisco, CA 94108",
+        street: "321 Pine Street",
         city: "San Francisco",
         state: "CA",
         zipCode: "94108",
@@ -100,9 +100,6 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       console.log(`[v0] Extraction attempt ${attempt + 1}/${maxRetries + 1}`)
-      
-      console.log(`[v0] Data URL prefix: ${dataUrl.substring(0, 50)}...`)
-      console.log(`[v0] Instructions length: ${extractionInstructions.length}`)
 
       const { text } = await generateText({
         model: "openai/gpt-4o",
@@ -122,18 +119,16 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
           },
         ],
         maxTokens: 2000,
-        abortSignal: AbortSignal.timeout(30000),
+        abortSignal: AbortSignal.timeout(10000),
       })
 
       console.log("[v0] AI extraction successful")
-      console.log("[v0] Response preview:", text.substring(0, 200))
       return text
     } catch (error) {
       lastError = error as Error
       const errorMessage = error instanceof Error ? error.message : String(error)
       
       console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, errorMessage)
-      console.error(`[v0] Error type:`, error instanceof Error ? error.constructor.name : typeof error)
 
       const isNetworkError =
         errorMessage.includes("Gateway") ||
@@ -170,7 +165,6 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Extracting data from document:", fileName)
     console.log("[v0] File type:", mimeType)
-    console.log("[v0] User ID:", userId || "(none)")
 
     if (!fileData) {
       throw new Error("No file data provided")
@@ -199,18 +193,18 @@ CRITICAL INSTRUCTIONS:
    - EIN: Business/employer ID - format XX-XXXXXXX
    - For 1099-NEC: recipient uses SSN (individual) or EIN (if recipient is a business)
    - Look for labels like "Social Security Number" vs "Employer ID Number" or "Tax ID"
+5. For addresses: Include apartment numbers, unit numbers, suite numbers as part of the street address. DO NOT drop them.
 
-5. ADDRESS EXTRACTION RULES:
-   - Extract the COMPLETE address including apartment/unit numbers
-   - Format: "street_address" should include apartment/unit (e.g., "480 Cedar Lane, Apt 2B")
-   - Then separately provide: "city", "state", "zip_code"
-   - For W-2: Extract both employer_address (with all parts) and employee_address (with all parts)
-   - Example: If you see "480 Cedar Lane, Apt 2B, Springfield, IL 62704"
-     * street_address: "480 Cedar Lane, Apt 2B"
-     * city: "Springfield"
-     * state: "IL"
-     * zip_code: "62704"
-   - NEVER use apartment numbers or suite numbers as the city name
+CRITICAL ADDRESS EXTRACTION RULES:
+- ALWAYS preserve complete addresses including apartment/unit/suite numbers
+- Example: "480 Cedar Lane, Apt 2B, Springfield, IL 62704" should extract:
+  * street: "480 Cedar Lane, Apt 2B"
+  * city: "Springfield" (extract the ACTUAL city from the document)
+  * state: "IL"
+  * zipCode: "62704"
+- DO NOT invent city names - extract exactly what's written in the document
+- DO NOT use generic cities like "San Francisco" unless that's what the document actually says
+- Parse carefully: Street Address | City | State | ZIP
 
 Identify the document type:
 - "w2" for W-2 Wage and Tax Statement
@@ -227,8 +221,9 @@ Identify the document type:
 Extract ALL visible data from the document:
 
 For W-2:
-- employer_name, employer_ein, employer_address (complete with suite/floor), employer_city, employer_state, employer_zip_code
-- employee_name, employee_ssn, employee_address (complete with apt/unit), employee_city, employee_state, employee_zip_code  
+- employer_name, employer_ein, employer_address (FULL address including apt/suite)
+- employee_name, employee_ssn, employee_address (FULL address including apt/suite)
+- IMPORTANT: Parse addresses to extract city EXACTLY as shown in document
 - tax_year
 - wages (Box 1), federal_tax_withheld (Box 2)
 - social_security_wages (Box 3), social_security_tax_withheld (Box 4)
@@ -237,32 +232,13 @@ For W-2:
 
 For 1099-NEC:
 - payer_name, payer_ein, payer_address
-- recipient_name, recipient_tin, recipient_address
+- recipient_name, recipient_tin, recipient_address  
 - tax_year
 - compensation (Box 1) - REQUIRED, this is the nonemployee compensation amount
 - federal_tax_withheld (Box 4)
 - state_tax_withheld (Box 5)
 - state_payers_state_no (Box 6)
 - state_income (Box 7)
-
-For 1099-MISC:
-- payer_name, payer_ein, payer_address
-- recipient_name, recipient_tin, recipient_address
-- tax_year
-- rents (Box 1), royalties (Box 2), other_income (Box 3)
-- federal_tax_withheld (Box 4)
-
-For 1099-G (Government Payments):
-- payer_name, payer_ein, payer_address (often a state agency like "Department of Labor")
-- recipient_name, recipient_tin, recipient_address
-- tax_year
-- unemployment_compensation (Box 1)
-- state_local_income_tax_refunds (Box 2)
-- federal_tax_withheld (Box 4)
-- state, state_tax_withheld
-
-For receipts:
-- merchant_name, date, amount, category, items
 
 CRITICAL EXTRACTION RULES:
 - For recipient/contractor on 1099-NEC: Extract as "ssn" if it's an individual SSN, extract as "ein" if it's a business EIN
@@ -271,30 +247,28 @@ CRITICAL EXTRACTION RULES:
 - If you see a 9-digit number without clear labeling, assume SSN for individuals, EIN for businesses
 - Never mask/hide the actual numbers - extract them exactly as shown
 - If numbers are already masked (XX-XXXXXXX), note this in confidence score
+- EXTRACT THE ACTUAL CITY NAME from the document - do not substitute or guess
 
 Rules:
-- Set "isTemplateData": true if the document contains placeholder/sample values like "John Doe", "Jane Smith", "Test Company", "Sample Corp", "123-45-6789", "00-0000000", etc.
-- Set "confidence" between 0 and 1 based on how confident you are in the extraction quality
-- Extract REAL values from the document exactly as they appear
-- If you can't read a field clearly, omit it from the JSON
+- Set "isTemplateData": true if the document contains placeholder/sample values
+- Set "confidence" between 0 and 1 based on extraction quality
+- Extract REAL values exactly as they appear
+- If you can't read a field clearly, omit it
 - Be accurate with numbers - these are used for tax filing
 - Always include documentType, taxYear, isTemplateData, and confidence
-- For 1099-NEC: ALWAYS include "compensation" field at the root level (Box 1)
-- For 1099-NEC: Include "ssn" for recipient SSN and "ein" for recipient EIN (or empty string if not applicable)
+- For 1099-NEC: ALWAYS include "compensation" field at root level (Box 1)
 - Return ONLY the JSON object, nothing else
-- DO NOT wrap in markdown code blocks
+- Do NOT wrap in markdown code blocks
 - DO NOT add any explanatory text`
 
     console.log("[v0] Calling AI model for extraction...")
-    const extractionStartTime = Date.now()
 
     let extractedData: any
 
     try {
-      const text = await extractWithRetry(dataUrl, extractionInstructions, 2)
+      const text = await extractWithRetry(dataUrl, extractionInstructions)
 
-      const extractionDuration = Date.now() - extractionStartTime
-      console.log(`[v0] AI extraction complete in ${extractionDuration}ms, parsing response...`)
+      console.log("[v0] AI extraction complete, parsing response...")
       console.log("[v0] Raw AI response:", text.substring(0, 200))
 
       let cleanedText = text.trim()
@@ -318,18 +292,12 @@ Rules:
       try {
         extractedData = JSON.parse(cleanedText)
         console.log("[v0] Successfully parsed AI response")
-        console.log("[v0] Extracted document type:", extractedData.documentType)
-        console.log("[v0] Is template data:", extractedData.isTemplateData)
       } catch (parseError) {
         console.error("[v0] Failed to parse AI response as JSON")
-        console.error("[v0] Failed text preview:", cleanedText.substring(0, 300))
-        throw new Error(`AI returned invalid JSON format. Please try again or use manual entry.`)
+        throw new Error(`AI returned invalid JSON format`)
       }
     } catch (aiError) {
       const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
-      
-      console.error("[v0] AI extraction error type:", aiError instanceof Error ? aiError.constructor.name : typeof aiError)
-      console.error("[v0] AI extraction error message:", errorMessage)
 
       if (
         errorMessage.includes("Gateway") ||
@@ -355,28 +323,35 @@ Rules:
         })
       }
 
-      if (errorMessage.includes("invalid JSON")) {
-        throw new Error("The AI could not understand the document format. Please ensure it's a clear, legible tax document (W-2 or 1099) and try again.")
-      } else if (errorMessage.includes("timeout") || errorMessage.includes("aborted")) {
-        throw new Error("The document took too long to process. Please try with a smaller or clearer document.")
-      }
-
       throw aiError
     }
 
     if (extractedData.documentType === "w2") {
-      const hasRequiredW2Data =
-        extractedData.employer?.name &&
-        extractedData.employer?.ein &&
-        extractedData.employee?.name &&
-        extractedData.employee?.ssn &&
-        extractedData.income?.wages !== undefined
+      const hasEmployerData = extractedData.employer_name || extractedData.employer?.name
+      const hasEmployerEIN = extractedData.employer_ein || extractedData.employer?.ein
+      const hasEmployeeData = extractedData.employee_name || extractedData.employee?.name
+      const hasEmployeeSSN = extractedData.employee_ssn || extractedData.employee?.ssn || extractedData.employee?.ssn_encrypted
+      const hasWages = extractedData.wages !== undefined || extractedData.income?.wages !== undefined
+
+      console.log("[v0] W-2 validation:", {
+        hasEmployerData,
+        hasEmployerEIN,
+        hasEmployeeData,
+        hasEmployeeSSN,
+        hasWages,
+      })
+
+      const hasRequiredW2Data = hasEmployerData && hasEmployerEIN && hasEmployeeData && hasEmployeeSSN && hasWages
 
       if (!hasRequiredW2Data) {
-        console.error("[v0] W-2 extraction missing required fields")
-        throw new Error(
-          "Could not extract all required W-2 data. Please ensure the document is clear and all fields are visible.",
-        )
+        console.error("[v0] W-2 extraction missing required fields - attempting to use partial data")
+        
+        return NextResponse.json({
+          success: true,
+          data: extractedData,
+          mode: "ai",
+          warning: "Some W-2 fields may be incomplete. Please review and fill in missing information before submitting.",
+        })
       }
     } else if (extractedData.documentType === "1099-nec" || extractedData.documentType === "1099-misc") {
       const hasRequired1099Data =
@@ -412,28 +387,40 @@ Rules:
       }
     }
 
-    if (extractedData.employer?.address) {
-      const parsed = parseFullAddress(extractedData.employer.address)
+    if (extractedData.employer?.address || extractedData.employer_address) {
+      const addressToParse = extractedData.employer?.address || extractedData.employer_address
+      const parsed = parseFullAddress(addressToParse)
       if (parsed) {
-        extractedData.employer.street = parsed.street || extractedData.employer.address
-        extractedData.employer.city = parsed.city
-        extractedData.employer.state = parsed.state
-        extractedData.employer.zipCode = parsed.zipCode
+        if (extractedData.employer) {
+          extractedData.employer.street = parsed.street || addressToParse
+          extractedData.employer.city = parsed.city
+          extractedData.employer.state = parsed.state
+          extractedData.employer.zipCode = parsed.zipCode
+        } else {
+          extractedData.employer_street = parsed.street || addressToParse
+          extractedData.employer_city = parsed.city
+          extractedData.employer_state = parsed.state
+          extractedData.employer_zip = parsed.zipCode
+        }
       }
-    } else if (extractedData.employer?.street && extractedData.employer?.city) {
-      // No need to parse again
     }
 
-    if (extractedData.employee?.address) {
-      const parsed = parseFullAddress(extractedData.employee.address)
+    if (extractedData.employee?.address || extractedData.employee_address) {
+      const addressToParse = extractedData.employee?.address || extractedData.employee_address
+      const parsed = parseFullAddress(addressToParse)
       if (parsed) {
-        extractedData.employee.street = parsed.street || extractedData.employee.address
-        extractedData.employee.city = parsed.city
-        extractedData.employee.state = parsed.state
-        extractedData.employee.zipCode = parsed.zipCode
+        if (extractedData.employee) {
+          extractedData.employee.street = parsed.street || addressToParse
+          extractedData.employee.city = parsed.city
+          extractedData.employee.state = parsed.state
+          extractedData.employee.zipCode = parsed.zipCode
+        } else {
+          extractedData.employee_street = parsed.street || addressToParse
+          extractedData.employee_city = parsed.city
+          extractedData.employee_state = parsed.state
+          extractedData.employee_zip = parsed.zipCode
+        }
       }
-    } else if (extractedData.employee?.street && extractedData.employee?.city) {
-      // No need to parse again
     }
 
     if (extractedData.payer?.address) {
@@ -444,8 +431,6 @@ Rules:
         extractedData.payer.state = parsed.state
         extractedData.payer.zipCode = parsed.zipCode
       }
-    } else if (extractedData.payer?.street && extractedData.payer?.city) {
-      // No need to parse again
     }
 
     if (extractedData.recipient?.address) {
@@ -456,8 +441,6 @@ Rules:
         extractedData.recipient.state = parsed.state
         extractedData.recipient.zipCode = parsed.zipCode
       }
-    } else if (extractedData.recipient?.street && extractedData.recipient?.city) {
-      // No need to parse again
     }
 
     if (extractedData.isTemplateData === true) {
@@ -474,7 +457,6 @@ Rules:
     console.log("[v0] Real document data extracted successfully")
     console.log("[v0] Document type:", extractedData.documentType)
     console.log("[v0] Tax year:", extractedData.taxYear)
-    console.log("[v0] Extraction confidence:", extractedData.confidence)
 
     return NextResponse.json({
       success: true,
@@ -483,9 +465,6 @@ Rules:
     })
   } catch (error) {
     console.error("[v0] Document extraction error:", error)
-    if (error instanceof Error && error.stack) {
-      console.error("[v0] Error stack:", error.stack.substring(0, 500))
-    }
 
     let userMessage = "Failed to extract document data"
     const errorMessage = error instanceof Error ? error.message : String(error)
@@ -495,11 +474,9 @@ Rules:
         "Unable to connect to AI service. The system will use demo data as a starting point - please review and update all fields."
     } else if (errorMessage.includes("File too large")) {
       userMessage = errorMessage
-    } else if (errorMessage.includes("invalid JSON") || errorMessage.includes("understand the document format")) {
-      userMessage = errorMessage
-    } else {
+    } else if (errorMessage.includes("invalid JSON")) {
       userMessage =
-        "Could not extract data from this document. This may happen if the document is unclear, corrupted, or not a standard tax form. Please try: (1) Uploading a clearer scan/photo, (2) Using a different file format (PDF works best), or (3) Entering the data manually."
+        "Could not understand the document format. Please ensure it's a clear, readable tax document (W-2, 1099, etc.)"
     }
 
     return NextResponse.json(

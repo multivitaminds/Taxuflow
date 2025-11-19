@@ -42,31 +42,42 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get organizations from books.org_members
     const { data: memberships, error: membershipsError } = await supabase
-      .from("org_members")
-      .select(`
-        org_id,
-        role,
-        orgs:org_id (
-          id,
-          name,
-          description
-        )
-      `)
+      .from("organization_memberships")
+      .select("organization_id, role")
       .eq("user_id", user.id)
 
     if (membershipsError) {
+      console.error("[v0] Supabase Error:", membershipsError.message)
       return handleSupabaseError(membershipsError, "organization memberships", "fetch")
     }
 
-    // Transform data
-    const organizations = memberships?.map((m: any) => ({
-      id: m.org_id,
-      name: m.orgs?.name || "Unnamed Organization",
-      description: m.orgs?.description,
-      role: m.role,
-    })) || []
+    if (!memberships || memberships.length === 0) {
+      return NextResponse.json({
+        organizations: [],
+        count: 0,
+      })
+    }
+
+    const orgIds = memberships.map(m => m.organization_id)
+    const { data: orgs, error: orgsError } = await supabase
+      .from("organizations")
+      .select("id, name")
+      .in("id", orgIds)
+
+    if (orgsError) {
+      console.error("[v0] Error fetching organizations:", orgsError)
+      return handleSupabaseError(orgsError, "organizations", "fetch")
+    }
+
+    const organizations = orgs?.map((org) => {
+      const membership = memberships.find(m => m.organization_id === org.id)
+      return {
+        id: org.id,
+        name: org.name,
+        role: membership?.role || "member",
+      }
+    }) || []
 
     return NextResponse.json({
       organizations,
@@ -126,10 +137,11 @@ export async function POST(request: Request) {
     }
 
     const { data: org, error: orgError } = await supabase
-      .from("orgs")
+      .from("organizations")
       .insert({
         name: name.trim(),
-        description: description?.trim() || null,
+        is_active: true,
+        plan_type: "free",
       })
       .select()
       .single()
@@ -148,9 +160,9 @@ export async function POST(request: Request) {
     console.log("[v0] Organization created successfully", { orgId: org.id })
 
     const { error: memberError } = await supabase
-      .from("org_members")
+      .from("organization_memberships")
       .insert({
-        org_id: org.id,
+        organization_id: org.id,
         user_id: user.id,
         role: "owner",
       })
@@ -165,8 +177,8 @@ export async function POST(request: Request) {
         orgId: org.id,
         userId: user.id
       })
-      // Try to clean up the org if member creation fails
-      await supabase.from("orgs").delete().eq("id", org.id)
+      // Rollback: delete the organization if membership creation fails
+      await supabase.from("organizations").delete().eq("id", org.id)
       return handleSupabaseError(memberError, "organization member", "create")
     }
 
@@ -176,7 +188,6 @@ export async function POST(request: Request) {
       organization: {
         id: org.id,
         name: org.name,
-        description: org.description,
         role: "owner",
       },
     })
