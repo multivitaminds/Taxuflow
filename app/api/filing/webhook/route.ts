@@ -4,29 +4,10 @@ import { sendProactiveFilingUpdate } from "@/lib/ai/filing-notifications"
 import { timingSafeEqual, createHmac } from "crypto"
 
 export async function POST(req: NextRequest) {
-  // Process webhook asynchronously after responding
-  const responsePromise = NextResponse.json({ success: true, message: "Webhook received" })
-
-  // Process webhook asynchronously
-  processWebhook(req).catch((error) => {
-    console.error("[v0] Webhook processing error:", error)
-  })
-
-  return responsePromise
-}
-
-async function processWebhook(req: NextRequest) {
   try {
     console.log("[v0] === WEBHOOK REQUEST RECEIVED ===")
     console.log("[v0] URL:", req.url)
     console.log("[v0] Method:", req.method)
-
-    // Log all headers
-    const headers: Record<string, string> = {}
-    req.headers.forEach((value, key) => {
-      headers[key] = value
-      console.log(`[v0] Header ${key}:`, value.substring(0, 50) + (value.length > 50 ? "..." : ""))
-    })
 
     const signature = req.headers.get("signature") || req.headers.get("Signature")
     const timestamp = req.headers.get("timestamp") || req.headers.get("Timestamp")
@@ -39,15 +20,14 @@ async function processWebhook(req: NextRequest) {
 
     if (!signature || !timestamp) {
       console.error("[v0] ❌ Missing signature or timestamp headers")
-      return
+      return NextResponse.json({ error: "Missing authentication headers" }, { status: 401 })
     }
 
     if (!clientId || !clientSecret) {
       console.error("[v0] ❌ Missing TaxBandits credentials in environment variables")
-      return
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
     }
 
-    // Get request body
     const body = await req.text()
     console.log("[v0] Webhook payload length:", body.length)
     console.log("[v0] Webhook payload:", body.substring(0, 500) + (body.length > 500 ? "..." : ""))
@@ -55,18 +35,16 @@ async function processWebhook(req: NextRequest) {
     const message = clientId + timestamp
     const expectedSignature = createHmac("sha256", clientSecret).update(message).digest("base64")
 
-    // Convert strings to buffers for timing-safe comparison
     const expectedBuffer = Buffer.from(expectedSignature)
     const receivedBuffer = Buffer.from(signature)
 
     if (expectedBuffer.length !== receivedBuffer.length || !timingSafeEqual(expectedBuffer, receivedBuffer)) {
       console.error("[v0] Signature verification FAILED!")
-      return
+      return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
     }
 
     console.log("[v0] Signature verified successfully!")
 
-    // Parse payload
     const payload = JSON.parse(body)
     const { SubmissionId, FormType, Records } = payload
 
@@ -75,16 +53,18 @@ async function processWebhook(req: NextRequest) {
     console.log("[v0] - FormType:", FormType)
     console.log("[v0] - Records:", Records?.length || 0)
 
-    // Process records
     await processWebhookRecords(SubmissionId, FormType, Records)
 
     console.log("[v0] ✅ Webhook processed successfully")
+
+    return NextResponse.json({ success: true, message: "Webhook processed" })
   } catch (error) {
     console.error("[v0] ❌ Error processing webhook:", error)
     if (error instanceof Error) {
       console.error("[v0] Error message:", error.message)
       console.error("[v0] Error stack:", error.stack)
     }
+    return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 })
   }
 }
 

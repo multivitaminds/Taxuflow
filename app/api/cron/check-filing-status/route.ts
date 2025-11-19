@@ -8,51 +8,68 @@ function base64UrlEncode(input: Buffer): string {
 
 export async function GET(req: NextRequest) {
   try {
-    console.log("[v0] Starting automatic status polling for pending filings...")
+    // Verify this is a valid cron request (Vercel sets this header)
+    const cronSecret = req.headers.get("authorization")
+    if (cronSecret !== `Bearer ${process.env.CRON_SECRET}`) {
+      console.log("[v0] Unauthorized cron request")
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    console.log("[v0] [CRON] Starting scheduled filing status check...")
 
     const supabase = createAdminClient()
 
-    // Get TaxBandits credentials
     const apiKey = process.env.TAXBANDITS_API_KEY
     const apiSecret = process.env.TAXBANDITS_API_SECRET
     const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
 
     if (!apiKey || !apiSecret) {
+      console.error("[v0] [CRON] TaxBandits credentials not configured")
       return NextResponse.json({ error: "TaxBandits credentials not configured" }, { status: 500 })
     }
 
-    // Find all pending W-2 filings
+    // Find all pending W-2 filings (last 24 hours only)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+
     const { data: pendingW2Filings } = await supabase
       .from("w2_filings")
       .select("*")
       .in("taxbandits_status", ["pending", "submitted"])
       .not("submission_id", "is", null)
+      .gte("created_at", oneDayAgo)
       .order("submitted_at", { ascending: false })
-      .limit(50)
+      .limit(100)
 
-    // Find all pending 1099-NEC filings
+    // Find all pending 1099-NEC filings (last 24 hours only)
     const { data: pending1099Filings } = await supabase
       .from("nec_1099_filings")
       .select("*")
       .in("taxbandits_status", ["pending", "submitted"])
       .not("submission_id", "is", null)
+      .gte("created_at", oneDayAgo)
       .order("submitted_at", { ascending: false })
-      .limit(50)
+      .limit(100)
 
     const allPendingFilings = [
       ...(pendingW2Filings || []).map((f) => ({ ...f, table: "w2_filings", formType: "FormW2" })),
       ...(pending1099Filings || []).map((f) => ({ ...f, table: "nec_1099_filings", formType: "Form1099NEC" })),
     ]
 
-    console.log(`[v0] Found ${allPendingFilings.length} pending filings to check`)
+    console.log(`[v0] [CRON] Found ${allPendingFilings.length} pending filings to check`)
 
-    const results = []
+    if (allPendingFilings.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: "No pending filings to check",
+        checked: 0,
+      })
+    }
+
     const baseUrl = environment === "production" ? "https://api.taxbandits.com" : "https://testsandbox.taxbandits.com"
 
+    // Check all filings in parallel
     const statusChecks = allPendingFilings.map(async (filing) => {
       try {
-        console.log(`[v0] Checking status for ${filing.table} submission:`, filing.submission_id)
-
         const timestamp = Date.now().toString()
         const message = apiKey + timestamp
         const hmac = crypto.createHmac("sha256", apiSecret)
@@ -72,46 +89,31 @@ export async function GET(req: NextRequest) {
         })
 
         if (!response.ok) {
-          console.error(`[v0] Failed to check status for ${filing.submission_id}:`, response.status)
-          return {
-            submission_id: filing.submission_id,
-            error: `HTTP ${response.status}`,
-            updated: false,
-          }
+          console.error(`[v0] [CRON] Failed to check status for ${filing.submission_id}:`, response.status)
+          return { submission_id: filing.submission_id, updated: false }
         }
 
         const data = await response.json()
         const records = data.Records || []
 
         if (records.length === 0) {
-          console.log(`[v0] No records found for ${filing.submission_id}`)
-          return {
-            submission_id: filing.submission_id,
-            status: "pending",
-            updated: false,
-            reason: "No records found",
-          }
+          return { submission_id: filing.submission_id, updated: false }
         }
 
         const record = records[0]
         const status = record.Status?.toLowerCase() || "pending"
-        const statusTime = record.StatusTime
-        const errors = record.Errors || null
-
-        console.log(`[v0] Status from TaxBandits for ${filing.submission_id}:`, status)
 
         if (status !== filing.taxbandits_status && status !== "pending") {
           const updateData: any = {
             taxbandits_status: status,
             irs_status: record.Status,
-            rejection_reasons: errors,
+            rejection_reasons: record.Errors || null,
             updated_at: new Date().toISOString(),
           }
 
           if (status === "accepted") {
-            updateData.accepted_at = statusTime || new Date().toISOString()
+            updateData.accepted_at = record.StatusTime || new Date().toISOString()
 
-            // Calculate refund for W-2 filings
             if (filing.table === "w2_filings" && !filing.refund_amount) {
               const wages = filing.wages || 0
               const federalWithheld = filing.federal_tax_withheld || 0
@@ -125,59 +127,39 @@ export async function GET(req: NextRequest) {
               updateData.refund_calculated_at = new Date().toISOString()
             }
           } else if (status === "rejected") {
-            updateData.rejected_at = statusTime || new Date().toISOString()
+            updateData.rejected_at = record.StatusTime || new Date().toISOString()
           }
 
-          const { error: updateError } = await supabase.from(filing.table).update(updateData).eq("id", filing.id)
+          await supabase.from(filing.table).update(updateData).eq("id", filing.id)
 
-          if (updateError) {
-            console.error(`[v0] Failed to update ${filing.submission_id}:`, updateError)
-            return {
-              submission_id: filing.submission_id,
-              error: updateError.message,
-              updated: false,
-            }
-          }
-
-          console.log(`[v0] Updated ${filing.submission_id} to status: ${status}`)
-          return {
-            submission_id: filing.submission_id,
-            old_status: filing.taxbandits_status,
-            new_status: status,
-            updated: true,
-          }
+          console.log(`[v0] [CRON] ✅ Updated ${filing.submission_id} to ${status}`)
+          return { submission_id: filing.submission_id, new_status: status, updated: true }
         }
 
-        return {
-          submission_id: filing.submission_id,
-          status: status,
-          updated: false,
-          reason: "No change in status",
-        }
+        return { submission_id: filing.submission_id, updated: false }
       } catch (error) {
-        console.error(`[v0] Error checking filing ${filing.submission_id}:`, error)
-        return {
-          submission_id: filing.submission_id,
-          error: error instanceof Error ? error.message : "Unknown error",
-          updated: false,
-        }
+        console.error(`[v0] [CRON] Error checking ${filing.submission_id}:`, error)
+        return { submission_id: filing.submission_id, updated: false, error: String(error) }
       }
     })
 
-    const checkResults = await Promise.all(statusChecks)
-    results.push(...checkResults)
+    const results = await Promise.all(statusChecks)
+    const updatedCount = results.filter((r) => r.updated).length
+
+    console.log(`[v0] [CRON] ✅ Checked ${allPendingFilings.length} filings, updated ${updatedCount}`)
 
     return NextResponse.json({
       success: true,
-      message: `Checked ${allPendingFilings.length} pending filings in parallel`,
-      results,
-      processing_time_ms: Date.now() - Number.parseInt(req.headers.get("x-start-time") || Date.now().toString()),
+      message: `Checked ${allPendingFilings.length} pending filings`,
+      checked: allPendingFilings.length,
+      updated: updatedCount,
+      results: results.filter((r) => r.updated),
     })
   } catch (error) {
-    console.error("[v0] Error in status polling:", error)
+    console.error("[v0] [CRON] Error in scheduled status check:", error)
     return NextResponse.json(
       {
-        error: "Failed to poll status",
+        error: "Failed to check filing status",
         message: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

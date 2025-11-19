@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import { parseFullAddress } from "@/lib/address-parser"
+import { getExtractionModel, isComparisonModeEnabled, getComparisonModels, getExtractionModelWithFallback } from "@/lib/ai-config"
 
 function createDemoExtraction(fileName: string): any {
   const isW2 = fileName.toLowerCase().includes("w2") || fileName.toLowerCase().includes("w-2")
@@ -96,67 +97,140 @@ function createDemoExtraction(fileName: string): any {
 
 async function extractWithRetry(dataUrl: string, extractionInstructions: string, maxRetries = 1) {
   let lastError: Error | null = null
+  
+  const modelConfigs = getExtractionModelWithFallback()
+  
+  for (const modelConfig of modelConfigs) {
+    console.log(`[v0] Attempting extraction with: ${modelConfig.name} (${modelConfig.provider})`)
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[v0] Extraction attempt ${attempt + 1}/${maxRetries + 1}`)
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`[v0] Extraction attempt ${attempt + 1}/${maxRetries + 1}`)
+        const { text } = await generateText({
+          model: modelConfig.modelId,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  image: dataUrl,
+                },
+                {
+                  type: "text",
+                  text: extractionInstructions,
+                },
+              ],
+            },
+          ],
+          maxTokens: modelConfig.maxTokens,
+          abortSignal: AbortSignal.timeout(modelConfig.timeoutMs),
+        })
 
-      const { text } = await generateText({
-        model: "openai/gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                image: dataUrl,
-              },
-              {
-                type: "text",
-                text: extractionInstructions,
-              },
-            ],
-          },
-        ],
-        maxTokens: 2000,
-        abortSignal: AbortSignal.timeout(10000),
-      })
+        console.log(`[v0] AI extraction successful with ${modelConfig.name}`)
+        return text
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        
+        console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, errorMessage)
+        
+        const isProviderRestricted = 
+          errorMessage.includes("team restrictions") ||
+          errorMessage.includes("Unable to route to any provider")
 
-      console.log("[v0] AI extraction successful")
-      return text
-    } catch (error) {
-      lastError = error as Error
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      
-      console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, errorMessage)
+        if (isProviderRestricted) {
+          console.log(`[v0] Provider ${modelConfig.provider} restricted - trying next model if available`)
+          lastError = error instanceof Error ? error : new Error(errorMessage)
+          break // Skip to next model
+        }
 
-      const isNetworkError =
-        errorMessage.includes("Gateway") ||
-        errorMessage.includes("timeout") ||
-        errorMessage.includes("ECONNRESET") ||
-        errorMessage.includes("network") ||
-        errorMessage.includes("fetch failed") ||
-        errorMessage.includes("Failed to fetch") ||
-        errorMessage.includes("NetworkError") ||
-        errorMessage.includes("ENOTFOUND") ||
-        errorMessage.includes("ETIMEDOUT")
+        const isNetworkError =
+          errorMessage.includes("Gateway") ||
+          errorMessage.includes("timeout") ||
+          errorMessage.includes("ECONNRESET") ||
+          errorMessage.includes("network") ||
+          errorMessage.includes("fetch failed") ||
+          errorMessage.includes("Failed to fetch") ||
+          errorMessage.includes("NetworkError") ||
+          errorMessage.includes("ENOTFOUND") ||
+          errorMessage.includes("ETIMEDOUT")
 
-      if (isNetworkError) {
-        console.log("[v0] Network/Gateway error detected, will use demo mode fallback")
-        throw error
+        if (isNetworkError) {
+          console.log("[v0] Network/Gateway error detected, will use demo mode fallback")
+          throw error
+        }
+
+        if (attempt === maxRetries) {
+          lastError = error instanceof Error ? error : new Error(errorMessage)
+          break
+        }
+
+        const waitTime = Math.min(500 * Math.pow(2, attempt), 2000)
+        console.log(`[v0] Waiting ${waitTime}ms before retry...`)
+        await new Promise((resolve) => setTimeout(resolve, waitTime))
       }
-
-      if (attempt === maxRetries) {
-        throw error
-      }
-
-      const waitTime = Math.min(500 * Math.pow(2, attempt), 2000)
-      console.log(`[v0] Waiting ${waitTime}ms before retry...`)
-      await new Promise((resolve) => setTimeout(resolve, waitTime))
     }
   }
 
-  throw lastError || new Error("Extraction failed after retries")
+  throw lastError || new Error("Extraction failed after trying all available models")
+}
+
+async function extractWithComparison(dataUrl: string, extractionInstructions: string) {
+  const [model1, model2] = getComparisonModels()
+  
+  console.log(`[v0] A/B Testing: Compare ${model1.name} vs ${model2.name}`)
+  
+  const results = await Promise.allSettled([
+    generateText({
+      model: model1.modelId,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", image: dataUrl },
+            { type: "text", text: extractionInstructions },
+          ],
+        },
+      ],
+      maxTokens: model1.maxTokens,
+      abortSignal: AbortSignal.timeout(model1.timeoutMs),
+    }),
+    generateText({
+      model: model2.modelId,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "image", image: dataUrl },
+            { type: "text", text: extractionInstructions },
+          ],
+        },
+      ],
+      maxTokens: model2.maxTokens,
+      abortSignal: AbortSignal.timeout(model2.timeoutMs),
+    }),
+  ])
+  
+  // Log comparison results
+  console.log(`[v0] ${model1.name} result:`, results[0].status)
+  console.log(`[v0] ${model2.name} result:`, results[1].status)
+  
+  if (results[0].status === "fulfilled" && results[1].status === "fulfilled") {
+    console.log(`[v0] Both models succeeded - using ${model1.name} (primary)`)
+    console.log(`[v0] ${model1.name} extracted:`, results[0].value.text.substring(0, 200))
+    console.log(`[v0] ${model2.name} extracted:`, results[1].value.text.substring(0, 200))
+    // Return primary model result, but log both for comparison
+    return results[0].value.text
+  } else if (results[0].status === "fulfilled") {
+    console.log(`[v0] Only ${model1.name} succeeded`)
+    return results[0].value.text
+  } else if (results[1].status === "fulfilled") {
+    console.log(`[v0] Only ${model2.name} succeeded, using fallback`)
+    return results[1].value.text
+  } else {
+    throw new Error("Both models failed to extract")
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -266,7 +340,13 @@ Rules:
     let extractedData: any
 
     try {
-      const text = await extractWithRetry(dataUrl, extractionInstructions)
+      let text: string
+      
+      if (isComparisonModeEnabled()) {
+        text = await extractWithComparison(dataUrl, extractionInstructions)
+      } else {
+        text = await extractWithRetry(dataUrl, extractionInstructions)
+      }
 
       console.log("[v0] AI extraction complete, parsing response...")
       console.log("[v0] Raw AI response:", text.substring(0, 200))

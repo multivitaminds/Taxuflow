@@ -9,19 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Spinner } from "@/components/ui/spinner"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
-import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  FileText,
-  Download,
-  RefreshCw,
-  DollarSign,
-  Calendar,
-  AlertCircle,
-  Sparkles,
-} from "lucide-react"
+import { useRouter } from 'next/navigation'
+import { CheckCircle2, XCircle, Clock, FileText, Download, RefreshCw, DollarSign, Calendar, AlertCircle, Sparkles } from 'lucide-react'
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 
@@ -122,26 +111,29 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
     const hasPendingFilings = filings.some((f) => f.filing_status === "pending" || f.filing_status === "submitted")
 
     if (hasPendingFilings) {
-      console.log("[v0] Detected pending filings, will auto-refresh status in 10 seconds...")
+      console.log("[v0] Detected pending filings, will auto-refresh status in 2 seconds...")
 
       const timer = setTimeout(async () => {
         console.log("[v0] Auto-refreshing pending filing statuses...")
 
         const pendingFilings = filings.filter((f) => f.filing_status === "pending" || f.filing_status === "submitted")
 
-        for (const filing of pendingFilings) {
-          try {
-            const response = await fetch(`/api/filing/check-status/${filing.id}`)
-            console.log("[v0] Auto-refreshed status for:", filing.id, response.ok ? "✓" : "✗")
-          } catch (error) {
-            console.error("[v0] Auto-refresh failed for:", filing.id, error)
-          }
-        }
+        const statusChecks = pendingFilings.map((filing) =>
+          fetch(`/api/filing/check-status/${filing.id}`)
+            .then((response) => {
+              console.log("[v0] Auto-refreshed status for:", filing.id, response.ok ? "✓" : "✗")
+              return response
+            })
+            .catch((error) => {
+              console.error("[v0] Auto-refresh failed for:", filing.id, error)
+            }),
+        )
 
-        // Reload the page to show updated statuses
+        await Promise.all(statusChecks)
+
         console.log("[v0] Reloading page to show updated statuses...")
         window.location.reload()
-      }, 10000) // Wait 10 seconds before checking
+      }, 2000)
 
       return () => clearTimeout(timer)
     }

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-filing-status",
+      "schedule": "*/30 * * * * *"
+    }
+  ]
+}
