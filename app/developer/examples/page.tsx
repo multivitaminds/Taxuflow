@@ -1,10 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Code, ExternalLink, Star } from "lucide-react"
+import { Code, ExternalLink, Star } from 'lucide-react'
 
 export default function ExamplesPage() {
+  const [selectedCategory, setSelectedCategory] = useState("All")
+  const [selectedLanguage, setSelectedLanguage] = useState("All")
+
   const examples = [
     {
       title: "Tax Filing Integration",
@@ -12,7 +16,7 @@ export default function ExamplesPage() {
       language: "Node.js",
       category: "Full Stack",
       difficulty: "Intermediate",
-      github: "https://github.com/taxu/examples/tax-filing",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: "https://demo.taxu.io/tax-filing",
       popular: true,
     },
@@ -22,7 +26,7 @@ export default function ExamplesPage() {
       language: "Python",
       category: "Backend",
       difficulty: "Beginner",
-      github: "https://github.com/taxu/examples/payroll-calculator",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: null,
       popular: true,
     },
@@ -32,7 +36,7 @@ export default function ExamplesPage() {
       language: "React",
       category: "Frontend",
       difficulty: "Intermediate",
-      github: "https://github.com/taxu/examples/accounting-dashboard",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: "https://demo.taxu.io/accounting",
       popular: true,
     },
@@ -42,7 +46,7 @@ export default function ExamplesPage() {
       language: "Node.js",
       category: "Backend",
       difficulty: "Beginner",
-      github: "https://github.com/taxu/examples/webhook-handler",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: null,
       popular: false,
     },
@@ -52,7 +56,7 @@ export default function ExamplesPage() {
       language: "Python",
       category: "AI/ML",
       difficulty: "Advanced",
-      github: "https://github.com/taxu/examples/document-ocr",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: null,
       popular: false,
     },
@@ -62,7 +66,7 @@ export default function ExamplesPage() {
       language: "Next.js",
       category: "Full Stack",
       difficulty: "Advanced",
-      github: "https://github.com/taxu/examples/saas-template",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: "https://demo.taxu.io/saas",
       popular: true,
     },
@@ -72,7 +76,7 @@ export default function ExamplesPage() {
       language: "React Native",
       category: "Mobile",
       difficulty: "Intermediate",
-      github: "https://github.com/taxu/examples/mobile-app",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: null,
       popular: false,
     },
@@ -82,7 +86,7 @@ export default function ExamplesPage() {
       language: "Go",
       category: "Backend",
       difficulty: "Intermediate",
-      github: "https://github.com/taxu/examples/compliance-checker",
+      github: "https://github.com/multivitaminds/taxu-examples",
       demo: null,
       popular: false,
     },
@@ -90,6 +94,15 @@ export default function ExamplesPage() {
 
   const categories = ["All", "Full Stack", "Backend", "Frontend", "AI/ML", "Mobile"]
   const languages = ["All", "Node.js", "Python", "React", "Next.js", "Go", "React Native"]
+
+  const filteredExamples = examples.filter((example) => {
+    const matchesCategory = selectedCategory === "All" || example.category === selectedCategory
+    const matchesLanguage = selectedLanguage === "All" || example.language === selectedLanguage
+    return matchesCategory && matchesLanguage
+  })
+
+  const popularFiltered = filteredExamples.filter((ex) => ex.popular)
+  const otherFiltered = filteredExamples.filter((ex) => !ex.popular)
 
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
@@ -112,7 +125,10 @@ export default function ExamplesPage() {
                   key={cat}
                   variant="outline"
                   size="sm"
-                  className="border-gray-700 text-gray-300 hover:bg-gray-800 bg-transparent"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`border-gray-700 text-gray-300 hover:bg-gray-800 transition-colors ${
+                    selectedCategory === cat ? "bg-[#635BFF] hover:bg-[#5046E5] text-white border-[#635BFF]" : "bg-transparent"
+                  }`}
                 >
                   {cat}
                 </Button>
@@ -127,7 +143,10 @@ export default function ExamplesPage() {
                   key={lang}
                   variant="outline"
                   size="sm"
-                  className="border-gray-700 text-gray-300 hover:bg-gray-800 bg-transparent"
+                  onClick={() => setSelectedLanguage(lang)}
+                  className={`border-gray-700 text-gray-300 hover:bg-gray-800 transition-colors ${
+                    selectedLanguage === lang ? "bg-[#635BFF] hover:bg-[#5046E5] text-white border-[#635BFF]" : "bg-transparent"
+                  }`}
                 >
                   {lang}
                 </Button>
@@ -137,12 +156,11 @@ export default function ExamplesPage() {
         </div>
 
         {/* Popular Examples */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">Popular Examples</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {examples
-              .filter((ex) => ex.popular)
-              .map((example) => (
+        {popularFiltered.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold text-white mb-6">Popular Examples</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {popularFiltered.map((example) => (
                 <Card
                   key={example.title}
                   className="bg-[#111] border-gray-800 p-6 hover:border-[#635BFF] transition-colors"
@@ -189,16 +207,16 @@ export default function ExamplesPage() {
                   </div>
                 </Card>
               ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* All Examples */}
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-6">All Examples</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {examples
-              .filter((ex) => !ex.popular)
-              .map((example) => (
+        {otherFiltered.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6">All Examples</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {otherFiltered.map((example) => (
                 <Card
                   key={example.title}
                   className="bg-[#111] border-gray-800 p-6 hover:border-gray-700 transition-colors"
@@ -229,8 +247,15 @@ export default function ExamplesPage() {
                   </Button>
                 </Card>
               ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {filteredExamples.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">No examples match your filters. Try selecting different options.</p>
+          </div>
+        )}
       </div>
     </div>
   )

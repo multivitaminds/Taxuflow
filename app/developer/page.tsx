@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Terminal, ArrowRight, BookOpen, Sparkles } from "lucide-react"
+import { Terminal, ArrowRight, BookOpen, Sparkles } from 'lucide-react'
 
 export default function DeveloperPortal() {
   return (
@@ -42,7 +42,7 @@ export default function DeveloperPortal() {
               <div className="font-mono text-sm space-y-2">
                 <div>
                   <span className="text-[#ff7b72]">$</span> <span className="text-[#79c0ff]">npm install</span>{" "}
-                  <span className="text-white">@taxu/sdk</span>
+                  <span className="text-white">@taxu/taxu-js</span>
                 </div>
                 <div className="h-px bg-[#1a3a52] my-4" />
                 <div>

@@ -15,8 +15,8 @@ function createDemoExtraction(fileName: string): any {
       employer: {
         name: "Demo Company Inc",
         ein: "12-3456789",
-        address: "123 Business Park Dr, San Francisco, CA 94105",
-        street: "123 Business Park Dr",
+        address: "123 Business Park Dr, Suite 100, San Francisco, CA 94105",
+        street: "123 Business Park Dr, Suite 100",
         city: "San Francisco",
         state: "CA",
         zipCode: "94105",
@@ -24,8 +24,8 @@ function createDemoExtraction(fileName: string): any {
       employee: {
         name: "John Doe",
         ssn: "XXX-XX-1234",
-        address: "456 Oak Avenue, San Francisco, CA 94102",
-        street: "456 Oak Avenue",
+        address: "456 Oak Avenue, Apt 3B, San Francisco, CA 94102",
+        street: "456 Oak Avenue, Apt 3B",
         city: "San Francisco",
         state: "CA",
         zipCode: "94102",
@@ -51,17 +51,18 @@ function createDemoExtraction(fileName: string): any {
       payer: {
         name: "Demo Client LLC",
         ein: "98-7654321",
-        address: "789 Market Street, San Francisco, CA 94103",
-        street: "789 Market Street",
+        address: "789 Market Street, Suite 200, San Francisco, CA 94103",
+        street: "789 Market Street, Suite 200",
         city: "San Francisco",
         state: "CA",
         zipCode: "94103",
       },
       recipient: {
         name: "Jane Smith",
-        tin: "XXX-XX-5678",
-        address: "321 Pine Street, San Francisco, CA 94108",
-        street: "321 Pine Street",
+        ssn: "XXX-XX-5678",
+        ein: "",
+        address: "321 Pine Street, Apt 4C, San Francisco, CA 94108",
+        street: "321 Pine Street, Apt 4C",
         city: "San Francisco",
         state: "CA",
         zipCode: "94108",
@@ -187,6 +188,23 @@ CRITICAL INSTRUCTIONS:
 1. If the document contains PLACEHOLDER/TEMPLATE data (like "John Doe", "Test Company", "123-45-6789", "Sample Corp", etc.), you MUST set "isTemplateData": true in your response
 2. If the document appears to be a real tax document with actual taxpayer information, set "isTemplateData": false
 3. Extract the actual values you see, but flag if they appear to be examples/templates
+4. IMPORTANT: Distinguish between SSN (Social Security Number) and EIN (Employer Identification Number):
+   - SSN: Individual taxpayer ID (employee/contractor) - format XXX-XX-XXXX
+   - EIN: Business/employer ID - format XX-XXXXXXX
+   - For 1099-NEC: recipient uses SSN (individual) or EIN (if recipient is a business)
+   - Look for labels like "Social Security Number" vs "Employer ID Number" or "Tax ID"
+
+5. ADDRESS EXTRACTION RULES:
+   - Extract the COMPLETE address including apartment/unit numbers
+   - Format: "street_address" should include apartment/unit (e.g., "480 Cedar Lane, Apt 2B")
+   - Then separately provide: "city", "state", "zip_code"
+   - For W-2: Extract both employer_address (with all parts) and employee_address (with all parts)
+   - Example: If you see "480 Cedar Lane, Apt 2B, Springfield, IL 62704"
+     * street_address: "480 Cedar Lane, Apt 2B"
+     * city: "Springfield"
+     * state: "IL"
+     * zip_code: "62704"
+   - NEVER use apartment numbers or suite numbers as the city name
 
 Identify the document type:
 - "w2" for W-2 Wage and Tax Statement
@@ -203,8 +221,8 @@ Identify the document type:
 Extract ALL visible data from the document:
 
 For W-2:
-- employer_name, employer_ein, employer_address
-- employee_name, employee_ssn, employee_address
+- employer_name, employer_ein, employer_address (complete with suite/floor), employer_city, employer_state, employer_zip_code
+- employee_name, employee_ssn, employee_address (complete with apt/unit), employee_city, employee_state, employee_zip_code  
 - tax_year
 - wages (Box 1), federal_tax_withheld (Box 2)
 - social_security_wages (Box 3), social_security_tax_withheld (Box 4)
@@ -240,59 +258,13 @@ For 1099-G (Government Payments):
 For receipts:
 - merchant_name, date, amount, category, items
 
-CRITICAL: You MUST respond with ONLY valid JSON. No explanations, no apologies, no text before or after the JSON.
-
-For 1099-NEC, return this structure:
-{
-  "documentType": "1099-nec",
-  "taxYear": 2024,
-  "isTemplateData": false,
-  "confidence": 0.95,
-  "payer": {
-    "name": "Company Name LLC",
-    "ein": "12-3456789",
-    "address": "123 Main St, City, ST 12345"
-  },
-  "recipient": {
-    "name": "John Doe",
-    "tin": "XXX-XX-1234",
-    "address": "456 Oak Ave, City, ST 12345"
-  },
-  "compensation": 50000.00,
-  "federalTaxWithheld": 0.00,
-  "stateTaxWithheld": 0.00,
-  "state": "CA",
-  "stateIncome": 50000.00
-}
-
-For W-2, return this structure:
-{
-  "documentType": "w2",
-  "taxYear": 2024,
-  "isTemplateData": false,
-  "confidence": 0.95,
-  "employer": {
-    "name": "Company Name",
-    "ein": "12-3456789",
-    "address": "123 Main St, City, ST 12345"
-  },
-  "employee": {
-    "name": "John Doe",
-    "ssn": "XXX-XX-1234",
-    "address": "456 Oak Ave, City, ST 12345"
-  },
-  "income": {
-    "wages": 75000.00,
-    "federalWithholding": 8500.00,
-    "socialSecurityWages": 75000.00,
-    "socialSecurityTax": 4650.00,
-    "medicareWages": 75000.00,
-    "medicareTax": 1087.50,
-    "stateWages": 75000.00,
-    "stateTax": 3750.00,
-    "state": "CA"
-  }
-}
+CRITICAL EXTRACTION RULES:
+- For recipient/contractor on 1099-NEC: Extract as "ssn" if it's an individual SSN, extract as "ein" if it's a business EIN
+- Look at the box labels carefully: "TIN" or "SSN" typically means Social Security Number
+- "EIN" or "Employer ID" means Employer Identification Number
+- If you see a 9-digit number without clear labeling, assume SSN for individuals, EIN for businesses
+- Never mask/hide the actual numbers - extract them exactly as shown
+- If numbers are already masked (XX-XXXXXXX), note this in confidence score
 
 Rules:
 - Set "isTemplateData": true if the document contains placeholder/sample values like "John Doe", "Jane Smith", "Test Company", "Sample Corp", "123-45-6789", "00-0000000", etc.
@@ -302,9 +274,10 @@ Rules:
 - Be accurate with numbers - these are used for tax filing
 - Always include documentType, taxYear, isTemplateData, and confidence
 - For 1099-NEC: ALWAYS include "compensation" field at the root level (Box 1)
+- For 1099-NEC: Include "ssn" for recipient SSN and "ein" for recipient EIN (or empty string if not applicable)
 - Return ONLY the JSON object, nothing else
-- Do NOT wrap in markdown code blocks
-- Do NOT add any explanatory text`
+- DO NOT wrap in markdown code blocks
+- DO NOT add any explanatory text`
 
     console.log("[v0] Calling AI model for extraction...")
 
@@ -390,7 +363,7 @@ Rules:
         extractedData.payer?.name &&
         extractedData.payer?.ein &&
         extractedData.recipient?.name &&
-        extractedData.recipient?.tin &&
+        (extractedData.recipient?.ssn || extractedData.recipient?.ein) &&
         (extractedData.compensation !== undefined || extractedData.income?.nonemployeeCompensation !== undefined)
 
       if (!hasRequired1099Data) {
@@ -427,6 +400,8 @@ Rules:
         extractedData.employer.state = parsed.state
         extractedData.employer.zipCode = parsed.zipCode
       }
+    } else if (extractedData.employer?.street && extractedData.employer?.city) {
+      // No need to parse again
     }
 
     if (extractedData.employee?.address) {
@@ -437,6 +412,8 @@ Rules:
         extractedData.employee.state = parsed.state
         extractedData.employee.zipCode = parsed.zipCode
       }
+    } else if (extractedData.employee?.street && extractedData.employee?.city) {
+      // No need to parse again
     }
 
     if (extractedData.payer?.address) {
@@ -447,6 +424,8 @@ Rules:
         extractedData.payer.state = parsed.state
         extractedData.payer.zipCode = parsed.zipCode
       }
+    } else if (extractedData.payer?.street && extractedData.payer?.city) {
+      // No need to parse again
     }
 
     if (extractedData.recipient?.address) {
@@ -457,6 +436,8 @@ Rules:
         extractedData.recipient.state = parsed.state
         extractedData.recipient.zipCode = parsed.zipCode
       }
+    } else if (extractedData.recipient?.street && extractedData.recipient?.city) {
+      // No need to parse again
     }
 
     if (extractedData.isTemplateData === true) {

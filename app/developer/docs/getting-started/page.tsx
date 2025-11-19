@@ -1,7 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight } from 'lucide-react'
 import Link from "next/link"
 
 export default function GettingStartedPage() {
@@ -118,28 +118,47 @@ export default function GettingStartedPage() {
               <h3 className="font-bold text-gray-900">Node.js</h3>
             </div>
             <pre className="bg-[#0d1117] p-6 rounded-lg overflow-x-auto text-sm border border-gray-800">
-              <code className="text-white font-mono">{String.raw`// Install: npm install @taxu/sdk
-
-const Taxu = require('@taxu/sdk');
-const taxu = new Taxu('your_api_key');
-
-// Upload and process a W-2 document
-const uploadedFile = await taxu.documents.upload({
-  file: fs.createReadStream('w2.pdf'),
-  type: 'w2'
+              <code className="text-white font-mono">{String.raw`// SDK coming soon - use REST API for now
+// REST API Example
+const response = await fetch('https://api.taxu.io/v1/documents/upload', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your_api_key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    file: fileData,
+    type: 'w2'
+  })
 });
 
+const uploadedFile = await response.json();
+
 // Get AI analysis results
-const analysis = await taxu.documents.retrieve(uploadedFile.id);
+const analysisResponse = await fetch(\`https://api.taxu.io/v1/documents/\${uploadedFile.id}\`, {
+  headers: {
+    'Authorization': 'Bearer your_api_key'
+  }
+});
+
+const analysis = await analysisResponse.json();
 console.log('Employer:', analysis.extracted_data.employer_name);
 console.log('Wages:', analysis.extracted_data.wages);
 
 // Calculate tax refund
-const calculation = await taxu.tax.calculate({
-  income: analysis.extracted_data.wages,
-  withheld: analysis.extracted_data.federal_tax_withheld
+const calculationResponse = await fetch('https://api.taxu.io/v1/tax/calculate', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer your_api_key',
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    income: analysis.extracted_data.wages,
+    withheld: analysis.extracted_data.federal_tax_withheld
+  })
 });
 
+const calculation = await calculationResponse.json();
 console.log('Estimated Refund:', calculation.estimated_refund);`}</code>
             </pre>
           </div>
@@ -149,27 +168,43 @@ console.log('Estimated Refund:', calculation.estimated_refund);`}</code>
               <h3 className="font-bold text-gray-900">Python</h3>
             </div>
             <pre className="bg-[#0d1117] p-6 rounded-lg overflow-x-auto text-sm border border-gray-800">
-              <code className="text-white font-mono">{String.raw`# Install: pip install taxu
+              <code className="text-white font-mono">{String.raw`# SDK coming soon - use REST API for now
+# REST API Example
+import requests
 
-import taxu
-taxu.api_key = 'your_api_key'
+API_KEY = 'your_api_key'
+BASE_URL = 'https://api.taxu.io/v1'
 
 # Upload and process a W-2 document
 with open('w2.pdf', 'rb') as file:
-    uploaded = taxu.Document.upload(file=file, type='w2')
+    response = requests.post(
+        f'{BASE_URL}/documents/upload',
+        headers={'Authorization': f'Bearer {API_KEY}'},
+        files={'file': file},
+        data={'type': 'w2'}
+    )
+    uploaded = response.json()
 
 # Get AI analysis results
-analysis = taxu.Document.retrieve(uploaded.id)
-print(f'Employer: {analysis.extracted_data.employer_name}')
-print(f'Wages: {analysis.extracted_data.wages}')
+analysis_response = requests.get(
+    f'{BASE_URL}/documents/{uploaded["id"]}',
+    headers={'Authorization': f'Bearer {API_KEY}'}
+)
+analysis = analysis_response.json()
+print(f'Employer: {analysis["extracted_data"]["employer_name"]}')
+print(f'Wages: {analysis["extracted_data"]["wages"]}')
 
 # Calculate tax refund
-calculation = taxu.Tax.calculate(
-    income=analysis.extracted_data.wages,
-    withheld=analysis.extracted_data.federal_tax_withheld
+calculation_response = requests.post(
+    f'{BASE_URL}/tax/calculate',
+    headers={'Authorization': f'Bearer {API_KEY}'},
+    json={
+        'income': analysis['extracted_data']['wages'],
+        'withheld': analysis['extracted_data']['federal_tax_withheld']
+    }
 )
-
-print(f'Estimated Refund: {calculation.estimated_refund}')`}</code>
+calculation = calculation_response.json()
+print(f'Estimated Refund: {calculation["estimated_refund"]}')`}</code>
             </pre>
           </div>
         </div>

@@ -30,29 +30,81 @@ export async function POST(req: Request) {
     const taxYear = formData.taxYear ? Number.parseInt(formData.taxYear) : new Date().getFullYear()
     const socialSecurityCap = taxYear >= 2025 ? 176100 : 168600
 
-    const wages = Number.parseFloat(formData.wages) || 0
-    const federalWithholding = Number.parseFloat(formData.federalWithholding) || 0
-    const socialSecurityWages = Number.parseFloat(formData.socialSecurityWages) || 0
-    const socialSecurityWithholding = Number.parseFloat(formData.socialSecurityWithholding) || 0
-    const medicareWages = Number.parseFloat(formData.medicareWages) || 0
-    const medicareWithholding = Number.parseFloat(formData.medicareWithholding) || 0
+    let wages = 0
+    let federalWithholding = 0
+    let socialSecurityWages = 0
+    let socialSecurityWithholding = 0
+    let medicareWages = 0
+    let medicareWithholding = 0
+    let federalPercent = 0
+    let ssPercent = 0
+    let medicarePercent = 0
 
-    const federalPercent = wages > 0 ? (federalWithholding / wages) * 100 : 0
-    const ssPercent = socialSecurityWages > 0 ? (socialSecurityWithholding / socialSecurityWages) * 100 : 0
-    const medicarePercent = medicareWages > 0 ? (medicareWithholding / medicareWages) * 100 : 0
+    if (formType === "w2") {
+      wages = Number.parseFloat(formData.wages) || 0
+      federalWithholding = Number.parseFloat(formData.federalWithholding) || 0
+      socialSecurityWages = Number.parseFloat(formData.socialSecurityWages) || 0
+      socialSecurityWithholding = Number.parseFloat(formData.socialSecurityWithholding) || 0
+      medicareWages = Number.parseFloat(formData.medicareWages) || 0
+      medicareWithholding = Number.parseFloat(formData.medicareWithholding) || 0
 
-    console.log("[v0] Calculated tax rates:", {
-      federal: `${federalPercent.toFixed(2)}%`,
-      socialSecurity: `${ssPercent.toFixed(2)}%`,
-      medicare: `${medicarePercent.toFixed(2)}%`,
-    })
+      federalPercent = wages > 0 ? (federalWithholding / wages) * 100 : 0
+      ssPercent = socialSecurityWages > 0 ? (socialSecurityWithholding / socialSecurityWages) * 100 : 0
+      medicarePercent = medicareWages > 0 ? (medicareWithholding / medicareWages) * 100 : 0
+
+      console.log("[v0] Calculated tax rates:", {
+        federal: `${federalPercent.toFixed(2)}%`,
+        socialSecurity: `${ssPercent.toFixed(2)}%`,
+        medicare: `${medicarePercent.toFixed(2)}%`,
+      })
+    }
 
     let validation: ValidationResponse
 
     try {
-      const { text } = await generateText({
-        model: "openai/gpt-4o-mini",
-        prompt: `You are a tax form validation expert. Review this ${formType.toUpperCase()} form data for errors and inconsistencies.
+      const validationPrompt = formType === "1099-nec" 
+        ? `You are a tax form validation expert. Review this 1099-NEC form data for errors and inconsistencies.
+
+Form Data:
+${JSON.stringify(formData, null, 2)}
+
+IMPORTANT: This is a 1099-NEC form for TAX YEAR ${taxYear}.
+
+VALIDATION RULES FOR 1099-NEC:
+1. Each contractor must have EITHER SSN or EIN (not necessarily both)
+2. SSN format: XXX-XX-XXXX (9 digits with dashes)
+3. EIN format: XX-XXXXXXX (9 digits with dash)
+4. Nonemployee compensation (Box 1) must be at least $600
+5. Federal income tax withheld (Box 4) is OPTIONAL and typically 0
+6. If federal tax withheld is present, it should be reasonable (0-37% of compensation)
+7. 1099-NEC does NOT have Social Security wages or Medicare wages
+8. Complete address required: street, city, state, ZIP code
+
+DO NOT FLAG AS ERROR:
+- Missing EIN if SSN is provided (or vice versa)
+- Zero federal tax withheld (this is normal for 1099-NEC)
+- Lack of Social Security or Medicare withholding (1099-NEC doesn't have these)
+
+ONLY FLAG AS ERROR IF:
+- Both SSN and EIN are missing
+- SSN or EIN has invalid format (wrong number of digits)
+- Compensation is less than $600
+- Negative amounts
+- Missing required address fields
+- Federal tax withheld exceeds 37% of compensation (if present)
+
+Return ONLY valid JSON in this exact format:
+{
+  "valid": boolean,
+  "errors": [
+    { "field": "fieldName", "message": "error description", "severity": "error" }
+  ],
+  "warnings": [
+    { "field": "fieldName", "message": "warning description", "severity": "warning" }
+  ],
+  "suggestions": ["suggestion 1", "suggestion 2"]
+}`
+        : `You are a tax form validation expert. Review this ${formType.toUpperCase()} form data for errors and inconsistencies.
 
 Form Data:
 ${JSON.stringify(formData, null, 2)}
@@ -95,7 +147,11 @@ Return ONLY valid JSON in this exact format:
     { "field": "fieldName", "message": "warning description", "severity": "warning" }
   ],
   "suggestions": ["suggestion 1", "suggestion 2"]
-}`,
+}`
+
+      const { text } = await generateText({
+        model: "openai/gpt-4o-mini",
+        prompt: validationPrompt,
         temperature: 0.1,
       })
 
@@ -116,7 +172,6 @@ Return ONLY valid JSON in this exact format:
       const warnings: ValidationError[] = []
       const suggestions: string[] = []
 
-      // Basic required field checks for 1099-NEC
       if (formType === "1099-nec" && formData.contractors) {
         formData.contractors.forEach((contractor: any, index: number) => {
           const contractorNum = index + 1
@@ -129,10 +184,29 @@ Return ONLY valid JSON in this exact format:
             })
           }
 
-          if (!contractor.ssn && !contractor.ein) {
+          const ssnCleaned = contractor.ssn ? contractor.ssn.replace(/\D/g, "") : ""
+          const einCleaned = contractor.ein ? contractor.ein.replace(/\D/g, "") : ""
+
+          if (!ssnCleaned && !einCleaned) {
             errors.push({
               field: `contractor${contractorNum}.tin`,
               message: `Contractor ${contractorNum}: Either SSN or EIN is required`,
+              severity: "error",
+            })
+          }
+
+          if (ssnCleaned && ssnCleaned.length !== 9) {
+            errors.push({
+              field: `contractor${contractorNum}.ssn`,
+              message: `Contractor ${contractorNum}: SSN must be 9 digits (format: XXX-XX-XXXX)`,
+              severity: "error",
+            })
+          }
+
+          if (einCleaned && einCleaned.length !== 9) {
+            errors.push({
+              field: `contractor${contractorNum}.ein`,
+              message: `Contractor ${contractorNum}: EIN must be 9 digits (format: XX-XXXXXXX)`,
               severity: "error",
             })
           }
@@ -144,6 +218,18 @@ Return ONLY valid JSON in this exact format:
               message: `Contractor ${contractorNum}: Compensation must be at least $600 for 1099-NEC filing`,
               severity: "error",
             })
+          }
+
+          const federalTaxWithheld = Number.parseFloat(contractor.federalTaxWithheld) || 0
+          if (federalTaxWithheld > 0 && compensation > 0) {
+            const withholdingPercent = (federalTaxWithheld / compensation) * 100
+            if (withholdingPercent > 37) {
+              warnings.push({
+                field: `contractor${contractorNum}.federalTaxWithheld`,
+                message: `Contractor ${contractorNum}: Federal withholding (${withholdingPercent.toFixed(1)}%) exceeds maximum tax bracket (37%)`,
+                severity: "warning",
+              })
+            }
           }
 
           if (!contractor.address || !contractor.city || !contractor.state || !contractor.zipCode) {

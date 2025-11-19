@@ -1,4 +1,4 @@
-import { Code2, Key, Zap } from "lucide-react"
+import { Code2, Key, Zap } from 'lucide-react'
 import Link from "next/link"
 
 export default function QuickStartPage() {
@@ -33,14 +33,16 @@ export default function QuickStartPage() {
           <div className="w-8 h-8 rounded-full bg-accent/10 text-accent flex items-center justify-center font-bold">
             2
           </div>
-          <h2 className="text-2xl font-bold">Install the SDK</h2>
+          <h2 className="text-2xl font-bold">Use the REST API</h2>
         </div>
-        <p className="text-muted-foreground mb-4">Install the Taxu SDK for your preferred language.</p>
+        <p className="text-muted-foreground mb-4">
+          Make API requests using your favorite HTTP library. SDKs coming soon!
+        </p>
         <div className="rounded-lg bg-background border border-border p-4 font-mono text-sm mb-4">
-          <div className="text-muted-foreground mb-2"># Node.js</div>
-          <div>npm install @taxu/sdk</div>
-          <div className="text-muted-foreground mt-4 mb-2"># Python</div>
-          <div>pip install taxu</div>
+          <div className="text-muted-foreground mb-2"># Node.js (using fetch)</div>
+          <div>npm install node-fetch</div>
+          <div className="text-muted-foreground mt-4 mb-2"># Python (using requests)</div>
+          <div>pip install requests</div>
         </div>
       </div>
 
@@ -54,23 +56,35 @@ export default function QuickStartPage() {
         </div>
         <p className="text-muted-foreground mb-4">Create a tax return estimate with just a few lines of code.</p>
         <div className="rounded-lg bg-background border border-border p-4 font-mono text-sm">
-          <div className="text-purple-400">const</div> Taxu = <div className="text-purple-400 inline">require</div>(
-          <div className="text-yellow-300 inline">'@taxu/sdk'</div>)
+          <div className="text-purple-400">const</div> response = <div className="text-purple-400 inline">await</div>{" "}
+          <div className="text-purple-400 inline">fetch</div>(
+          <div className="text-yellow-300 inline">'https://api.taxu.io/v1/refunds/estimate'</div>, {"{"}
           <br />
-          <div className="text-purple-400">const</div> taxu = <div className="text-purple-400 inline">new</div> Taxu(
-          <div className="text-yellow-300 inline">'your_api_key'</div>)
+          <div className="pl-4">
+            method: <div className="text-yellow-300 inline">'POST'</div>,
+          </div>
+          <div className="pl-4">headers: {"{"}</div>
+          <div className="pl-8">
+            <div className="text-yellow-300 inline">'Authorization'</div>:{" "}
+            <div className="text-yellow-300 inline">'Bearer your_api_key'</div>,
+          </div>
+          <div className="pl-8">
+            <div className="text-yellow-300 inline">'Content-Type'</div>:{" "}
+            <div className="text-yellow-300 inline">'application/json'</div>
+          </div>
+          <div className="pl-4">{"}"},</div>
+          <div className="pl-4">body: JSON.stringify({"{"}</div>
+          <div className="pl-8">income: 75000,</div>
+          <div className="pl-8">
+            filingStatus: <div className="text-yellow-300 inline">'single'</div>,
+          </div>
+          <div className="pl-8">deductions: 12000</div>
+          <div className="pl-4">{"}"})</div>
+          {"}"})
           <br />
           <br />
           <div className="text-purple-400">const</div> estimate = <div className="text-purple-400 inline">await</div>{" "}
-          taxu.refunds.estimate({"{"}
-          <br />
-          <div className="pl-4">income: 75000,</div>
-          <div className="pl-4">
-            filingStatus: <div className="text-yellow-300 inline">'single'</div>,
-          </div>
-          <div className="pl-4">deductions: 12000</div>
-          {"}"})
-          <br />
+          response.json()
           <br />
           console.log(estimate.refundAmount)
         </div>
