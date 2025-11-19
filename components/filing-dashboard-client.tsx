@@ -111,7 +111,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
     const hasPendingFilings = filings.some((f) => f.filing_status === "pending" || f.filing_status === "submitted")
 
     if (hasPendingFilings) {
-      console.log("[v0] Detected pending filings, will auto-refresh status in 2 seconds...")
+      console.log("[v0] Detected pending filings, will auto-refresh status in 3 seconds...")
 
       const timer = setTimeout(async () => {
         console.log("[v0] Auto-refreshing pending filing statuses...")
@@ -133,7 +133,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
         console.log("[v0] Reloading page to show updated statuses...")
         window.location.reload()
-      }, 2000)
+      }, 3000)
 
       return () => clearTimeout(timer)
     }

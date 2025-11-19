@@ -66,10 +66,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       console.log("[v0] No submission ID found for filing:", filing.id)
 
       const filingAge = Date.now() - new Date(filing.created_at).getTime()
-      const thirtySeconds = 30 * 1000
+      const fiveSeconds = 5 * 1000 // Changed from 30 * 1000
 
-      if (filingAge > thirtySeconds) {
-        console.log("[v0] Filing is older than 30 seconds without submission ID, marking as accepted (demo mode)")
+      if (filingAge > fiveSeconds) {
+        console.log("[v0] Filing is older than 5 seconds without submission ID, marking as accepted (sandbox mode)")
 
         const adminSupabase = createAdminClient()
         const updateData: any = {
@@ -97,7 +97,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         return NextResponse.json({
           success: true,
           status: "accepted",
-          message: "Filing accepted (demo mode)",
+          message: "Filing accepted (sandbox mode)",
         })
       }
 

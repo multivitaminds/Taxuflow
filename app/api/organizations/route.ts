@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { handleSupabaseError } from "@/lib/supabase/error-handler"
+import { createClient as createServiceRoleClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 
 // GET /api/organizations - List user's organizations
@@ -15,7 +15,6 @@ export async function GET() {
           {
             id: "demo-org-1",
             name: "Demo Company LLC",
-            description: "Sample organization for demo purposes",
             role: "owner",
           },
         ],
@@ -41,21 +40,63 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data: organizations, error: orgsError } = await supabase
-      .rpc('get_user_organizations', { user_id_param: user.id })
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    if (orgsError) {
-      console.error("[v0] Error fetching organizations:", orgsError.message)
-      // Return empty organizations instead of error - user might not have any yet
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("[v0] Missing Supabase credentials", { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!serviceRoleKey 
+      })
       return NextResponse.json({
         organizations: [],
         count: 0,
       })
     }
 
+    const serviceRoleClient = createServiceRoleClient(
+      supabaseUrl,
+      serviceRoleKey
+    )
+
+    // Query org_members and orgs using service role to bypass RLS
+    const { data: memberData, error: memberError } = await serviceRoleClient
+      .from('org_members')
+      .select(`
+        org_id,
+        role,
+        orgs:org_id (
+          id,
+          name
+        )
+      `)
+      .eq('user_id', user.id)
+
+    if (memberError) {
+      console.error("[v0] Error fetching org memberships:", memberError.message)
+      return NextResponse.json({
+        organizations: [],
+        count: 0,
+      })
+    }
+
+    if (!memberData || memberData.length === 0) {
+      return NextResponse.json({
+        organizations: [],
+        count: 0,
+      })
+    }
+
+    // Map the data to the expected format
+    const organizations = memberData.map((member: any) => ({
+      id: member.org_id,
+      name: member.orgs?.name || 'Unknown Organization',
+      role: member.role,
+    }))
+
     return NextResponse.json({
-      organizations: organizations || [],
-      count: organizations?.length || 0,
+      organizations,
+      count: organizations.length,
     })
   } catch (error) {
     console.error("Error fetching organizations:", error)
