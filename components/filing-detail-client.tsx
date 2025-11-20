@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +22,8 @@ interface Filing {
   accepted_at: string
   rejected_at: string
   provider_response: any
+  wages?: number
+  federal_tax_withheld?: number
 }
 
 export default function FilingDetailClient({ filing, formType = "W-2" }: { filing: Filing; formType?: string }) {
@@ -29,21 +31,82 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
   const { toast } = useToast()
   const [downloading, setDownloading] = useState(false)
   const [checkingStatus, setCheckingStatus] = useState(false)
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  const handleCheckStatus = useCallback(async () => {
+    if (checkingStatus) return
+    setCheckingStatus(true)
+
+    try {
+      const response = await fetch(`/api/filing/check-status/${filing.id}`)
+
+      // Check content type to safely handle non-JSON responses
+      const contentType = response.headers.get("content-type")
+      let data: any
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json()
+      } else {
+        const text = await response.text()
+        console.error("[v0] Non-JSON response received:", text.substring(0, 200))
+        throw new Error("Received invalid response from server (Internal Server Error)")
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Failed to check status")
+      }
+
+      // If status changed to accepted/rejected, stop auto-refresh
+      if (
+        data.status === "accepted" ||
+        data.status === "rejected" ||
+        data.status === "success" ||
+        data.status === "failed"
+      ) {
+        setAutoRefreshEnabled(false)
+        toast({
+          title: "Status Updated",
+          description: `Filing status is now: ${data.status.toUpperCase()}`,
+        })
+        router.refresh()
+      } else if (data.status === "pending" && autoRefreshEnabled) {
+        // If still pending, schedule next check
+        // But only if we didn't just get an error
+      }
+    } catch (error) {
+      console.error("[v0] Status check error:", error)
+      // Stop auto-refresh on error to prevent infinite loops
+      setAutoRefreshEnabled(false)
+      toast({
+        title: "Status Check Failed",
+        description: error instanceof Error ? error.message : "Unable to check status. Auto-refresh stopped.",
+        variant: "destructive",
+      })
+    } finally {
+      setCheckingStatus(false)
+    }
+  }, [filing.id, checkingStatus, autoRefreshEnabled, router, toast])
+
+  // Auto-refresh logic using recursive setTimeout
   useEffect(() => {
     const status = filing.irs_status?.toLowerCase()
     const isPending = status === "pending" || status === "processing" || status === "submitted"
 
-    if (isPending) {
-      console.log("[v0] Filing is pending, starting auto-refresh timer...")
-      const timer = setInterval(() => {
-        console.log("[v0] Auto-refreshing filing status...")
-        handleCheckStatus()
-      }, 5000) // Check every 5 seconds
+    if (isPending && autoRefreshEnabled) {
+      // Clear any existing timeout
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
 
-      return () => clearInterval(timer)
+      // Schedule next check
+      timeoutRef.current = setTimeout(() => {
+        handleCheckStatus()
+      }, 5000)
     }
-  }, [filing.irs_status, filing.id])
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [filing.irs_status, autoRefreshEnabled, handleCheckStatus])
 
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -75,7 +138,6 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      // Call TaxBandits API to download the filed return
       const response = await fetch(`/api/filing/download/${filing.id}`)
 
       if (!response.ok) {
@@ -108,44 +170,9 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
     }
   }
 
-  const handleCheckStatus = async () => {
-    setCheckingStatus(true)
-    try {
-      const response = await fetch(`/api/filing/check-status/${filing.id}`)
-
-      const contentType = response.headers.get("content-type")
-      let data: any
-
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json()
-      } else {
-        // Handle non-JSON responses (like HTML error pages)
-        const text = await response.text()
-        console.error("[v0] Non-JSON response received:", text.substring(0, 200))
-        throw new Error("Received invalid response from server. Please try again.")
-      }
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to check status")
-      }
-
-      toast({
-        title: "Status Updated",
-        description: `Current status: ${data.status.toUpperCase()}`,
-      })
-
-      // Refresh the page to show updated status
-      router.refresh()
-    } catch (error) {
-      console.error("[v0] Status check error:", error)
-      toast({
-        title: "Status Check Failed",
-        description: error instanceof Error ? error.message : "Unable to check status. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setCheckingStatus(false)
-    }
+  const onManualRefresh = () => {
+    setAutoRefreshEnabled(true) // Re-enable if it was stopped
+    handleCheckStatus()
   }
 
   return (
@@ -168,7 +195,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
 
             <div className="flex gap-2">
               <Button
-                onClick={handleCheckStatus}
+                onClick={onManualRefresh}
                 disabled={checkingStatus}
                 variant="outline"
                 className="border-purple-200 hover:bg-purple-50 bg-transparent"
@@ -204,7 +231,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
                 </p>
                 <div className="flex flex-col gap-2">
                   <Button
-                    onClick={handleCheckStatus}
+                    onClick={onManualRefresh}
                     disabled={checkingStatus}
                     size="sm"
                     className="bg-blue-600 hover:bg-blue-700 text-white w-fit"

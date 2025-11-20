@@ -83,6 +83,16 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
     // 6. Sandbox Auto-Accept Logic
     if (environment === "sandbox" && filingAge > fiveSeconds && filing.taxbandits_status !== "accepted") {
       try {
+        // Check for service role key explicitly
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          console.error("[v0] Missing SUPABASE_SERVICE_ROLE_KEY for sandbox auto-accept")
+          return NextResponse.json({
+            success: true,
+            status: "pending",
+            message: "Filing pending (Sandbox auto-accept requires SUPABASE_SERVICE_ROLE_KEY)",
+          })
+        }
+
         const adminSupabase = await createAdminClient()
         const updateData: any = {
           taxbandits_status: "accepted",
@@ -92,8 +102,9 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         }
 
         if (tableName === "w2_filings") {
-          const wages = Number(filing.wages || 0)
-          const federalWithheld = Number(filing.federal_tax_withheld || 0)
+          // Safe number conversion
+          const wages = Number(filing.wages) || 0
+          const federalWithheld = Number(filing.federal_tax_withheld) || 0
           const standardDeduction = 13850
           const taxableIncome = Math.max(0, wages - standardDeduction)
           const estimatedTaxLiability = taxableIncome * 0.1
@@ -120,14 +131,11 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
         console.error("[v0] Failed to create admin client or update filing:", adminError)
 
         const errorMessage = adminError instanceof Error ? adminError.message : "Unknown admin error"
-        const isCredentialError = errorMessage.includes("Missing Supabase admin credentials")
 
         return NextResponse.json({
           success: true,
           status: "pending",
-          message: isCredentialError
-            ? "Filing pending (Sandbox auto-accept requires SUPABASE_SERVICE_ROLE_KEY)"
-            : "Filing pending (sandbox mode - auto-accept failed)",
+          message: "Filing pending (sandbox mode - auto-accept failed)",
           error: errorMessage,
         })
       }
@@ -228,8 +236,8 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
           updateData.accepted_at = statusTime || new Date().toISOString()
 
           if (tableName === "w2_filings") {
-            const wages = Number(filing.wages || 0)
-            const federalWithheld = Number(filing.federal_tax_withheld || 0)
+            const wages = Number(filing.wages) || 0
+            const federalWithheld = Number(filing.federal_tax_withheld) || 0
             const standardDeduction = 13850
             const taxableIncome = Math.max(0, wages - standardDeduction)
             const estimatedTaxLiability = taxableIncome * 0.1
