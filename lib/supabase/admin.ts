@@ -1,6 +1,5 @@
 import "server-only"
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { createClient } from "@supabase/supabase-js"
 
 /**
  * Creates a Supabase admin client with service role key
@@ -15,21 +14,7 @@ export async function createAdminClient() {
     throw new Error("Missing Supabase admin credentials")
   }
 
-  const cookieStore = await cookies()
-
-  return createServerClient(supabaseUrl, supabaseServiceRoleKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll()
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        } catch {
-          // Ignore cookie errors in server components
-        }
-      },
-    },
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

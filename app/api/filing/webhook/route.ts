@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
 async function processWebhookRecords(submissionId: string, formType: string, records: any[]) {
   try {
-    const supabase = createAdminClient()
+    const supabase = await createAdminClient()
 
     const isW2 = submissionId.startsWith("W2-") || formType === "Form W-2" || formType === "W2"
     const is1099NEC = submissionId.startsWith("1099NEC-") || formType === "Form 1099-NEC" || formType === "1099-NEC"

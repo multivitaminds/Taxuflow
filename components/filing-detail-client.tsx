@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Download, FileText, CheckCircle2, XCircle, Clock, RefreshCw, ExternalLink } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { ArrowLeft, Download, FileText, CheckCircle2, XCircle, Clock, RefreshCw } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 
 interface Filing {
@@ -29,6 +29,21 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
   const { toast } = useToast()
   const [downloading, setDownloading] = useState(false)
   const [checkingStatus, setCheckingStatus] = useState(false)
+
+  useEffect(() => {
+    const status = filing.irs_status?.toLowerCase()
+    const isPending = status === "pending" || status === "processing" || status === "submitted"
+
+    if (isPending) {
+      console.log("[v0] Filing is pending, starting auto-refresh timer...")
+      const timer = setInterval(() => {
+        console.log("[v0] Auto-refreshing filing status...")
+        handleCheckStatus()
+      }, 5000) // Check every 5 seconds
+
+      return () => clearInterval(timer)
+    }
+  }, [filing.irs_status, filing.id])
 
   const getStatusIcon = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -97,10 +112,10 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
     setCheckingStatus(true)
     try {
       const response = await fetch(`/api/filing/check-status/${filing.id}`)
-      
+
       const contentType = response.headers.get("content-type")
       let data: any
-      
+
       if (contentType && contentType.includes("application/json")) {
         data = await response.json()
       } else {
@@ -109,7 +124,7 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
         console.error("[v0] Non-JSON response received:", text.substring(0, 200))
         throw new Error("Received invalid response from server. Please try again.")
       }
-      
+
       if (!response.ok) {
         throw new Error(data.error || data.message || "Failed to check status")
       }
@@ -184,8 +199,8 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
               <div className="flex-1">
                 <h3 className="font-semibold text-blue-900 mb-1">Filing Status: Processing</h3>
                 <p className="text-sm text-blue-700 mb-3">
-                  Your filing is being processed by the IRS e-file provider. This typically takes 2-5 minutes in the sandbox
-                  environment, but can occasionally take longer.
+                  Your filing is being processed by the IRS e-file provider. This typically takes 2-5 minutes in the
+                  sandbox environment, but can occasionally take longer.
                 </p>
                 <div className="flex flex-col gap-2">
                   <Button
@@ -243,17 +258,19 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
                   <span className="font-medium text-red-900">{new Date(filing.rejected_at).toLocaleString()}</span>
                 </div>
               )}
-              {(filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") && filing.accepted_at && filing.filed_at && (
-                <div className="mt-3 pt-3 border-t border-blue-200">
-                  <p className="text-xs text-blue-600">
-                    Processing time:{" "}
-                    {Math.round(
-                      (new Date(filing.accepted_at).getTime() - new Date(filing.filed_at).getTime()) / (1000 * 60),
-                    )}{" "}
-                    minutes
-                  </p>
-                </div>
-              )}
+              {(filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") &&
+                filing.accepted_at &&
+                filing.filed_at && (
+                  <div className="mt-3 pt-3 border-t border-blue-200">
+                    <p className="text-xs text-blue-600">
+                      Processing time:{" "}
+                      {Math.round(
+                        (new Date(filing.accepted_at).getTime() - new Date(filing.filed_at).getTime()) / (1000 * 60),
+                      )}{" "}
+                      minutes
+                    </p>
+                  </div>
+                )}
             </div>
           </div>
 
@@ -284,12 +301,14 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
             </div>
           </div>
 
-          {filing.refund_amount && formType === "W-2" && (filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") && (
-            <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-700 font-medium">Expected Refund</p>
-              <p className="text-2xl font-bold text-green-600">${filing.refund_amount.toLocaleString()}</p>
-            </div>
-          )}
+          {filing.refund_amount &&
+            formType === "W-2" &&
+            (filing.irs_status?.toLowerCase() === "accepted" || filing.irs_status?.toLowerCase() === "success") && (
+              <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-700 font-medium">Expected Refund</p>
+                <p className="text-2xl font-bold text-green-600">${filing.refund_amount.toLocaleString()}</p>
+              </div>
+            )}
         </Card>
 
         {/* Rejection Reasons */}

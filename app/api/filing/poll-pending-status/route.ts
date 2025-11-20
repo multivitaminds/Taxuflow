@@ -10,7 +10,19 @@ export async function GET(req: NextRequest) {
   try {
     console.log("[v0] Starting automatic status polling for pending filings...")
 
-    const supabase = createAdminClient()
+    let supabase
+    try {
+      supabase = await createAdminClient()
+    } catch (error) {
+      console.error("[v0] Failed to create admin client:", error)
+      return NextResponse.json(
+        {
+          error: "Configuration Error",
+          message: "Missing SUPABASE_SERVICE_ROLE_KEY. Please configure it in Vercel settings.",
+        },
+        { status: 500 },
+      )
+    }
 
     // Get TaxBandits credentials
     const apiKey = process.env.TAXBANDITS_API_KEY

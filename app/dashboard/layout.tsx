@@ -1,15 +1,15 @@
 import type React from "react"
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardProvider } from "@/components/dashboard-provider"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
-  
+
   const isDemoMode = cookieStore.get("demo_mode")?.value === "true"
   if (isDemoMode) {
     console.log("[v0] Dashboard: Using demo mode")
@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   const supabase = await createClient()
-  
+
   if (!supabase) {
     console.log("[v0] Dashboard: Supabase not configured, using demo mode as fallback")
     cookieStore.set("demo_mode", "true", {
@@ -75,9 +75,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
     )
   }
 
-  const { data: { user }, error } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      console.error("[v0] Dashboard: Error fetching user:", error)
+    } else {
+      user = data.user
+    }
+  } catch (err) {
+    console.error("[v0] Dashboard: Exception fetching user:", err)
+  }
 
-  if (error || !user) {
+  if (!user) {
     console.log("[v0] Dashboard: No authenticated user, redirecting to login")
     redirect("/login")
   }
@@ -86,11 +96,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   let profile = null
   try {
-    const { data } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
+    const { data } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle()
     profile = data
   } catch (err) {
     console.error("[v0] Error fetching user profile:", err)

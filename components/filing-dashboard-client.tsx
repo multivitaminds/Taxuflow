@@ -45,17 +45,18 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
 
   const totalFilings = filings.length
-  const acceptedFilings = filings.filter((f) => f.filing_status === "accepted").length
-  const pendingFilings = filings.filter((f) => f.filing_status === "submitted" || f.filing_status === "pending").length
+  const acceptedFilings = filings.filter((f) => f.filing_status.toLowerCase() === "accepted").length
+  const pendingFilings = filings.filter((f) => ["submitted", "pending", "processing"].includes(f.filing_status.toLowerCase())).length
   const totalRefunds = filings
-    .filter((f) => f.refund_amount && f.filing_status === "accepted" && f.form_type === "W-2")
+    .filter((f) => f.refund_amount && f.filing_status.toLowerCase() === "accepted" && f.form_type === "W-2")
     .reduce((sum, f) => sum + (f.refund_amount || 0), 0)
 
   const filteredFilings = filings.filter((filing) => {
+    const status = filing.filing_status.toLowerCase()
     if (selectedTab === "all") return true
-    if (selectedTab === "accepted") return filing.filing_status === "accepted"
-    if (selectedTab === "pending") return filing.filing_status === "submitted" || filing.filing_status === "pending"
-    if (selectedTab === "rejected") return filing.filing_status === "rejected"
+    if (selectedTab === "accepted") return status === "accepted"
+    if (selectedTab === "pending") return ["submitted", "pending", "processing"].includes(status)
+    if (selectedTab === "rejected") return status === "rejected"
     return true
   })
 
@@ -122,7 +123,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
       clearTimeout(pollingRef.current)
     }
 
-    const hasPendingFilings = filings.some((f) => f.filing_status === "pending" || f.filing_status === "submitted")
+    const hasPendingFilings = filings.some((f) => ["pending", "submitted", "processing"].includes(f.filing_status.toLowerCase()))
 
     if (hasPendingFilings) {
       console.log("[v0] Detected pending filings, will auto-refresh status in 3 seconds...")
@@ -130,7 +131,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
       pollingRef.current = setTimeout(async () => {
         console.log("[v0] Auto-refreshing pending filing statuses...")
 
-        const pendingFilings = filings.filter((f) => f.filing_status === "pending" || f.filing_status === "submitted")
+        const pendingFilings = filings.filter((f) => ["pending", "submitted", "processing"].includes(f.filing_status.toLowerCase()))
 
         // Run checks in parallel
         const statusChecks = pendingFilings.map((filing) =>
@@ -323,7 +324,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
                 <TabsTrigger value="accepted">Accepted ({acceptedFilings})</TabsTrigger>
                 <TabsTrigger value="pending">Pending ({pendingFilings})</TabsTrigger>
                 <TabsTrigger value="rejected">
-                  Rejected ({filings.filter((f) => f.filing_status === "rejected").length})
+                  Rejected ({filings.filter((f) => f.filing_status.toLowerCase() === "rejected").length})
                 </TabsTrigger>
               </TabsList>
 
@@ -379,7 +380,8 @@ function FilingCard({
   isRefreshing: boolean
 }) {
   const getStatusBadge = (status: string) => {
-    switch (status) {
+    const s = status.toLowerCase()
+    switch (s) {
       case "accepted":
         return (
           <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
@@ -413,6 +415,8 @@ function FilingCard({
         return <Badge variant="secondary">{status}</Badge>
     }
   }
+
+  const isPending = ["pending", "submitted", "processing"].includes(filing.filing_status.toLowerCase())
 
   return (
     <Card className="glass-effect border-0 hover-lift hover:shadow-2xl transition-all">
@@ -486,7 +490,7 @@ function FilingCard({
           </div>
 
           <div className="flex flex-col gap-2 ml-4">
-            {(filing.filing_status === "pending" || filing.filing_status === "submitted") && (
+            {isPending && (
               <Button variant="outline" size="sm" onClick={(e) => onRefresh(filing.id, e)} disabled={isRefreshing}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
                 {isRefreshing ? "Checking..." : "Check Status"}
@@ -498,7 +502,7 @@ function FilingCard({
                 View Details
               </Link>
             </Button>
-            {filing.filing_status === "accepted" && (
+            {filing.filing_status.toLowerCase() === "accepted" && (
               <Button variant="outline" size="sm">
                 <Download className="mr-2 h-4 w-4" />
                 Download

@@ -9,13 +9,20 @@ export default async function NewFilingPage() {
     redirect("/login")
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
 
-  if (!user) {
+    if (error || !user) {
+      console.error("[v0] Error fetching user in NewFilingPage:", error)
+      redirect("/login")
+    }
+
+    return <NewFilingClient userId={user.id} />
+  } catch (err) {
+    console.error("[v0] Exception in NewFilingPage:", err)
     redirect("/login")
   }
-
-  return <NewFilingClient userId={user.id} />
 }

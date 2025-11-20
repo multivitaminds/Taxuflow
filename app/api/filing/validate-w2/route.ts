@@ -146,8 +146,12 @@ Analyze the W-2 form data and identify:
 IRS W-2 Rules:
 - EIN format: XX-XXXXXXX (9 digits with hyphen after 2nd digit)
 - SSN format: XXX-XX-XXXX (9 digits with hyphens)
-- Social Security tax rate: 6.2% of wages up to $168,600 (2024)
-- Medicare tax rate: 1.45% of all wages (+ 0.9% additional for high earners)
+- Social Security tax rate: 6.2% of wages up to the wage base limit.
+  - 2024 Limit: $168,600 (Max tax: $10,453.20)
+  - 2025 Limit: $176,100 (Max tax: $10,918.20)
+  - Check the "taxYear" field in the input to determine which limit applies.
+- Medicare tax rate: 1.45% of all wages (+ 0.9% additional for high earners over $200,000)
+  - Allow for small rounding differences (±$0.05).
 - Federal withholding: Cannot exceed total wages
 - Box 3 (SS wages) usually equals Box 1 (wages) unless over SS wage base
 - Box 5 (Medicare wages) usually equals Box 1 (wages)
@@ -210,7 +214,8 @@ IMPORTANT: Always return valid JSON. If there are no issues in a category, retur
             ...warnings,
             {
               field: "system",
-              message: "AI-powered validation is temporarily unavailable, but your form has been validated using comprehensive IRS rules and requirements.",
+              message:
+                "AI-powered validation is temporarily unavailable, but your form has been validated using comprehensive IRS rules and requirements.",
               severity: "info",
             },
           ],
@@ -255,7 +260,8 @@ IMPORTANT: Always return valid JSON. If there are no issues in a category, retur
         warnings: [
           {
             field: "system",
-            message: "AI validation is temporarily unavailable. Your form has been checked with rule-based validation. Please verify all fields are correct before submitting.",
+            message:
+              "AI validation is temporarily unavailable. Your form has been checked with rule-based validation. Please verify all fields are correct before submitting.",
             severity: "info",
           },
         ],
