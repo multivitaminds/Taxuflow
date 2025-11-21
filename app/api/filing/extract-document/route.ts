@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
 import { parseFullAddress } from "@/lib/address-parser"
-import { getExtractionModel, isComparisonModeEnabled, getComparisonModels, getExtractionModelWithFallback } from "@/lib/ai-config"
+import { isComparisonModeEnabled, getComparisonModels, getExtractionModelWithFallback } from "@/lib/ai-config"
 
 function createDemoExtraction(fileName: string): any {
   const isW2 = fileName.toLowerCase().includes("w2") || fileName.toLowerCase().includes("w-2")
@@ -97,12 +97,12 @@ function createDemoExtraction(fileName: string): any {
 
 async function extractWithRetry(dataUrl: string, extractionInstructions: string, maxRetries = 1) {
   let lastError: Error | null = null
-  
+
   const modelConfigs = getExtractionModelWithFallback()
-  
+
   for (const modelConfig of modelConfigs) {
     console.log(`[v0] Attempting extraction with: ${modelConfig.name} (${modelConfig.provider})`)
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         console.log(`[v0] Extraction attempt ${attempt + 1}/${maxRetries + 1}`)
@@ -132,12 +132,11 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
         return text
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error)
-        
+
         console.error(`[v0] Extraction attempt ${attempt + 1} failed:`, errorMessage)
-        
-        const isProviderRestricted = 
-          errorMessage.includes("team restrictions") ||
-          errorMessage.includes("Unable to route to any provider")
+
+        const isProviderRestricted =
+          errorMessage.includes("team restrictions") || errorMessage.includes("Unable to route to any provider")
 
         if (isProviderRestricted) {
           console.log(`[v0] Provider ${modelConfig.provider} restricted - trying next model if available`)
@@ -178,9 +177,9 @@ async function extractWithRetry(dataUrl: string, extractionInstructions: string,
 
 async function extractWithComparison(dataUrl: string, extractionInstructions: string) {
   const [model1, model2] = getComparisonModels()
-  
+
   console.log(`[v0] A/B Testing: Compare ${model1.name} vs ${model2.name}`)
-  
+
   const results = await Promise.allSettled([
     generateText({
       model: model1.modelId,
@@ -211,11 +210,11 @@ async function extractWithComparison(dataUrl: string, extractionInstructions: st
       abortSignal: AbortSignal.timeout(model2.timeoutMs),
     }),
   ])
-  
+
   // Log comparison results
   console.log(`[v0] ${model1.name} result:`, results[0].status)
   console.log(`[v0] ${model2.name} result:`, results[1].status)
-  
+
   if (results[0].status === "fulfilled" && results[1].status === "fulfilled") {
     console.log(`[v0] Both models succeeded - using ${model1.name} (primary)`)
     console.log(`[v0] ${model1.name} extracted:`, results[0].value.text.substring(0, 200))
@@ -341,7 +340,7 @@ Rules:
 
     try {
       let text: string
-      
+
       if (isComparisonModeEnabled()) {
         text = await extractWithComparison(dataUrl, extractionInstructions)
       } else {
@@ -354,8 +353,8 @@ Rules:
       let cleanedText = text.trim()
 
       if (cleanedText.startsWith("`")) {
-        cleanedText = cleanedText.replace(/^\`\`\`(?:json)?\n?/, "")
-        cleanedText = cleanedText.replace(/\n?\`\`\`$/, "")
+        cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
+        cleanedText = cleanedText.replace(/\n?```$/, "")
         cleanedText = cleanedText.trim()
       }
 
@@ -388,9 +387,13 @@ Rules:
         errorMessage.includes("NetworkError") ||
         errorMessage.includes("ENOTFOUND") ||
         errorMessage.includes("ETIMEDOUT") ||
-        errorMessage.includes("ECONNRESET")
+        errorMessage.includes("ECONNRESET") ||
+        errorMessage.includes("Both models failed to extract") || // Catch the specific error from logs
+        errorMessage.includes("team restrictions") ||
+        errorMessage.includes("Unable to route")
       ) {
-        console.log("[v0] AI extraction unavailable - using intelligent demo mode")
+        console.log("[v0] AI extraction unavailable or failed - using intelligent demo mode")
+        console.log("[v0] Error details:", errorMessage)
 
         extractedData = createDemoExtraction(fileName)
 
@@ -410,7 +413,8 @@ Rules:
       const hasEmployerData = extractedData.employer_name || extractedData.employer?.name
       const hasEmployerEIN = extractedData.employer_ein || extractedData.employer?.ein
       const hasEmployeeData = extractedData.employee_name || extractedData.employee?.name
-      const hasEmployeeSSN = extractedData.employee_ssn || extractedData.employee?.ssn || extractedData.employee?.ssn_encrypted
+      const hasEmployeeSSN =
+        extractedData.employee_ssn || extractedData.employee?.ssn || extractedData.employee?.ssn_encrypted
       const hasWages = extractedData.wages !== undefined || extractedData.income?.wages !== undefined
 
       console.log("[v0] W-2 validation:", {
@@ -425,12 +429,13 @@ Rules:
 
       if (!hasRequiredW2Data) {
         console.error("[v0] W-2 extraction missing required fields - attempting to use partial data")
-        
+
         return NextResponse.json({
           success: true,
           data: extractedData,
           mode: "ai",
-          warning: "Some W-2 fields may be incomplete. Please review and fill in missing information before submitting.",
+          warning:
+            "Some W-2 fields may be incomplete. Please review and fill in missing information before submitting.",
         })
       }
     } else if (extractedData.documentType === "1099-nec" || extractedData.documentType === "1099-misc") {
@@ -469,9 +474,9 @@ Rules:
 
     if (extractedData.employer?.address || extractedData.employer_address) {
       const addressData = extractedData.employer?.address || extractedData.employer_address
-      
+
       // Check if address is already an object (AI pre-parsed it)
-      if (typeof addressData === 'object' && addressData !== null) {
+      if (typeof addressData === "object" && addressData !== null) {
         // Address is already parsed, use it directly
         if (extractedData.employer) {
           extractedData.employer.street = addressData.street || addressData.address
@@ -484,7 +489,7 @@ Rules:
           extractedData.employer_state = addressData.state
           extractedData.employer_zip = addressData.zipCode || addressData.zip
         }
-      } else if (typeof addressData === 'string') {
+      } else if (typeof addressData === "string") {
         // Address is a string, parse it
         const parsed = parseFullAddress(addressData)
         if (parsed) {
@@ -505,9 +510,9 @@ Rules:
 
     if (extractedData.employee?.address || extractedData.employee_address) {
       const addressData = extractedData.employee?.address || extractedData.employee_address
-      
+
       // Check if address is already an object (AI pre-parsed it)
-      if (typeof addressData === 'object' && addressData !== null) {
+      if (typeof addressData === "object" && addressData !== null) {
         // Address is already parsed, use it directly
         if (extractedData.employee) {
           extractedData.employee.street = addressData.street || addressData.address
@@ -520,7 +525,7 @@ Rules:
           extractedData.employee_state = addressData.state
           extractedData.employee_zip = addressData.zipCode || addressData.zip
         }
-      } else if (typeof addressData === 'string') {
+      } else if (typeof addressData === "string") {
         // Address is a string, parse it
         const parsed = parseFullAddress(addressData)
         if (parsed) {
@@ -541,13 +546,13 @@ Rules:
 
     if (extractedData.payer?.address) {
       const addressData = extractedData.payer.address
-      
-      if (typeof addressData === 'object' && addressData !== null) {
+
+      if (typeof addressData === "object" && addressData !== null) {
         extractedData.payer.street = addressData.street || addressData.address
         extractedData.payer.city = addressData.city
         extractedData.payer.state = addressData.state
         extractedData.payer.zipCode = addressData.zipCode || addressData.zip
-      } else if (typeof addressData === 'string') {
+      } else if (typeof addressData === "string") {
         const parsed = parseFullAddress(addressData)
         if (parsed) {
           extractedData.payer.street = parsed.street || addressData
@@ -560,13 +565,13 @@ Rules:
 
     if (extractedData.recipient?.address) {
       const addressData = extractedData.recipient.address
-      
-      if (typeof addressData === 'object' && addressData !== null) {
+
+      if (typeof addressData === "object" && addressData !== null) {
         extractedData.recipient.street = addressData.street || addressData.address
         extractedData.recipient.city = addressData.city
         extractedData.recipient.state = addressData.state
         extractedData.recipient.zipCode = addressData.zipCode || addressData.zip
-      } else if (typeof addressData === 'string') {
+      } else if (typeof addressData === "string") {
         const parsed = parseFullAddress(addressData)
         if (parsed) {
           extractedData.recipient.street = parsed.street || addressData
@@ -603,7 +608,12 @@ Rules:
     let userMessage = "Failed to extract document data"
     const errorMessage = error instanceof Error ? error.message : String(error)
 
-    if (errorMessage.includes("Gateway") || errorMessage.includes("timeout") || errorMessage.includes("fetch failed") || errorMessage.includes("network")) {
+    if (
+      errorMessage.includes("Gateway") ||
+      errorMessage.includes("timeout") ||
+      errorMessage.includes("fetch failed") ||
+      errorMessage.includes("network")
+    ) {
       userMessage =
         "Unable to connect to AI service. The system will use demo data as a starting point - please review and update all fields."
     } else if (errorMessage.includes("File too large")) {

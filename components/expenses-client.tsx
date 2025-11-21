@@ -42,22 +42,18 @@ export function ExpensesClient() {
       }
 
       const { data: expensesData, error: expensesError } = await supabase
-        .from("journal_entries")
+        .from("expenses")
         .select("*")
-        .eq("entry_type", "expense")
-        .order("entry_date", { ascending: false })
+        .order("expense_date", { ascending: false })
 
       if (expensesError) throw expensesError
 
-      // Fetch all accounts for the user
-      const { data: accountsData, error: accountsError } = await supabase.from("accounts").select("id, name")
+      const { data: accountsData, error: accountsError } = await supabase.from("accounts").select("id, account_name")
 
       if (accountsError) throw accountsError
 
-      // Create a map of account_id to account name
-      const accountsMap = new Map(accountsData?.map((acc) => [acc.id, acc.name]) || [])
+      const accountsMap = new Map(accountsData?.map((acc) => [acc.id, acc.account_name]) || [])
 
-      // Merge the data
       const expensesWithAccounts =
         expensesData?.map((expense) => ({
           ...expense,
@@ -86,10 +82,10 @@ export function ExpensesClient() {
     total: expenses.length,
     totalAmount: expenses.reduce((sum, e) => sum + (e.amount || 0), 0),
     thisMonth: expenses
-      .filter((e) => new Date(e.entry_date).getMonth() === new Date().getMonth())
+      .filter((e) => new Date(e.expense_date).getMonth() === new Date().getMonth())
       .reduce((sum, e) => sum + (e.amount || 0), 0),
     lastMonth: expenses
-      .filter((e) => new Date(e.entry_date).getMonth() === new Date().getMonth() - 1)
+      .filter((e) => new Date(e.expense_date).getMonth() === new Date().getMonth() - 1)
       .reduce((sum, e) => sum + (e.amount || 0), 0),
   }
 
@@ -97,7 +93,6 @@ export function ExpensesClient() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -119,7 +114,6 @@ export function ExpensesClient() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="p-4 border-border">
               <div className="flex items-center justify-between">
@@ -169,7 +163,6 @@ export function ExpensesClient() {
         </div>
       </div>
 
-      {/* Filters and Search */}
       <div className="container mx-auto px-6 py-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -195,7 +188,6 @@ export function ExpensesClient() {
           </div>
         </div>
 
-        {/* Expenses List */}
         <Card className="border-border">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -230,7 +222,9 @@ export function ExpensesClient() {
                 ) : (
                   filteredExpenses.map((expense) => (
                     <tr key={expense.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                      <td className="p-4 text-muted-foreground">{new Date(expense.entry_date).toLocaleDateString()}</td>
+                      <td className="p-4 text-muted-foreground">
+                        {new Date(expense.expense_date).toLocaleDateString()}
+                      </td>
                       <td className="p-4">
                         <Link
                           href={`/accounting/expenses/${expense.id}`}

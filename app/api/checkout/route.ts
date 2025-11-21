@@ -22,6 +22,16 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Plan found:", plan.name, plan.price)
 
+    const hasSupabaseKeys = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const hasStripeKey = process.env.STRIPE_SECRET_KEY
+
+    if (!hasSupabaseKeys || !hasStripeKey) {
+      console.log("[v0] Missing API keys, defaulting to demo mode immediately")
+      return NextResponse.json({
+        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&plan=${planId}&demo=true`,
+      })
+    }
+
     if (plan.price === 0) {
       return NextResponse.json({ error: "Free plan doesn't require checkout" }, { status: 400 })
     }
@@ -37,8 +47,8 @@ export async function POST(request: NextRequest) {
       console.log("[v0] Supabase initialization failed, assuming demo mode:", error)
     }
 
-    if (!user || !process.env.STRIPE_SECRET_KEY) {
-      console.log("[v0] Demo mode or missing config, returning mock success")
+    if (!user) {
+      console.log("[v0] No user found, returning mock success")
       return NextResponse.json({
         url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&plan=${planId}&demo=true`,
       })

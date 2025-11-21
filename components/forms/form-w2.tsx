@@ -369,33 +369,28 @@ export default function FormW2({ extractedData }: FormW2Props) {
     const file = e.target.files?.[0]
     if (!file) return
 
+    e.target.value = ""
+
     setUploading(true)
     setExtracting(true)
 
     try {
-      // Upload file to blob storage
-      const uploadFormData = new FormData()
-      uploadFormData.append("file", file)
+      const arrayBuffer = await file.arrayBuffer()
+      const base64 = Buffer.from(arrayBuffer).toString("base64")
 
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadFormData,
-      })
-
-      if (!uploadResponse.ok) throw new Error("Upload failed")
-
-      const { url } = await uploadResponse.json()
-
-      // Extract data using AI
       const extractResponse = await fetch("/api/filing/extract-document", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileId: url }),
+        body: JSON.stringify({
+          fileData: base64,
+          fileName: file.name,
+          mimeType: file.type,
+        }),
       })
 
       const extractData = await extractResponse.json()
 
-      if (extractData.success && extractData.data.documentType === "w2") {
+      if (extractData.success && extractData.data) {
         const extracted: ExtractedW2Data = extractData.data
 
         if (!extracted.employer?.name || !extracted.income?.wages) {

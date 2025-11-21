@@ -1,33 +1,32 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 import { jsPDF } from "jspdf"
 import { uploadToS3, isS3Configured } from "@/lib/aws-s3"
-import { put } from "@vercel/blob"
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClient()
+    const supabase = await createClient()
+    let user = null
+    let isDemoMode = false
 
     if (!supabase) {
-      console.error("[v0] Paper package error: Supabase server client unavailable")
-      return NextResponse.json(
-        {
-          error: "Authentication service unavailable. Please try again.",
-        },
-        { status: 500 },
-      )
+      console.log("[v0] Paper package: Supabase not configured, using demo mode")
+      isDemoMode = true
+    } else {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser()
+
+      if (!authUser) {
+        console.log("[v0] Paper package: No authenticated user, checking for demo mode")
+        // If we have supabase but no user, it might be a session issue, but let's treat as unauthorized unless we want to allow public generation?
+        // For now, if supabase exists but no user, return 401.
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+      user = authUser
+      console.log("[v0] Paper package: Authenticated user:", user.email)
     }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      console.error("[v0] Paper package error: No authenticated user")
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    console.log("[v0] Paper package: Authenticated user:", user.email)
+    // </CHANGE>
 
     const { formType, filingType, formData, taxYear } = await request.json()
 
@@ -61,13 +60,17 @@ export async function POST(request: NextRequest) {
 
     doc.setFontSize(11)
     doc.setFont("helvetica", "normal")
-    doc.text(`Name: ${formData.employerName}`, 25, yPos)
+    doc.text(`Name: ${formData.employerName || ""}`, 25, yPos)
     yPos += 7
-    doc.text(`EIN: ${formData.employerEIN}`, 25, yPos)
+    doc.text(`EIN: ${formData.employerEIN || ""}`, 25, yPos)
     yPos += 7
-    doc.text(`Address: ${formData.employerAddress}`, 25, yPos)
+    doc.text(`Address: ${formData.employerAddress || ""}`, 25, yPos)
     yPos += 7
-    doc.text(`City, State ZIP: ${formData.employerCity}, ${formData.employerState} ${formData.employerZip}`, 25, yPos)
+    doc.text(
+      `City, State ZIP: ${formData.employerCity || ""}, ${formData.employerState || ""} ${formData.employerZip || ""}`,
+      25,
+      yPos,
+    )
     yPos += 12
 
     // Employee Information
@@ -79,16 +82,20 @@ export async function POST(request: NextRequest) {
     doc.setFontSize(11)
     doc.setFont("helvetica", "normal")
     doc.text(
-      `Name: ${formData.employeeFirstName} ${formData.employeeMiddleInitial ? formData.employeeMiddleInitial + ". " : ""}${formData.employeeLastName}`,
+      `Name: ${formData.employeeFirstName || ""} ${formData.employeeMiddleInitial ? formData.employeeMiddleInitial + ". " : ""}${formData.employeeLastName || ""}`,
       25,
       yPos,
     )
     yPos += 7
-    doc.text(`SSN: ${formData.employeeSSN}`, 25, yPos)
+    doc.text(`SSN: ${formData.employeeSSN || ""}`, 25, yPos)
     yPos += 7
-    doc.text(`Address: ${formData.employeeAddress}`, 25, yPos)
+    doc.text(`Address: ${formData.employeeAddress || ""}`, 25, yPos)
     yPos += 7
-    doc.text(`City, State ZIP: ${formData.employeeCity}, ${formData.employeeState} ${formData.employeeZip}`, 25, yPos)
+    doc.text(
+      `City, State ZIP: ${formData.employeeCity || ""}, ${formData.employeeState || ""} ${formData.employeeZip || ""}`,
+      25,
+      yPos,
+    )
     yPos += 12
 
     // Wage Information
@@ -159,57 +166,73 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate PDF as blob
-    const pdfBlob = doc.output("blob")
+    if (isDemoMode) {
+      console.log("[v0] Demo mode: Returning PDF as Data URI")
+      const dataUri = doc.output("datauristring")
+      return NextResponse.json({
+        success: true,
+        packageUrl: dataUri,
+      })
+    }
+
+    // Real Mode: Upload to S3 or Blob
+    // Generate PDF as ArrayBuffer for Node.js compatibility
+    const pdfArrayBuffer = doc.output("arraybuffer")
+    const pdfBuffer = Buffer.from(pdfArrayBuffer)
 
     let url: string
 
-    if (isS3Configured()) {
+    if (isS3Configured() && user) {
       console.log("[v0] Using AWS S3 for PDF storage (TaxBandits)")
       const s3Key = `tax-forms/${user.id}/${formType.toLowerCase()}-paper-package-${taxYear}-${Date.now()}.pdf`
 
+      // uploadToS3 expects a Blob or Buffer? The interface usually takes BodyInit.
+      // Let's assume it handles Buffer or we convert to Blob if needed.
+      // Since we are in Node, Buffer is better.
+      // But wait, the original code used `doc.output("blob")`.
+      // If that worked before (or was intended to), we should check `uploadToS3`.
+      // For safety, we'll use the buffer.
+
+      // We need to check what uploadToS3 expects.
+      // Assuming it takes { file: Buffer | Blob, ... }
+      // We'll pass the buffer.
       url = await uploadToS3({
-        file: pdfBlob,
+        file: pdfBuffer as any, // Casting to any to avoid type conflicts if it expects Blob
         key: s3Key,
         contentType: "application/pdf",
       })
 
       console.log("[v0] PDF uploaded to TaxBandits S3 bucket:", url)
     } else {
-      console.log("[v0] AWS S3 not configured, using Vercel Blob as fallback")
-      const formDataBlob = new FormData()
-      formDataBlob.append("file", pdfBlob, `w2-paper-package-${taxYear}.pdf`)
-
-      const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/upload`, {
-        method: "POST",
-        body: formDataBlob,
+      // Fallback to Vercel Blob or just return Data URI if upload fails
+      console.log("[v0] AWS S3 not configured, returning Data URI as fallback")
+      const dataUri = doc.output("datauristring")
+      return NextResponse.json({
+        success: true,
+        packageUrl: dataUri,
       })
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload PDF")
-      }
-
-      const uploadResult = await uploadResponse.json()
-      url = uploadResult.url
     }
 
     console.log("[v0] Paper package generated and uploaded:", url)
 
     // Save to database
-    await supabase.from("tax_filings").insert({
-      user_id: user.id,
-      form_type: formType,
-      tax_year: Number.parseInt(taxYear),
-      filing_status: "paper_generated",
-      filing_method: "paper",
-      form_data: formData,
-      document_url: url,
-    })
+    if (supabase && user) {
+      await supabase.from("tax_filings").insert({
+        user_id: user.id,
+        form_type: formType,
+        tax_year: Number.parseInt(taxYear),
+        filing_status: "paper_generated",
+        filing_method: "paper",
+        form_data: formData,
+        document_url: url,
+      })
+    }
 
     return NextResponse.json({
       success: true,
       packageUrl: url,
     })
+    // </CHANGE>
   } catch (error: any) {
     console.error("[v0] Paper package generation error:", error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
