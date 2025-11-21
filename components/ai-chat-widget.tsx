@@ -1,18 +1,32 @@
 "use client"
 import { useState, useRef, useEffect } from "react"
-import type React from "react"
 import { usePathname } from "next/navigation"
-
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, X, Send, Mic, Volume2, RefreshCw, Settings } from "lucide-react"
+import {
+  X,
+  Send,
+  Mic,
+  RefreshCw,
+  Settings,
+  Paperclip,
+  ImageIcon,
+  MoreHorizontal,
+  ChevronDown,
+  Download,
+  ThumbsUp,
+  ThumbsDown,
+} from "lucide-react"
 import { agents as agentData } from "@/data/agents"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useChat } from "ai/react"
 
 interface Message {
   id: string
   role: "user" | "assistant"
   content: string
+  timestamp?: number
 }
 
 const agents: Record<string, { name: string; role: string; color: string; avatar: string }> = {}
@@ -32,13 +46,29 @@ export function AIChatWidget() {
   const [showAgentSelector, setShowAgentSelector] = useState(false)
   const [selectedModel, setSelectedModel] = useState<string>("openai/gpt-4o-mini")
   const [showSettings, setShowSettings] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [feedbackGiven, setFeedbackGiven] = useState<Record<string, "up" | "down" | null>>({})
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const recognitionRef = useRef<any>(null)
   const pathname = usePathname()
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
+    api: "/api/chat",
+    body: {
+      agent: currentAgent,
+      model: selectedModel,
+      context: getContextPrompt(pathname),
+    },
+    initialMessages: [
+      {
+        id: "welcome-" + Date.now(),
+        role: "assistant",
+        content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. How can I help you with your taxes today?`,
+      },
+    ],
+    onError: (err) => {
+      console.error("[v0] Chat error:", err)
+    },
+  })
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -46,94 +76,13 @@ export function AIChatWidget() {
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, isLoading])
 
   useEffect(() => {
-    const welcomeMessage: Message = {
-      id: "welcome-" + Date.now(),
-      role: "assistant",
-      content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. How can I help you with your taxes today?`,
+    if (messages.length === 0 || (messages.length === 1 && messages[0].role === "assistant")) {
+      setFeedbackGiven({})
     }
-    setMessages([welcomeMessage])
   }, [currentAgent])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || isLoading) return
-
-    const userMessage: Message = {
-      id: "user-" + Date.now(),
-      role: "user",
-      content: input.trim(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    setInput("")
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-          agent: currentAgent,
-          model: selectedModel,
-          context: getContextPrompt(),
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-      let assistantMessage = ""
-      const assistantMessageId = "assistant-" + Date.now()
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          const chunk = decoder.decode(value)
-          const lines = chunk.split("\n")
-
-          for (const line of lines) {
-            if (line.startsWith("0:")) {
-              try {
-                const jsonStr = line.slice(2)
-                const parsed = JSON.parse(jsonStr)
-                if (parsed.content) {
-                  assistantMessage += parsed.content
-                  setMessages((prev) => {
-                    const existing = prev.find((m) => m.id === assistantMessageId)
-                    if (existing) {
-                      return prev.map((m) => (m.id === assistantMessageId ? { ...m, content: assistantMessage } : m))
-                    } else {
-                      return [...prev, { id: assistantMessageId, role: "assistant", content: assistantMessage }]
-                    }
-                  })
-                }
-              } catch (e) {
-                console.error("[v0] Failed to parse chunk:", e)
-              }
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error("[v0] Chat error:", err)
-      setError("Sorry, I encountered an error. Please try again.")
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleVoiceInput = () => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
@@ -161,7 +110,7 @@ export function AIChatWidget() {
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript
-      setInput(transcript)
+      handleInputChange(transcript)
       setIsListening(false)
     }
 
@@ -177,71 +126,36 @@ export function AIChatWidget() {
     recognition.start()
   }
 
-  const handleTextToSpeech = (text: string) => {
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.rate = 0.9
-      utterance.pitch = 1
-      window.speechSynthesis.speak(utterance)
-    }
+  const handleDownloadTranscript = () => {
+    const transcript = messages
+      .map((m) => `[${new Date(m.createdAt || Date.now()).toLocaleTimeString()}] ${m.role.toUpperCase()}: ${m.content}`)
+      .join("\n\n")
+    const blob = new Blob([transcript], { type: "text/plain" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `chat-transcript-${new Date().toISOString()}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
-  const getContextPrompt = () => {
-    if (pathname?.includes("/file/w2")) {
-      return "\n\nCONTEXT: User is currently on the W-2 filing page. Help them with W-2 specific questions like understanding boxes, employer vs employee information, and filing deadlines."
-    }
-    if (pathname?.includes("/file/1099")) {
-      return "\n\nCONTEXT: User is currently on the 1099-NEC filing page. Help them with contractor payments, $600 threshold, and 1099 requirements."
-    }
-    if (pathname?.includes("/file/941")) {
-      return "\n\nCONTEXT: User is currently on the Form 941 (quarterly payroll tax) page. Help them with quarterly filing, payroll tax calculations, and deposit schedules."
-    }
-    if (pathname?.includes("/dashboard")) {
-      return "\n\nCONTEXT: User is on their dashboard. Help them understand their filing status, upcoming deadlines, and next steps."
-    }
-    return ""
+  const handleFeedback = (messageId: string, type: "up" | "down") => {
+    setFeedbackGiven((prev) => ({ ...prev, [messageId]: type }))
+    console.log(`[v0] Feedback for ${messageId}: ${type}`)
   }
-
-  const getQuickActions = () => {
-    if (pathname?.includes("/file/w2")) {
-      return [
-        "What is Box 1 on a W-2?",
-        "How do I correct a W-2 error?",
-        "What's the W-2 filing deadline?",
-        "Can I e-file a late W-2?",
-      ]
-    }
-    if (pathname?.includes("/file/1099")) {
-      return [
-        "Who needs a 1099-NEC?",
-        "What's the $600 threshold?",
-        "When is 1099 deadline?",
-        "Do I need to file 1099 for LLC?",
-      ]
-    }
-    return [
-      "What's my refund estimate?",
-      "Am I eligible for EITC?",
-      "What deductions can I claim?",
-      "How do I reduce audit risk?",
-    ]
-  }
-
-  const quickActions = getQuickActions()
 
   if (!isOpen) {
     return (
       <button
         data-chat-widget-button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-gradient-to-br from-neon to-blue-500 shadow-lg shadow-neon/50 flex items-center justify-center hover:scale-110 transition-transform z-50 group"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[#FF5722] shadow-lg shadow-orange-500/30 flex items-center justify-center hover:scale-110 transition-transform z-50 group"
         aria-label="Open AI chat"
       >
-        <MessageSquare className="w-6 h-6 text-background" />
-        <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold text-white animate-pulse">
-          AI
-        </div>
-        <div className="absolute inset-0 rounded-full bg-neon/20 animate-ping" />
+        <ChevronDown className="w-8 h-8 text-white rotate-180" />
+        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white" />
       </button>
     )
   }
@@ -249,177 +163,241 @@ export function AIChatWidget() {
   const agent = agents[currentAgent]
 
   return (
-    <Card className="fixed bottom-6 right-6 w-96 h-[600px] flex flex-col border-neon/20 bg-background/95 backdrop-blur-xl shadow-2xl shadow-neon/20 z-50">
+    <Card className="fixed bottom-6 right-6 w-[400px] h-[650px] flex flex-col border-none shadow-2xl z-50 overflow-hidden rounded-2xl font-sans">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-neon/20 bg-gradient-to-r from-neon/10 to-blue-500/10">
-        <button
-          onClick={() => setShowAgentSelector(!showAgentSelector)}
-          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-        >
+      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-100">
+        <div className="flex items-center gap-3">
           <div
-            className={`w-10 h-10 rounded-full bg-gradient-to-br ${agent.color} flex items-center justify-center text-white font-bold`}
+            className={`w-10 h-10 rounded-lg bg-gradient-to-br ${agent.color} flex items-center justify-center text-white font-bold shadow-sm`}
           >
             {agent.avatar}
           </div>
-          <div className="text-left">
-            <div className="font-semibold flex items-center gap-1">
-              {agent.name}
-              <RefreshCw className="w-3 h-3 text-muted-foreground" />
-            </div>
-            <div className="text-xs text-muted-foreground">{agent.role} • Online</div>
+          <div>
+            <div className="font-bold text-gray-900 flex items-center gap-1">{agent.name}</div>
+            <div className="text-xs text-gray-500">The team can also help</div>
           </div>
-        </button>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)}>
-            <Settings className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
-            <X className="w-4 h-4" />
+        </div>
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:bg-gray-100 rounded-full">
+                <MoreHorizontal className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleDownloadTranscript}>
+                <Download className="w-4 h-4 mr-2" />
+                Download transcript
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowAgentSelector(!showAgentSelector)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Switch Agent
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowSettings(!showSettings)}>
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setIsOpen(false)}>
+                <X className="w-4 h-4 mr-2" />
+                Collapse window
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsOpen(false)}
+            className="h-8 w-8 text-gray-500 hover:bg-gray-100 rounded-full"
+          >
+            <X className="w-5 h-5" />
           </Button>
         </div>
       </div>
 
-      {/* AI Model Settings Panel */}
-      {showSettings && (
-        <div className="p-4 border-b border-neon/20 bg-background/50 space-y-3">
-          <p className="text-xs font-semibold text-muted-foreground mb-2">AI Model</p>
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="w-full p-2 rounded-lg border border-neon/20 bg-background text-sm"
-          >
-            {aiModels.map((model) => (
-              <option key={model.value} value={model.value}>
-                {model.label}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-muted-foreground">
-            Choose your preferred AI model. GPT-4o is recommended for most tasks.
-          </p>
-        </div>
-      )}
-
-      {/* Agent Selector */}
-      {showAgentSelector && (
-        <div className="p-4 border-b border-neon/20 bg-background/50 space-y-2">
-          <p className="text-xs text-muted-foreground mb-2">Switch to another AI agent:</p>
-          {Object.entries(agents).map(([key, agentData]) => (
-            <button
-              key={key}
-              onClick={() => {
-                setCurrentAgent(key)
-                setShowAgentSelector(false)
-              }}
-              className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors ${
-                currentAgent === key ? "bg-neon/10 border border-neon/20" : ""
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full bg-gradient-to-br ${agentData.color} flex items-center justify-center text-white text-sm font-bold`}
+      {/* Settings & Selectors (Overlay) */}
+      {(showSettings || showAgentSelector) && (
+        <div className="absolute top-[72px] left-0 right-0 bg-white/95 backdrop-blur-sm z-10 border-b border-gray-100 p-4 animate-in slide-in-from-top-2">
+          {showSettings && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">AI Model</p>
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                className="w-full p-2 rounded-lg border border-gray-200 bg-white text-sm focus:ring-2 focus:ring-neon/20 outline-none"
               >
-                {agentData.avatar}
-              </div>
-              <div className="text-left text-sm">
-                <div className="font-medium">{agentData.name}</div>
-                <div className="text-xs text-muted-foreground">{agentData.role}</div>
-              </div>
-            </button>
-          ))}
+                {aiModels.map((model) => (
+                  <option key={model.value} value={model.value}>
+                    {model.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {showAgentSelector && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Agent</p>
+              {Object.entries(agents).map(([key, agentData]) => (
+                <button
+                  key={key}
+                  onClick={() => {
+                    setCurrentAgent(key)
+                    setShowAgentSelector(false)
+                  }}
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors ${
+                    currentAgent === key ? "bg-blue-50 border border-blue-100" : ""
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-full bg-gradient-to-br ${agentData.color} flex items-center justify-center text-white text-xs font-bold`}
+                  >
+                    {agentData.avatar}
+                  </div>
+                  <div className="text-left">
+                    <div className="font-medium text-sm text-gray-900">{agentData.name}</div>
+                    <div className="text-xs text-gray-500">{agentData.role}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                message.role === "user" ? "bg-neon text-background" : "bg-muted text-foreground border border-neon/20"
-              }`}
-            >
-              {message.role === "assistant" && (
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-neon">{currentAgent}</span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => handleTextToSpeech(message.content)}
-                  >
-                    <Volume2 className="w-3 h-3" />
-                  </Button>
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-white">
+        {messages.map((message, index) => {
+          const isLastMessage = index === messages.length - 1
+          const isAssistant = message.role === "assistant"
+
+          return (
+            <div key={message.id} className="space-y-2">
+              <div className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div
+                  className={`max-w-[85%] rounded-2xl px-5 py-3 text-[15px] leading-relaxed shadow-sm ${
+                    message.role === "user"
+                      ? "bg-[#FF5722] text-white rounded-br-none"
+                      : "bg-gray-100 text-gray-800 rounded-bl-none"
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{message.content}</p>
+                </div>
+              </div>
+
+              {/* Feedback & Metadata for Assistant Messages */}
+              {isAssistant && (
+                <div className="flex flex-col gap-2 animate-in fade-in duration-500">
+                  {isLastMessage && !isLoading && (
+                    <div className="flex items-center gap-2 mt-1 ml-1">
+                      <span className="text-xs font-medium text-gray-900">Did that answer your question?</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => handleFeedback(message.id, "up")}
+                          className={`p-1 rounded hover:bg-gray-100 transition-colors ${feedbackGiven[message.id] === "up" ? "text-green-600 bg-green-50" : "text-gray-400"}`}
+                        >
+                          <ThumbsUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleFeedback(message.id, "down")}
+                          className={`p-1 rounded hover:bg-gray-100 transition-colors ${feedbackGiven[message.id] === "down" ? "text-red-600 bg-red-50" : "text-gray-400"}`}
+                        >
+                          <ThumbsDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 ml-1">
+                    <span className="text-[11px] text-gray-400">
+                      {agent.name} • AI Agent •{" "}
+                      {new Date(message.createdAt || Date.now()).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
                 </div>
               )}
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
             </div>
-          </div>
-        ))}
+          )
+        })}
+
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-muted text-foreground border border-neon/20 rounded-2xl px-4 py-2">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-neon rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-neon rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-neon rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
+            <div className="bg-gray-100 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5">
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
             </div>
           </div>
         )}
+
         {error && (
-          <div className="flex justify-start">
-            <div className="bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl px-4 py-2">
-              <p className="text-sm">{error}</p>
+          <div className="flex justify-center">
+            <div className="bg-red-50 text-red-600 text-xs px-3 py-1.5 rounded-full border border-red-100">
+              {error.message || "An error occurred"}
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Actions */}
-      <div className="px-4 py-2 border-t border-neon/20 bg-background/50">
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {quickActions.map((action, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              size="sm"
-              className="text-xs whitespace-nowrap border-neon/20 bg-transparent"
-              onClick={() => setInput(action)}
-            >
-              {action}
-            </Button>
-          ))}
-        </div>
-      </div>
+      {/* Input Area */}
+      <div className="p-4 bg-white border-t border-gray-100">
+        <form onSubmit={handleSubmit} className="relative">
+          <div className="relative flex items-center gap-2 bg-white rounded-xl border border-gray-200 p-2 shadow-sm focus-within:ring-2 focus-within:ring-[#FF5722]/20 focus-within:border-[#FF5722]/50 transition-all">
+            <div className="flex gap-1 pl-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full"
+              >
+                <Paperclip className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full"
+              >
+                <ImageIcon className="w-4 h-4" />
+              </Button>
+            </div>
 
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-neon/20 bg-background/50">
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className={`border-neon/20 bg-transparent ${isListening ? "bg-neon/20" : ""}`}
-            onClick={handleVoiceInput}
-          >
-            <Mic className={`w-4 h-4 ${isListening ? "text-neon animate-pulse" : ""}`} />
-          </Button>
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={`Ask ${currentAgent} anything...`}
-            className="flex-1 border-neon/20 bg-background/50"
-            disabled={isLoading}
-          />
-          <Button type="submit" disabled={isLoading} className="bg-neon hover:bg-neon/90 text-background">
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Powered by {selectedModel.split("/")[1]} • SOC 2 Compliance In Progress • Encrypted
-        </p>
-      </form>
+            <Input
+              value={input}
+              onChange={handleInputChange}
+              placeholder="Message..."
+              className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 px-2 h-9 text-[15px]"
+              disabled={isLoading}
+            />
+
+            <div className="flex gap-1 pr-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={`h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full ${isListening ? "text-red-500 bg-red-50" : ""}`}
+                onClick={handleVoiceInput}
+              >
+                <Mic className={`w-4 h-4 ${isListening ? "animate-pulse" : ""}`} />
+              </Button>
+              <Button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                size="icon"
+                className={`h-8 w-8 rounded-full transition-all ${input.trim() ? "bg-[#FF5722] text-white hover:bg-[#F4511E]" : "bg-gray-100 text-gray-400"}`}
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="text-center mt-2">
+            <span className="text-[10px] font-medium text-gray-400 flex items-center justify-center gap-1">
+              Powered by <span className="font-bold text-gray-500">Taxu AI</span>
+            </span>
+          </div>
+        </form>
+      </div>
     </Card>
   )
 }
@@ -431,3 +409,19 @@ const aiModels = [
   { value: "anthropic/claude-opus-4", label: "Claude Opus 4" },
   { value: "xai/grok-4-fast", label: "Grok 4 Fast" },
 ]
+
+const getContextPrompt = (pathname: string | null) => {
+  if (pathname?.includes("/file/w2")) {
+    return "\n\nCONTEXT: User is currently on the W-2 filing page. Help them with W-2 specific questions like understanding boxes, employer vs employee information, and filing deadlines."
+  }
+  if (pathname?.includes("/file/1099")) {
+    return "\n\nCONTEXT: User is currently on the 1099-NEC filing page. Help them with contractor payments, $600 threshold, and 1099 requirements."
+  }
+  if (pathname?.includes("/file/941")) {
+    return "\n\nCONTEXT: User is currently on the Form 941 (quarterly payroll tax) page. Help them with quarterly filing, payroll tax calculations, and deposit schedules."
+  }
+  if (pathname?.includes("/dashboard")) {
+    return "\n\nCONTEXT: User is on their dashboard. Help them understand their filing status, upcoming deadlines, and next steps."
+  }
+  return ""
+}

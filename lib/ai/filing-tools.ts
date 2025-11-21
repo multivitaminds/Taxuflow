@@ -12,6 +12,13 @@ export const filingStatusTool = tool({
   execute: async ({ userId, filingId }) => {
     const supabase = await createClient()
 
+    if (!supabase) {
+      return {
+        success: false,
+        message: "Filing status is not available in demo mode. Please sign in to view real data.",
+      }
+    }
+
     let query = supabase.from("tax_filings").select("*").order("created_at", { ascending: false })
 
     if (filingId) {
@@ -33,15 +40,15 @@ export const filingStatusTool = tool({
       success: true,
       filing: {
         id: filings.id,
-        status: filings.status,
-        provider_status: filings.provider_status,
-        submitted_at: filings.submitted_at,
-        irs_accepted_at: filings.irs_accepted_at,
-        refund_amount: filings.refund_amount,
-        refund_status: filings.refund_status,
-        estimated_refund_date: filings.estimated_refund_date,
+        status: filings.filing_status, // Changed from status
+        provider_status: filings.irs_status, // Changed from provider_status
+        submitted_at: filings.filed_at, // Changed from submitted_at
+        irs_accepted_at: filings.accepted_at, // Changed from irs_accepted_at
+        refund_amount: filings.refund_or_owed, // Changed from refund_amount
+        refund_status: filings.irs_status, // Changed from refund_status
+        estimated_refund_date: null, // Column does not exist
       },
-      statusMessage: getStatusMessage(filings.status, filings.provider_status),
+      statusMessage: getStatusMessage(filings.filing_status, filings.irs_status),
     }
   },
 })
@@ -54,6 +61,13 @@ export const filingHistoryTool = tool({
   }),
   execute: async ({ userId, limit }) => {
     const supabase = await createClient()
+
+    if (!supabase) {
+      return {
+        success: false,
+        message: "Filing history is not available in demo mode.",
+      }
+    }
 
     const { data: filings, error } = await supabase
       .from("tax_filings")
@@ -74,10 +88,10 @@ export const filingHistoryTool = tool({
       filings: filings.map((f) => ({
         id: f.id,
         tax_year: f.tax_year,
-        status: f.status,
-        submitted_at: f.submitted_at,
-        refund_amount: f.refund_amount,
-        refund_status: f.refund_status,
+        status: f.filing_status, // Changed from status
+        submitted_at: f.filed_at, // Changed from submitted_at
+        refund_amount: f.refund_or_owed, // Changed from refund_amount
+        refund_status: f.irs_status, // Changed from refund_status
       })),
     }
   },
