@@ -39,7 +39,7 @@ agentData.forEach((agent) => {
   }
 })
 
-export function AIChatWidget() {
+export function TaxuChatWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [currentAgent, setCurrentAgent] = useState<string>("Sam")
   const [isListening, setIsListening] = useState(false)

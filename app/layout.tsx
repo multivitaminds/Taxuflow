@@ -1,10 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
-import { Suspense } from "react"
 import { ConditionalNavigation } from "@/components/conditional-navigation"
-import { AIChatWidget } from "@/components/ai-chat-widget"
+import { TaxuChatWidget } from "@/components/taxu-chat-widget"
 import { ErrorBoundary } from "@/components/error-boundary"
 import "./globals.css"
 
@@ -38,7 +37,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ConditionalNavigation />
           {children}
-          <AIChatWidget />
+          <TaxuChatWidget />
         </ErrorBoundary>
         <Analytics />
       </body>

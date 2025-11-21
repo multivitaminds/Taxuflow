@@ -76,7 +76,7 @@ ${context ? `Current Page/State Context: ${context}` : ""}
       maxSteps: 5,
     })
 
-    return result.toUIMessageStreamResponse()
+    return result.toDataStreamResponse()
   } catch (error) {
     console.error("[v0] Chat API error:", error)
     return new Response(
