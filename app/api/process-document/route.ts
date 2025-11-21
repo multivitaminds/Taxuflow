@@ -16,14 +16,28 @@ export async function POST(request: NextRequest) {
     const { isDemoMode } = await checkDemoMode()
 
     if (isDemoMode) {
-      return NextResponse.json(
-        {
-          error:
-            "Document processing is not available in demo mode. Please create a free account to upload and process your documents.",
-          isDemoMode: true,
+      // This simulates the AI processing delay and returns realistic dummy data.
+      await new Promise((resolve) => setTimeout(resolve, 2000)) // Simulate processing time
+
+      return NextResponse.json({
+        success: true,
+        documentType: "w2",
+        analysis: {
+          documentType: "w2",
+          confidence: 98,
+          summary: "W-2 Wage and Tax Statement (Demo Mode)",
+          description: "W-2 form for Demo User - tax year 2024",
+          extractedData: {
+            employer_name: "Demo Corporation Inc.",
+            employee_name: "Demo User",
+            wages: 85000.0,
+            federal_tax_withheld: 12500.0,
+            tax_year: 2024,
+          },
+          deductions: [],
         },
-        { status: 403 },
-      )
+        message: "Document processed successfully (Demo Mode)",
+      })
     }
 
     console.log("[v0] Starting intelligent document processing")
@@ -344,9 +358,9 @@ Return ONLY valid JSON, no markdown or explanation.`
 
     let cleanedText = text.trim()
 
-    if (cleanedText.startsWith("\`\`\`")) {
-      cleanedText = cleanedText.replace(/^\`\`\`(?:json)?\n?/, "")
-      cleanedText = cleanedText.replace(/\n?\`\`\`$/, "")
+    if (cleanedText.startsWith("```")) {
+      cleanedText = cleanedText.replace(/^```(?:json)?\n?/, "")
+      cleanedText = cleanedText.replace(/\n?```$/, "")
       cleanedText = cleanedText.trim()
     }
 

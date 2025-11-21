@@ -1,7 +1,5 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-/* Removed tw-animate-css import that was causing "Missing closing } at @utility slide-out-to-top-*" error */
+/* Removed tw-animate-css import that was causing "Invalid custom property" error */
 
 :root {
   /* Stripe-inspired color system with purple-to-orange gradient palette */
