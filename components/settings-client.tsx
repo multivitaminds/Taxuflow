@@ -272,13 +272,13 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
             </div>
           </Card>
 
-          <Card className="p-6 border-red-500/20 bg-card/50 backdrop-blur">
-            <h2 className="text-xl font-bold mb-4 text-red-500">Danger Zone</h2>
-            <p className="text-muted-foreground mb-4">Sign out of your account</p>
+          <Card className="p-6 border-border bg-card/50 backdrop-blur">
+            <h2 className="text-xl font-bold mb-4">Account Actions</h2>
+            <p className="text-muted-foreground mb-4">Manage your session and account access</p>
             <Button
               onClick={handleSignOut}
               variant="outline"
-              className="border-red-500/20 text-red-500 hover:bg-red-500/10 bg-transparent"
+              className="text-red-500 hover:bg-red-500/10 hover:text-red-600 border-red-200 dark:border-red-900/30 bg-transparent"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

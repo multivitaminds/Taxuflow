@@ -2,14 +2,26 @@
 
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, ArrowLeft, Send, Lock, Sparkles, FileText, AlertCircle, Info, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react'
+import {
+  Loader2,
+  ArrowLeft,
+  Send,
+  Lock,
+  Sparkles,
+  FileText,
+  AlertCircle,
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
+} from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { PenaltyAbatementDialog } from "@/components/penalty-abatement-dialog"
@@ -210,18 +222,23 @@ export default function FormW2({ extractedData }: FormW2Props) {
         // Don't return - still populate what we have
       }
 
+      const employeeNameObj = extractedData.employee_name || {}
+      const firstName = employeeNameObj.first || employeeNameObj.firstName || ""
+      const lastName = employeeNameObj.last || employeeNameObj.lastName || ""
+      const middleName = employeeNameObj.middle || employeeNameObj.middleInitial || ""
+
       const employeeName =
-        typeof extractedData.employee_name === 'string'
+        typeof extractedData.employee_name === "string"
           ? extractedData.employee_name
-          : extractedData.employee_name?.first && extractedData.employee_name?.last
-          ? `${extractedData.employee_name.first} ${extractedData.employee_name.last}`
-          : extractedData.employee?.name || ""
+          : firstName && lastName
+            ? `${firstName} ${lastName}`
+            : extractedData.employee?.name || ""
 
       const parsedName = parseName(employeeName)
 
-      let employeeFirstName = extractedData.employee_name?.first || ""
-      let employeeMiddleInitial = extractedData.employee_name?.middle || ""
-      let employeeLastName = extractedData.employee_name?.last || ""
+      let employeeFirstName = firstName
+      let employeeMiddleInitial = middleName
+      let employeeLastName = lastName
 
       if (parsedName && !employeeFirstName) {
         employeeFirstName = parsedName.firstName
@@ -230,9 +247,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
       }
 
       let employerAddr
-      let employeeAddr
-
-      if (typeof extractedData.employer_address === 'object' && extractedData.employer_address !== null) {
+      if (typeof extractedData.employer_address === "object" && extractedData.employer_address !== null) {
         // AI already parsed it perfectly - use it directly
         employerAddr = {
           street: extractedData.employer_address.street || "",
@@ -246,7 +261,8 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employerAddr = cleanAndParseAddress(employerAddress)
       }
 
-      if (typeof extractedData.employee_address === 'object' && extractedData.employee_address !== null) {
+      let employeeAddr
+      if (typeof extractedData.employee_address === "object" && extractedData.employee_address !== null) {
         // AI already parsed it perfectly - use it directly
         employeeAddr = {
           street: extractedData.employee_address.street || "",
@@ -284,21 +300,46 @@ export default function FormW2({ extractedData }: FormW2Props) {
         employeeZip: employeeAddr.zip || "",
 
         wages: wages?.toString() || "",
-        federalWithholding: (extractedData.federal_tax_withheld || extractedData.federal_income_tax || extractedData.federal_withholding || extractedData.income?.federalWithholding)?.toString() || "",
-        socialSecurityWages: (extractedData.social_security_wages || extractedData.income?.socialSecurityWages)?.toString() || "",
-        socialSecurityWithholding: (extractedData.social_security_tax_withheld || extractedData.social_security_tax || extractedData.social_security_withholding || extractedData.income?.socialSecurityTax)?.toString() || "",
+        federalWithholding:
+          (
+            extractedData.federal_tax_withheld ||
+            extractedData.federal_income_tax ||
+            extractedData.federal_withholding ||
+            extractedData.income?.federalWithholding
+          )?.toString() || "",
+        socialSecurityWages:
+          (extractedData.social_security_wages || extractedData.income?.socialSecurityWages)?.toString() || "",
+        socialSecurityWithholding:
+          (
+            extractedData.social_security_tax_withheld ||
+            extractedData.social_security_tax ||
+            extractedData.social_security_withholding ||
+            extractedData.income?.socialSecurityTax
+          )?.toString() || "",
         medicareWages: (extractedData.medicare_wages || extractedData.income?.medicareWages)?.toString() || "",
-        medicareWithholding: (extractedData.medicare_tax_withheld || extractedData.medicare_tax || extractedData.medicare_withholding || extractedData.income?.medicareTax)?.toString() || "",
-        socialSecurityTips: (extractedData.social_security_tips)?.toString() || "",
-        allocatedTips: (extractedData.allocated_tips)?.toString() || "",
-        dependentCareBenefits: (extractedData.dependent_care_benefits)?.toString() || "",
-        nonqualifiedPlans: (extractedData.nonqualified_plans)?.toString() || "",
+        medicareWithholding:
+          (
+            extractedData.medicare_tax_withheld ||
+            extractedData.medicare_tax ||
+            extractedData.medicare_withholding ||
+            extractedData.income?.medicareTax
+          )?.toString() || "",
+        socialSecurityTips: extractedData.social_security_tips?.toString() || "",
+        allocatedTips: extractedData.allocated_tips?.toString() || "",
+        dependentCareBenefits: extractedData.dependent_care_benefits?.toString() || "",
+        nonqualifiedPlans: extractedData.nonqualified_plans?.toString() || "",
         box12Code: extractedData.box_12_code || extractedData.box12Code || "",
         box12Amount: (extractedData.box_12_amount || extractedData.box12Amount)?.toString() || "",
         stateWages: (extractedData.state_wages || extractedData.income?.stateWages)?.toString() || "",
-        stateWithholding: (extractedData.state_tax_withheld || extractedData.state_income_tax || extractedData.state_withholding || extractedData.income?.stateTax)?.toString() || "",
-        localWages: (extractedData.local_wages)?.toString() || "",
-        localWithholding: (extractedData.local_income_tax)?.toString() || "",
+        stateWithholding:
+          (
+            extractedData.state_tax_withheld ||
+            extractedData.state_income_tax ||
+            extractedData.state_withholding ||
+            extractedData.income?.stateTax
+          )?.toString() || "",
+        localWages: extractedData.local_wages?.toString() || "",
+        localWithholding: extractedData.local_income_tax?.toString() || "",
 
         taxYear: extractedData.taxYear?.toString() || new Date().getFullYear().toString(),
       }
@@ -367,14 +408,25 @@ export default function FormW2({ extractedData }: FormW2Props) {
           // Don't return - still populate what we have
         }
 
-        const employeeName = extracted.employee?.name || ""
+        const employeeNameObj = extracted.employee_name || {}
+        const firstName = employeeNameObj.first || employeeNameObj.firstName || ""
+        const lastName = employeeNameObj.last || employeeNameObj.lastName || ""
+        const middleName = employeeNameObj.middle || employeeNameObj.middleInitial || ""
+
+        const employeeName =
+          typeof extracted.employee_name === "string"
+            ? extracted.employee_name
+            : firstName && lastName
+              ? `${firstName} ${lastName}`
+              : extracted.employee?.name || ""
+
         const parsedName = parseName(employeeName)
 
-        let employeeFirstName = ""
-        let employeeMiddleInitial = ""
-        let employeeLastName = ""
+        let employeeFirstName = firstName
+        let employeeMiddleInitial = middleName
+        let employeeLastName = lastName
 
-        if (parsedName) {
+        if (parsedName && !employeeFirstName) {
           employeeFirstName = parsedName.firstName
           employeeMiddleInitial = parsedName.middleInitial
           employeeLastName = parsedName.lastName
@@ -1459,20 +1511,23 @@ export default function FormW2({ extractedData }: FormW2Props) {
             {/* Validation Results */}
             {validationResult && (
               <div className="space-y-3">
-                {validationResult.warnings?.filter((w: any) => w.field === "system").map((warning: any, index: number) => (
-                  <Alert key={`system-warning-${index}`} className="bg-blue-500/10 border-blue-500/20">
-                    <Info className="h-4 w-4 text-blue-600" />
-                    <AlertTitle className="text-blue-600 font-semibold">Validation Status</AlertTitle>
-                    <AlertDescription className="text-sm">
-                      {warning.message}
-                      {warning.message.includes("temporarily unavailable") && (
-                        <span className="block mt-2 text-xs text-muted-foreground">
-                          Don't worry - your form has been checked with comprehensive rule-based validation. You can safely proceed with submission.
-                        </span>
-                      )}
-                    </AlertDescription>
-                  </Alert>
-                ))}
+                {validationResult.warnings
+                  ?.filter((w: any) => w.field === "system")
+                  .map((warning: any, index: number) => (
+                    <Alert key={`system-warning-${index}`} className="bg-blue-500/10 border-blue-500/20">
+                      <Info className="h-4 w-4 text-blue-600" />
+                      <AlertTitle className="text-blue-600 font-semibold">Validation Status</AlertTitle>
+                      <AlertDescription className="text-sm">
+                        {warning.message}
+                        {warning.message.includes("temporarily unavailable") && (
+                          <span className="block mt-2 text-xs text-muted-foreground">
+                            Don't worry - your form has been checked with comprehensive rule-based validation. You can
+                            safely proceed with submission.
+                          </span>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  ))}
 
                 {validationResult.errors?.map((error: any, index: number) => (
                   <Alert key={`error-${index}`} className="bg-red-500/10 border-red-500/20">
@@ -1482,13 +1537,15 @@ export default function FormW2({ extractedData }: FormW2Props) {
                   </Alert>
                 ))}
 
-                {validationResult.warnings?.filter((w: any) => w.field !== "system").map((warning: any, index: number) => (
-                  <Alert key={`warning-${index}`} className="bg-orange-500/10 border-orange-500/20">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <AlertTitle className="text-orange-600 font-semibold">Warning: {warning.field}</AlertTitle>
-                    <AlertDescription className="text-sm">{warning.message}</AlertDescription>
-                  </Alert>
-                ))}
+                {validationResult.warnings
+                  ?.filter((w: any) => w.field !== "system")
+                  .map((warning: any, index: number) => (
+                    <Alert key={`warning-${index}`} className="bg-orange-500/10 border-orange-500/20">
+                      <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <AlertTitle className="text-orange-600 font-semibold">Warning: {warning.field}</AlertTitle>
+                      <AlertDescription className="text-sm">{warning.message}</AlertDescription>
+                    </Alert>
+                  ))}
 
                 {validationResult.suggestions?.map((suggestion: any, index: number) => (
                   <Alert key={`suggestion-${index}`} className="bg-blue-500/10 border-blue-500/20">
@@ -1498,15 +1555,17 @@ export default function FormW2({ extractedData }: FormW2Props) {
                   </Alert>
                 ))}
 
-                {validationResult.valid && !validationResult.errors?.length && !validationResult.warnings?.filter((w: any) => w.field !== "system").length && (
-                  <Alert className="bg-green-500/10 border-green-500/20">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <AlertTitle className="text-green-600 font-semibold">All Clear!</AlertTitle>
-                    <AlertDescription className="text-sm">
-                      Your form passed all validation checks. Ready to submit!
-                    </AlertDescription>
-                  </Alert>
-                )}
+                {validationResult.valid &&
+                  !validationResult.errors?.length &&
+                  !validationResult.warnings?.filter((w: any) => w.field !== "system").length && (
+                    <Alert className="bg-green-500/10 border-green-500/20">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <AlertTitle className="text-green-600 font-semibold">All Clear!</AlertTitle>
+                      <AlertDescription className="text-sm">
+                        Your form passed all validation checks. Ready to submit!
+                      </AlertDescription>
+                    </Alert>
+                  )}
               </div>
             )}
 

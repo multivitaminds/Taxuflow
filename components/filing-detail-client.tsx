@@ -36,51 +36,54 @@ export default function FilingDetailClient({ filing, formType = "W-2" }: { filin
 
   const handleCheckStatus = useCallback(async () => {
     if (checkingStatus) return
+
+    console.log("[v0] handleCheckStatus: Starting status check for filing:", filing.id)
     setCheckingStatus(true)
 
     try {
-      const response = await fetch(`/api/filing/check-status/${filing.id}`)
+      // Add timestamp to prevent caching
+      const url = `/api/filing/check-status/${filing.id}?t=${Date.now()}`
+      console.log("[v0] handleCheckStatus: Fetching", url)
 
-      // Check content type to safely handle non-JSON responses
+      const response = await fetch(url)
+
+      console.log("[v0] handleCheckStatus: Response status:", response.status)
+
       const contentType = response.headers.get("content-type")
       let data: any
 
       if (contentType && contentType.includes("application/json")) {
         data = await response.json()
+        console.log("[v0] handleCheckStatus: Response data:", data)
       } else {
         const text = await response.text()
-        console.error("[v0] Non-JSON response received:", text.substring(0, 200))
-        throw new Error("Received invalid response from server (Internal Server Error)")
+        console.error("[v0] handleCheckStatus: Non-JSON response:", text.substring(0, 200))
+        throw new Error(`Server returned non-JSON response (${response.status})`)
       }
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to check status")
+        throw new Error(data.error || data.message || "Status check failed")
       }
 
-      // If status changed to accepted/rejected, stop auto-refresh
-      if (
-        data.status === "accepted" ||
-        data.status === "rejected" ||
-        data.status === "success" ||
-        data.status === "failed"
-      ) {
+      if (data.status === "accepted" || data.status === "success") {
+        console.log("[v0] handleCheckStatus: Status is now accepted!")
         setAutoRefreshEnabled(false)
         toast({
-          title: "Status Updated",
-          description: `Filing status is now: ${data.status.toUpperCase()}`,
+          title: "Filing Accepted!",
+          description: "Your filing has been successfully accepted.",
         })
         router.refresh()
-      } else if (data.status === "pending" && autoRefreshEnabled) {
-        // If still pending, schedule next check
-        // But only if we didn't just get an error
+      } else {
+        console.log("[v0] handleCheckStatus: Status still pending")
+        // If we got a valid pending response, we can continue auto-refreshing
       }
     } catch (error) {
-      console.error("[v0] Status check error:", error)
-      // Stop auto-refresh on error to prevent infinite loops
-      setAutoRefreshEnabled(false)
+      console.error("[v0] handleCheckStatus: Error:", error)
+      // Don't disable auto-refresh for network glitches, but do for logic errors
+      // For now, we'll keep it enabled to retry, but show error
       toast({
         title: "Status Check Failed",
-        description: error instanceof Error ? error.message : "Unable to check status. Auto-refresh stopped.",
+        description: error instanceof Error ? error.message : "Unable to check status",
         variant: "destructive",
       })
     } finally {

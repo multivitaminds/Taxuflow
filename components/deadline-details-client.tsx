@@ -224,7 +224,12 @@ export function DeadlineDetailsClient({ user, profile }: DeadlineDetailsClientPr
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
                 <span>Email reminders enabled</span>
               </div>
-              <Button variant="outline" size="sm" className="border-neon/20 bg-transparent">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-neon/20 bg-transparent"
+                onClick={() => router.push("/dashboard/settings")}
+              >
                 Configure
               </Button>
             </div>
@@ -233,7 +238,12 @@ export function DeadlineDetailsClient({ user, profile }: DeadlineDetailsClientPr
                 <CheckCircle2 className="w-5 h-5 text-green-500" />
                 <span>Push notifications enabled</span>
               </div>
-              <Button variant="outline" size="sm" className="border-neon/20 bg-transparent">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-neon/20 bg-transparent"
+                onClick={() => router.push("/dashboard/settings")}
+              >
                 Configure
               </Button>
             </div>
@@ -242,7 +252,12 @@ export function DeadlineDetailsClient({ user, profile }: DeadlineDetailsClientPr
                 <AlertCircle className="w-5 h-5 text-yellow-500" />
                 <span>SMS reminders (upgrade required)</span>
               </div>
-              <Button variant="outline" size="sm" className="border-neon/20 bg-transparent">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-neon/20 bg-transparent"
+                onClick={() => router.push("/dashboard/subscription")}
+              >
                 Upgrade
               </Button>
             </div>
