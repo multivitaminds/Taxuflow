@@ -2,9 +2,9 @@
 /* Removed tw-animate-css import that was causing "Invalid custom property" error */
 
 :root {
-  /* Stripe-inspired color system with purple-to-orange gradient palette */
+  /* Stripe-inspired color system */
   --background: #ffffff;
-  --background-alt: #fafbfc;
+  --background-alt: #f6f9fc;
   --foreground: #0a2540;
   --card: #ffffff;
   --card-foreground: #0a2540;
@@ -15,8 +15,8 @@
   --secondary: #f6f9fc;
   --secondary-foreground: #0a2540;
   --muted: #f6f9fc;
-  --muted-foreground: #697386;
-  --accent: #635bff;
+  --muted-foreground: #425466;
+  --accent: #00d4ff;
   --accent-foreground: #ffffff;
   --destructive: #df1b41;
   --destructive-foreground: #ffffff;
@@ -29,13 +29,49 @@
   --chart-4: #ff5c35;
   --chart-5: #ffc043;
   --radius: 0.5rem;
-  --sidebar: #ffffff;
+  --sidebar: #f7f9fc;
   --sidebar-foreground: #0a2540;
   --sidebar-primary: #635bff;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f6f9fc;
+  --sidebar-accent: #e3e8ee;
   --sidebar-accent-foreground: #0a2540;
   --sidebar-border: #e3e8ee;
+  --sidebar-ring: #635bff;
+}
+
+.dark {
+  --background: #0a2540;
+  --background-alt: #1a1f36;
+  --foreground: #ffffff;
+  --card: #1a1f36;
+  --card-foreground: #ffffff;
+  --popover: #1a1f36;
+  --popover-foreground: #ffffff;
+  --primary: #635bff;
+  --primary-foreground: #ffffff;
+  --secondary: #2e364f;
+  --secondary-foreground: #ffffff;
+  --muted: #2e364f;
+  --muted-foreground: #a3acb9;
+  --accent: #00d4ff;
+  --accent-foreground: #ffffff;
+  --destructive: #df1b41;
+  --destructive-foreground: #ffffff;
+  --border: #2e364f;
+  --input: #2e364f;
+  --ring: #635bff;
+  --chart-1: #635bff;
+  --chart-2: #00d4ff;
+  --chart-3: #7a73ff;
+  --chart-4: #ff5c35;
+  --chart-5: #ffc043;
+  --sidebar: #0a2540;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #635bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2e364f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2e364f;
   --sidebar-ring: #635bff;
 }
 
@@ -148,5 +184,59 @@
 
   .hover-lift:hover {
     transform: translateY(-4px);
+  }
+
+  /* Updated gradient-stripe-hero to have darker, more contrasting gradients */
+  .gradient-stripe-hero {
+    background-color: #0a2540;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 70%, 0.25) 0px, transparent 50%),
+      radial-gradient(at 95% 0%, hsla(330, 100%, 70%, 0.2) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 70%, 0.15) 0px, transparent 50%);
+  }
+
+  .dark .gradient-stripe-hero {
+    background-color: #0a2540;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 65%, 0.2) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 65%, 0.2) 0px, transparent 50%);
+  }
+
+  /* Added new utility for light hero sections with dark text */
+  .gradient-stripe-hero-light {
+    background-color: #ffffff;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 85%, 0.3) 0px, transparent 50%),
+      radial-gradient(at 95% 0%, hsla(330, 100%, 85%, 0.25) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 85%, 0.2) 0px, transparent 50%);
+  }
+
+  .dark .gradient-stripe-hero-light {
+    background-color: #0a2540;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 65%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 65%, 0.15) 0px, transparent 50%);
+  }
+
+  .gradient-stripe-mesh {
+    background-color: #ffffff;
+    background-image: radial-gradient(at 100% 0%, hsla(330, 100%, 65%, 0.2) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(200, 100%, 65%, 0.1) 0px, transparent 50%);
+  }
+
+  .text-gradient-stripe {
+    background: linear-gradient(to right, #635bff, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .clip-diagonal {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+
+  .clip-diagonal-reverse {
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* Added clip-diagonal-top utility */
+  .clip-diagonal-top {
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
   }
 }

@@ -731,6 +731,14 @@ export default function FormW2({ extractedData }: FormW2Props) {
         }),
       })
 
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text()
+        console.error("[v0] Server returned non-JSON response:", text)
+        throw new Error(`Server error: ${response.status} ${response.statusText}`)
+      }
+      // </CHANGE>
+
       const result = await response.json()
 
       if (result.success) {

@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,7 +10,7 @@ import {
   Camera,
   Lightbulb,
   HeadphonesIcon,
-  Sparkles,
+  Cpu,
   Brain,
   Zap,
   FileText,
@@ -51,7 +52,7 @@ export default function AIFeaturesPage() {
       ],
     },
     {
-      icon: Sparkles,
+      icon: Cpu,
       title: "Year-Round Assistant",
       description: "Not just April. Taxu helps you optimize taxes all year long.",
       benefits: ["Ask tax questions anytime", "Track deductible expenses monthly", "Get alerts for tax law changes"],
@@ -113,27 +114,28 @@ export default function AIFeaturesPage() {
   ]
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium border border-accent/20 mb-8">
-            <Sparkles className="w-4 h-4" />
-            Powered by GPT-4
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 gradient-stripe-hero overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+        <div className="container mx-auto max-w-4xl text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white text-sm font-medium border border-white/20 mb-8">
+            <Cpu className="w-4 h-4" />
+            Powered by Advanced AI
           </div>
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1]">
-            AI Features That
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-white text-balance leading-[1.1]">
+            Intelligent features that
             <br />
-            <span className="text-glow">Actually Help</span>
+            <span className="text-[#00d4ff]">work for you</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground text-balance">
+          <p className="text-xl sm:text-2xl text-blue-100 text-balance leading-relaxed">
             Every feature designed to make taxes effortless. Built with the latest AI technology.
           </p>
         </div>
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="container mx-auto max-w-7xl">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
@@ -141,17 +143,17 @@ export default function AIFeaturesPage() {
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-border bg-card p-8 hover:border-accent/50 hover:glow-neon transition-all duration-300"
+                  className="rounded-lg border border-slate-200 bg-white p-8 hover:border-[#635bff]/50 hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all duration-300"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mb-6">
-                    <Icon className="w-7 h-7 text-accent" />
+                  <div className="w-14 h-14 rounded-lg bg-[#635bff]/10 flex items-center justify-center mb-6">
+                    <Icon className="w-7 h-7 text-[#635bff]" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground mb-6 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-2xl font-bold mb-3 text-[#0a2540]">{feature.title}</h3>
+                  <p className="text-slate-600 mb-6 leading-relaxed">{feature.description}</p>
                   <ul className="space-y-2">
                     {feature.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <span className="text-accent mt-1">•</span>
+                      <li key={i} className="flex items-start gap-2 text-sm text-slate-600">
+                        <span className="text-[#635bff] mt-1">•</span>
                         <span>{benefit}</span>
                       </li>
                     ))}
@@ -164,48 +166,50 @@ export default function AIFeaturesPage() {
       </section>
 
       {/* Technology Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#f6f9fc] clip-diagonal">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">Built on Cutting-Edge AI</h2>
-            <p className="text-xl text-muted-foreground">The same technology powering ChatGPT, fine-tuned for taxes</p>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-[#0a2540]">Built on Cutting-Edge AI</h2>
+            <p className="text-xl text-slate-600">The same technology powering ChatGPT, fine-tuned for taxes</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <Brain className="w-10 h-10 text-accent" />
+              <div className="w-20 h-20 rounded-full bg-[#635bff]/10 flex items-center justify-center mx-auto mb-4">
+                <Brain className="w-10 h-10 text-[#635bff]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">GPT-4 Powered</h3>
-              <p className="text-muted-foreground">Advanced language model trained on millions of tax scenarios</p>
+              <h3 className="text-xl font-bold mb-2 text-[#0a2540]">GPT-4 Powered</h3>
+              <p className="text-slate-600">Advanced language model trained on millions of tax scenarios</p>
             </div>
             <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-10 h-10 text-accent" />
+              <div className="w-20 h-20 rounded-full bg-[#635bff]/10 flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-10 h-10 text-[#635bff]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">IRS Compliant</h3>
-              <p className="text-muted-foreground">Every calculation verified against official IRS guidelines</p>
+              <h3 className="text-xl font-bold mb-2 text-[#0a2540]">IRS Compliant</h3>
+              <p className="text-slate-600">Every calculation verified against official IRS guidelines</p>
             </div>
             <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-10 h-10 text-accent" />
+              <div className="w-20 h-20 rounded-full bg-[#635bff]/10 flex items-center justify-center mx-auto mb-4">
+                <Zap className="w-10 h-10 text-[#635bff]" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Always Learning</h3>
-              <p className="text-muted-foreground">Continuously updated with new tax laws and regulations</p>
+              <h3 className="text-xl font-bold mb-2 text-[#0a2540]">Always Learning</h3>
+              <p className="text-slate-600">Continuously updated with new tax laws and regulations</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl sm:text-5xl font-bold mb-6">Experience the Future of Filing</h2>
-          <p className="text-xl text-muted-foreground mb-8">Try all AI features free. No credit card required.</p>
-          <Button size="lg" className="glow-neon-strong">
-            Start Filing Free
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
+          <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-[#0a2540]">Experience the Future of Filing</h2>
+          <p className="text-xl text-slate-600 mb-8">Try all AI features free. No credit card required.</p>
+          <Link href="/get-started">
+            <Button className="rounded-full bg-[#635bff] hover:bg-[#5851df] text-white px-8 py-6 text-lg transition-all duration-300">
+              Start Filing Free
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </section>
 

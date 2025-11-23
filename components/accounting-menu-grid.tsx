@@ -89,6 +89,7 @@ export function AccountingMenuGrid() {
               <Icon className="h-10 w-10" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">{item.title}</h3>
+            <p className="text-gray-600">{item.description}</p>
           </Link>
         )
       })}

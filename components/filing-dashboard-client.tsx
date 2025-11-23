@@ -8,8 +8,19 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Spinner } from "@/components/ui/spinner"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter } from 'next/navigation'
-import { CheckCircle2, XCircle, Clock, FileText, Download, RefreshCw, DollarSign, Calendar, AlertCircle, Sparkles } from 'lucide-react'
+import { useRouter } from "next/navigation"
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  FileText,
+  Download,
+  RefreshCw,
+  DollarSign,
+  Calendar,
+  AlertCircle,
+  BarChart3,
+} from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import Link from "next/link"
 
@@ -46,7 +57,9 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
   const totalFilings = filings.length
   const acceptedFilings = filings.filter((f) => f.filing_status.toLowerCase() === "accepted").length
-  const pendingFilings = filings.filter((f) => ["submitted", "pending", "processing"].includes(f.filing_status.toLowerCase())).length
+  const pendingFilings = filings.filter((f) =>
+    ["submitted", "pending", "processing"].includes(f.filing_status.toLowerCase()),
+  ).length
   const totalRefunds = filings
     .filter((f) => f.refund_amount && f.filing_status.toLowerCase() === "accepted" && f.form_type === "W-2")
     .reduce((sum, f) => sum + (f.refund_amount || 0), 0)
@@ -63,7 +76,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   const handleRefresh = async () => {
     setRefreshing(true)
     router.refresh()
-    
+
     // Reset refreshing state after a short delay since router.refresh is async but doesn't return a promise
     setTimeout(() => {
       setRefreshing(false)
@@ -123,7 +136,9 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
       clearTimeout(pollingRef.current)
     }
 
-    const hasPendingFilings = filings.some((f) => ["pending", "submitted", "processing"].includes(f.filing_status.toLowerCase()))
+    const hasPendingFilings = filings.some((f) =>
+      ["pending", "submitted", "processing"].includes(f.filing_status.toLowerCase()),
+    )
 
     if (hasPendingFilings) {
       console.log("[v0] Detected pending filings, will auto-refresh status in 3 seconds...")
@@ -131,7 +146,9 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
       pollingRef.current = setTimeout(async () => {
         console.log("[v0] Auto-refreshing pending filing statuses...")
 
-        const pendingFilings = filings.filter((f) => ["pending", "submitted", "processing"].includes(f.filing_status.toLowerCase()))
+        const pendingFilings = filings.filter((f) =>
+          ["pending", "submitted", "processing"].includes(f.filing_status.toLowerCase()),
+        )
 
         // Run checks in parallel
         const statusChecks = pendingFilings.map((filing) =>
@@ -161,7 +178,7 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
   if (isLoading) {
     return (
-      <div className="min-h-screen gradient-mesh p-6">
+      <div className="min-h-screen bg-[#f6f9fc] p-6">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex items-center justify-between">
             <div>
@@ -209,31 +226,27 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
   }
 
   return (
-    <div className="min-h-screen gradient-mesh p-6">
+    <div className="min-h-screen bg-[#f6f9fc] p-6">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-balance text-4xl font-bold tracking-tight">
-                <span className="text-gradient">Tax Filing Dashboard</span>
-              </h1>
-              <Sparkles className="h-6 w-6 text-primary" />
+              <h1 className="text-balance text-3xl font-bold tracking-tight text-[#0a2540]">Tax Filing Dashboard</h1>
+              <BarChart3 className="h-6 w-6 text-[#635bff]" />
             </div>
-            <p className="text-pretty text-muted-foreground text-lg">
-              Track your tax returns and filing status in real-time
-            </p>
+            <p className="text-pretty text-slate-600 text-lg">Track your tax returns and filing status in real-time</p>
           </div>
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="hover-lift bg-transparent"
+              className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
             >
               <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Button asChild className="hover-lift shadow-lg glow-purple">
+            <Button asChild className="bg-[#635bff] hover:bg-[#5851df] text-white shadow-sm">
               <Link href="/dashboard/filing/new">
                 <FileText className="mr-2 h-4 w-4" />
                 New Filing
@@ -244,86 +257,104 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card
-            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            className="border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all cursor-pointer bg-white"
             onClick={() => setSelectedTab("all")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Filings</CardTitle>
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <FileText className="h-4 w-4 text-primary" />
+              <CardTitle className="text-sm font-medium text-slate-600">Total Filings</CardTitle>
+              <div className="p-2 bg-[#635bff]/10 rounded-md">
+                <FileText className="h-4 w-4 text-[#635bff]" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gradient">{totalFilings}</div>
-              <p className="text-xs text-muted-foreground mt-1">All time</p>
+              <div className="text-3xl font-bold text-[#0a2540]">{totalFilings}</div>
+              <p className="text-xs text-slate-500 mt-1">All time</p>
             </CardContent>
           </Card>
 
           <Card
-            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            className="border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all cursor-pointer bg-white"
             onClick={() => setSelectedTab("accepted")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <CardTitle className="text-sm font-medium text-slate-600">Accepted</CardTitle>
+              <div className="p-2 bg-green-100 rounded-md">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">{acceptedFilings}</div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <div className="text-3xl font-bold text-[#0a2540]">{acceptedFilings}</div>
+              <p className="text-xs text-slate-500 mt-1">
                 {totalFilings > 0 ? Math.round((acceptedFilings / totalFilings) * 100) : 0}% success rate
               </p>
             </CardContent>
           </Card>
 
           <Card
-            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            className="border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all cursor-pointer bg-white"
             onClick={() => setSelectedTab("pending")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
-                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+              <CardTitle className="text-sm font-medium text-slate-600">Pending</CardTitle>
+              <div className="p-2 bg-yellow-100 rounded-md">
+                <Clock className="h-4 w-4 text-yellow-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{pendingFilings}</div>
-              <p className="text-xs text-muted-foreground mt-1">Awaiting IRS response</p>
+              <div className="text-3xl font-bold text-[#0a2540]">{pendingFilings}</div>
+              <p className="text-xs text-slate-500 mt-1">Awaiting IRS response</p>
             </CardContent>
           </Card>
 
           <Card
-            className="glass-effect border-0 hover-lift hover:shadow-xl transition-all cursor-pointer"
+            className="border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all cursor-pointer bg-white"
             onClick={() => setSelectedTab("accepted")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Refunds</CardTitle>
-              <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <CardTitle className="text-sm font-medium text-slate-600">Total Refunds</CardTitle>
+              <div className="p-2 bg-green-100 rounded-md">
+                <DollarSign className="h-4 w-4 text-green-600" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                ${totalRefunds.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Accepted returns</p>
+              <div className="text-3xl font-bold text-[#0a2540]">${totalRefunds.toLocaleString()}</div>
+              <p className="text-xs text-slate-500 mt-1">Accepted returns</p>
             </CardContent>
           </Card>
         </div>
 
-        <Card className="glass-effect border-0" id="filing-history">
+        <Card className="border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] bg-white" id="filing-history">
           <CardHeader>
-            <CardTitle className="text-2xl">Filing History</CardTitle>
-            <CardDescription className="text-base">View and manage all your tax return submissions</CardDescription>
+            <CardTitle className="text-xl text-[#0a2540]">Filing History</CardTitle>
+            <CardDescription className="text-slate-500">
+              View and manage all your tax return submissions
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-              <TabsList className="glass-effect">
-                <TabsTrigger value="all">All ({totalFilings})</TabsTrigger>
-                <TabsTrigger value="accepted">Accepted ({acceptedFilings})</TabsTrigger>
-                <TabsTrigger value="pending">Pending ({pendingFilings})</TabsTrigger>
-                <TabsTrigger value="rejected">
+              <TabsList className="bg-slate-100 p-1">
+                <TabsTrigger
+                  value="all"
+                  className="data-[state=active]:bg-white data-[state=active]:text-[#635bff] data-[state=active]:shadow-sm"
+                >
+                  All ({totalFilings})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="accepted"
+                  className="data-[state=active]:bg-white data-[state=active]:text-[#635bff] data-[state=active]:shadow-sm"
+                >
+                  Accepted ({acceptedFilings})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="pending"
+                  className="data-[state=active]:bg-white data-[state=active]:text-[#635bff] data-[state=active]:shadow-sm"
+                >
+                  Pending ({pendingFilings})
+                </TabsTrigger>
+                <TabsTrigger
+                  value="rejected"
+                  className="data-[state=active]:bg-white data-[state=active]:text-[#635bff] data-[state=active]:shadow-sm"
+                >
                   Rejected ({filings.filter((f) => f.filing_status.toLowerCase() === "rejected").length})
                 </TabsTrigger>
               </TabsList>
@@ -331,19 +362,19 @@ export function FilingDashboardClient({ user, filings, isLoading = false }: Fili
               <TabsContent value={selectedTab} className="mt-6">
                 {filteredFilings.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="p-4 bg-primary/10 rounded-2xl mb-4">
-                      <FileText className="h-12 w-12 text-primary" />
+                    <div className="p-4 bg-slate-50 rounded-full mb-4">
+                      <FileText className="h-8 w-8 text-slate-400" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">No filings found</h3>
-                    <p className="text-sm text-muted-foreground mb-6 max-w-md">
+                    <h3 className="text-lg font-semibold mb-2 text-[#0a2540]">No filings found</h3>
+                    <p className="text-sm text-slate-500 mb-6 max-w-md">
                       {selectedTab === "all"
                         ? "Get started by filing your first tax return"
                         : `No ${selectedTab} filings to display`}
                     </p>
                     {selectedTab === "all" && (
-                      <Button asChild size="lg" className="hover-lift shadow-lg glow-purple">
+                      <Button asChild size="lg" className="bg-[#635bff] hover:bg-[#5851df] text-white">
                         <Link href="/dashboard/filing/new">
-                          <Sparkles className="mr-2 h-4 w-4" />
+                          <FileText className="mr-2 h-4 w-4" />
                           File Your First Return
                         </Link>
                       </Button>
@@ -384,14 +415,14 @@ function FilingCard({
     switch (s) {
       case "accepted":
         return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border-none">
             <CheckCircle2 className="mr-1 h-3 w-3" />
             Accepted
           </Badge>
         )
       case "rejected":
         return (
-          <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+          <Badge className="bg-red-100 text-red-800 hover:bg-red-200 border-none">
             <XCircle className="mr-1 h-3 w-3" />
             Rejected
           </Badge>
@@ -399,37 +430,41 @@ function FilingCard({
       case "submitted":
       case "pending":
         return (
-          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+          <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-none">
             <Clock className="mr-1 h-3 w-3" />
             Pending
           </Badge>
         )
       case "processing":
         return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border-none">
             <RefreshCw className="mr-1 h-3 w-3" />
             Processing
           </Badge>
         )
       default:
-        return <Badge variant="secondary">{status}</Badge>
+        return (
+          <Badge variant="secondary" className="bg-slate-100 text-slate-800">
+            {status}
+          </Badge>
+        )
     }
   }
 
   const isPending = ["pending", "submitted", "processing"].includes(filing.filing_status.toLowerCase())
 
   return (
-    <Card className="glass-effect border-0 hover-lift hover:shadow-2xl transition-all">
+    <Card className="border border-slate-200 shadow-sm hover:shadow-md transition-all bg-white">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold text-[#0a2540]">
                 {filing.form_type} - Tax Year {filing.tax_year}
               </h3>
               {getStatusBadge(filing.filing_status)}
               {filing.irs_status && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-xs border-slate-200 text-slate-600">
                   IRS: {filing.irs_status}
                 </Badge>
               )}
@@ -437,10 +472,10 @@ function FilingCard({
 
             <div className="grid gap-4 md:grid-cols-3 text-sm">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className="h-4 w-4 text-slate-400" />
                 <div>
-                  <p className="text-muted-foreground">Filed</p>
-                  <p className="font-medium">
+                  <p className="text-slate-500">Filed</p>
+                  <p className="font-medium text-[#0a2540]">
                     {filing.filed_at
                       ? formatDistanceToNow(new Date(filing.filed_at), { addSuffix: true })
                       : "Not filed"}
@@ -449,10 +484,10 @@ function FilingCard({
               </div>
 
               <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <FileText className="h-4 w-4 text-slate-400" />
                 <div>
-                  <p className="text-muted-foreground">Submission ID</p>
-                  <p className="font-mono text-xs">{filing.submission_id || "N/A"}</p>
+                  <p className="text-slate-500">Submission ID</p>
+                  <p className="font-mono text-xs text-[#0a2540]">{filing.submission_id || "N/A"}</p>
                 </div>
               </div>
 
@@ -460,7 +495,7 @@ function FilingCard({
                 <div className="flex items-center gap-2">
                   <DollarSign className="h-4 w-4 text-green-600" />
                   <div>
-                    <p className="text-muted-foreground">Refund Amount</p>
+                    <p className="text-slate-500">Refund Amount</p>
                     <p className="font-semibold text-green-600">${filing.refund_amount.toLocaleString()}</p>
                   </div>
                 </div>

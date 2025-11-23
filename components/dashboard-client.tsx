@@ -1,10 +1,29 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { FileText, TrendingUp, Shield, Calendar, Upload, MessageSquare, Settings, CreditCard, Download, CheckCircle2, AlertCircle, Trash2, Loader2, Receipt, Users, Building2, BarChart3, Wallet } from 'lucide-react'
+import {
+  FileText,
+  TrendingUp,
+  Shield,
+  Calendar,
+  Upload,
+  MessageSquare,
+  Settings,
+  CreditCard,
+  Download,
+  CheckCircle2,
+  AlertCircle,
+  Trash2,
+  Loader2,
+  Receipt,
+  Users,
+  Building2,
+  BarChart3,
+  Wallet,
+} from "lucide-react"
 import type { User } from "@supabase/ssr"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { DocumentUpload } from "@/components/document-upload"
@@ -52,6 +71,19 @@ interface Deduction {
   status: string
 }
 
+interface Invoice {
+  id: string
+  total_amount: number
+  status: string
+  created_at: string
+}
+
+interface Expense {
+  id: string
+  amount: number
+  expense_date: string
+}
+
 export function DashboardClient({ user: initialUser, profile: initialProfile }: DashboardClientProps) {
   const router = useRouter()
   const [selectedAgent, setSelectedAgent] = useState(initialProfile?.preferred_agent || "Sam")
@@ -83,6 +115,10 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   const [deductions, setDeductions] = useState<Deduction[]>([])
   const [loadingData, setLoadingData] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(false)
+
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [financialLoading, setFinancialLoading] = useState(true)
 
   const [daysUntilDeadline, setDaysUntilDeadline] = useState(0)
   const [deadlineDate, setDeadlineDate] = useState("")
@@ -153,21 +189,24 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
       if (initialUser?.id === "demo-user-id") {
         console.log("[v0] Demo mode detected, checking for real client-side session")
         const supabase = getSupabaseBrowserClient()
-        
+
         if (supabase) {
           try {
-            const { data: { user: clientUser }, error } = await supabase.auth.getUser()
-            
+            const {
+              data: { user: clientUser },
+              error,
+            } = await supabase.auth.getUser()
+
             if (!error && clientUser && clientUser.id !== "demo-user-id") {
               console.log("[v0] Found real authenticated user:", clientUser.email)
-              
+
               // Fetch real user profile
               const { data: realProfile } = await supabase
                 .from("user_profiles")
                 .select("*")
                 .eq("id", clientUser.id)
                 .maybeSingle()
-              
+
               const userProfile = realProfile || {
                 id: clientUser.id,
                 email: clientUser.email || "",
@@ -177,7 +216,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
                 preferred_agent: "Sam",
                 subscription_tier: "Free",
               }
-              
+
               console.log("[v0] Using real user data:", { email: clientUser.email, name: userProfile.full_name })
               setUser(clientUser)
               setProfile(userProfile)
@@ -189,7 +228,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
             console.error("[v0] Error checking client-side session:", err)
           }
         }
-        
+
         console.log("[v0] No real session found, using demo mode")
         setUser(initialUser)
         setProfile(initialProfile)
@@ -299,6 +338,17 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
         { id: "ded-3", name: "Professional Development", amount: 600, status: "suggested" },
       ])
 
+      setInvoices([
+        { id: "inv-1", total_amount: 1250.0, status: "paid", created_at: new Date().toISOString() },
+        { id: "inv-2", total_amount: 850.0, status: "pending", created_at: new Date().toISOString() },
+        { id: "inv-3", total_amount: 2400.0, status: "paid", created_at: new Date().toISOString() },
+      ])
+      setExpenses([
+        { id: "exp-1", amount: 120.5, expense_date: new Date().toISOString() },
+        { id: "exp-2", amount: 450.0, expense_date: new Date().toISOString() },
+      ])
+      setFinancialLoading(false)
+
       setLoadingData(false)
       setLoadingDocuments(false)
       return
@@ -381,6 +431,26 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
         console.log("[v0] Deductions fetched:", deductionsData?.length || 0)
         setDeductions(deductionsData || [])
       }
+
+      const { data: invoicesData } = await supabase
+        .from("invoices")
+        .select("id, total_amount, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10)
+
+      if (invoicesData) setInvoices(invoicesData)
+
+      const { data: expensesData } = await supabase
+        .from("journal_entries")
+        .select("id, amount, entry_date")
+        .eq("user_id", user.id)
+        .eq("entry_type", "expense")
+        .order("entry_date", { ascending: false })
+        .limit(10)
+
+      if (expensesData) setExpenses(expensesData.map((e) => ({ ...e, expense_date: e.entry_date })))
+      setFinancialLoading(false)
     } catch (err) {
       console.error("[v0] Unexpected error fetching dashboard data:", err)
       if (err instanceof Error && err.message === "Request timeout") {
@@ -465,7 +535,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
           <p className="text-lg text-red-600 mb-4">Session expired or authentication failed</p>
           <div className="space-y-2">
             <button
-              onClick={() => window.location.href = "/login"}
+              onClick={() => (window.location.href = "/login")}
               className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 w-full"
             >
               Back to Login
@@ -737,11 +807,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
 
   return (
     <>
-      <DashboardHeader
-        userName={fullUserName}
-        userEmail={user?.email || ""}
-        userId={user?.id}
-      />
+      <DashboardHeader userName={fullUserName} userEmail={user?.email || ""} userId={user?.id} />
 
       <div className="min-h-screen bg-background pt-20">
         <div className="container mx-auto px-4 py-12">

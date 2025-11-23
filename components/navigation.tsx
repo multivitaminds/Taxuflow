@@ -4,90 +4,40 @@ import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X, ChevronDown } from "lucide-react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { AuthButton } from "@/components/auth-button"
 
 const navigationStructure = [
   { href: "/", label: "Home" },
   {
-    label: "AI Agents",
+    label: "Products",
     items: [
-      { href: "/ai-agents", label: "Overview", description: "Meet your AI tax assistants" },
-      { href: "/ai-agents/personal", label: "Personal AI Agent", description: "For individuals and families" },
-      { href: "/ai-agents/business", label: "Business AI Agent", description: "For businesses and enterprises" },
-      { href: "/ai-agents/capabilities", label: "Capabilities", description: "What our AI can do for you" },
+      { href: "/ai-agents", label: "AI Agents", description: "Meet your AI tax assistants" },
+      { href: "/ai-features", label: "Features", description: "Complete feature overview" },
+      { href: "/accounting", label: "Accounting", description: "Integrations & Reports" },
     ],
   },
+  { href: "/developer", label: "Developers" },
   {
-    label: "How It Works",
+    label: "Solutions",
     items: [
-      { href: "/how-it-works", label: "Overview", description: "See how Taxu simplifies taxes" },
-      { href: "/how-it-works/process", label: "Our Process", description: "Step-by-step tax automation" },
-      { href: "/how-it-works/integrations", label: "Integrations", description: "Connect your financial accounts" },
-      { href: "/how-it-works/security", label: "Security & Privacy", description: "Bank-level encryption" },
-    ],
-  },
-  {
-    label: "Features",
-    items: [
-      { href: "/ai-features", label: "All Features", description: "Complete feature overview" },
-      { href: "/ai-features/deductions", label: "Smart Deductions", description: "AI-powered deduction finder" },
-      { href: "/ai-features/filing", label: "Auto Filing", description: "Automated tax filing" },
-      { href: "/ai-features/audit", label: "Audit Protection", description: "Full audit support" },
+      { href: "/individuals", label: "For Individuals", description: "Personal tax solutions" },
+      { href: "/businesses", label: "For Businesses", description: "SMB & Enterprise solutions" },
     ],
   },
   { href: "/pricing", label: "Pricing" },
   {
-    label: "Individuals",
+    label: "Resources",
     items: [
-      { href: "/individuals", label: "Overview", description: "Personal tax solutions" },
-      { href: "/individuals/freelancers", label: "Freelancers", description: "For self-employed professionals" },
-      { href: "/individuals/investors", label: "Investors", description: "Capital gains and dividends" },
-      { href: "/individuals/families", label: "Families", description: "Family tax planning" },
+      { href: "/how-it-works", label: "How It Works", description: "See how Taxu simplifies taxes" },
+      { href: "/security", label: "Security", description: "Data protection standards" },
     ],
   },
-  {
-    label: "Businesses",
-    items: [
-      { href: "/businesses", label: "Overview", description: "Business tax solutions" },
-      { href: "/businesses/small-business", label: "Small Business", description: "For SMBs and startups" },
-      { href: "/businesses/enterprise", label: "Enterprise", description: "For large organizations" },
-      { href: "/businesses/accountants", label: "For Accountants", description: "Professional tools" },
-    ],
-  },
-  {
-    label: "Accounting",
-    items: [
-      { href: "/accounting", label: "Overview", description: "Accounting integrations" },
-      { href: "/accounting/quickbooks", label: "QuickBooks", description: "Sync with QuickBooks" },
-      { href: "/accounting/xero", label: "Xero", description: "Connect to Xero" },
-      { href: "/accounting/reports", label: "Reports", description: "Financial reporting" },
-    ],
-  },
-  {
-    label: "Developer",
-    items: [
-      { href: "/developer", label: "Documentation", description: "Start integrating Taxu's products and tools" },
-      { href: "/developer/docs/getting-started", label: "Get Started", description: "Quick start guide" },
-      {
-        href: "/developer/docs/api/tax-calculation",
-        label: "Tax Calculation API",
-        description: "Calculate taxes programmatically",
-      },
-      {
-        href: "/developer/docs/api/documents",
-        label: "Document Intelligence",
-        description: "Extract data from tax documents",
-      },
-      { href: "/developer/docs/api/ai-agents", label: "AI Agents API", description: "Integrate AI tax assistants" },
-      { href: "/developer/docs/webhooks", label: "Webhooks", description: "Real-time event notifications" },
-    ],
-  },
-  { href: "/security", label: "Security" },
 ]
 
 export function Navigation() {
   const [isDark, setIsDark] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const [isVisible, setIsVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
 
@@ -96,12 +46,23 @@ export function Navigation() {
     setIsDark(isDarkMode)
 
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
+      const currentScrollY = window.scrollY
+
+      if (currentScrollY < 10) {
+        setIsVisible(true)
+      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false)
+      } else if (currentScrollY < lastScrollY) {
+        setIsVisible(true)
+      }
+
+      setLastScrollY(currentScrollY)
+      setIsScrolled(currentScrollY > 20)
     }
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, [lastScrollY])
 
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark")
@@ -110,62 +71,81 @@ export function Navigation() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "border-b border-border bg-background/95 backdrop-blur-md shadow-sm" : "bg-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform ${
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      } ${isScrolled ? "bg-[#0A2540] shadow-md py-2" : "bg-[#0A2540] py-4"}`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div
-          className={`flex items-center justify-between transition-all duration-300 ${isScrolled ? "h-14" : "h-20"}`}
-        >
+        <div className="flex items-center justify-between h-14">
+          {" "}
+          {/* Fixed height to 64-72px equivalent */}
           <div className="flex items-center gap-8">
-            <Link href="/" className="text-2xl font-bold tracking-tight">
-              <span className="text-foreground">Tax</span>
-              <span className="text-accent">u</span>
+            <Link href="/" className="text-2xl font-bold tracking-tight flex items-center gap-1 pl-2">
+              <span className="text-white">Tax</span>
+              <span className="text-[#4C6FFF]">u</span> {/* Used Accent Blue from instructions */}
             </Link>
-            <nav className="hidden lg:flex items-center gap-6">
+
+            <nav className="hidden lg:flex items-center gap-8">
               {navigationStructure.map((item) => {
                 if ("items" in item) {
                   return (
                     <div
                       key={item.label}
-                      className="relative"
+                      className="relative group"
                       onMouseEnter={() => setOpenDropdown(item.label)}
                       onMouseLeave={() => setOpenDropdown(null)}
                     >
-                      <button className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2">
+                      <button
+                        className={`flex items-center gap-1 text-[15px] font-medium transition-colors py-2
+                          ${openDropdown === item.label ? "text-white opacity-100" : "text-white/80 hover:text-white"}
+                        `}
+                      >
                         {item.label}
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform duration-200 ${openDropdown === item.label ? "rotate-180" : ""}`}
+                        />
                       </button>
-                      {openDropdown === item.label && (
-                        <div className="absolute top-full left-0 pt-2">
-                          <div className="w-80 bg-background border border-border rounded-lg shadow-lg p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <div className="space-y-1">
-                              {item.items.map((subItem) => (
-                                <Link
-                                  key={subItem.href}
-                                  href={subItem.href}
-                                  className="block px-3 py-2 rounded-md hover:bg-muted transition-colors group"
-                                  onClick={() => setOpenDropdown(null)}
-                                >
-                                  <div className="font-semibold text-sm text-foreground group-hover:text-accent">
-                                    {subItem.label}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground mt-0.5">{subItem.description}</div>
-                                </Link>
-                              ))}
-                            </div>
+
+                      <div
+                        className={`absolute top-full left-0 pt-4 transition-all duration-200 ${openDropdown === item.label ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-2"}`}
+                      >
+                        <div className="w-64 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden p-2">
+                          <div className="space-y-1">
+                            {item.items.map((subItem) => (
+                              <Link
+                                key={subItem.href}
+                                href={subItem.href}
+                                className="block px-4 py-3 rounded-md hover:bg-slate-50 transition-colors group/item"
+                                onClick={() => setOpenDropdown(null)}
+                              >
+                                <div className="font-semibold text-sm text-slate-900 group-hover/item:text-[#4C6FFF]">
+                                  {subItem.label}
+                                </div>
+                                <div className="text-xs text-slate-500 mt-1">{subItem.description}</div>
+                              </Link>
+                            ))}
                           </div>
                         </div>
-                      )}
+                      </div>
                     </div>
+                  )
+                }
+                if (item.href === "/developer") {
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="text-[15px] font-medium text-white/80 hover:text-white transition-colors"
+                    >
+                      {item.label}
+                    </Link>
                   )
                 }
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-[15px] font-medium text-white/80 hover:text-white transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -173,35 +153,49 @@ export function Navigation() {
               })}
             </nav>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode} className="rounded-full">
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
-            <div className="hidden sm:flex">
-              <AuthButton />
-            </div>
+          <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              onClick={toggleDarkMode}
+              className="rounded-full text-white hover:bg-white/10 hover:text-white hidden"
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+
+            <Link href="/login" className="hidden sm:inline-block">
+              <Button variant="ghost" className="text-white hover:text-white hover:bg-white/10 font-medium text-[15px]">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/get-started" className="hidden sm:inline-block">
+              <Button className="bg-[#4C6FFF] hover:bg-[#3b5bdb] text-white font-medium rounded-full px-6 transition-all shadow-lg shadow-blue-900/20">
+                Get Started
+              </Button>
+            </Link>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-white hover:bg-white/10"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
         </div>
       </div>
 
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-border bg-background/95 backdrop-blur-md max-h-[80vh] overflow-y-auto">
-          <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+        <div className="lg:hidden absolute top-full left-0 right-0 bg-[#0A2540] border-t border-white/10 shadow-2xl max-h-[calc(100vh-80px)] overflow-y-auto">
+          <nav className="container mx-auto px-4 py-6 flex flex-col gap-4">
             {navigationStructure.map((item) => {
               if ("items" in item) {
                 return (
-                  <div key={item.label} className="space-y-1">
+                  <div key={item.label} className="space-y-2">
                     <button
                       onClick={() => setOpenDropdown(openDropdown === item.label ? null : item.label)}
-                      className="w-full flex items-center justify-between px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted rounded-lg transition-colors"
+                      className="w-full flex items-center justify-between text-[16px] font-medium text-white p-2 rounded-lg hover:bg-white/5 transition-colors"
                     >
                       {item.label}
                       <ChevronDown
@@ -209,12 +203,12 @@ export function Navigation() {
                       />
                     </button>
                     {openDropdown === item.label && (
-                      <div className="pl-4 space-y-1">
+                      <div className="pl-4 space-y-2 border-l border-white/10 ml-2">
                         {item.items.map((subItem) => (
                           <Link
                             key={subItem.href}
                             href={subItem.href}
-                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                            className="block px-4 py-2 text-[14px] text-white/70 hover:text-white transition-colors"
                             onClick={() => setIsMobileMenuOpen(false)}
                           >
                             {subItem.label}
@@ -225,19 +219,41 @@ export function Navigation() {
                   </div>
                 )
               }
+              if (item.href === "/developer") {
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="text-[16px] font-medium text-white p-2 rounded-lg hover:bg-white/5 transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              }
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  className="text-[16px] font-medium text-white p-2 rounded-lg hover:bg-white/5 transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
                 </Link>
               )
             })}
-            <div className="mt-4 px-4 flex flex-col gap-2 sm:hidden">
-              <AuthButton />
+            <div className="mt-6 pt-6 border-t border-white/10 flex flex-col gap-4 sm:hidden">
+              <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button
+                  variant="outline"
+                  className="w-full bg-transparent text-white border-white/20 hover:bg-white/10"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/get-started" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button className="w-full bg-[#4C6FFF] hover:bg-[#3b5bdb] text-white">Get Started</Button>
+              </Link>
             </div>
           </nav>
         </div>

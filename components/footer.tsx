@@ -3,29 +3,40 @@ import { StatusBadge } from "./status-badge"
 
 export function Footer() {
   const footerLinks = {
-    Product: [
-      { label: "How It Works", href: "/how-it-works" },
-      { label: "AI Features", href: "/ai-features" },
-      { label: "Meet AI Agents", href: "/ai-agents" },
-      { label: "Pricing", href: "/pricing" },
+    Products: [
+      { label: "Payments", href: "/products/payments" },
+      { label: "Billing", href: "/products/billing" },
+      { label: "Connect", href: "/products/connect" },
+      { label: "Payouts", href: "/products/payouts" },
+      { label: "Issuing", href: "/products/issuing" },
+      { label: "Terminal", href: "/products/terminal" },
+      { label: "Tax", href: "/products/tax" },
+      { label: "Identity", href: "/products/identity" },
     ],
     Solutions: [
       { label: "Individuals", href: "/individuals" },
       { label: "Businesses", href: "/businesses" },
       { label: "Developer", href: "/developers" },
       { label: "Partners", href: "/partners" },
+      { label: "Ecommerce", href: "/solutions/ecommerce" },
+      { label: "SaaS", href: "/solutions/saas" },
+      { label: "Marketplaces", href: "/solutions/marketplaces" },
+      { label: "Platforms", href: "/solutions/platforms" },
     ],
     Resources: [
       { label: "Blog", href: "/blog" },
       { label: "Referral Program", href: "/referral" },
       { label: "Security", href: "/security" },
       { label: "Get Started", href: "/get-started" },
+      { label: "Guides", href: "/guides" },
+      { label: "API Reference", href: "/docs" },
     ],
     Company: [
       { label: "About", href: "/about" },
       { label: "Careers", href: "/careers" },
       { label: "Contact", href: "/contact" },
       { label: "Status", href: "/developer-portal/status" },
+      { label: "Newsroom", href: "/newsroom" },
     ],
     Legal: [
       { label: "Terms", href: "/terms" },
@@ -36,16 +47,18 @@ export function Footer() {
   }
 
   return (
-    <footer className="border-t border-border bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-12">
+    <footer className="bg-[#0a2540] text-white border-t border-white/10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-8 mb-16">
           <div className="col-span-2 md:col-span-1">
-            <div className="text-2xl font-bold mb-4">
-              <span className="text-foreground">Tax</span>
-              <span className="text-accent">u</span>
+            <div className="text-2xl font-bold mb-6">
+              <span className="text-white">Tax</span>
+              <span className="text-[#00d4ff]">u</span>
             </div>
-            <p className="text-sm text-muted-foreground mb-4">AI-powered tax filing for everyone.</p>
-            <div className="mb-4">
+            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+              AI-powered tax filing infrastructure for the internet economy.
+            </p>
+            <div className="mb-6">
               <StatusBadge />
             </div>
             <div className="flex gap-4">
@@ -53,7 +66,7 @@ export function Footer() {
                 href="https://twitter.com/taxu_ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-colors"
+                className="text-slate-400 hover:text-white transition-colors"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.072 4.072 0 01-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
@@ -63,7 +76,7 @@ export function Footer() {
                 href="https://github.com/taxu-ai"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-accent transition-colors"
+                className="text-slate-400 hover:text-white transition-colors"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                   <path
@@ -78,13 +91,13 @@ export function Footer() {
 
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="font-semibold mb-4">{category}</h3>
+              <h3 className="font-bold mb-4 text-white">{category}</h3>
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-sm text-slate-400 hover:text-white transition-colors font-medium"
                     >
                       {link.label}
                     </Link>
@@ -95,15 +108,13 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-muted-foreground">© 2025 Taxu. All rights reserved.</div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-slate-400">© 2025 Taxu. All rights reserved.</div>
+          <div className="flex items-center gap-6 text-sm text-slate-400 font-medium">
             <span>IRS e-file Certified</span>
-            <span>•</span>
-            <span>SOC 2 Compliance In Progress</span>
-            <span>•</span>
+            <span>SOC 2 Compliance</span>
             <span>
-              Powered by <span className="text-accent">GPT-4</span>
+              Powered by <span className="text-[#00d4ff]">Stripe</span>
             </span>
           </div>
         </div>

@@ -41,12 +41,12 @@ export default function HowItWorksPage() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="gradient-stripe-hero pt-32 pb-20 px-4 sm:px-6 lg:px-8 clip-diagonal">
         <div className="container mx-auto max-w-4xl text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1]">
-            Filing Made <span className="text-glow">Simple</span>
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1] text-white">
+            Filing Made <span className="text-[#00d4ff]">Simple</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground text-balance">
+          <p className="text-xl sm:text-2xl text-white/80 text-balance">
             From upload to refund in 5 minutes. Here's exactly how it works.
           </p>
         </div>

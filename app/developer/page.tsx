@@ -1,16 +1,16 @@
 import Link from "next/link"
-import { Terminal, ArrowRight, BookOpen, Sparkles } from 'lucide-react'
+import { Terminal, ArrowRight, BookOpen } from "lucide-react"
 
 export default function DeveloperPortal() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section - Stripe-inspired dark blue */}
-      <section className="bg-[#0a2540] text-white relative overflow-hidden">
+      <section className="bg-gradient-to-r from-[#0F2244] to-[#13254B] text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#635bff]/10 to-transparent" />
         <div className="container mx-auto px-6 py-24 relative">
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-semibold mb-8">
-              <Sparkles className="w-4 h-4 text-[#00d4ff]" />
+              <Terminal className="w-4 h-4 text-[#00d4ff]" />
               Designed for developers
             </div>
             <h1 className="text-6xl font-bold mb-6 leading-tight">Ship faster with powerful and easy-to-use APIs</h1>
@@ -336,7 +336,7 @@ export default function DeveloperPortal() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-[#0a2540] to-[#1a3a52] text-white">
+      <section className="py-20 bg-gradient-to-r from-[#0F2244] to-[#13254B] text-white">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-4xl font-bold mb-6">Ready to get started?</h2>
           <p className="text-xl text-[#adbdcc] mb-10 max-w-2xl mx-auto">
@@ -347,7 +347,7 @@ export default function DeveloperPortal() {
               href="/login"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-[#0a2540] rounded-lg hover:bg-gray-100 transition-all font-bold text-lg shadow-lg"
             >
-              Create account <ArrowRight className="w-5 h-5" />
+              Create account <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/developer/docs/getting-started"

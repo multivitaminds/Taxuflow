@@ -5,6 +5,10 @@ import ChatClient from "@/components/chat-client"
 export default async function ChatPage() {
   const supabase = await createClient()
 
+  if (!supabase) {
+    redirect("/login")
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()

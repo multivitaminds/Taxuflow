@@ -67,17 +67,17 @@ export default function CompliancePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="gradient-stripe-hero pt-32 pb-20 px-4 clip-diagonal">
         <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-medium mb-6 backdrop-blur-sm border border-white/20">
             <Shield className="h-4 w-4" />
             Compliance & Certifications
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance text-white">
             Trusted, Certified,
-            <span className="text-accent"> Compliant</span>
+            <span className="text-[#00d4ff]"> Compliant</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 text-balance">
+          <p className="text-xl text-white/80 mb-8 text-balance">
             We maintain the highest standards of security, privacy, and regulatory compliance to protect your sensitive
             tax information.
           </p>
@@ -85,29 +85,27 @@ export default function CompliancePage() {
       </section>
 
       {/* Certifications Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-[#f6f9fc]">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Certifications & Authorizations</h2>
-            <p className="text-lg text-muted-foreground">Independently verified security and compliance standards</p>
+            <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Certifications & Authorizations</h2>
+            <p className="text-lg text-slate-600">Independently verified security and compliance standards</p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {certifications.map((cert) => (
-              <Card key={cert.title} className="p-8">
+              <Card key={cert.title} className="p-8 border-0 shadow-md hover:shadow-lg transition-shadow bg-white">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
-                    <div className="w-16 h-16 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <cert.icon className="h-8 w-8 text-accent" />
+                    <div className="w-16 h-16 rounded-lg bg-[#f6f9fc] flex items-center justify-center">
+                      <cert.icon className="h-8 w-8 text-[#635bff]" />
                     </div>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-2xl font-bold">{cert.title}</h3>
-                      <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
-                        {cert.status}
-                      </Badge>
+                      <h3 className="text-2xl font-bold text-[#0a2540]">{cert.title}</h3>
+                      <Badge className="bg-[#00d4ff]/10 text-[#0077b6] border-[#00d4ff]/20">{cert.status}</Badge>
                     </div>
-                    <p className="text-muted-foreground">{cert.description}</p>
+                    <p className="text-slate-600">{cert.description}</p>
                   </div>
                 </div>
               </Card>
@@ -117,20 +115,20 @@ export default function CompliancePage() {
       </section>
 
       {/* Standards Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Compliance Standards</h2>
-            <p className="text-lg text-muted-foreground">We adhere to industry-leading regulatory frameworks</p>
+            <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Compliance Standards</h2>
+            <p className="text-lg text-slate-600">We adhere to industry-leading regulatory frameworks</p>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {standards.map((standard) => (
-              <Card key={standard.name} className="p-6">
+              <Card key={standard.name} className="p-6 border border-slate-200 shadow-sm">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="h-6 w-6 text-accent flex-shrink-0 mt-1" />
+                  <CheckCircle2 className="h-6 w-6 text-[#635bff] flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">{standard.name}</h3>
-                    <p className="text-muted-foreground">{standard.description}</p>
+                    <h3 className="text-xl font-semibold mb-2 text-[#0a2540]">{standard.name}</h3>
+                    <p className="text-slate-600">{standard.description}</p>
                   </div>
                 </div>
               </Card>
@@ -140,18 +138,18 @@ export default function CompliancePage() {
       </section>
 
       {/* Security Practices Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-[#f6f9fc]">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Security Practices</h2>
-            <p className="text-lg text-muted-foreground">Comprehensive measures to protect your data</p>
+            <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Security Practices</h2>
+            <p className="text-lg text-slate-600">Comprehensive measures to protect your data</p>
           </div>
-          <Card className="p-8">
+          <Card className="p-8 border-0 shadow-lg bg-white">
             <div className="grid md:grid-cols-2 gap-6">
               {practices.map((practice, index) => (
                 <div key={index} className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
-                  <p className="text-muted-foreground">{practice}</p>
+                  <CheckCircle2 className="h-5 w-5 text-[#00d4ff] flex-shrink-0 mt-0.5" />
+                  <p className="text-slate-700">{practice}</p>
                 </div>
               ))}
             </div>
@@ -160,39 +158,45 @@ export default function CompliancePage() {
       </section>
 
       {/* Audit Reports Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Audit Reports</h2>
-            <p className="text-lg text-muted-foreground mb-8">Request copies of our compliance documentation</p>
+            <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Audit Reports</h2>
+            <p className="text-lg text-slate-600 mb-8">Request copies of our compliance documentation</p>
           </div>
-          <Card className="p-8">
+          <Card className="p-8 border border-slate-200 shadow-sm">
             <div className="space-y-6">
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-slate-100 rounded-lg bg-[#f6f9fc]">
                 <div>
-                  <h3 className="font-semibold mb-1">SOC 2 Compliance Status</h3>
-                  <p className="text-sm text-muted-foreground">Audit in progress - Target completion 2025</p>
+                  <h3 className="font-semibold mb-1 text-[#0a2540]">SOC 2 Compliance Status</h3>
+                  <p className="text-sm text-slate-500">Audit in progress - Target completion 2025</p>
                 </div>
-                <button className="text-accent hover:underline text-sm font-medium">Request Status</button>
+                <button className="text-[#635bff] hover:text-[#0a2540] text-sm font-medium transition-colors">
+                  Request Status
+                </button>
               </div>
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-slate-100 rounded-lg bg-[#f6f9fc]">
                 <div>
-                  <h3 className="font-semibold mb-1">Penetration Test Results</h3>
-                  <p className="text-sm text-muted-foreground">Third-party security assessment - Updated Q4 2024</p>
+                  <h3 className="font-semibold mb-1 text-[#0a2540]">Penetration Test Results</h3>
+                  <p className="text-sm text-slate-500">Third-party security assessment - Updated Q4 2024</p>
                 </div>
-                <button className="text-accent hover:underline text-sm font-medium">Request Report</button>
+                <button className="text-[#635bff] hover:text-[#0a2540] text-sm font-medium transition-colors">
+                  Request Report
+                </button>
               </div>
-              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-slate-100 rounded-lg bg-[#f6f9fc]">
                 <div>
-                  <h3 className="font-semibold mb-1">Data Processing Agreement</h3>
-                  <p className="text-sm text-muted-foreground">GDPR-compliant DPA template</p>
+                  <h3 className="font-semibold mb-1 text-[#0a2540]">Data Processing Agreement</h3>
+                  <p className="text-sm text-slate-500">GDPR-compliant DPA template</p>
                 </div>
-                <button className="text-accent hover:underline text-sm font-medium">Download DPA</button>
+                <button className="text-[#635bff] hover:text-[#0a2540] text-sm font-medium transition-colors">
+                  Download DPA
+                </button>
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mt-6 text-center">
+            <p className="text-sm text-slate-500 mt-6 text-center">
               Enterprise customers can request additional compliance documentation by contacting{" "}
-              <a href="mailto:compliance@taxu.ai" className="text-accent">
+              <a href="mailto:compliance@taxu.ai" className="text-[#635bff] hover:underline">
                 compliance@taxu.ai
               </a>
             </p>
@@ -201,20 +205,20 @@ export default function CompliancePage() {
       </section>
 
       {/* Contact Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-accent/10 via-background to-background">
+      <section className="py-20 px-4 bg-[#0a2540] clip-diagonal-top">
         <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl font-bold mb-6">Questions About Compliance?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
+          <h2 className="text-4xl font-bold mb-6 text-white">Questions About Compliance?</h2>
+          <p className="text-xl text-white/80 mb-8">
             Our compliance team is here to answer your questions and provide additional documentation.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="mailto:compliance@taxu.ai">
-              <button className="px-6 py-3 bg-accent text-white rounded-lg font-medium hover:bg-accent/90 transition-colors">
+              <button className="px-6 py-3 bg-[#635bff] text-white rounded-lg font-medium hover:bg-[#635bff]/90 transition-colors">
                 Contact Compliance Team
               </button>
             </a>
             <a href="/security/docs">
-              <button className="px-6 py-3 border border-border rounded-lg font-medium hover:bg-muted transition-colors">
+              <button className="px-6 py-3 border border-white/20 text-white rounded-lg font-medium hover:bg-white/10 transition-colors">
                 View Security Docs
               </button>
             </a>

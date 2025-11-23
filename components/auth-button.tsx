@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { getSupabaseBrowserClient, isSupabaseConfigured } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut } from "lucide-react"
 import type { User as SupabaseUser } from "@supabase/ssr"
 
 export function AuthButton() {
@@ -95,12 +95,12 @@ export function AuthButton() {
     return (
       <div className="flex items-center gap-3">
         <Link href="/dashboard">
-          <Button variant="ghost" className="hover:text-[#2ACBFF]">
+          <Button variant="ghost" className="hover:text-[#635bff] text-[#0a2540] dark:text-white">
             <User className="w-4 h-4 mr-2" />
             Dashboard
           </Button>
         </Link>
-        <Button onClick={handleSignOut} variant="ghost" className="hover:text-red-400">
+        <Button onClick={handleSignOut} variant="ghost" className="hover:text-red-400 text-[#0a2540] dark:text-white">
           <LogOut className="w-4 h-4 mr-2" />
           Sign out
         </Button>
@@ -111,15 +111,14 @@ export function AuthButton() {
   return (
     <div className="flex items-center gap-3">
       <Link href="/login">
-        <Button
-          variant="outline"
-          className="border-border text-foreground hover:bg-muted hover:text-[#2ACBFF] font-medium bg-transparent"
-        >
+        <Button variant="ghost" className="text-[#0a2540] dark:text-white hover:text-[#635bff] font-medium">
           Sign in
         </Button>
       </Link>
       <Link href="/signup">
-        <Button className="bg-[#2ACBFF] hover:bg-[#0EA5E9] text-[#0B0C0E] font-semibold">Get Started</Button>
+        <Button className="bg-[#635bff] hover:bg-[#5851df] text-white font-medium rounded-full px-6">
+          Get Started
+        </Button>
       </Link>
     </div>
   )

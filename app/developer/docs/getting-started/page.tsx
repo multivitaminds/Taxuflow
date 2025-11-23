@@ -1,8 +1,40 @@
 "use client"
 
+import type React from "react"
+
 import { Card } from "@/components/ui/card"
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Copy, Check } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
+
+// Simple code block component for syntax highlighting
+function CodeBlock({ language, code }: { language: string; code: React.ReactNode }) {
+  const [copied, setCopied] = useState(false)
+
+  const onCopy = () => {
+    // Extract text content from React node children for copying
+    const text = document.getElementById(`code-${language}`)?.innerText || ""
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="rounded-lg overflow-hidden border border-gray-800 bg-[#0d1117] my-4">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-gray-800">
+        <span className="text-xs font-medium text-gray-400 select-none">{language}</span>
+        <button onClick={onCopy} className="text-gray-400 hover:text-white transition-colors">
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+      <div className="p-4 overflow-x-auto">
+        <pre className="font-mono text-sm leading-relaxed" id={`code-${language}`}>
+          {code}
+        </pre>
+      </div>
+    </div>
+  )
+}
 
 export default function GettingStartedPage() {
   return (
@@ -108,104 +140,224 @@ export default function GettingStartedPage() {
       </section>
 
       {/* Quick Start Code Example */}
-      <section className="bg-gray-50 -mx-6 px-6 py-12 rounded-xl">
+      <section className="bg-gray-50 -mx-6 px-6 py-12 rounded-xl border border-gray-100">
         <h2 className="text-3xl font-bold mb-6 text-gray-900">Quick start code example</h2>
         <p className="text-gray-600 mb-8">Here's a simple example to process a W-2 document and calculate taxes:</p>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-900">Node.js</h3>
-            </div>
-            <pre className="bg-[#0d1117] p-6 rounded-lg overflow-x-auto text-sm border border-gray-800">
-              <code className="text-white font-mono">{String.raw`// SDK coming soon - use REST API for now
-// REST API Example
-const response = await fetch('https://api.taxu.io/v1/documents/upload', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer your_api_key',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    file: fileData,
-    type: 'w2'
-  })
-});
-
-const uploadedFile = await response.json();
-
-// Get AI analysis results
-const analysisResponse = await fetch(\`https://api.taxu.io/v1/documents/\${uploadedFile.id}\`, {
-  headers: {
-    'Authorization': 'Bearer your_api_key'
-  }
-});
-
-const analysis = await analysisResponse.json();
-console.log('Employer:', analysis.extracted_data.employer_name);
-console.log('Wages:', analysis.extracted_data.wages);
-
-// Calculate tax refund
-const calculationResponse = await fetch('https://api.taxu.io/v1/tax/calculate', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer your_api_key',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    income: analysis.extracted_data.wages,
-    withheld: analysis.extracted_data.federal_tax_withheld
-  })
-});
-
-const calculation = await calculationResponse.json();
-console.log('Estimated Refund:', calculation.estimated_refund);`}</code>
-            </pre>
+            <h3 className="font-bold text-gray-900 mb-3">Node.js</h3>
+            <CodeBlock
+              language="Node.js"
+              code={
+                <code className="text-[#e6edf3]">
+                  <span className="text-[#8b949e]">// SDK coming soon - use REST API for now</span>
+                  {"\n"}
+                  <span className="text-[#8b949e]">// REST API Example</span>
+                  {"\n"}
+                  <span className="text-[#ff7b72]">const</span> <span className="text-[#d2a8ff]">response</span>{" "}
+                  <span className="text-[#ff7b72]">= await</span> <span className="text-[#d2a8ff]">fetch</span>(
+                  <span className="text-[#a5d6ff]">'https://api.taxu.io/v1/documents/upload'</span>, {"{"}
+                  {"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">method</span>: <span className="text-[#a5d6ff]">'POST'</span>,{"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">headers</span>: {"{"}
+                  {"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">'Authorization'</span>:{" "}
+                  <span className="text-[#a5d6ff]">'Bearer your_api_key'</span>,{"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">'Content-Type'</span>:{" "}
+                  <span className="text-[#a5d6ff]">'application/json'</span>
+                  {"\n"}
+                  {"  "}
+                  {"}"},{"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">body</span>: <span className="text-[#ff7b72]">JSON</span>.
+                  <span className="text-[#d2a8ff]">stringify</span>({"{"}
+                  {"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">file</span>: fileData,{"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">type</span>: <span className="text-[#a5d6ff]">'w2'</span>
+                  {"\n"}
+                  {"  "}
+                  {"})"}
+                  {"\n"}
+                  {"}"});{"\n"}
+                  {"\n"}
+                  <span className="text-[#ff7b72]">const</span> <span className="text-[#d2a8ff]">uploadedFile</span>{" "}
+                  <span className="text-[#ff7b72]">= await</span> response.<span className="text-[#d2a8ff]">json</span>
+                  ();{"\n"}
+                  {"\n"}
+                  <span className="text-[#8b949e]">// Get AI analysis results</span>
+                  {"\n"}
+                  <span className="text-[#ff7b72]">const</span> <span className="text-[#d2a8ff]">analysisResponse</span>{" "}
+                  <span className="text-[#ff7b72]">= await</span> <span className="text-[#d2a8ff]">fetch</span>(
+                  <span className="text-[#a5d6ff]">{`\`https://api.taxu.io/v1/documents/\${uploadedFile.id}\``}</span>,{" "}
+                  {"{"}
+                  {"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">headers</span>: {"{"}
+                  {"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">'Authorization'</span>:{" "}
+                  <span className="text-[#a5d6ff]">'Bearer your_api_key'</span>
+                  {"\n"}
+                  {"  "}
+                  {"}"}
+                  {"\n"}
+                  {"}"});{"\n"}
+                  {"\n"}
+                  <span className="text-[#ff7b72]">const</span> <span className="text-[#d2a8ff]">analysis</span>{" "}
+                  <span className="text-[#ff7b72]">= await</span> analysisResponse.
+                  <span className="text-[#d2a8ff]">json</span>();{"\n"}
+                  <span className="text-[#d2a8ff]">console</span>.<span className="text-[#d2a8ff]">log</span>(
+                  <span className="text-[#a5d6ff]">'Employer:'</span>, analysis.extracted_data.employer_name);{"\n"}
+                  <span className="text-[#d2a8ff]">console</span>.<span className="text-[#d2a8ff]">log</span>(
+                  <span className="text-[#a5d6ff]">'Wages:'</span>, analysis.extracted_data.wages);{"\n"}
+                  {"\n"}
+                  <span className="text-[#8b949e]">// Calculate tax refund</span>
+                  {"\n"}
+                  <span className="text-[#ff7b72]">const</span>{" "}
+                  <span className="text-[#d2a8ff]">calculationResponse</span>{" "}
+                  <span className="text-[#ff7b72]">= await</span> <span className="text-[#d2a8ff]">fetch</span>(
+                  <span className="text-[#a5d6ff]">'https://api.taxu.io/v1/tax/calculate'</span>, {"{"}
+                  {"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">method</span>: <span className="text-[#a5d6ff]">'POST'</span>,{"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">headers</span>: {"{"}
+                  {"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">'Authorization'</span>:{" "}
+                  <span className="text-[#a5d6ff]">'Bearer your_api_key'</span>,{"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">'Content-Type'</span>:{" "}
+                  <span className="text-[#a5d6ff]">'application/json'</span>
+                  {"\n"}
+                  {"  "}
+                  {"}"},{"\n"}
+                  {"  "}
+                  <span className="text-[#79c0ff]">body</span>: <span className="text-[#ff7b72]">JSON</span>.
+                  <span className="text-[#d2a8ff]">stringify</span>({"{"}
+                  {"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">income</span>: analysis.extracted_data.wages,{"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">withheld</span>: analysis.extracted_data.federal_tax_withheld{"\n"}
+                  {"  "}
+                  {"})"}
+                  {"\n"}
+                  {"}"});{"\n"}
+                  {"\n"}
+                  <span className="text-[#ff7b72]">const</span> <span className="text-[#d2a8ff]">calculation</span>{" "}
+                  <span className="text-[#ff7b72]">= await</span> calculationResponse.
+                  <span className="text-[#d2a8ff]">json</span>();{"\n"}
+                  <span className="text-[#d2a8ff]">console</span>.<span className="text-[#d2a8ff]">log</span>(
+                  <span className="text-[#a5d6ff]">'Estimated Refund:'</span>, calculation.estimated_refund);
+                </code>
+              }
+            />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-gray-900">Python</h3>
-            </div>
-            <pre className="bg-[#0d1117] p-6 rounded-lg overflow-x-auto text-sm border border-gray-800">
-              <code className="text-white font-mono">{String.raw`# SDK coming soon - use REST API for now
-# REST API Example
-import requests
-
-API_KEY = 'your_api_key'
-BASE_URL = 'https://api.taxu.io/v1'
-
-# Upload and process a W-2 document
-with open('w2.pdf', 'rb') as file:
-    response = requests.post(
-        f'{BASE_URL}/documents/upload',
-        headers={'Authorization': f'Bearer {API_KEY}'},
-        files={'file': file},
-        data={'type': 'w2'}
-    )
-    uploaded = response.json()
-
-# Get AI analysis results
-analysis_response = requests.get(
-    f'{BASE_URL}/documents/{uploaded["id"]}',
-    headers={'Authorization': f'Bearer {API_KEY}'}
-)
-analysis = analysis_response.json()
-print(f'Employer: {analysis["extracted_data"]["employer_name"]}')
-print(f'Wages: {analysis["extracted_data"]["wages"]}')
-
-# Calculate tax refund
-calculation_response = requests.post(
-    f'{BASE_URL}/tax/calculate',
-    headers={'Authorization': f'Bearer {API_KEY}'},
-    json={
-        'income': analysis['extracted_data']['wages'],
-        'withheld': analysis['extracted_data']['federal_tax_withheld']
-    }
-)
-calculation = calculation_response.json()
-print(f'Estimated Refund: {calculation["estimated_refund"]}')`}</code>
-            </pre>
+            <h3 className="font-bold text-gray-900 mb-3">Python</h3>
+            <CodeBlock
+              language="Python"
+              code={
+                <code className="text-[#e6edf3]">
+                  <span className="text-[#8b949e]"># SDK coming soon - use REST API for now</span>
+                  {"\n"}
+                  <span className="text-[#8b949e]"># REST API Example</span>
+                  {"\n"}
+                  <span className="text-[#ff7b72]">import</span> requests{"\n"}
+                  {"\n"}
+                  <span className="text-[#79c0ff]">API_KEY</span> ={" "}
+                  <span className="text-[#a5d6ff]">'your_api_key'</span>
+                  {"\n"}
+                  <span className="text-[#79c0ff]">BASE_URL</span> ={" "}
+                  <span className="text-[#a5d6ff]">'https://api.taxu.io/v1'</span>
+                  {"\n"}
+                  {"\n"}
+                  <span className="text-[#8b949e]"># Upload and process a W-2 document</span>
+                  {"\n"}
+                  <span className="text-[#ff7b72]">with</span> <span className="text-[#d2a8ff]">open</span>(
+                  <span className="text-[#a5d6ff]">'w2.pdf'</span>, <span className="text-[#a5d6ff]">'rb'</span>){" "}
+                  <span className="text-[#ff7b72]">as</span> file:{"\n"}
+                  {"    "}
+                  <span className="text-[#d2a8ff]">response</span> = requests.post({"\n"}
+                  {"        "}
+                  <span className="text-[#a5d6ff]">f'{`{BASE_URL}`}/documents/upload'</span>,{"\n"}
+                  {"        "}
+                  <span className="text-[#79c0ff]">headers</span>={"{"}
+                  <span className="text-[#a5d6ff]">'Authorization'</span>:{" "}
+                  <span className="text-[#a5d6ff]">f'Bearer {`{API_KEY}`}'</span>
+                  {"}"},{"\n"}
+                  {"        "}
+                  <span className="text-[#79c0ff]">files</span>={"{"}
+                  <span className="text-[#a5d6ff]">'file'</span>: file{"}"},{"\n"}
+                  {"        "}
+                  <span className="text-[#79c0ff]">data</span>={"{"}
+                  <span className="text-[#a5d6ff]">'type'</span>: <span className="text-[#a5d6ff]">'w2'</span>
+                  {"}"}
+                  {"\n"}
+                  {"    "}){"\n"}
+                  {"    "}
+                  <span className="text-[#d2a8ff]">uploaded</span> = response.json(){"\n"}
+                  {"\n"}
+                  <span className="text-[#8b949e]"># Get AI analysis results</span>
+                  {"\n"}
+                  <span className="text-[#d2a8ff]">analysis_response</span> = requests.get({"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">
+                    f'{`{BASE_URL}`}/documents/{`{uploaded["id"]}`}'
+                  </span>
+                  ,{"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">headers</span>={"{"}
+                  <span className="text-[#a5d6ff]">'Authorization'</span>:{" "}
+                  <span className="text-[#a5d6ff]">f'Bearer {`{API_KEY}`}'</span>
+                  {"}"}
+                  {"\n"}){"\n"}
+                  <span className="text-[#d2a8ff]">analysis</span> = analysis_response.json(){"\n"}
+                  <span className="text-[#d2a8ff]">print</span>(
+                  <span className="text-[#a5d6ff]">f'Employer: {`{analysis["extracted_data"]["employer_name"]}`}'</span>
+                  ){"\n"}
+                  <span className="text-[#d2a8ff]">print</span>(
+                  <span className="text-[#a5d6ff]">f'Wages: {`{analysis["extracted_data"]["wages"]}`}'</span>){"\n"}
+                  {"\n"}
+                  <span className="text-[#8b949e]"># Calculate tax refund</span>
+                  {"\n"}
+                  <span className="text-[#d2a8ff]">calculation_response</span> = requests.post({"\n"}
+                  {"    "}
+                  <span className="text-[#a5d6ff]">f'{`{BASE_URL}`}/tax/calculate'</span>,{"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">headers</span>={"{"}
+                  <span className="text-[#a5d6ff]">'Authorization'</span>:{" "}
+                  <span className="text-[#a5d6ff]">f'Bearer {`{API_KEY}`}'</span>
+                  {"}"},{"\n"}
+                  {"    "}
+                  <span className="text-[#79c0ff]">json</span>={"{"}
+                  {"\n"}
+                  {"        "}
+                  <span className="text-[#a5d6ff]">'income'</span>: analysis[
+                  <span className="text-[#a5d6ff]">'extracted_data'</span>][
+                  <span className="text-[#a5d6ff]">'wages'</span>],{"\n"}
+                  {"        "}
+                  <span className="text-[#a5d6ff]">'withheld'</span>: analysis[
+                  <span className="text-[#a5d6ff]">'extracted_data'</span>][
+                  <span className="text-[#a5d6ff]">'federal_tax_withheld'</span>]{"\n"}
+                  {"    "}
+                  {"}"}
+                  {"\n"}){"\n"}
+                  <span className="text-[#d2a8ff]">calculation</span> = calculation_response.json(){"\n"}
+                  <span className="text-[#d2a8ff]">print</span>(
+                  <span className="text-[#a5d6ff]">f'Estimated Refund: {`{calculation["estimated_refund"]}`}'</span>)
+                </code>
+              }
+            />
           </div>
         </div>
       </section>

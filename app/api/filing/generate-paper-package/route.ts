@@ -3,6 +3,21 @@ import { createClient } from "@/lib/supabase/server"
 import { jsPDF } from "jspdf"
 import { uploadToS3, isS3Configured } from "@/lib/aws-s3"
 
+if (typeof window === "undefined") {
+  const globalAny = global as any
+  globalAny.window = {
+    document: {
+      createElementNS: () => {
+        return {}
+      },
+    },
+  }
+  globalAny.navigator = {}
+  globalAny.btoa = (str: string) => Buffer.from(str, "binary").toString("base64")
+  globalAny.atob = (b64: string) => Buffer.from(b64, "base64").toString("binary")
+}
+// </CHANGE>
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -32,8 +47,22 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Generating paper filing package for:", { formType, filingType, taxYear })
 
-    // Create PDF with jsPDF
-    const doc = new jsPDF()
+    let doc
+    try {
+      doc = new jsPDF()
+    } catch (pdfError: any) {
+      console.error("[v0] jsPDF instantiation failed:", pdfError)
+      // Try to re-import or handle error specific to environment
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to initialize PDF generator. Please try again or contact support.",
+        },
+        { status: 500 },
+      )
+    }
+    // </CHANGE>
+
     let yPos = 20
 
     // Title
@@ -179,6 +208,7 @@ export async function POST(request: NextRequest) {
     // Generate PDF as ArrayBuffer for Node.js compatibility
     const pdfArrayBuffer = doc.output("arraybuffer")
     const pdfBuffer = Buffer.from(pdfArrayBuffer)
+    // </CHANGE>
 
     let url: string
 

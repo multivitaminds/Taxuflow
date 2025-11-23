@@ -1,178 +1,122 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Calculator, Users, Receipt, CreditCard } from "lucide-react"
 
 export default function AccountingAPIPage() {
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-4xl font-bold mb-4">Accounting API</h1>
-        <p className="text-lg text-muted-foreground">
+    <div className="space-y-10 pb-20 px-6 md:px-12 lg:px-36">
+      <div className="border-b border-slate-200 pb-8">
+        <div className="inline-flex items-center gap-2 text-[#635BFF] font-medium mb-2">
+          <Calculator className="w-5 h-5" />
+          <span>API Reference</span>
+        </div>
+        <h1 className="text-4xl font-bold text-slate-900 mb-4">Accounting API</h1>
+        <p className="text-xl text-slate-600 max-w-3xl leading-relaxed">
           Manage customers, invoices, expenses, and accounting data programmatically.
         </p>
       </div>
 
-      <Card className="p-8">
-        <h2 className="text-2xl font-bold mb-4">Customers</h2>
+      {/* Customers Section */}
+      <section id="customers" className="scroll-mt-24">
+        <div className="flex items-center gap-3 mb-6">
+          <Users className="w-6 h-6 text-slate-400" />
+          <h2 className="text-2xl font-bold text-slate-900">Customers</h2>
+        </div>
 
-        <div className="space-y-6">
-          <div>
+        <Card className="border-slate-200 shadow-sm overflow-hidden mb-8">
+          <div className="p-6 md:p-8 bg-white border-b border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary">GET</Badge>
-              <code className="text-lg">/v1/accounting/customers</code>
+              <div className="px-3 py-1 rounded-md bg-green-100 text-green-700 font-mono font-bold text-sm">GET</div>
+              <code className="text-lg text-slate-900 font-mono">/v1/accounting/customers</code>
             </div>
-            <p className="text-muted-foreground mb-4">
-              List all customers with their revenue stats and invoice counts.
-            </p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/customers \
-  -H "Authorization: Bearer your_api_key"`}</code>
-            </pre>
+            <p className="text-slate-600">List all customers with their revenue stats and invoice counts.</p>
           </div>
+          <div className="bg-[#1a1f36] p-6 overflow-x-auto">
+            <code className="text-sm font-mono text-blue-300">curl</code>{" "}
+            <code className="text-sm font-mono text-white">https://api.taxu.io/v1/accounting/customers \</code>
+            <br />
+            <code className="text-sm font-mono text-white pl-4">-H "Authorization: Bearer sk_test_..."</code>
+          </div>
+        </Card>
 
-          <div>
+        <Card className="border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-6 md:p-8 bg-white border-b border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-              <Badge variant="default">POST</Badge>
-              <code className="text-lg">/v1/accounting/customers</code>
+              <div className="px-3 py-1 rounded-md bg-blue-100 text-blue-700 font-mono font-bold text-sm">POST</div>
+              <code className="text-lg text-slate-900 font-mono">/v1/accounting/customers</code>
             </div>
-            <p className="text-muted-foreground mb-4">Create a new customer contact.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/customers \
-  -H "Authorization: Bearer your_api_key" \
-  -H "Content-Type: application/json" \
+            <p className="text-slate-600">Create a new customer contact.</p>
+          </div>
+          <div className="bg-[#1a1f36] p-6 overflow-x-auto">
+            <pre className="text-sm font-mono text-white">{`curl https://api.taxu.io/v1/accounting/customers \\
+  -H "Authorization: Bearer sk_test_..." \\
+  -H "Content-Type: application/json" \\
   -d '{
     "contact_name": "John Smith",
     "company_name": "Acme Corp",
-    "email": "john@acme.com",
-    "phone": "+1-555-0123",
-    "tax_id": "12-3456789"
-  }'`}</code>
-            </pre>
+    "email": "john@acme.com"
+  }'`}</pre>
           </div>
+        </Card>
+      </section>
+
+      {/* Invoices Section */}
+      <section id="invoices" className="scroll-mt-24 pt-8 border-t border-slate-200">
+        <div className="flex items-center gap-3 mb-6">
+          <Receipt className="w-6 h-6 text-slate-400" />
+          <h2 className="text-2xl font-bold text-slate-900">Invoices</h2>
         </div>
-      </Card>
 
-      <Card className="p-8">
-        <h2 className="text-2xl font-bold mb-4">Invoices</h2>
-
-        <div className="space-y-6">
-          <div>
+        <Card className="border-slate-200 shadow-sm overflow-hidden mb-8">
+          <div className="p-6 md:p-8 bg-white border-b border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary">GET</Badge>
-              <code className="text-lg">/v1/accounting/invoices</code>
+              <div className="px-3 py-1 rounded-md bg-blue-100 text-blue-700 font-mono font-bold text-sm">POST</div>
+              <code className="text-lg text-slate-900 font-mono">/v1/accounting/invoices</code>
             </div>
-            <p className="text-muted-foreground mb-4">List invoices with optional filtering by status or customer.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/invoices?status=paid \
-  -H "Authorization: Bearer your_api_key"`}</code>
-            </pre>
+            <p className="text-slate-600">Create a new invoice with line items.</p>
           </div>
-
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="default">POST</Badge>
-              <code className="text-lg">/v1/accounting/invoices</code>
-            </div>
-            <p className="text-muted-foreground mb-4">Create a new invoice with line items.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/invoices \
-  -H "Authorization: Bearer your_api_key" \
-  -H "Content-Type: application/json" \
+          <div className="bg-[#1a1f36] p-6 overflow-x-auto">
+            <pre className="text-sm font-mono text-white">{`curl https://api.taxu.io/v1/accounting/invoices \\
+  -H "Authorization: Bearer sk_test_..." \\
+  -H "Content-Type: application/json" \\
   -d '{
     "customer_id": "cust_123",
-    "invoice_number": "INV-001",
-    "invoice_date": "2024-01-15",
-    "due_date": "2024-02-15",
     "items": [
-      {
-        "description": "Tax Preparation Services",
-        "quantity": 1,
-        "unit_price": 500.00,
-        "amount": 500.00
-      }
-    ],
-    "notes": "Thank you for your business"
-  }'`}</code>
-            </pre>
+      { "description": "Service", "amount": 500.00 }
+    ]
+  }'`}</pre>
           </div>
+        </Card>
+      </section>
+
+      {/* Expenses Section */}
+      <section id="expenses" className="scroll-mt-24 pt-8 border-t border-slate-200">
+        <div className="flex items-center gap-3 mb-6">
+          <CreditCard className="w-6 h-6 text-slate-400" />
+          <h2 className="text-2xl font-bold text-slate-900">Expenses</h2>
         </div>
-      </Card>
 
-      <Card className="p-8">
-        <h2 className="text-2xl font-bold mb-4">Expenses</h2>
-
-        <div className="space-y-6">
-          <div>
+        <Card className="border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-6 md:p-8 bg-white border-b border-slate-100">
             <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary">GET</Badge>
-              <code className="text-lg">/v1/accounting/expenses</code>
+              <div className="px-3 py-1 rounded-md bg-blue-100 text-blue-700 font-mono font-bold text-sm">POST</div>
+              <code className="text-lg text-slate-900 font-mono">/v1/accounting/expenses</code>
             </div>
-            <p className="text-muted-foreground mb-4">List all expense journal entries.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/expenses \
-  -H "Authorization: Bearer your_api_key"`}</code>
-            </pre>
+            <p className="text-slate-600">Record a new expense.</p>
           </div>
-
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="default">POST</Badge>
-              <code className="text-lg">/v1/accounting/expenses</code>
-            </div>
-            <p className="text-muted-foreground mb-4">Record a new expense.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/expenses \
-  -H "Authorization: Bearer your_api_key" \
-  -H "Content-Type: application/json" \
+          <div className="bg-[#1a1f36] p-6 overflow-x-auto">
+            <pre className="text-sm font-mono text-white">{`curl https://api.taxu.io/v1/accounting/expenses \\
+  -H "Authorization: Bearer sk_test_..." \\
+  -H "Content-Type: application/json" \\
   -d '{
-    "entry_date": "2024-01-15",
     "amount": 150.00,
     "description": "Office supplies",
-    "account_id": "acc_6100",
-    "reference_number": "EXP-001"
-  }'`}</code>
-            </pre>
+    "account_id": "acc_6100"
+  }'`}</pre>
           </div>
-        </div>
-      </Card>
-
-      <Card className="p-8">
-        <h2 className="text-2xl font-bold mb-4">Vendors</h2>
-
-        <div className="space-y-6">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="secondary">GET</Badge>
-              <code className="text-lg">/v1/accounting/vendors</code>
-            </div>
-            <p className="text-muted-foreground mb-4">List all vendor contacts.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/vendors \
-  -H "Authorization: Bearer your_api_key"`}</code>
-            </pre>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Badge variant="default">POST</Badge>
-              <code className="text-lg">/v1/accounting/vendors</code>
-            </div>
-            <p className="text-muted-foreground mb-4">Create a new vendor contact.</p>
-            <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>{String.raw`curl https://api.taxu.io/v1/accounting/vendors \
-  -H "Authorization: Bearer your_api_key" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "contact_name": "Office Depot",
-    "email": "billing@officedepot.com",
-    "phone": "+1-800-555-0199",
-    "contact_type": "vendor"
-  }'`}</code>
-            </pre>
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </section>
     </div>
   )
 }
