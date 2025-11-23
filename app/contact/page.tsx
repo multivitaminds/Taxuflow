@@ -85,41 +85,47 @@ export default function ContactPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="pt-32 pb-20 px-4 gradient-stripe-hero clip-diagonal">
         <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white text-sm font-medium border border-white/20 mb-6">
             <MessageSquare className="h-4 w-4" />
             Contact Us
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance text-white">
             We're Here to
-            <span className="text-accent"> Help</span>
+            <span className="text-[#00d4ff]"> Help</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 text-balance">
+          <p className="text-xl text-blue-100 mb-8 text-balance">
             Have questions about Taxu? Our team is ready to assist you with anything you need.
           </p>
         </div>
       </section>
 
       {/* Contact Methods */}
-      <section className="py-12 px-4">
+      <section className="py-12 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-3 gap-6 mb-16">
             {contactMethods.map((method) => (
-              <Card key={method.title} className="p-6 text-center">
-                <method.icon className="h-10 w-10 text-accent mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">{method.title}</h3>
-                <p className="text-muted-foreground mb-4">{method.description}</p>
+              <Card
+                key={method.title}
+                className="p-6 text-center border-slate-200 hover:border-[#635bff]/50 hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all duration-300"
+              >
+                <method.icon className="h-10 w-10 text-[#635bff] mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2 text-[#0a2540]">{method.title}</h3>
+                <p className="text-slate-600 mb-4">{method.description}</p>
                 {method.href ? (
                   <a href={method.href}>
-                    <Button variant="outline" className="w-full bg-transparent">
+                    <Button className="w-full bg-white hover:bg-slate-50 text-[#635bff] border border-slate-200">
                       {method.action}
                     </Button>
                   </a>
                 ) : (
-                  <Button variant="outline" className="w-full bg-transparent" onClick={method.onClick}>
+                  <Button
+                    className="w-full bg-white hover:bg-slate-50 text-[#635bff] border border-slate-200"
+                    onClick={method.onClick}
+                  >
                     {method.action}
                   </Button>
                 )}
@@ -130,33 +136,29 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form */}
-      <section className="py-12 px-4">
+      <section className="py-12 px-4 bg-[#f6f9fc]">
         <div className="container mx-auto max-w-3xl">
-          <Card className="p-8">
+          <Card className="p-8 border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)]">
             <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-2">Send Us a Message</h2>
-              <p className="text-muted-foreground">
-                Fill out the form below and we'll get back to you within 24 hours.
-              </p>
+              <h2 className="text-3xl font-bold mb-2 text-[#0a2540]">Send Us a Message</h2>
+              <p className="text-slate-600">Fill out the form below and we'll get back to you within 24 hours.</p>
             </div>
 
             {isSubmitted ? (
               <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                  <Send className="h-8 w-8 text-accent" />
+                <div className="w-16 h-16 rounded-full bg-[#635bff]/10 flex items-center justify-center mx-auto mb-4">
+                  <Send className="h-8 w-8 text-[#635bff]" />
                 </div>
-                <h3 className="text-2xl font-bold mb-2">Message Sent!</h3>
-                <p className="text-muted-foreground mb-6">
+                <h3 className="text-2xl font-bold mb-2 text-[#0a2540]">Message Sent!</h3>
+                <p className="text-slate-600 mb-6">
                   Thank you for contacting us. We'll respond to your inquiry shortly.
                 </p>
-                <Button onClick={() => setIsSubmitted(false)}>Send Another Message</Button>
+                <Button className="rounded-full bg-[#635bff] hover:bg-[#5851df]" onClick={() => setIsSubmitted(false)}>
+                  Send Another Message
+                </Button>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500">{error}</div>
-                )}
-
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name</Label>
@@ -213,7 +215,12 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <Button type="submit" size="lg" className="w-full glow-neon-strong" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full rounded-full bg-[#635bff] hover:bg-[#5851df]"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? "Sending..." : "Send Message"}
                   <Send className="ml-2 h-5 w-5" />
                 </Button>
@@ -224,17 +231,17 @@ export default function ContactPage() {
       </section>
 
       {/* Office Location */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold mb-6">Visit Our Office</h2>
+              <h2 className="text-4xl font-bold mb-6 text-[#0a2540]">Visit Our Office</h2>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-6 w-6 text-accent flex-shrink-0 mt-1" />
+                  <MapPin className="h-6 w-6 text-[#635bff] flex-shrink-0 mt-1" />
                   <div>
                     <div className="font-semibold mb-1">Headquarters</div>
-                    <div className="text-muted-foreground">
+                    <div className="text-slate-600">
                       123 Innovation Drive
                       <br />
                       San Francisco, CA 94105
@@ -244,10 +251,10 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Phone className="h-6 w-6 text-accent flex-shrink-0 mt-1" />
+                  <Phone className="h-6 w-6 text-[#635bff] flex-shrink-0 mt-1" />
                   <div>
                     <div className="font-semibold mb-1">Phone</div>
-                    <div className="text-muted-foreground">
+                    <div className="text-slate-600">
                       1-800-TAXU-HELP
                       <br />
                       Mon-Fri: 9am-6pm EST
@@ -255,10 +262,10 @@ export default function ContactPage() {
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Mail className="h-6 w-6 text-accent flex-shrink-0 mt-1" />
+                  <Mail className="h-6 w-6 text-[#635bff] flex-shrink-0 mt-1" />
                   <div>
                     <div className="font-semibold mb-1">Email</div>
-                    <div className="text-muted-foreground">
+                    <div className="text-slate-600">
                       support@taxu.ai
                       <br />
                       Response within 24 hours

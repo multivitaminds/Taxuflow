@@ -1,26 +1,27 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { redirect } from 'next/navigation'
+import { createServerClient } from "@/lib/supabase/server"
 import { ScheduleClient } from "@/components/schedule-client"
 
 export default async function SchedulePage() {
   try {
-    const supabase = await createClient()
+    const supabase = await createServerClient()
+    
+    if (!supabase) {
+      // Supabase not configured, redirect to demo mode dashboard
+      redirect("/dashboard")
+    }
 
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
-      console.log("[v0] Auth error or no user, redirecting to login")
+    if (!user) {
       redirect("/login")
     }
 
-    const { data: profile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).single()
-
-    return <ScheduleClient user={user} profile={profile} />
+    return <ScheduleClient user={user} />
   } catch (error) {
-    console.log("[v0] Error in schedule page:", error)
-    redirect("/login")
+    console.log("[v0] Schedule page auth error:", error)
+    redirect("/dashboard")
   }
 }

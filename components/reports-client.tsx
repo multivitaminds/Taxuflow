@@ -1,7 +1,7 @@
 "use client"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, TrendingUp, DollarSign, PieChart, Download, Calendar } from "lucide-react"
+import { FileText, TrendingUp, DollarSign, PieChart, Download, Calendar, ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 export default function ReportsClient() {
@@ -143,19 +143,20 @@ export default function ReportsClient() {
             <h2 className="text-xl font-semibold mb-4">{category.title}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {category.reports.map((report) => (
-                <Link key={report.name} href={report.href}>
-                  <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+                <Link key={report.name} href={report.href} className="group block">
+                  <Card className="p-6 h-full transition-all duration-200 hover:shadow-lg hover:scale-[1.02] hover:border-primary/50 cursor-pointer">
                     <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <report.icon className="h-6 w-6 text-primary" />
+                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                        {report.icon && <report.icon className="h-6 w-6 text-primary" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold mb-1">{report.name}</h3>
+                        <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors">{report.name}</h3>
                         <p className="text-sm text-muted-foreground">{report.description}</p>
                       </div>
+                      <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                     </div>
                     <div className="mt-4 pt-4 border-t">
-                      <Button variant="ghost" size="sm" className="w-full">
+                      <Button variant="ghost" size="sm" className="w-full group-hover:bg-primary/10 transition-colors">
                         <Download className="h-4 w-4 mr-2" />
                         Generate Report
                       </Button>

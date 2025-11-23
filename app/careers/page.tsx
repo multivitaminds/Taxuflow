@@ -107,61 +107,58 @@ export default function CareersPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="pt-32 pb-20 px-4 gradient-stripe-hero clip-diagonal">
         <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white text-sm font-medium border border-white/20 mb-6">
             <Briefcase className="h-4 w-4" />
             Careers at Taxu
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 text-balance text-white">
             Build the Future of
-            <span className="text-accent"> Tax Filing</span>
+            <span className="text-[#00d4ff]"> Financial Infrastructure</span>
           </h1>
-          <p className="text-xl text-muted-foreground mb-8 text-balance">
-            Join our mission to make tax filing simple, accessible, and stress-free for everyone through AI innovation.
+          <p className="text-xl text-blue-100 mb-8 text-balance">
+            Join our mission to make financial services accessible, affordable, and stress-free for everyone through AI
+            innovation.
           </p>
         </div>
       </section>
 
       {/* Why Join Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Join Taxu?</h2>
-            <p className="text-lg text-muted-foreground">
-              We're building something special, and we want you to be part of it
-            </p>
+            <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Why Join Taxu?</h2>
+            <p className="text-lg text-slate-600">We're building something special, and we want you to be part of it</p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <Card className="p-8 text-center">
-              <Zap className="h-12 w-12 text-accent mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">Impact</h3>
-              <p className="text-muted-foreground">
-                Your work will directly help millions of people navigate one of life's most stressful tasks
+            <Card className="p-8 text-center border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all duration-300">
+              <Zap className="h-12 w-12 text-[#635bff] mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3 text-[#0a2540]">Impact</h3>
+              <p className="text-slate-600">
+                Your work will directly help millions of people navigate one of life's most critical financial tasks
               </p>
             </Card>
-            <Card className="p-8 text-center">
-              <TrendingUp className="h-12 w-12 text-accent mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">Growth</h3>
-              <p className="text-muted-foreground">
-                Join a fast-growing startup where you'll learn, grow, and take on new challenges
+            <Card className="p-8 text-center border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all duration-300">
+              <TrendingUp className="h-12 w-12 text-[#635bff] mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3 text-[#0a2540]">Growth</h3>
+              <p className="text-slate-600">
+                Join a fast-growing fintech platform where you'll learn, grow, and take on new challenges
               </p>
             </Card>
-            <Card className="p-8 text-center">
-              <Users className="h-12 w-12 text-accent mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">Culture</h3>
-              <p className="text-muted-foreground">
-                Work with talented, passionate people who care about making a difference
-              </p>
+            <Card className="p-8 text-center border-none shadow-[0_2px_10px_rgba(0,0,0,0.08)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition-all duration-300">
+              <Users className="h-12 w-12 text-[#635bff] mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3 text-[#0a2540]">Culture</h3>
+              <p className="text-slate-600">Work with talented, passionate people who care about making a difference</p>
             </Card>
           </div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-[#f6f9fc] clip-diagonal">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Benefits & Perks</h2>
@@ -180,7 +177,7 @@ export default function CareersPage() {
       </section>
 
       {/* Open Positions Section */}
-      <section className="py-20 px-4 bg-muted/30">
+      <section className="py-20 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">Open Positions</h2>
@@ -220,14 +217,14 @@ export default function CareersPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-[#0a2540] text-white">
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl font-bold mb-6">Don't See the Right Role?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
+          <p className="text-xl text-blue-100 mb-8">
             We're always looking for talented people. Send us your resume and let us know what you're passionate about.
           </p>
           <Link href="/contact">
-            <Button size="lg" className="glow-neon-strong">
+            <Button className="rounded-full bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-[#0a2540] px-8 py-6 text-lg font-semibold">
               Get in Touch
             </Button>
           </Link>

@@ -13,7 +13,7 @@ export default async function DeadlineDetailsPage() {
     redirect("/login")
   }
 
-  const { data: profile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).single()
+  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
 
   return <DeadlineDetailsClient user={user} profile={profile} />
 }

@@ -24,14 +24,14 @@ import {
   BarChart3,
   Wallet,
 } from "lucide-react"
-import type { User } from "@supabase/supabase-js"
-import { createClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/ssr"
+import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { DocumentUpload } from "@/components/document-upload"
 import { agents } from "@/data/agents"
-import { UserMenu } from "@/components/user-menu"
+import { DashboardHeader } from "@/components/dashboard-header"
 
 interface DashboardClientProps {
-  user: User
+  user: User | null // Allow null for client-side auth fallback
   profile: {
     full_name: string | null
     preferred_agent: string
@@ -71,15 +71,39 @@ interface Deduction {
   status: string
 }
 
-export function DashboardClient({ user, profile }: DashboardClientProps) {
+interface Invoice {
+  id: string
+  total_amount: number
+  status: string
+  created_at: string
+}
+
+interface Expense {
+  id: string
+  amount: number
+  expense_date: string
+}
+
+export function DashboardClient({ user: initialUser, profile: initialProfile }: DashboardClientProps) {
   const router = useRouter()
-  const [selectedAgent, setSelectedAgent] = useState(profile?.preferred_agent || "Sam")
-  const [isDemoMode, setIsDemoMode] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState(initialProfile?.preferred_agent || "Sam")
+  const [user, setUser] = useState(initialUser)
+  const [profile, setProfile] = useState(initialProfile)
+  const [loading, setLoading] = useState(false)
+
+  const [supabaseReady, setSupabaseReady] = useState(!!initialUser)
+  const [supabaseError, setSupabaseError] = useState<string | null>(null)
+
   const userName =
-    profile?.full_name?.split(" ")[0] ||
-    user.user_metadata?.full_name?.split(" ")[0] ||
-    user.email?.split("@")[0] ||
+    (profile || initialProfile)?.full_name?.split(" ")[0] ||
+    (user || initialUser)?.user_metadata?.full_name?.split(" ")[0] ||
+    (user || initialUser)?.email?.split("@")[0] ||
     "there"
+  const fullUserName =
+    (profile || initialProfile)?.full_name ||
+    (user || initialUser)?.user_metadata?.full_name ||
+    (user || initialUser)?.email?.split("@")[0] ||
+    "User"
 
   const [documents, setDocuments] = useState<Document[]>([])
   const [showUploadModal, setShowUploadModal] = useState(false)
@@ -92,8 +116,35 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   const [loadingData, setLoadingData] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(false)
 
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [financialLoading, setFinancialLoading] = useState(true)
+
   const [daysUntilDeadline, setDaysUntilDeadline] = useState(0)
   const [deadlineDate, setDeadlineDate] = useState("")
+
+  const getDeadlineInfo = () => {
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    let deadlineYear = currentYear + 1
+    if (now.getMonth() < 3 || (now.getMonth() === 3 && now.getDate() <= 15)) {
+      deadlineYear = currentYear
+    }
+    const deadline = new Date(deadlineYear, 3, 15)
+    const dayOfWeek = deadline.getDay()
+    if (dayOfWeek === 0) deadline.setDate(deadline.getDate() + 1)
+    else if (dayOfWeek === 6) deadline.setDate(deadline.getDate() + 2)
+
+    const timeDiff = deadline.getTime() - now.getTime()
+    const days = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+
+    return {
+      days,
+      date: deadline.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+    }
+  }
+
+  const deadline = getDeadlineInfo()
 
   useEffect(() => {
     const calculateDeadline = () => {
@@ -133,18 +184,86 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
     return () => clearInterval(interval)
   }, [])
 
-  const getSupabase = () => {
-    if (user.id === "demo-user-id") {
-      return null
+  useEffect(() => {
+    async function initSupabase() {
+      if (initialUser?.id === "demo-user-id") {
+        console.log("[v0] Demo mode detected, checking for real client-side session")
+        const supabase = getSupabaseBrowserClient()
+
+        if (supabase) {
+          try {
+            const {
+              data: { user: clientUser },
+              error,
+            } = await supabase.auth.getUser()
+
+            if (!error && clientUser && clientUser.id !== "demo-user-id") {
+              console.log("[v0] Found real authenticated user:", clientUser.email)
+
+              // Fetch real user profile
+              const { data: realProfile } = await supabase
+                .from("user_profiles")
+                .select("*")
+                .eq("id", clientUser.id)
+                .maybeSingle()
+
+              const userProfile = realProfile || {
+                id: clientUser.id,
+                email: clientUser.email || "",
+                full_name: clientUser.user_metadata?.full_name || clientUser.email?.split("@")[0] || "User",
+                created_at: clientUser.created_at,
+                updated_at: clientUser.updated_at || clientUser.created_at,
+                preferred_agent: "Sam",
+                subscription_tier: "Free",
+              }
+
+              console.log("[v0] Using real user data:", { email: clientUser.email, name: userProfile.full_name })
+              setUser(clientUser)
+              setProfile(userProfile)
+              setSupabaseReady(true)
+              setLoading(false)
+              return
+            }
+          } catch (err) {
+            console.error("[v0] Error checking client-side session:", err)
+          }
+        }
+
+        console.log("[v0] No real session found, using demo mode")
+        setUser(initialUser)
+        setProfile(initialProfile)
+        setSupabaseReady(true)
+        setLoading(false)
+        return
+      }
+
+      if (initialUser) {
+        console.log("[v0] Using server-provided user:", initialUser.email)
+        setUser(initialUser)
+        setProfile(initialProfile)
+        setSupabaseReady(true)
+        setLoading(false)
+        return
+      }
+
+      console.log("[v0] No server user provided, redirecting to login")
+      window.location.href = "/login"
     }
-    return createClient()
-  }
+
+    initSupabase()
+  }, [initialUser, initialProfile]) // Dependencies updated
+
+  // Dynamically import and get Supabase client once ready
+  const supabase = supabaseReady ? getSupabaseBrowserClient() : null
 
   const fetchDashboardData = async () => {
-    const demoMode = user.id === "demo-user-id"
+    if (!user) {
+      console.log("[v0] No user available yet, skipping data fetch")
+      return
+    }
 
-    if (demoMode) {
-      console.log("[v0] Demo mode detected, loading sample data")
+    if (user.id === "demo-user-id" || user.id === "authenticated-user-id") {
+      console.log("[v0] Loading demo data for", user.id)
       setDocuments([
         {
           id: "demo-1",
@@ -219,17 +338,25 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         { id: "ded-3", name: "Professional Development", amount: 600, status: "suggested" },
       ])
 
+      setInvoices([
+        { id: "inv-1", total_amount: 1250.0, status: "paid", created_at: new Date().toISOString() },
+        { id: "inv-2", total_amount: 850.0, status: "pending", created_at: new Date().toISOString() },
+        { id: "inv-3", total_amount: 2400.0, status: "paid", created_at: new Date().toISOString() },
+      ])
+      setExpenses([
+        { id: "exp-1", amount: 120.5, expense_date: new Date().toISOString() },
+        { id: "exp-2", amount: 450.0, expense_date: new Date().toISOString() },
+      ])
+      setFinancialLoading(false)
+
       setLoadingData(false)
       setLoadingDocuments(false)
-      setIsDemoMode(true)
       return
     }
 
-    const supabase = getSupabase()
-
     if (!supabase) {
-      console.error("[v0] Cannot fetch data: Supabase client is not configured")
-      setDocumentError("Database connection error. Please check your configuration.")
+      console.error("[v0] Cannot fetch data: Supabase client not available")
+      setDocumentError("Database connection unavailable in preview mode. Try demo account for full functionality.")
       setLoadingData(false)
       setLoadingDocuments(false)
       return
@@ -237,13 +364,19 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
 
     console.log("[v0] Fetching dashboard data for user:", user.id)
     setLoadingData(true)
+    setLoadingDocuments(true) // Set to true to show loading state for documents
 
     try {
-      const { data: docsData, error: docsError } = await supabase
-        .from("documents")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+      const fetchWithTimeout = async <T,>(promise: Promise<T>, timeoutMs = 10000): Promise<T> => {
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), timeoutMs),
+        )
+        return Promise.race([promise, timeoutPromise])
+      }
+
+      const { data: docsData, error: docsError } = await fetchWithTimeout(
+        supabase.from("documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      )
 
       if (docsError) {
         console.error("[v0] Error fetching documents:", docsError)
@@ -253,67 +386,33 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         setDocuments(docsData || [])
       }
 
-      const { data: taxData, error: taxError } = await supabase
-        .from("tax_calculations")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const { data: taxData, error: taxError } = await fetchWithTimeout(
+        supabase
+          .from("tax_calculations")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      )
 
       if (taxError) {
         console.log("[v0] Error fetching tax calculations:", taxError.message)
       } else if (taxData) {
-        console.log("[v0] Tax calculation found:", {
-          refund: taxData.estimated_refund,
-          confidence: taxData.confidence_percentage,
-          risk: taxData.audit_risk_score,
-        })
+        console.log("[v0] Tax calculation fetched:", taxData)
         setTaxCalc(taxData)
       } else {
         console.log("[v0] No tax calculations yet")
-
-        const w2Docs = docsData?.filter((doc) => doc.ai_document_type === "w2" || doc.document_type === "w2")
-
-        if (w2Docs && w2Docs.length > 0) {
-          console.log("[v0] Found W-2 documents but no calculations, checking W-2 data...")
-
-          // Check if W-2 data exists
-          const { data: w2Data, error: w2Error } = await supabase
-            .from("w2_data")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle()
-
-          if (w2Data && !w2Error) {
-            console.log("[v0] W-2 data exists, generating tax calculations...")
-            // Trigger tax calculation
-            await generateTaxCalculations(user.id, w2Data, supabase)
-            // Refetch tax calculations
-            const { data: newTaxData } = await supabase
-              .from("tax_calculations")
-              .select("*")
-              .eq("user_id", user.id)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle()
-
-            if (newTaxData) {
-              console.log("[v0] Tax calculations generated successfully")
-              setTaxCalc(newTaxData)
-            }
-          }
-        }
       }
 
-      const { data: activitiesData, error: activitiesError } = await supabase
-        .from("agent_activities")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
+      const { data: activitiesData, error: activitiesError } = await fetchWithTimeout(
+        supabase
+          .from("agent_activities")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(5),
+      )
 
       if (activitiesError) {
         console.log("[v0] No activities yet:", activitiesError.message)
@@ -322,11 +421,9 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         setActivities(activitiesData || [])
       }
 
-      const { data: deductionsData, error: deductionsError } = await supabase
-        .from("deductions_credits")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("status", "suggested")
+      const { data: deductionsData, error: deductionsError } = await fetchWithTimeout(
+        supabase.from("deductions_credits").select("*").eq("user_id", user.id),
+      )
 
       if (deductionsError) {
         console.log("[v0] No deductions yet:", deductionsError.message)
@@ -334,115 +431,56 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         console.log("[v0] Deductions fetched:", deductionsData?.length || 0)
         setDeductions(deductionsData || [])
       }
+
+      const { data: invoicesData } = await supabase
+        .from("invoices")
+        .select("id, total_amount, status, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10)
+
+      if (invoicesData) setInvoices(invoicesData)
+
+      const { data: expensesData } = await supabase
+        .from("journal_entries")
+        .select("id, amount, entry_date")
+        .eq("user_id", user.id)
+        .eq("entry_type", "expense")
+        .order("entry_date", { ascending: false })
+        .limit(10)
+
+      if (expensesData) setExpenses(expensesData.map((e) => ({ ...e, expense_date: e.entry_date })))
+      setFinancialLoading(false)
     } catch (err) {
       console.error("[v0] Unexpected error fetching dashboard data:", err)
-    }
-
-    setLoadingData(false)
-    setLoadingDocuments(false)
-  }
-
-  const generateTaxCalculations = async (userId: string, w2Data: any, supabase: any) => {
-    try {
-      const wages = Number.parseFloat(w2Data.wages) || 0
-      const federalWithheld = Number.parseFloat(w2Data.federal_tax_withheld) || 0
-      const stateWithheld = Number.parseFloat(w2Data.state_tax_withheld) || 0
-
-      // Determine filing status and standard deduction
-      const filingStatus = w2Data.filing_status || "single"
-      const standardDeduction = filingStatus === "married_joint" ? 29200 : 14600 // 2024 values
-
-      const taxableIncome = Math.max(0, wages - standardDeduction)
-
-      // Calculate federal tax based on 2024 tax brackets
-      let federalTax = 0
-      if (filingStatus === "married_joint") {
-        if (taxableIncome <= 23200) {
-          federalTax = taxableIncome * 0.1
-        } else if (taxableIncome <= 94300) {
-          federalTax = 2320 + (taxableIncome - 23200) * 0.12
-        } else if (taxableIncome <= 201050) {
-          federalTax = 10852 + (taxableIncome - 94300) * 0.22
-        } else {
-          federalTax = 34337 + (taxableIncome - 201050) * 0.24
-        }
+      if (err instanceof Error && err.message === "Request timeout") {
+        setDocumentError("Request timed out. Please check your internet connection.")
       } else {
-        if (taxableIncome <= 11600) {
-          federalTax = taxableIncome * 0.1
-        } else if (taxableIncome <= 47150) {
-          federalTax = 1160 + (taxableIncome - 11600) * 0.12
-        } else if (taxableIncome <= 100525) {
-          federalTax = 5426 + (taxableIncome - 47150) * 0.22
-        } else {
-          federalTax = 17168.5 + (taxableIncome - 100525) * 0.24
-        }
+        setDocumentError("Failed to load data. Please refresh the page.")
       }
-
-      const stateTax = wages * 0.05 // Simplified state tax
-
-      const totalTaxLiability = federalTax + stateTax
-      const totalWithheld = federalWithheld + stateWithheld
-      const estimatedRefund = totalWithheld - totalTaxLiability
-
-      const taxCalc = {
-        user_id: userId,
-        total_income: wages,
-        adjusted_gross_income: wages,
-        taxable_income: taxableIncome,
-        standard_deduction: standardDeduction,
-        filing_status: filingStatus,
-        federal_tax_liability: federalTax,
-        state_tax_liability: stateTax,
-        total_tax_withheld: totalWithheld,
-        estimated_refund: estimatedRefund > 0 ? estimatedRefund : 0,
-        amount_owed: estimatedRefund < 0 ? Math.abs(estimatedRefund) : 0,
-        confidence_level: "High",
-        confidence_percentage: 96,
-        audit_risk_score: "Low",
-        tax_year: w2Data.tax_year || 2024,
-      }
-
-      console.log("[v0] Inserting tax calculation:", taxCalc)
-
-      const { data, error } = await supabase
-        .from("tax_calculations")
-        .upsert(taxCalc, { onConflict: "user_id" })
-        .select()
-        .single()
-
-      if (error) {
-        console.error("[v0] Error saving tax calculation:", error)
-      } else {
-        console.log("[v0] Tax calculation saved successfully")
-      }
-
-      return data || taxCalc
-    } catch (error) {
-      console.error("[v0] Error generating tax calculations:", error)
-      return null
+    } finally {
+      setLoadingData(false)
+      setLoadingDocuments(false)
     }
   }
 
+  // This useEffect hook is now correctly placed after the initialisation hooks and before conditional rendering
+  // It depends on user and supabaseReady to ensure it only runs when data can be fetched.
   useEffect(() => {
-    fetchDashboardData()
-  }, [user.id])
-
-  useEffect(() => {
-    const demoMode = user.id === "demo-user-id"
-    setIsDemoMode(demoMode)
-    if (demoMode) {
-      console.log("[v0] Demo mode detected, loading sample data")
-    } else {
-      console.log("[v0] Authenticated user mode, user:", user.email)
+    if (user && supabaseReady) {
+      fetchDashboardData()
     }
-  }, [user.id, user.email])
+  }, [user, supabaseReady]) // Depend on user and supabaseReady state
+
+  // The autoRefresh useEffect hook is also moved up and now depends on supabaseReady
 
   useEffect(() => {
-    if (autoRefresh) {
+    if (autoRefresh && user && supabaseReady) {
       console.log("[v0] Auto-refresh enabled, will refresh every 3 seconds")
       const interval = setInterval(() => {
         console.log("[v0] Auto-refreshing dashboard data...")
-        fetchDashboardData()
+        // Trigger re-fetch by updating a dependency
+        window.location.reload()
       }, 3000)
 
       return () => {
@@ -450,7 +488,63 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
         clearInterval(interval)
       }
     }
-  }, [autoRefresh, user.id])
+  }, [autoRefresh, user, supabaseReady]) // Depend on autoRefresh, user, and supabaseReady state
+
+  if (!supabaseReady) {
+    if (supabaseError) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-background">
+          <div className="text-center">
+            <p className="text-lg text-red-600 mb-4">{supabaseError}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-sm text-muted-foreground">Connecting to database...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user && !loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center max-w-md px-4">
+          <p className="text-lg text-red-600 mb-4">Session expired or authentication failed</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => (window.location.href = "/login")}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 w-full"
+            >
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const handleStatCardClick = (type: string) => {
     console.log(`[v0] Navigating to ${type} details`)
@@ -484,8 +578,6 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }
 
   const handleDownloadDocument = async (documentId: string, fileName: string) => {
-    const supabase = getSupabase()
-
     if (!supabase) {
       alert("Database connection error. Please refresh the page.")
       return
@@ -556,6 +648,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
     router.push("/accounting")
   }
 
+  const handle1099Filing = () => {
+    console.log("[v0] Navigating to 1099 filing")
+    router.push("/1099-filing")
+  }
+
   const handleUploadComplete = () => {
     console.log("[v0] Document upload complete, refreshing dashboard data")
     setAutoRefresh(false)
@@ -564,8 +661,6 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }
 
   const handleDeleteDocument = async (documentId: string, fileName: string) => {
-    const supabase = getSupabase()
-
     if (!supabase) {
       alert("Database connection error. Please refresh the page.")
       return
@@ -600,6 +695,11 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
       console.error("[v0] Unexpected error deleting document:", err)
       alert("An unexpected error occurred. Please try again.")
     }
+  }
+
+  const handleStartFiling = (formType: string) => {
+    console.log(`[v0] Starting ${formType} filing workflow`)
+    router.push(`/dashboard/file/${formType}`)
   }
 
   const completionPercentage = () => {
@@ -706,532 +806,498 @@ export function DashboardClient({ user, profile }: DashboardClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-neon/20">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-neon to-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-xl font-bold text-background">T</span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold">Taxu</h1>
-                <p className="text-xs text-muted-foreground">AI Tax Platform</p>
-              </div>
-            </div>
-            <UserMenu user={user} profile={profile} />
+    <>
+      <DashboardHeader userName={fullUserName} userEmail={user?.email || ""} userId={user?.id} />
+
+      <div className="min-h-screen bg-background pt-20">
+        <div className="container mx-auto px-4 py-12">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}</h1>
+            <p className="text-muted-foreground">
+              Your 2024 tax filing is {completionPercentage()}% complete • Sam is monitoring your progress
+            </p>
           </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-12">
-        {isDemoMode && (
-          <div className="mb-6 p-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-purple-400">🚀 Demo Mode Active</p>
-                <p className="text-sm text-muted-foreground">
-                  You're exploring Taxu with sample data. Create a free account to use your own data.
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card
+              onClick={() => handleStatCardClick("refund")}
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <TrendingUp className="w-5 h-5 text-neon" />
+                <span className="text-xs text-muted-foreground">Estimated</span>
               </div>
-              <Button onClick={() => router.push("/signup")} className="bg-purple-600 hover:bg-purple-700 text-white">
-                Create Account
-              </Button>
-            </div>
-          </div>
-        )}
+              <div className="text-2xl font-bold text-neon">${taxCalc?.estimated_refund?.toFixed(0) || "0"}</div>
+              <div className="text-sm text-muted-foreground">Expected Refund</div>
+            </Card>
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}</h1>
-          <p className="text-muted-foreground">
-            Your 2024 tax filing is {completionPercentage()}% complete • Sam is monitoring your progress
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card
-            onClick={() => handleStatCardClick("refund")}
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-5 h-5 text-neon" />
-              <span className="text-xs text-muted-foreground">Estimated</span>
-            </div>
-            <div className="text-2xl font-bold text-neon">${taxCalc?.estimated_refund?.toFixed(0) || "0"}</div>
-            <div className="text-sm text-muted-foreground">Expected Refund</div>
-          </Card>
-
-          <Card
-            onClick={() => handleStatCardClick("audit-risk")}
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Shield className="w-5 h-5 text-green-500" />
-              <span className="text-xs text-muted-foreground">Audit Risk</span>
-            </div>
-            <div className="text-2xl font-bold text-green-500">{taxCalc?.audit_risk_score || "N/A"}</div>
-            <div className="text-sm text-muted-foreground">
-              {taxCalc?.confidence_percentage?.toFixed(0) || "0"}% Confidence
-            </div>
-          </Card>
-
-          <Card
-            onClick={() => handleStatCardClick("documents")}
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <FileText className="w-5 h-5 text-blue-500" />
-              <span className="text-xs text-muted-foreground">Documents</span>
-            </div>
-            <div className="text-2xl font-bold">{documents.length}/10</div>
-            <div className="text-sm text-muted-foreground">Uploaded</div>
-          </Card>
-
-          <Card
-            onClick={() => handleStatCardClick("deadline")}
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/40 transition-all hover:scale-105"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <Calendar className="w-5 h-5 text-orange-500" />
-              <span className="text-xs text-muted-foreground">Deadline</span>
-            </div>
-            <div className="text-2xl font-bold">{daysUntilDeadline}</div>
-            <div className="text-sm text-muted-foreground">Days Left</div>
-            <div className="text-xs text-muted-foreground mt-1">{deadlineDate}</div>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6 border-neon/20 bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-bold mb-1">🚀 Advanced Features</h2>
-                  <p className="text-sm text-muted-foreground">Premium QuickBooks integrations and enterprise tools</p>
-                </div>
+            <Card
+              onClick={() => handleStatCardClick("audit-risk")}
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Shield className="w-5 h-5 text-green-500" />
+                <span className="text-xs text-muted-foreground">Audit Risk</span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <button
-                  onClick={() => router.push("/dashboard/time")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-all">
-                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                      <path strokeWidth="2" d="M12 6v6l4 2" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium">Time Tracking</span>
-                </button>
-                <button
-                  onClick={() => router.push("/dashboard/projects")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center group-hover:bg-green-500/30 transition-all">
-                    <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeWidth="2" d="M3 7h18M3 12h18M3 17h18" />
-                      <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth="2" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium">Projects</span>
-                </button>
-                <button
-                  onClick={() => router.push("/dashboard/custom-fields")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition-all">
-                    <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeWidth="2" d="M12 4v16m8-8H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium">Custom Fields</span>
-                </button>
-                <button
-                  onClick={() => router.push("/dashboard/sales-tax")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/30 transition-all">
-                    <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeWidth="2" d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium">Sales Tax</span>
-                </button>
-                <button
-                  onClick={() => router.push("/dashboard/quickbooks-sync")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center group-hover:bg-cyan-500/30 transition-all">
-                    <svg className="w-5 h-5 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeWidth="2" d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-                      <path strokeWidth="2" d="M21 3v5h-5" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-medium">QB Sync</span>
-                </button>
+              <div className="text-2xl font-bold text-green-500">{taxCalc?.audit_risk_score || "N/A"}</div>
+              <div className="text-sm text-muted-foreground">
+                {taxCalc?.confidence_percentage?.toFixed(0) || "0"}% Confidence
               </div>
             </Card>
 
-            {/* QuickBooks-Style Accounting Features card */}
-            <Card className="p-6 border-neon/20 bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-bold mb-1">QuickBooks-Style Accounting</h2>
-                  <p className="text-sm text-muted-foreground">Complete business accounting and bookkeeping tools</p>
-                </div>
-                <Button onClick={handleAccountingDashboard} className="bg-neon hover:bg-neon/90 text-background">
-                  Open Accounting
-                </Button>
+            <Card
+              onClick={() => handleStatCardClick("documents")}
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                <span className="text-xs text-muted-foreground">Documents</span>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <button
-                  onClick={() => router.push("/accounting/invoices")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <Receipt className="w-6 h-6 text-blue-500" />
-                  <span className="text-xs font-medium">Invoices</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/expenses")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <Wallet className="w-6 h-6 text-green-500" />
-                  <span className="text-xs font-medium">Expenses</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/customers")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <Users className="w-6 h-6 text-purple-500" />
-                  <span className="text-xs font-medium">Customers</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/reports")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <BarChart3 className="w-6 h-6 text-orange-500" />
-                  <span className="text-xs font-medium">Reports</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/vendors")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <Building2 className="w-6 h-6 text-red-500" />
-                  <span className="text-xs font-medium">Vendors</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/banking")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <CreditCard className="w-6 h-6 text-cyan-500" />
-                  <span className="text-xs font-medium">Banking</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/products")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <FileText className="w-6 h-6 text-yellow-500" />
-                  <span className="text-xs font-medium">Products</span>
-                </button>
-                <button
-                  onClick={() => router.push("/accounting/projects")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer hover:scale-105"
-                >
-                  <TrendingUp className="w-6 h-6 text-pink-500" />
-                  <span className="text-xs font-medium">Projects</span>
-                </button>
-              </div>
+              <div className="text-2xl font-bold">{documents.length}/10</div>
+              <div className="text-sm text-muted-foreground">Uploaded</div>
             </Card>
 
-            <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-              <h2 className="text-xl font-bold mb-4">Continue Filing</h2>
-              <div className="space-y-4">
-                <button
-                  onClick={handlePersonalInfo}
-                  className="w-full flex items-start gap-4 text-left hover:bg-background/50 p-3 rounded-lg transition-all"
-                >
-                  <div className="w-10 h-10 rounded-full bg-neon/10 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-5 h-5 text-neon" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Personal Information</h3>
-                    <p className="text-sm text-muted-foreground">{profile?.full_name ? "Completed" : "Not started"}</p>
-                  </div>
-                </button>
+            <Card
+              onClick={() => handleStatCardClick("deadline")}
+              className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:border-neon/60 hover:bg-card/70 transition-all hover:scale-105 active:scale-100"
+            >
+              <div className="flex items-center justify-between mb-2">
+                <Calendar className="w-5 h-5 text-orange-500" />
+                <span className="text-xs text-muted-foreground">Deadline</span>
+              </div>
+              <div className="text-2xl font-bold">{daysUntilDeadline}</div>
+              <div className="text-sm text-muted-foreground">Days Left</div>
+              <div className="text-xs text-muted-foreground mt-1">{deadlineDate}</div>
+            </Card>
+          </div>
 
-                <button
-                  onClick={handleIncomeDocuments}
-                  className="w-full flex items-start gap-4 text-left hover:bg-background/50 p-3 rounded-lg transition-all"
-                >
-                  <div className="w-10 h-10 rounded-full bg-neon/10 flex items-center justify-center flex-shrink-0">
-                    {documents.length > 0 ? (
-                      <CheckCircle2 className="w-5 h-5 text-neon" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-orange-500" />
-                    )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              {/* QuickBooks-Style Accounting Features card */}
+              <Card className="p-6 border-neon/20 bg-gradient-to-br from-blue-500/10 to-purple-500/10 backdrop-blur">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">QuickBooks-Style Accounting</h2>
+                    <p className="text-sm text-muted-foreground">Complete business accounting and bookkeeping tools</p>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Income Documents</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {documents.length > 0 ? `${documents.length} documents uploaded` : "No documents yet"}
-                    </p>
-                  </div>
-                </button>
-
-                <div className="flex items-start gap-4">
-                  <div
-                    className={`w-10 h-10 rounded-full ${
-                      deductions.length > 0 ? "bg-neon animate-pulse" : "bg-muted"
-                    } flex items-center justify-center flex-shrink-0`}
+                  <Button onClick={handleAccountingDashboard} className="bg-neon hover:bg-neon/90 text-background">
+                    Open Accounting
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button
+                    onClick={() => router.push("/accounting/invoices")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
                   >
-                    {deductions.length > 0 ? (
-                      <AlertCircle className="w-5 h-5 text-background" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 text-muted-foreground" />
-                    )}
+                    <Receipt className="w-6 h-6 text-blue-500" />
+                    <span className="text-xs font-medium">Invoices</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/expenses")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <Wallet className="w-6 h-6 text-green-500" />
+                    <span className="text-xs font-medium">Expenses</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/customers")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <Users className="w-6 h-6 text-purple-500" />
+                    <span className="text-xs font-medium">Customers</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/reports")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <BarChart3 className="w-6 h-6 text-orange-500" />
+                    <span className="text-xs font-medium">Reports</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/vendors")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <Building2 className="w-6 h-6 text-red-500" />
+                    <span className="text-xs font-medium">Vendors</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/banking")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <CreditCard className="w-6 h-6 text-cyan-500" />
+                    <span className="text-xs font-medium">Banking</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/products")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <FileText className="w-6 h-6 text-yellow-500" />
+                    <span className="text-xs font-medium">Products</span>
+                  </button>
+                  <button
+                    onClick={() => router.push("/accounting/projects")}
+                    className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all hover:scale-105"
+                  >
+                    <TrendingUp className="w-6 h-6 text-pink-500" />
+                    <span className="text-xs font-medium">Projects</span>
+                  </button>
+                </div>
+              </Card>
+
+              <Card className="p-6 border-neon/20 bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">1099 Filing & Management</h2>
+                    <p className="text-sm text-muted-foreground">File 1099 forms for contractors and vendors</p>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold mb-1">Deductions & Credits</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {deductions.length > 0
-                        ? `Found ${deductions.length} potential deductions for you`
-                        : "Upload W-2 to find deductions"}
-                    </p>
-                    {deductions.length > 0 && (
-                      <Button onClick={handleReviewDeductions} className="bg-neon hover:bg-neon/90 text-background">
-                        Review Tax Return
-                      </Button>
-                    )}
+                  <Button onClick={handle1099Filing} className="bg-green-600 hover:bg-green-700 text-white">
+                    File 1099s
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50">
+                    <Users className="w-6 h-6 text-green-500" />
+                    <span className="text-xs font-medium text-center">Manage Recipients</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50">
+                    <FileText className="w-6 h-6 text-blue-500" />
+                    <span className="text-xs font-medium text-center">File Forms</span>
                   </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
 
-            <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-              <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
-              {activities.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No activity yet. Upload a W-2 to get started!
-                </p>
-              ) : (
+              <Card className="p-6 border-neon/20 bg-gradient-to-br from-purple-500/10 to-blue-500/10 backdrop-blur">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">Start New Filing</h2>
+                    <p className="text-sm text-muted-foreground">File tax forms directly through Taxu</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button
+                    onClick={() => handleStartFiling("w2")}
+                    className="flex flex-col items-center gap-3 p-6 rounded-lg bg-background/50 hover:bg-background/80 transition-all border border-border hover:border-neon/40"
+                  >
+                    <FileText className="w-8 h-8 text-green-500" />
+                    <div className="text-center">
+                      <div className="font-semibold mb-1">File W-2</div>
+                      <div className="text-xs text-muted-foreground">Employee wage reporting</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleStartFiling("1099-nec")}
+                    className="flex flex-col items-center gap-3 p-6 rounded-lg bg-background/50 hover:bg-background/80 transition-all border border-border hover:border-neon/40"
+                  >
+                    <FileText className="w-8 h-8 text-blue-500" />
+                    <div className="text-center">
+                      <div className="font-semibold mb-1">File 1099-NEC</div>
+                      <div className="text-xs text-muted-foreground">Contractor payments</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleStartFiling("941")}
+                    className="flex flex-col items-center gap-3 p-6 rounded-lg bg-background/50 hover:bg-background/80 transition-all border border-border hover:border-neon/40"
+                  >
+                    <FileText className="w-8 h-8 text-purple-500" />
+                    <div className="text-center">
+                      <div className="font-semibold mb-1">File Form 941</div>
+                      <div className="text-xs text-muted-foreground">Quarterly payroll taxes</div>
+                    </div>
+                  </button>
+                </div>
+              </Card>
+
+              <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+                <h2 className="text-xl font-bold mb-4">Continue Filing</h2>
                 <div className="space-y-4">
-                  {activities.map((activity) => (
-                    <button
-                      key={activity.id}
-                      onClick={() => handleActivityClick(activity.id)}
-                      className="w-full flex items-center gap-4 text-sm text-left hover:bg-background/50 p-2 rounded-lg transition-all"
+                  <button
+                    onClick={handlePersonalInfo}
+                    className="w-full flex items-start gap-4 text-left hover:bg-background/50 p-3 rounded-lg transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-neon/10 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="w-5 h-5 text-neon" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Personal Information</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {profile?.full_name ? "Completed" : "Not started"}
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={handleIncomeDocuments}
+                    className="w-full flex items-start gap-4 text-left hover:bg-background/50 p-3 rounded-lg transition-all"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-neon/10 flex items-center justify-center flex-shrink-0">
+                      {documents.length > 0 ? (
+                        <CheckCircle2 className="w-5 h-5 text-neon" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-orange-500" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Income Documents</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {documents.length > 0 ? `${documents.length} documents uploaded` : "No documents yet"}
+                      </p>
+                    </div>
+                  </button>
+
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={`w-10 h-10 rounded-full ${
+                        deductions.length > 0 ? "bg-neon animate-pulse" : "bg-muted"
+                      } flex items-center justify-center flex-shrink-0`}
                     >
-                      <div className="w-2 h-2 rounded-full bg-neon" />
-                      <span className="text-muted-foreground">{timeAgo(activity.created_at)}</span>
-                      <span>{activity.title}</span>
+                      {deductions.length > 0 ? (
+                        <AlertCircle className="w-5 h-5 text-background" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">Deductions & Credits</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {deductions.length > 0
+                          ? `Found ${deductions.length} potential deductions for you`
+                          : "Upload W-2 to find deductions"}
+                      </p>
+                      {deductions.length > 0 && (
+                        <Button onClick={handleReviewDeductions} className="bg-neon hover:bg-neon/90 text-background">
+                          Review Tax Return
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+                <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+                {activities.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No activity yet. Upload a W-2 to get started!
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {activities.map((activity) => (
+                      <button
+                        key={activity.id}
+                        onClick={() => handleActivityClick(activity.id)}
+                        className="w-full flex items-center gap-4 text-sm text-left hover:bg-background/50 p-2 rounded-lg transition-all"
+                      >
+                        <div className="w-2 h-2 rounded-full bg-neon" />
+                        <span className="text-muted-foreground">{timeAgo(activity.created_at)}</span>
+                        <span>{activity.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold">Your Documents</h2>
+                  <Button
+                    onClick={handleUploadDocument}
+                    variant="outline"
+                    size="sm"
+                    className="border-neon/20 bg-transparent"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </Button>
+                </div>
+
+                {documentError && (
+                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <p className="text-sm text-red-500">{documentError}</p>
+                    <Button
+                      onClick={fetchDashboardData}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 border-red-500/20 bg-transparent"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                )}
+
+                {loadingDocuments ? (
+                  <div className="text-center py-8 text-muted-foreground">Loading documents...</div>
+                ) : documents.length === 0 ? (
+                  <div className="text-center py-8">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground mb-4">No documents uploaded yet</p>
+                    <Button onClick={handleUploadDocument} className="bg-neon hover:bg-neon/90 text-background">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Your First Document
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer"
+                      >
+                        <div className="flex items-center gap-3">
+                          {getDocumentIcon(doc)}
+                          <div>
+                            <div className="font-medium">{getDocumentDisplayName(doc)}</div>
+                            <div className="text-xs text-muted-foreground">{getDocumentSubtitle(doc)}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDownloadDocument(doc.id, doc.file_name)
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            title="Download document"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteDocument(doc.id, doc.file_name)
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
+                            title="Delete document"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
+            </div>
+
+            <div className="space-y-6">
+              <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+                <h2 className="text-xl font-bold mb-4">Your AI Team</h2>
+                <p className="text-sm text-muted-foreground mb-4">Led by Sam, your Lead Tax Strategist</p>
+                <div className="space-y-3">
+                  {agents.map((agent) => (
+                    <button
+                      key={agent.name}
+                      onClick={() => {
+                        setSelectedAgent(agent.name)
+                        handleChatWithAgent(agent.name)
+                      }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
+                        selectedAgent === agent.name
+                          ? "bg-neon/10 border border-neon/20"
+                          : "bg-background/50 hover:bg-background/80"
+                      }`}
+                    >
+                      <div
+                        className={`w-10 h-10 rounded-full bg-gradient-to-br ${agent.gradient} flex items-center justify-center text-white font-bold`}
+                      >
+                        {agent.name[0]}
+                      </div>
+                      <div className="text-left">
+                        <div className="font-semibold">{agent.name}</div>
+                        <div className="text-xs text-muted-foreground">{agent.role}</div>
+                      </div>
                     </button>
                   ))}
                 </div>
-              )}
-            </Card>
-
-            <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Your Documents</h2>
                 <Button
-                  onClick={handleUploadDocument}
-                  variant="outline"
-                  size="sm"
-                  className="border-neon/20 bg-transparent"
+                  onClick={() => handleChatWithAgent(selectedAgent)}
+                  className="w-full mt-4 bg-neon hover:bg-neon/90 text-background"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Chat with {selectedAgent}
                 </Button>
-              </div>
-
-              {documentError && (
-                <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-sm text-red-500">{documentError}</p>
-                  <Button
-                    onClick={fetchDashboardData}
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 border-red-500/20 bg-transparent"
-                  >
-                    Retry
-                  </Button>
-                </div>
-              )}
-
-              {loadingDocuments ? (
-                <div className="text-center py-8 text-muted-foreground">Loading documents...</div>
-              ) : documents.length === 0 ? (
-                <div className="text-center py-8">
-                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground mb-4">No documents uploaded yet</p>
-                  <Button onClick={handleUploadDocument} className="bg-neon hover:bg-neon/90 text-background">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Your First Document
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer"
-                    >
-                      <div className="flex items-center gap-3">
-                        {getDocumentIcon(doc)}
-                        <div>
-                          <div className="font-medium">{getDocumentDisplayName(doc)}</div>
-                          <div className="text-xs text-muted-foreground">{getDocumentSubtitle(doc)}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDownloadDocument(doc.id, doc.file_name)
-                          }}
-                          variant="ghost"
-                          size="sm"
-                          title="Download document"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteDocument(doc.id, doc.file_name)
-                          }}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                          title="Delete document"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-              <h2 className="text-xl font-bold mb-4">Your AI Team</h2>
-              <p className="text-sm text-muted-foreground mb-4">Led by Sam, your Lead Tax Strategist</p>
-              <div className="space-y-3">
-                {agents.map((agent) => (
-                  <button
-                    key={agent.name}
-                    onClick={() => {
-                      setSelectedAgent(agent.name)
-                      handleChatWithAgent(agent.name)
-                    }}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
-                      selectedAgent === agent.name
-                        ? "bg-neon/10 border border-neon/20"
-                        : "bg-background/50 hover:bg-background/80"
-                    }`}
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-full bg-gradient-to-br ${agent.gradient} flex items-center justify-center text-white font-bold`}
-                    >
-                      {agent.name[0]}
-                    </div>
-                    <div className="text-left">
-                      <div className="font-semibold">{agent.name}</div>
-                      <div className="text-xs text-muted-foreground">{agent.role}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <Button
-                onClick={() => handleChatWithAgent(selectedAgent)}
-                className="w-full mt-4 bg-neon hover:bg-neon/90 text-background"
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Chat with {selectedAgent}
-              </Button>
-            </Card>
-
-            <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-              <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
-              <div className="space-y-2">
-                <Button
-                  onClick={handleScheduleReview}
-                  variant="outline"
-                  className="w-full justify-start border-neon/20 bg-transparent"
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Schedule Review
-                </Button>
-                <Button
-                  onClick={handleManageSubscription}
-                  variant="outline"
-                  className="w-full justify-start border-neon/20 bg-transparent"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Manage Subscription
-                </Button>
-                <Button
-                  onClick={handleAccountSettings}
-                  variant="outline"
-                  className="w-full justify-start border-neon/20 bg-transparent"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Account Settings
-                </Button>
-              </div>
-            </Card>
-
-            {profile?.subscription_tier === "Free" && (
-              <Card
-                onClick={handleUpgrade}
-                className="p-6 border-neon/20 bg-gradient-to-br from-neon/10 to-blue-500/10 cursor-pointer hover:border-neon/40 transition-all"
-              >
-                <h3 className="font-bold mb-2">Unlock AI Co-Pilot</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Get year-round tax advice, reminders, and planning for just $5/month
-                </p>
-                <Button className="w-full bg-neon hover:bg-neon/90 text-background">Upgrade Now</Button>
               </Card>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl p-6 border-neon/20 bg-card">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Upload Tax Documents</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowUploadModal(false)
-                  setAutoRefresh(false)
-                }}
-              >
-                ✕
-              </Button>
-            </div>
+              <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+                <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
+                <div className="space-y-2">
+                  <Button
+                    onClick={handleScheduleReview}
+                    variant="outline"
+                    className="w-full justify-start border-neon/20 bg-transparent"
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Schedule Review
+                  </Button>
+                  <Button
+                    onClick={handleManageSubscription}
+                    variant="outline"
+                    className="w-full justify-start border-neon/20 bg-transparent"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Manage Subscription
+                  </Button>
+                  <Button
+                    onClick={handleAccountSettings}
+                    variant="outline"
+                    className="w-full justify-start border-neon/20 bg-transparent"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Account Settings
+                  </Button>
+                </div>
+              </Card>
 
-            <DocumentUpload onUploadComplete={handleUploadComplete} />
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground">Supported formats: PDF, JPG, PNG, DOCX (max 10MB)</p>
-              {autoRefresh && (
-                <p className="text-xs text-neon mt-2 flex items-center gap-2">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Dashboard auto-refreshing...
-                </p>
+              {profile?.subscription_tier === "Free" && (
+                <Card
+                  onClick={handleUpgrade}
+                  className="p-6 border-neon/20 bg-gradient-to-br from-neon/10 to-blue-500/10 cursor-pointer hover:border-neon/40 transition-all"
+                >
+                  <h3 className="font-bold mb-2">Unlock AI Co-Pilot</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Get year-round tax advice, reminders, and planning for just $5/month
+                  </p>
+                  <Button className="w-full bg-neon hover:bg-neon/90 text-background">Upgrade Now</Button>
+                </Card>
               )}
             </div>
-          </Card>
+          </div>
         </div>
-      )}
-    </div>
+
+        {showUploadModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <Card className="w-full max-w-2xl p-6 border-neon/20 bg-card">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Upload Tax Documents</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowUploadModal(false)
+                    setAutoRefresh(false)
+                  }}
+                >
+                  ✕
+                </Button>
+              </div>
+
+              <DocumentUpload onUploadComplete={handleUploadComplete} />
+
+              <div className="mt-6 pt-6 border-t border-border">
+                <p className="text-sm text-muted-foreground">Supported formats: PDF, JPG, PNG, DOCX (max 10MB)</p>
+                {autoRefresh && (
+                  <p className="text-xs text-neon mt-2 flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Dashboard auto-refreshing...
+                  </p>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+      </div>
+    </>
   )
 }

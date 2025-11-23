@@ -4,6 +4,7 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Copy, Check } from "lucide-react"
 import { useState } from "react"
+import Link from "next/link"
 
 export default function ApiDocsPage() {
   return (
@@ -44,13 +45,8 @@ export default function ApiDocsPage() {
                   </h3>
                   <ul className="space-y-2 text-sm">
                     <li>
-                      <a href="#returns" className="hover:text-accent transition-colors">
-                        Tax Returns
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#refunds" className="hover:text-accent transition-colors">
-                        Refund Estimates
+                      <a href="#filing" className="hover:text-accent transition-colors">
+                        Tax Filing
                       </a>
                     </li>
                     <li>
@@ -59,8 +55,8 @@ export default function ApiDocsPage() {
                       </a>
                     </li>
                     <li>
-                      <a href="#deductions" className="hover:text-accent transition-colors">
-                        Deductions
+                      <a href="#quickbooks" className="hover:text-accent transition-colors">
+                        QuickBooks Sync
                       </a>
                     </li>
                   </ul>
@@ -73,11 +69,6 @@ export default function ApiDocsPage() {
                     <li>
                       <a href="#webhooks" className="hover:text-accent transition-colors">
                         Webhooks
-                      </a>
-                    </li>
-                    <li>
-                      <a href="#oauth" className="hover:text-accent transition-colors">
-                        OAuth 2.0
                       </a>
                     </li>
                     <li>
@@ -131,18 +122,18 @@ export default function ApiDocsPage() {
                     <h3 className="text-xl font-semibold mb-3">1. Install the SDK</h3>
                     <CodeBlock
                       language="bash"
-                      code={`npm install @taxu/node
+                      code={`npm install @taxu/taxu-js
 # or
-pip install taxu-python`}
+pip install taxu-python  # Coming soon`}
                     />
                   </div>
                   <div>
                     <h3 className="text-xl font-semibold mb-3">2. Make your first request</h3>
                     <CodeBlock
                       language="javascript"
-                      code={`import Taxu from '@taxu/node';
+                      code={`import { TaxuClient } from '@taxu/taxu-js';
 
-const taxu = new Taxu('sk_live_abc123xyz');
+const taxu = new TaxuClient('sk_live_abc123xyz');
 
 const estimate = await taxu.refunds.estimate({
   income: 75000,
@@ -153,135 +144,172 @@ const estimate = await taxu.refunds.estimate({
 console.log(estimate.refundAmount); // 2,450`}
                     />
                   </div>
+                  <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
+                    <p className="text-sm">
+                      <strong className="text-accent">New:</strong> JavaScript SDK is now available on npm.{" "}
+                      <Link href="/sdk/javascript" className="underline">
+                        View documentation
+                      </Link>
+                    </p>
+                  </div>
                 </div>
               </section>
 
-              {/* Tax Returns */}
-              <section id="returns">
-                <h2 className="text-3xl font-bold mb-4">Tax Returns</h2>
+              {/* Tax Filing */}
+              <section id="filing">
+                <h2 className="text-3xl font-bold mb-4">Tax Filing</h2>
                 <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Create, retrieve, and file tax returns programmatically.
+                  Submit tax forms including 1099-NEC, W-2, and Form 941 directly to the IRS via TaxBandits.
                 </p>
 
                 <div className="space-y-8">
                   <ApiEndpoint
                     method="POST"
-                    path="/v1/returns"
-                    title="Create a tax return"
-                    description="Initialize a new tax return for a user"
+                    path="/api/filing/submit-1099"
+                    title="Submit 1099-NEC Form"
+                    description="File 1099-NEC forms for contractors"
                     requestExample={`{
-  "userId": "user_123",
-  "taxYear": 2024,
-  "filingStatus": "single",
-  "forms": {
-    "w2": [...],
-    "1099": [...]
-  }
+  "businessName": "Acme Corp",
+  "ein": "12-3456789",
+  "recipients": [{
+    "name": "John Contractor",
+    "ssn": "123-45-6789",
+    "address": "123 Main St",
+    "city": "San Francisco",
+    "state": "CA",
+    "zip": "94102",
+    "compensation": 5000.00
+  }]
 }`}
                     responseExample={`{
-  "id": "ret_abc123",
-  "status": "draft",
-  "taxYear": 2024,
-  "createdAt": "2025-04-15T10:30:00Z"
-}`}
-                  />
-
-                  <ApiEndpoint
-                    method="GET"
-                    path="/v1/returns/:id"
-                    title="Retrieve a tax return"
-                    description="Get details of a specific tax return"
-                    responseExample={`{
-  "id": "ret_abc123",
-  "status": "filed",
-  "taxYear": 2024,
-  "refundAmount": 3250.00,
-  "filedAt": "2025-04-15T14:20:00Z"
+  "success": true,
+  "submissionId": "sub_abc123",
+  "status": "pending",
+  "filingId": "filing_xyz789"
 }`}
                   />
 
                   <ApiEndpoint
                     method="POST"
-                    path="/v1/returns/:id/file"
-                    title="File a tax return"
-                    description="Submit the return to the IRS"
+                    path="/api/filing/submit-w2"
+                    title="Submit W-2 Form"
+                    description="File W-2 forms for employees"
                     requestExample={`{
-  "electronicSignature": true,
-  "directDeposit": {
-    "routingNumber": "123456789",
-    "accountNumber": "987654321"
+  "employer": {
+    "name": "Acme Corp",
+    "ein": "12-3456789",
+    "address": "456 Business Ave"
+  },
+  "employee": {
+    "name": "Jane Employee",
+    "ssn": "987-65-4321",
+    "wages": 75000.00,
+    "federalWithheld": 8500.00
   }
 }`}
                     responseExample={`{
-  "id": "ret_abc123",
-  "status": "filed",
-  "confirmationNumber": "IRS-2024-ABC123"
+  "success": true,
+  "submissionId": "sub_def456",
+  "status": "accepted"
+}`}
+                  />
+
+                  <ApiEndpoint
+                    method="GET"
+                    path="/api/filing/status"
+                    title="Get Filing Status"
+                    description="Check the status of a submitted filing"
+                    responseExample={`{
+  "filingId": "filing_xyz789",
+  "status": "accepted",
+  "submittedAt": "2025-01-15T10:30:00Z",
+  "acceptedAt": "2025-01-15T10:35:00Z",
+  "confirmationNumber": "IRS-2025-ABC123"
 }`}
                   />
                 </div>
-              </section>
-
-              {/* Refund Estimates */}
-              <section id="refunds">
-                <h2 className="text-3xl font-bold mb-4">Refund Estimates</h2>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Calculate accurate refund estimates based on income, deductions, and credits.
-                </p>
-
-                <ApiEndpoint
-                  method="POST"
-                  path="/v1/refunds/estimate"
-                  title="Calculate refund estimate"
-                  description="Get an instant refund calculation"
-                  requestExample={`{
-  "income": 75000,
-  "filingStatus": "single",
-  "deductions": ["standard"],
-  "credits": ["earned_income"],
-  "withheld": 8500
-}`}
-                  responseExample={`{
-  "refundAmount": 2450.00,
-  "taxLiability": 6050.00,
-  "effectiveRate": 8.07,
-  "breakdown": {
-    "federalTax": 6050.00,
-    "withheld": 8500.00,
-    "credits": 0,
-    "refund": 2450.00
-  }
-}`}
-                />
               </section>
 
               {/* Documents */}
               <section id="documents">
                 <h2 className="text-3xl font-bold mb-4">Documents</h2>
                 <p className="text-muted-foreground mb-6 leading-relaxed">
-                  Upload and parse tax documents with OCR and automatic form detection.
+                  Upload and extract data from tax documents using AI-powered OCR.
                 </p>
 
-                <ApiEndpoint
-                  method="POST"
-                  path="/v1/documents/upload"
-                  title="Upload a document"
-                  description="Upload W-2, 1099, receipts, or other tax documents"
-                  requestExample={`{
+                <div className="space-y-8">
+                  <ApiEndpoint
+                    method="POST"
+                    path="/api/filing/upload-document"
+                    title="Upload Document"
+                    description="Upload W-2, 1099, or receipt documents"
+                    requestExample={`{
   "file": "base64_encoded_file",
-  "type": "w2",
-  "userId": "user_123"
+  "filename": "w2-2024.pdf",
+  "type": "w2"
 }`}
-                  responseExample={`{
-  "id": "doc_xyz789",
-  "type": "w2",
-  "status": "parsed",
-  "data": {
+                    responseExample={`{
+  "success": true,
+  "url": "https://blob.vercel-storage.com/...",
+  "documentId": "doc_abc123"
+}`}
+                  />
+
+                  <ApiEndpoint
+                    method="POST"
+                    path="/api/filing/extract-document"
+                    title="Extract Document Data"
+                    description="Use AI to extract structured data from uploaded documents"
+                    requestExample={`{
+  "documentUrl": "https://blob.vercel-storage.com/...",
+  "documentType": "w2"
+}`}
+                    responseExample={`{
+  "success": true,
+  "extractedData": {
     "employer": "Acme Corp",
+    "ein": "12-3456789",
+    "employee": "John Doe",
+    "ssn": "123-45-6789",
     "wages": 75000.00,
     "federalWithheld": 8500.00
   }
 }`}
-                />
+                  />
+                </div>
+              </section>
+
+              {/* QuickBooks Sync */}
+              <section id="quickbooks">
+                <h2 className="text-3xl font-bold mb-4">QuickBooks Integration</h2>
+                <p className="text-muted-foreground mb-6 leading-relaxed">
+                  Connect to QuickBooks and sync transaction data for tax categorization.
+                </p>
+
+                <div className="space-y-8">
+                  <ApiEndpoint
+                    method="GET"
+                    path="/api/quickbooks/connect"
+                    title="Connect QuickBooks"
+                    description="Initiate OAuth flow to connect QuickBooks account"
+                    responseExample={`{
+  "authUrl": "https://appcenter.intuit.com/connect/oauth2?..."
+}`}
+                  />
+
+                  <ApiEndpoint
+                    method="POST"
+                    path="/api/quickbooks/sync"
+                    title="Sync Transactions"
+                    description="Pull transactions from QuickBooks and categorize for taxes"
+                    responseExample={`{
+  "success": true,
+  "transactionCount": 247,
+  "categorized": 245,
+  "needsReview": 2
+}`}
+                  />
+                </div>
               </section>
 
               {/* Webhooks */}

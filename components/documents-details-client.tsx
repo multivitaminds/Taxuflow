@@ -20,16 +20,20 @@ export function DocumentsDetailsClient({ user, profile }: DocumentsDetailsClient
   const [loading, setLoading] = useState(true)
   const [showUploadModal, setShowUploadModal] = useState(false)
 
+  console.log("[v0] DocumentsDetailsClient rendering", { user: !!user, profile: !!profile })
+
   const supabase = createClient()
 
   const fetchDocuments = async () => {
     setLoading(true)
+    console.log("[v0] Fetching documents for user", user.id)
     const { data, error } = await supabase
       .from("documents")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
 
+    console.log("[v0] Documents fetched", { count: data?.length, error })
     if (data) {
       setDocuments(data)
     }
@@ -250,11 +254,14 @@ export function DocumentsDetailsClient({ user, profile }: DocumentsDetailsClient
         </div>
 
         {documents.length === 0 && (
-          <Card className="p-12 border-neon/20 bg-card/50 backdrop-blur text-center">
-            <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <Card
+            className="p-12 border-neon/20 bg-card/50 backdrop-blur text-center cursor-pointer hover:bg-card/70 hover:border-neon/40 transition-all group"
+            onClick={() => setShowUploadModal(true)}
+          >
+            <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4 group-hover:text-neon transition-colors" />
             <h3 className="text-xl font-bold mb-2">No documents uploaded yet</h3>
             <p className="text-muted-foreground mb-6">Upload your first tax document to get started</p>
-            <Button onClick={() => setShowUploadModal(true)} className="bg-neon hover:bg-neon/90 text-background">
+            <Button className="bg-neon hover:bg-neon/90 text-background pointer-events-none">
               <Upload className="w-4 h-4 mr-2" />
               Upload Document
             </Button>

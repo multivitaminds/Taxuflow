@@ -8,7 +8,7 @@ const features = [
   },
   {
     icon: Shield,
-    title: "SOC 2 Type II infra",
+    title: "SOC 2 Compliance In Progress",
     description: "Independently audited security controls",
   },
   {

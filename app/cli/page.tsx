@@ -2,30 +2,36 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Terminal, Download } from "lucide-react"
+import Link from "next/link"
 
 export default function CLIPage() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white">
       <Navigation />
 
-      <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto max-w-4xl">
+      {/* Hero Section */}
+      <div className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 gradient-stripe-hero clip-diagonal">
+        <div className="container mx-auto max-w-4xl relative z-10">
           {/* Header */}
           <div className="mb-12 text-center">
-            <Terminal className="w-16 h-16 text-accent mx-auto mb-6" />
-            <h1 className="text-5xl sm:text-6xl font-bold mb-6">
-              Taxu <span className="text-glow">CLI</span>
+            <Terminal className="w-16 h-16 text-[#00d4ff] mx-auto mb-6" />
+            <h1 className="text-5xl sm:text-6xl font-bold mb-6 text-white">
+              Taxu <span className="text-[#00d4ff]">CLI</span>
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xl text-blue-100 max-w-2xl mx-auto leading-relaxed">
               Command-line tool for fast integration, testing, and automation of Taxu API workflows.
             </p>
           </div>
+        </div>
+      </div>
 
+      <div className="px-4 sm:px-6 lg:px-8 py-20 bg-white">
+        <div className="container mx-auto max-w-4xl">
           {/* Installation */}
           <section className="mb-16">
-            <h2 className="text-3xl font-bold mb-6">Installation</h2>
-            <div className="rounded-xl border border-border bg-card p-6">
-              <pre className="font-mono text-accent">
+            <h2 className="text-3xl font-bold mb-6 text-[#0a2540]">Installation</h2>
+            <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+              <pre className="font-mono text-[#79c0ff]">
                 <code>npm install -g @taxu/cli</code>
               </pre>
             </div>
@@ -33,23 +39,23 @@ export default function CLIPage() {
 
           {/* Quick Start */}
           <section className="mb-16">
-            <h2 className="text-3xl font-bold mb-6">Quick Start</h2>
+            <h2 className="text-3xl font-bold mb-6 text-[#0a2540]">Quick Start</h2>
             <div className="space-y-4">
-              <div className="rounded-xl border border-border bg-card p-6">
-                <p className="text-sm text-muted-foreground mb-3">1. Login with your API key</p>
-                <pre className="font-mono text-sm text-accent">
+              <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+                <p className="text-sm text-slate-400 mb-3">1. Login with your API key</p>
+                <pre className="font-mono text-sm text-[#79c0ff]">
                   <code>taxu login</code>
                 </pre>
               </div>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <p className="text-sm text-muted-foreground mb-3">2. Test an endpoint</p>
-                <pre className="font-mono text-sm text-accent">
+              <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+                <p className="text-sm text-slate-400 mb-3">2. Test an endpoint</p>
+                <pre className="font-mono text-sm text-[#79c0ff]">
                   <code>taxu refund:estimate --income 75000 --status single</code>
                 </pre>
               </div>
-              <div className="rounded-xl border border-border bg-card p-6">
-                <p className="text-sm text-muted-foreground mb-3">3. Create a tax return</p>
-                <pre className="font-mono text-sm text-accent">
+              <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+                <p className="text-sm text-slate-400 mb-3">3. Create a tax return</p>
+                <pre className="font-mono text-sm text-[#79c0ff]">
                   <code>taxu returns:create --user user_123 --year 2024</code>
                 </pre>
               </div>
@@ -58,7 +64,7 @@ export default function CLIPage() {
 
           {/* Commands */}
           <section className="mb-16">
-            <h2 className="text-3xl font-bold mb-6">Available Commands</h2>
+            <h2 className="text-3xl font-bold mb-6 text-[#0a2540]">Available Commands</h2>
             <div className="space-y-3">
               {[
                 { cmd: "taxu login", desc: "Authenticate with your API key" },
@@ -83,11 +89,11 @@ export default function CLIPage() {
 
           {/* Examples */}
           <section className="mb-16">
-            <h2 className="text-3xl font-bold mb-6">Examples</h2>
+            <h2 className="text-3xl font-bold mb-6 text-[#0a2540]">Examples</h2>
             <div className="space-y-6">
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="text-xl font-bold mb-4">Estimate Refund</h3>
-                <pre className="font-mono text-sm text-accent overflow-x-auto">
+              <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+                <h3 className="text-xl font-bold mb-4 text-white">Estimate Refund</h3>
+                <pre className="font-mono text-sm text-[#79c0ff] overflow-x-auto">
                   <code>{`$ taxu refund:estimate \\
   --income 75000 \\
   --status single \\
@@ -99,9 +105,9 @@ export default function CLIPage() {
                 </pre>
               </div>
 
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="text-xl font-bold mb-4">Upload Document</h3>
-                <pre className="font-mono text-sm text-accent overflow-x-auto">
+              <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+                <h3 className="text-xl font-bold mb-4 text-white">Upload Document</h3>
+                <pre className="font-mono text-sm text-[#79c0ff] overflow-x-auto">
                   <code>{`$ taxu documents:upload \\
   --file ./w2.pdf \\
   --type W2 \\
@@ -115,9 +121,9 @@ export default function CLIPage() {
                 </pre>
               </div>
 
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="text-xl font-bold mb-4">Test Webhooks</h3>
-                <pre className="font-mono text-sm text-accent overflow-x-auto">
+              <div className="rounded-lg border border-slate-200 bg-[#0d1117] p-6">
+                <h3 className="text-xl font-bold mb-4 text-white">Test Webhooks</h3>
+                <pre className="font-mono text-sm text-[#79c0ff] overflow-x-auto">
                   <code>{`$ taxu webhooks:test \\
   --event return.filed \\
   --url https://myapp.com/webhooks
@@ -132,13 +138,15 @@ export default function CLIPage() {
 
           {/* Download */}
           <section>
-            <div className="rounded-2xl border border-accent/30 bg-card p-12 text-center glow-neon">
-              <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-              <p className="text-xl text-muted-foreground mb-8">Install the CLI and start building in minutes</p>
-              <Button size="lg" className="glow-neon-strong">
-                <Download className="w-5 h-5 mr-2" />
-                Install CLI
-              </Button>
+            <div className="rounded-lg border border-[#635bff]/30 bg-gradient-to-br from-[#635bff]/5 to-[#00d4ff]/5 p-12 text-center">
+              <h2 className="text-3xl font-bold mb-4 text-[#0a2540]">Ready to Get Started?</h2>
+              <p className="text-xl text-slate-600 mb-8">Install the CLI and start building in minutes</p>
+              <Link href="/developer">
+                <Button className="rounded-full bg-[#635bff] hover:bg-[#5851df] text-white px-8 py-6 text-lg">
+                  <Download className="w-5 h-5 mr-2" />
+                  Install CLI
+                </Button>
+              </Link>
             </div>
           </section>
         </div>

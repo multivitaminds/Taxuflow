@@ -9,36 +9,91 @@ export async function GET(request: Request) {
   const error_description = requestUrl.searchParams.get("error_description")
 
   if (error) {
-    console.error("[v0] OAuth error:", error, error_description)
-    return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(error_description || error)}`, request.url))
+    console.log("[v0] OAuth error:", error, error_description)
+    return NextResponse.redirect(
+      new URL(
+        `/login?error=${encodeURIComponent(error)}&error_description=${encodeURIComponent(error_description || error)}`,
+        request.url,
+      ),
+    )
   }
 
   if (code) {
     const cookieStore = await cookies()
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
+          getAll() {
+            return cookieStore.getAll()
           },
-          set(name: string, value: string, options: any) {
-            cookieStore.set({ name, value, ...options })
-          },
-          remove(name: string, options: any) {
-            cookieStore.set({ name, value: "", ...options })
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+            } catch {
+              // Ignore errors from Server Component context
+            }
           },
         },
       },
     )
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
 
-    if (exchangeError) {
-      console.error("[v0] Session exchange error:", exchangeError)
-      return NextResponse.redirect(new URL(`/login?error=${encodeURIComponent(exchangeError.message)}`, request.url))
+    if (sessionError) {
+      console.error("[v0] Session exchange error:", sessionError)
+      return NextResponse.redirect(
+        new URL(`/login?error=auth_error&error_description=${encodeURIComponent(sessionError.message)}`, request.url),
+      )
     }
+
+    if (data?.user) {
+      console.log("[v0] OAuth successful for user:", data.user.email)
+
+      const { data: existingProfile } = await supabase
+        .from("user_profiles")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle()
+
+      if (!existingProfile) {
+        // Create profile for OAuth users
+        await supabase.from("user_profiles").insert({
+          id: data.user.id,
+          email: data.user.email,
+          full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
+        })
+      }
+
+      const response = NextResponse.redirect(new URL("/dashboard", request.url))
+
+      // Set session cookies explicitly
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session) {
+        response.cookies.set("sb-access-token", session.access_token, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+        })
+        response.cookies.set("sb-refresh-token", session.refresh_token, {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+          httpOnly: true,
+          secure: true,
+          sameSite: "lax",
+        })
+      }
+
+      return response
+    }
+
+    return NextResponse.redirect(new URL("/dashboard", request.url))
   }
 
   return NextResponse.redirect(new URL("/dashboard", request.url))

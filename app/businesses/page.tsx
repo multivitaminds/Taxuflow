@@ -85,28 +85,28 @@ export default function BusinessesPage() {
   ]
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <Navigation />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="gradient-stripe-hero pt-32 pb-32 px-4 sm:px-6 lg:px-8 clip-diagonal">
         <div className="container mx-auto max-w-4xl text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1]">
-            Tax Tools for <span className="text-glow">Business Owners</span>
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1] text-white">
+            Tax Infrastructure for <span className="text-[#00d4ff]">Business</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground text-balance mb-8">
-            From sole proprietors to growing agencies — AI-powered tax planning and filing built for business.
+          <p className="text-xl sm:text-2xl text-white/80 text-balance mb-8">
+            From sole proprietors to growing agencies — AI-powered tax planning and filing built for the modern economy.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/businesses/get-started">
-              <Button size="lg" className="glow-neon-strong">
+              <Button size="lg" className="bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-[#0a2540] font-semibold">
                 Start Business Filing
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button size="lg" variant="outline" className="bg-transparent">
-                Book a Demo
+              <Button size="lg" variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+                Contact Sales
               </Button>
             </Link>
           </div>
@@ -114,11 +114,11 @@ export default function BusinessesPage() {
       </section>
 
       {/* Business Types Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#f6f9fc]">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">Built for Your Business Structure</h2>
-            <p className="text-xl text-muted-foreground">Specialized tools for every entity type</p>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-[#0a2540]">Built for Your Structure</h2>
+            <p className="text-xl text-slate-600">Specialized tools for every entity type</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -128,27 +128,28 @@ export default function BusinessesPage() {
                 <Link
                   key={index}
                   href={`/businesses/get-started?type=${type.title.toLowerCase().replace(/\s+/g, "-")}`}
-                  className="block"
+                  className="block group"
                 >
-                  <div className="rounded-2xl border border-border bg-card p-8 hover:border-accent/50 hover:glow-neon transition-all cursor-pointer h-full">
-                    <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center mb-6">
-                      <Icon className="w-7 h-7 text-accent" />
+                  <div className="rounded-2xl border border-slate-200 bg-white p-8 hover:shadow-xl transition-all cursor-pointer h-full relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-[#635bff] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-14 h-14 rounded-xl bg-[#f6f9fc] flex items-center justify-center mb-6 group-hover:bg-[#635bff] transition-colors duration-300">
+                      <Icon className="w-7 h-7 text-[#635bff] group-hover:text-white transition-colors" />
                     </div>
-                    <h3 className="text-2xl font-bold mb-2">{type.title}</h3>
-                    <p className="text-muted-foreground mb-6">{type.description}</p>
+                    <h3 className="text-2xl font-bold mb-2 text-[#0a2540]">{type.title}</h3>
+                    <p className="text-slate-600 mb-6">{type.description}</p>
                     <ul className="space-y-3">
                       {type.features.map((feature, i) => (
                         <li key={i} className="flex items-start gap-3">
-                          <CheckCircle className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
-                          <span className="text-sm">{feature}</span>
+                          <CheckCircle className="w-5 h-5 text-[#00d4ff] flex-shrink-0 mt-0.5" />
+                          <span className="text-sm text-slate-700">{feature}</span>
                         </li>
                       ))}
                     </ul>
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <Button variant="outline" className="w-full bg-transparent">
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                      <div className="flex items-center text-[#635bff] font-semibold group-hover:translate-x-1 transition-transform">
                         Get Started
                         <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -159,24 +160,27 @@ export default function BusinessesPage() {
       </section>
 
       {/* Tools Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">Complete Business Tax Suite</h2>
-            <p className="text-xl text-muted-foreground">Everything you need to manage business taxes year-round</p>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-[#0a2540]">Complete Business Suite</h2>
+            <p className="text-xl text-slate-600">Everything you need to manage business taxes year-round</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
             {tools.map((tool, index) => {
               const Icon = tool.icon
               return (
-                <div key={index} className="flex gap-6 p-8 rounded-2xl border border-border bg-card">
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-6 h-6 text-accent" />
+                <div
+                  key={index}
+                  className="flex gap-6 p-8 rounded-2xl border border-slate-200 bg-white hover:border-[#635bff]/30 transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#f6f9fc] flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-6 h-6 text-[#0a2540]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold mb-2">{tool.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed">{tool.description}</p>
+                    <h3 className="text-xl font-bold mb-2 text-[#0a2540]">{tool.title}</h3>
+                    <p className="text-slate-600 leading-relaxed">{tool.description}</p>
                   </div>
                 </div>
               )
@@ -186,28 +190,28 @@ export default function BusinessesPage() {
       </section>
 
       {/* Integrations Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#f6f9fc]">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">Integrates With Your Stack</h2>
-            <p className="text-xl text-muted-foreground">Connect your existing tools for seamless tax management</p>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4 text-[#0a2540]">Integrates With Your Stack</h2>
+            <p className="text-xl text-slate-600">Connect your existing tools for seamless tax management</p>
           </div>
 
           <div className="grid grid-cols-3 md:grid-cols-6 gap-6">
             {integrations.map((integration, index) => (
               <div
                 key={index}
-                className="aspect-square rounded-2xl border border-border bg-card flex items-center justify-center hover:border-accent/50 transition-colors"
+                className="aspect-square rounded-2xl border border-slate-200 bg-white flex items-center justify-center hover:shadow-lg transition-all"
               >
-                <div className="text-2xl font-bold text-muted-foreground">{integration.logo}</div>
+                <div className="text-2xl font-bold text-slate-400">{integration.logo}</div>
               </div>
             ))}
           </div>
 
           <div className="text-center mt-12">
-            <p className="text-muted-foreground mb-4">Plus many more integrations via API</p>
+            <p className="text-slate-600 mb-4">Plus many more integrations via API</p>
             <Link href="/partners">
-              <Button variant="outline" className="bg-transparent">
+              <Button variant="outline" className="border-slate-300 text-[#0a2540] hover:bg-slate-50 bg-transparent">
                 View All Integrations
               </Button>
             </Link>
@@ -216,43 +220,45 @@ export default function BusinessesPage() {
       </section>
 
       {/* Pricing Teaser */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="container mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-accent/30 bg-card p-12 text-center glow-neon">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Business Tax Planning</h2>
-            <p className="text-xl text-muted-foreground mb-6">
-              Starting at $10/month for year-round support and quarterly filing
-            </p>
-            <ul className="inline-block text-left space-y-3 mb-8">
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" />
-                <span>Unlimited tax questions</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" />
-                <span>Quarterly tax estimates</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" />
-                <span>Expense tracking & categorization</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-accent" />
-                <span>Annual return filing included</span>
-              </li>
-            </ul>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/businesses/get-started">
-                <Button size="lg" className="glow-neon-strong">
-                  Start Business Filing
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/pricing">
-                <Button size="lg" variant="outline" className="bg-transparent">
-                  View Pricing
-                </Button>
-              </Link>
+          <div className="rounded-2xl border border-slate-200 bg-[#0a2540] p-12 text-center text-white shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#635bff] opacity-20 rounded-full blur-3xl -mr-32 -mt-32" />
+            <div className="relative z-10">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4">Business Tax Planning</h2>
+              <p className="text-xl text-white/80 mb-6">
+                Starting at $10/month for year-round support and quarterly filing
+              </p>
+              <ul className="inline-block text-left space-y-3 mb-8">
+                {[
+                  "Unlimited tax questions",
+                  "Quarterly tax estimates",
+                  "Expense tracking & categorization",
+                  "Annual return filing included",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-[#00d4ff]" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/businesses/get-started">
+                  <Button size="lg" className="bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-[#0a2540] font-semibold">
+                    Start Business Filing
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link href="/pricing">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="bg-transparent border-white/20 text-white hover:bg-white/10"
+                  >
+                    View Pricing
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>

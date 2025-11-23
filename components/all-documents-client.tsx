@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { ArrowLeft, FileText, Download, Trash2, CheckCircle2, Clock, Search, Upload } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
-import { DocumentUpload } from "@/components/document-upload"
+import { DocumentDetailModal } from "@/components/document-detail-modal"
 
 interface AllDocumentsClientProps {
   user: User
@@ -20,7 +20,8 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
-  const [showUpload, setShowUpload] = useState(false)
+  const [selectedDocument, setSelectedDocument] = useState<any>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
 
   const supabase = createClient()
 
@@ -97,6 +98,11 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
     }
   }
 
+  const handleUpload = () => {
+    console.log("[v0] Upload button clicked, navigating to upload page")
+    router.push("/dashboard/documents/upload")
+  }
+
   const getDocumentStatus = (doc: any) => {
     if (doc.ai_document_type) {
       return { status: "processed", label: "Processed", icon: CheckCircle2, color: "text-green-500" }
@@ -115,6 +121,11 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
 
     return matchesSearch && matchesFilter
   })
+
+  const handleDocumentClick = (doc: any) => {
+    setSelectedDocument(doc)
+    setIsDetailModalOpen(true)
+  }
 
   if (loading) {
     return (
@@ -135,28 +146,20 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
           Back to Documents
         </Button>
 
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold mb-2">All Documents</h1>
             <p className="text-muted-foreground">Complete list of all your uploaded tax documents</p>
           </div>
-          <Button onClick={() => setShowUpload(!showUpload)} className="bg-neon text-background hover:bg-neon/90">
+          <Button
+            onClick={handleUpload}
+            className="bg-neon hover:bg-neon/90 text-background relative z-10 cursor-pointer"
+            type="button"
+          >
             <Upload className="w-4 h-4 mr-2" />
-            {showUpload ? "Hide Upload" : "Upload Document"}
+            Upload Document
           </Button>
         </div>
-
-        {showUpload && (
-          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur mb-8">
-            <h2 className="text-xl font-semibold mb-4">Upload New Document</h2>
-            <DocumentUpload
-              onUploadComplete={() => {
-                fetchDocuments()
-                setShowUpload(false)
-              }}
-            />
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
@@ -241,7 +244,8 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
               return (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all"
+                  onClick={() => handleDocumentClick(doc)}
+                  className="flex items-center justify-between p-4 rounded-lg bg-background/50 hover:bg-background/80 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
                     <FileText className="w-6 h-6 text-neon" />
@@ -285,11 +289,25 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
             {filteredDocuments.length === 0 && (
               <div className="text-center py-12">
                 <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No documents found</p>
+                <p className="text-muted-foreground mb-4">No documents found</p>
+                <Button
+                  onClick={handleUpload}
+                  className="bg-neon hover:bg-neon/90 text-background relative z-10 cursor-pointer"
+                  type="button"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Your First Document
+                </Button>
               </div>
             )}
           </div>
         </Card>
+
+        <DocumentDetailModal
+          document={selectedDocument}
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+        />
       </div>
     </div>
   )

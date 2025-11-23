@@ -235,7 +235,7 @@ export default function DevelopersPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-              SOC 2 Certified
+              SOC 2 Compliance In Progress
             </div>
           </div>
         </div>
@@ -481,21 +481,41 @@ export default function DevelopersPage() {
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">Official SDKs</h2>
             <p className="text-xl text-muted-foreground mb-8">Get started faster with our official client libraries</p>
             <div className="flex flex-wrap items-center justify-center gap-4 mb-8">
-              {["Node.js", "Python", "Ruby", "PHP", "Go"].map((lang) => (
+              <Link
+                href="/sdk/javascript"
+                className="px-4 py-2 rounded-lg bg-green-500/10 border border-green-500/30 font-mono text-sm text-green-500 hover:bg-green-500/20 transition-colors"
+              >
+                Node.js ✓
+              </Link>
+              <Link
+                href="/sdk/python"
+                className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 font-mono text-sm text-amber-500 hover:bg-amber-500/20 transition-colors"
+              >
+                Python (In Dev)
+              </Link>
+              {["Ruby", "PHP", "Go"].map((lang) => (
                 <div
                   key={lang}
-                  className="px-4 py-2 rounded-lg bg-background-alt border border-border font-mono text-sm"
+                  className="px-4 py-2 rounded-lg bg-background-alt border border-border font-mono text-sm text-muted-foreground"
                 >
-                  {lang}
+                  {lang} (Planned)
                 </div>
               ))}
             </div>
-            <Link href="/sdk/javascript">
-              <Button size="lg" className="glow-neon-strong">
-                Browse SDKs on GitHub
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <div className="flex items-center justify-center gap-4">
+              <Link href="https://github.com/taxu-io" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" variant="outline" className="bg-transparent">
+                  <Github className="mr-2 h-5 w-5" />
+                  View on GitHub
+                </Button>
+              </Link>
+              <Link href="/sdk/javascript">
+                <Button size="lg" className="glow-neon-strong">
+                  Get Started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

@@ -21,22 +21,54 @@ export function InvoicesClient() {
 
   async function loadInvoices() {
     try {
+      console.log("[v0] Loading invoices...")
       const supabase = getSupabaseBooksClient()
 
       if (!supabase) {
+        console.log("[v0] No Supabase client available")
         setLoading(false)
         return
       }
 
-      const { data, error } = await supabase
+      const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
-        .select("*, customers(company_name, contact_name, email)")
+        .select("*")
         .order("created_at", { ascending: false })
 
-      if (error) throw error
-      setInvoices(data || [])
-    } catch (error) {
-      console.error("Error loading invoices:", error)
+      if (invoicesError) {
+        console.error("[v0] Error loading invoices:", invoicesError.message)
+        throw invoicesError
+      }
+
+      // Get unique contact IDs
+      const contactIds = [...new Set(invoicesData?.map((inv) => inv.contact_id).filter(Boolean))]
+
+      // Fetch contacts separately if there are any
+      const contactsMap = new Map()
+      if (contactIds.length > 0) {
+        const { data: contactsData, error: contactsError } = await supabase
+          .from("contacts")
+          .select("*")
+          .in("id", contactIds)
+
+        if (!contactsError && contactsData) {
+          contactsData.forEach((contact) => {
+            contactsMap.set(contact.id, contact)
+          })
+        }
+      }
+
+      // Merge invoices with their contacts
+      const invoicesWithContacts =
+        invoicesData?.map((invoice) => ({
+          ...invoice,
+          contact: contactsMap.get(invoice.contact_id) || null,
+        })) || []
+
+      console.log("[v0] Invoices loaded:", invoicesWithContacts.length)
+      setInvoices(invoicesWithContacts)
+    } catch (error: any) {
+      console.error("Error loading invoices:", error.message || error)
     } finally {
       setLoading(false)
     }
@@ -60,8 +92,8 @@ export function InvoicesClient() {
   const filteredInvoices = invoices.filter((invoice) => {
     const matchesSearch =
       invoice.invoice_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.customers?.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      invoice.customers?.contact_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      invoice.contact?.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      invoice.contact?.contact_name?.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesFilter = filterStatus === "all" || invoice.status === filterStatus
     return matchesSearch && matchesFilter
   })
@@ -234,7 +266,10 @@ export function InvoicesClient() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
                           <span className="text-foreground">
-                            {invoice.customers?.company_name || invoice.customers?.contact_name || "Unknown"}
+                            {invoice.contact?.company_name ||
+                              invoice.contact?.display_name ||
+                              invoice.contact?.contact_name ||
+                              "Unknown"}
                           </span>
                         </div>
                       </td>

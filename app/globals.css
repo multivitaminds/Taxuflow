@@ -1,81 +1,78 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
+/* Removed tw-animate-css import that was causing "Invalid custom property" error */
 
 :root {
-  /* Updated to neon-accented billion-dollar design system */
+  /* Stripe-inspired color system */
   --background: #ffffff;
-  --background-alt: #fafafa;
-  --foreground: #1f1f1f;
+  --background-alt: #f6f9fc;
+  --foreground: #0a2540;
   --card: #ffffff;
-  --card-foreground: #1f1f1f;
+  --card-foreground: #0a2540;
   --popover: #ffffff;
-  --popover-foreground: #1f1f1f;
-  --primary: #1f1f1f;
+  --popover-foreground: #0a2540;
+  --primary: #635bff;
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #1f1f1f;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
-  --accent: #2acbff;
-  --accent-foreground: #0b0c0e;
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: #e5e7eb;
-  --input: #e5e7eb;
-  --ring: #2acbff;
-  --chart-1: #2acbff;
-  --chart-2: #10b981;
-  --chart-3: #f59e0b;
-  --chart-4: #ef4444;
-  --chart-5: #8b5cf6;
-  --radius: 0.75rem;
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --secondary: #f6f9fc;
+  --secondary-foreground: #0a2540;
+  --muted: #f6f9fc;
+  --muted-foreground: #425466;
+  --accent: #00d4ff;
+  --accent-foreground: #ffffff;
+  --destructive: #df1b41;
+  --destructive-foreground: #ffffff;
+  --border: #e3e8ee;
+  --input: #e3e8ee;
+  --ring: #635bff;
+  --chart-1: #635bff;
+  --chart-2: #00d4ff;
+  --chart-3: #7a73ff;
+  --chart-4: #ff5c35;
+  --chart-5: #ffc043;
+  --radius: 0.5rem;
+  --sidebar: #f7f9fc;
+  --sidebar-foreground: #0a2540;
+  --sidebar-primary: #635bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e3e8ee;
+  --sidebar-accent-foreground: #0a2540;
+  --sidebar-border: #e3e8ee;
+  --sidebar-ring: #635bff;
 }
 
 .dark {
-  /* Deep navy background with neon blue accents */
-  --background: #0b0c0e;
-  --background-alt: #1f1f1f;
+  --background: #0a2540;
+  --background-alt: #1a1f36;
   --foreground: #ffffff;
-  --card: #1f1f1f;
+  --card: #1a1f36;
   --card-foreground: #ffffff;
-  --popover: #1f1f1f;
+  --popover: #1a1f36;
   --popover-foreground: #ffffff;
-  --primary: #ffffff;
-  --primary-foreground: #0b0c0e;
-  --secondary: #1f1f1f;
+  --primary: #635bff;
+  --primary-foreground: #ffffff;
+  --secondary: #2e364f;
   --secondary-foreground: #ffffff;
-  --muted: #1f1f1f;
-  --muted-foreground: #9ca3af;
-  --accent: #2acbff;
-  --accent-foreground: #0b0c0e;
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: #2a2a2a;
-  --input: #1f1f1f;
-  --ring: #2acbff;
-  --chart-1: #2acbff;
-  --chart-2: #10b981;
-  --chart-3: #f59e0b;
-  --chart-4: #ef4444;
-  --chart-5: #8b5cf6;
-  --sidebar: oklch(0.145 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --muted: #2e364f;
+  --muted-foreground: #a3acb9;
+  --accent: #00d4ff;
+  --accent-foreground: #ffffff;
+  --destructive: #df1b41;
+  --destructive-foreground: #ffffff;
+  --border: #2e364f;
+  --input: #2e364f;
+  --ring: #635bff;
+  --chart-1: #635bff;
+  --chart-2: #00d4ff;
+  --chart-3: #7a73ff;
+  --chart-4: #ff5c35;
+  --chart-5: #ffc043;
+  --sidebar: #0a2540;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #635bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2e364f;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2e364f;
+  --sidebar-ring: #635bff;
 }
 
 @theme inline {
@@ -106,9 +103,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
   --radius-xl: calc(var(--radius) + 4px);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -125,26 +122,121 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 
-  /* Added smooth scroll behavior */
   html {
     scroll-behavior: smooth;
   }
+
+  /* Stripe-style smooth animations */
+  * {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
-/* Added neon glow utilities for premium effects */
+/* Premium gradient utilities inspired by Stripe */
 @layer utilities {
-  .glow-neon {
-    box-shadow: 0 0 20px rgba(42, 203, 255, 0.3), 0 0 40px rgba(42, 203, 255, 0.1);
+  .gradient-purple-orange {
+    background: linear-gradient(135deg, #a960ee 0%, #ff5c35 50%, #ffc043 100%);
   }
 
-  .glow-neon-strong {
-    box-shadow: 0 0 30px rgba(42, 203, 255, 0.5), 0 0 60px rgba(42, 203, 255, 0.2);
+  .gradient-purple-blue {
+    background: linear-gradient(135deg, #635bff 0%, #7a73ff 50%, #00d4ff 100%);
   }
 
-  .text-glow {
-    text-shadow: 0 0 20px rgba(42, 203, 255, 0.5);
+  .gradient-mesh {
+    background: radial-gradient(at 0% 0%, rgba(99, 91, 255, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(255, 92, 53, 0.15) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(255, 192, 67, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(0, 212, 255, 0.15) 0px, transparent 50%);
+  }
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass-effect {
+    background: rgba(26, 31, 54, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 40px rgba(99, 91, 255, 0.3), 0 0 80px rgba(99, 91, 255, 0.1);
+  }
+
+  .glow-orange {
+    box-shadow: 0 0 40px rgba(255, 92, 53, 0.3), 0 0 80px rgba(255, 92, 53, 0.1);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #635bff 0%, #ff5c35 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hover-lift {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Updated gradient-stripe-hero to have darker, more contrasting gradients */
+  .gradient-stripe-hero {
+    background-color: #0a2540;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 70%, 0.25) 0px, transparent 50%),
+      radial-gradient(at 95% 0%, hsla(330, 100%, 70%, 0.2) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 70%, 0.15) 0px, transparent 50%);
+  }
+
+  .dark .gradient-stripe-hero {
+    background-color: #0a2540;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 65%, 0.2) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 65%, 0.2) 0px, transparent 50%);
+  }
+
+  /* Added new utility for light hero sections with dark text */
+  .gradient-stripe-hero-light {
+    background-color: #ffffff;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 85%, 0.3) 0px, transparent 50%),
+      radial-gradient(at 95% 0%, hsla(330, 100%, 85%, 0.25) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 85%, 0.2) 0px, transparent 50%);
+  }
+
+  .dark .gradient-stripe-hero-light {
+    background-color: #0a2540;
+    background-image: radial-gradient(at 80% 0%, hsla(250, 100%, 65%, 0.15) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(200, 100%, 65%, 0.15) 0px, transparent 50%);
+  }
+
+  .gradient-stripe-mesh {
+    background-color: #ffffff;
+    background-image: radial-gradient(at 100% 0%, hsla(330, 100%, 65%, 0.2) 0px, transparent 50%),
+      radial-gradient(at 0% 0%, hsla(200, 100%, 65%, 0.1) 0px, transparent 50%);
+  }
+
+  .text-gradient-stripe {
+    background: linear-gradient(to right, #635bff, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .clip-diagonal {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+  }
+
+  .clip-diagonal-reverse {
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* Added clip-diagonal-top utility */
+  .clip-diagonal-top {
+    clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
   }
 }

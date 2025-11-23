@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
-import { CheckCircle, Download, Share2, Calendar, DollarSign, TrendingUp } from "lucide-react"
+import { CheckCircle, Download, Share2, Calendar, DollarSign, TrendingUp, Clock } from "lucide-react"
 
 export default function RefundPage() {
   const router = useRouter()
@@ -14,6 +14,9 @@ export default function RefundPage() {
 
   useEffect(() => {
     loadFiling()
+    // Poll for status updates every 30 seconds
+    const interval = setInterval(loadFiling, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const loadFiling = async () => {
@@ -56,6 +59,15 @@ export default function RefundPage() {
   const estimatedDate = new Date()
   estimatedDate.setDate(estimatedDate.getDate() + 10)
 
+  const getStatusStep = () => {
+    if (filing?.refund_sent_at) return 3
+    if (filing?.accepted_at) return 2
+    if (filing?.provider_status === "accepted") return 2
+    return 1
+  }
+
+  const statusStep = getStatusStep()
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto px-4 py-12">
@@ -85,33 +97,53 @@ export default function RefundPage() {
           <h3 className="text-xl font-bold mb-6">Refund Status</h3>
           <div className="space-y-4">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-neon flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-background" />
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  statusStep >= 1 ? "bg-neon" : "bg-muted"
+                }`}
+              >
+                <CheckCircle className={`w-5 h-5 ${statusStep >= 1 ? "text-background" : "text-muted-foreground"}`} />
               </div>
               <div className="flex-1">
                 <p className="font-semibold">Return Accepted</p>
                 <p className="text-sm text-muted-foreground">IRS has received and accepted your return</p>
-                <p className="text-xs text-muted-foreground mt-1">Today</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filing?.accepted_at ? new Date(filing.accepted_at).toLocaleDateString() : "Today"}
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <div className="w-3 h-3 rounded-full bg-neon animate-pulse" />
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  statusStep >= 2 ? "bg-neon" : "bg-muted"
+                }`}
+              >
+                {statusStep === 2 && !filing?.refund_sent_at ? (
+                  <div className="w-3 h-3 rounded-full bg-background animate-pulse" />
+                ) : (
+                  <Clock className={`w-5 h-5 ${statusStep >= 2 ? "text-background" : "text-muted-foreground"}`} />
+                )}
               </div>
               <div className="flex-1">
                 <p className="font-semibold">Processing</p>
                 <p className="text-sm text-muted-foreground">IRS is reviewing your return</p>
-                <p className="text-xs text-muted-foreground mt-1">In progress</p>
+                <p className="text-xs text-muted-foreground mt-1">{statusStep >= 2 ? "In progress" : "Pending"}</p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-5 h-5 text-muted-foreground" />
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  statusStep >= 3 ? "bg-neon" : "bg-muted"
+                }`}
+              >
+                <DollarSign className={`w-5 h-5 ${statusStep >= 3 ? "text-background" : "text-muted-foreground"}`} />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-muted-foreground">Refund Sent</p>
+                <p className={`font-semibold ${statusStep < 3 ? "text-muted-foreground" : ""}`}>Refund Sent</p>
                 <p className="text-sm text-muted-foreground">Direct deposit to your account</p>
-                <p className="text-xs text-muted-foreground mt-1">7-10 business days</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {filing?.refund_sent_at ? new Date(filing.refund_sent_at).toLocaleDateString() : "7-10 business days"}
+                </p>
               </div>
             </div>
           </div>

@@ -1,27 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@/lib/supabase/server"
-import { getQuickBooksAuthUrl } from "@/lib/quickbooks/oauth"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerClient()
+    const { searchParams } = new URL(request.url)
+    const userId = searchParams.get("userId")
 
-    // Get authenticated user
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
+    const clientId = process.env.QBO_CLIENT_ID
+    const redirectUri = process.env.QBO_REDIRECT_URI || `${process.env.NEXT_PUBLIC_APP_URL}/api/books/qbo/callback`
 
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!clientId) {
+      return NextResponse.json(
+        {
+          error: "QuickBooks integration not configured",
+          message: "Please add QBO_CLIENT_ID and QBO_CLIENT_SECRET to your environment variables",
+        },
+        { status: 400 },
+      )
     }
 
-    // Generate OAuth URL with user ID in state
-    const authUrl = getQuickBooksAuthUrl(user.id)
+    const state = JSON.stringify({ userId, random: Math.random().toString(36).substring(7) })
 
-    return NextResponse.json({ url: authUrl })
+    // Build QuickBooks OAuth URL
+    const authUrl = new URL("https://appcenter.intuit.com/connect/oauth2")
+    authUrl.searchParams.set("client_id", clientId)
+    authUrl.searchParams.set("redirect_uri", redirectUri)
+    authUrl.searchParams.set("response_type", "code")
+    authUrl.searchParams.set("scope", "com.intuit.quickbooks.accounting")
+    authUrl.searchParams.set("state", state)
+
+    console.log("[v0] QuickBooks OAuth URL generated")
+
+    return NextResponse.redirect(authUrl.toString())
   } catch (error) {
-    console.error("[v0] Error generating QuickBooks auth URL:", error)
-    return NextResponse.json({ error: "Failed to generate authorization URL" }, { status: 500 })
+    console.error("[v0] QuickBooks connect error:", error)
+    return NextResponse.json({ error: "Failed to initiate QuickBooks connection" }, { status: 500 })
   }
 }

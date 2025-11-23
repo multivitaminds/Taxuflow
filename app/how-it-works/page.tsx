@@ -2,7 +2,6 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Upload, MessageSquare, CheckCircle, Download, ArrowRight } from "lucide-react"
-import Link from "next/link"
 
 export default function HowItWorksPage() {
   const steps = [
@@ -42,12 +41,12 @@ export default function HowItWorksPage() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="gradient-stripe-hero pt-32 pb-20 px-4 sm:px-6 lg:px-8 clip-diagonal">
         <div className="container mx-auto max-w-4xl text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1]">
-            Filing Made <span className="text-glow">Simple</span>
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1] text-white">
+            Filing Made <span className="text-[#00d4ff]">Simple</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-muted-foreground text-balance">
+          <p className="text-xl sm:text-2xl text-white/80 text-balance">
             From upload to refund in 5 minutes. Here's exactly how it works.
           </p>
         </div>
@@ -122,12 +121,10 @@ export default function HowItWorksPage() {
         <div className="container mx-auto max-w-4xl text-center">
           <h2 className="text-4xl sm:text-5xl font-bold mb-6">Ready to Try It?</h2>
           <p className="text-xl text-muted-foreground mb-8">Start your free filing now. No credit card required.</p>
-          <Link href="/get-started">
-            <Button size="lg" className="glow-neon-strong">
-              Start Filing Free
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <Button size="lg" className="glow-neon-strong">
+            Start Filing Free
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
         </div>
       </section>
 

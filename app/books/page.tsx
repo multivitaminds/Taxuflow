@@ -1,9 +1,11 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createBooksServerClient } from "@/lib/supabase/books-server"
+import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AccountingDashboardClient } from "@/components/accounting-dashboard-client"
 
 export default async function BooksPage() {
-  const supabase = await createServerClient()
+  const supabase = await createClient()
+  const booksClient = await createBooksServerClient()
 
   // Check authentication
   const {
@@ -15,46 +17,55 @@ export default async function BooksPage() {
     redirect("/login")
   }
 
-  // Fetch invoices
-  const { data: invoices = [] } = await supabase
+  // Fetch invoices using user_id with error handling
+  const { data: invoices, error: invoicesError } = await booksClient
     .from("invoices")
-    .select(`
-      *,
-      contact:contacts(name, email, company_name)
-    `)
+    .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10)
 
-  // Fetch expenses (from journal_entries with type='expense')
-  const { data: expenses = [] } = await supabase
+  console.log("[v0] Invoices query result:", { invoices, error: invoicesError })
+
+  // Fetch expenses using user_id with error handling
+  const { data: expenses, error: expensesError } = await booksClient
     .from("journal_entries")
     .select("*")
-    .eq("entry_type", "expense")
+    .eq("user_id", user.id)
     .order("entry_date", { ascending: false })
     .limit(10)
 
-  // Fetch customers (contacts with type='customer')
-  const { data: customers = [] } = await supabase
+  console.log("[v0] Expenses query result:", { expenses, error: expensesError })
+
+  // Fetch customers using user_id with error handling
+  const { data: customers, error: customersError } = await booksClient
     .from("contacts")
     .select("*")
-    .eq("contact_type", "customer")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  // Format recent transactions
+  console.log("[v0] Customers query result:", { customers, error: customersError })
+
+  // Use empty arrays as fallback if queries fail
+  const safeInvoices = invoices || []
+  const safeExpenses = expenses || []
+  const safeCustomers = customers || []
+
+  // Format recent transactions with safe data
   const recentTransactions = [
-    ...invoices.map((inv) => ({
+    ...safeInvoices.map((inv: any) => ({
       id: inv.id,
       type: "invoice",
-      description: `Invoice ${inv.invoice_number}`,
+      description: `Invoice ${inv.invoice_number || inv.id}`,
       amount: inv.total_amount,
       date: inv.invoice_date,
       status: inv.status,
     })),
-    ...expenses.map((exp) => ({
+    ...safeExpenses.map((exp: any) => ({
       id: exp.id,
       type: "expense",
       description: exp.description || "Expense",
-      amount: exp.total_amount,
+      amount: exp.amount,
       date: exp.entry_date,
       status: "completed",
     })),
@@ -65,9 +76,9 @@ export default async function BooksPage() {
   return (
     <AccountingDashboardClient
       user={user}
-      invoices={invoices}
-      expenses={expenses}
-      customers={customers}
+      invoices={safeInvoices}
+      expenses={safeExpenses}
+      customers={safeCustomers}
       recentTransactions={recentTransactions}
     />
   )

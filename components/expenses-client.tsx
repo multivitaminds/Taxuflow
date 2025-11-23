@@ -41,14 +41,26 @@ export function ExpensesClient() {
         return
       }
 
-      const { data, error } = await supabase
-        .from("journal_entries")
-        .select("*, accounts(name)")
-        .eq("entry_type", "expense")
-        .order("entry_date", { ascending: false })
+      const { data: expensesData, error: expensesError } = await supabase
+        .from("expenses")
+        .select("*")
+        .order("expense_date", { ascending: false })
 
-      if (error) throw error
-      setExpenses(data || [])
+      if (expensesError) throw expensesError
+
+      const { data: accountsData, error: accountsError } = await supabase.from("accounts").select("id, account_name")
+
+      if (accountsError) throw accountsError
+
+      const accountsMap = new Map(accountsData?.map((acc) => [acc.id, acc.account_name]) || [])
+
+      const expensesWithAccounts =
+        expensesData?.map((expense) => ({
+          ...expense,
+          account_name: expense.account_id ? accountsMap.get(expense.account_id) : null,
+        })) || []
+
+      setExpenses(expensesWithAccounts)
     } catch (error) {
       console.error("Error loading expenses:", error)
     } finally {
@@ -61,8 +73,8 @@ export function ExpensesClient() {
   const filteredExpenses = expenses.filter((expense) => {
     const matchesSearch =
       expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      expense.accounts?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesFilter = filterCategory === "all" || expense.accounts?.name === filterCategory
+      expense.account_name?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = filterCategory === "all" || expense.account_name === filterCategory
     return matchesSearch && matchesFilter
   })
 
@@ -70,10 +82,10 @@ export function ExpensesClient() {
     total: expenses.length,
     totalAmount: expenses.reduce((sum, e) => sum + (e.amount || 0), 0),
     thisMonth: expenses
-      .filter((e) => new Date(e.entry_date).getMonth() === new Date().getMonth())
+      .filter((e) => new Date(e.expense_date).getMonth() === new Date().getMonth())
       .reduce((sum, e) => sum + (e.amount || 0), 0),
     lastMonth: expenses
-      .filter((e) => new Date(e.entry_date).getMonth() === new Date().getMonth() - 1)
+      .filter((e) => new Date(e.expense_date).getMonth() === new Date().getMonth() - 1)
       .reduce((sum, e) => sum + (e.amount || 0), 0),
   }
 
@@ -81,7 +93,6 @@ export function ExpensesClient() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <div className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -103,7 +114,6 @@ export function ExpensesClient() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card className="p-4 border-border">
               <div className="flex items-center justify-between">
@@ -153,7 +163,6 @@ export function ExpensesClient() {
         </div>
       </div>
 
-      {/* Filters and Search */}
       <div className="container mx-auto px-6 py-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -179,7 +188,6 @@ export function ExpensesClient() {
           </div>
         </div>
 
-        {/* Expenses List */}
         <Card className="border-border">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -214,7 +222,9 @@ export function ExpensesClient() {
                 ) : (
                   filteredExpenses.map((expense) => (
                     <tr key={expense.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                      <td className="p-4 text-muted-foreground">{new Date(expense.entry_date).toLocaleDateString()}</td>
+                      <td className="p-4 text-muted-foreground">
+                        {new Date(expense.expense_date).toLocaleDateString()}
+                      </td>
                       <td className="p-4">
                         <Link
                           href={`/accounting/expenses/${expense.id}`}
@@ -223,11 +233,11 @@ export function ExpensesClient() {
                           {expense.description}
                         </Link>
                       </td>
-                      <td className="p-4 text-muted-foreground">{expense.accounts?.name || "—"}</td>
+                      <td className="p-4 text-muted-foreground">{expense.account_name || "—"}</td>
                       <td className="p-4">
                         <Badge variant="outline" className="gap-1">
                           <Tag className="h-3 w-3" />
-                          {expense.accounts?.name || "Uncategorized"}
+                          {expense.account_name || "Uncategorized"}
                         </Badge>
                       </td>
                       <td className="p-4 font-medium text-foreground">${expense.amount?.toLocaleString()}</td>

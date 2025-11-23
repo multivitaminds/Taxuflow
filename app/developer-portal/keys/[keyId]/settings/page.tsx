@@ -1,10 +1,15 @@
-import { DeveloperPortalLayout } from "@/components/developer-portal-layout"
+import { Navigation } from "@/components/navigation"
+import { Footer } from "@/components/footer"
 import { KeySettingsClient } from "@/components/key-settings-client"
 
 export default function KeySettingsPage({ params }: { params: { keyId: string } }) {
   return (
-    <DeveloperPortalLayout>
-      <KeySettingsClient keyId={params.keyId} />
-    </DeveloperPortalLayout>
+    <main className="min-h-screen bg-background">
+      <Navigation />
+      <div className="pt-24 pb-20">
+        <KeySettingsClient keyId={params.keyId} />
+      </div>
+      <Footer />
+    </main>
   )
 }

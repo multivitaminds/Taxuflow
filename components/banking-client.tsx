@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Plus, Landmark, CreditCard, ArrowUpRight, ArrowDownRight, RefreshCw, Download } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default function BankingClient() {
+export function BankingClient() {
   const [selectedAccount, setSelectedAccount] = useState("checking")
 
   const accounts = [

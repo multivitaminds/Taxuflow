@@ -1,70 +1,94 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Download, Calendar } from "lucide-react"
-import { getBillListData } from "@/lib/accounting/data-service"
+import { Download, Calendar, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
-export default async function BillListReport() {
-  const bills = await getBillListData()
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  const totalAmount = bills.reduce((sum, bill) => sum + bill.amount, 0)
-
+export default function BillListReport() {
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Bill List</h1>
-          <p className="text-muted-foreground mt-1">All bills with payment status</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Calendar className="h-4 w-4 mr-2" />
-            Date Range
+      <div className="mb-6">
+        <Link href="/accounting/reports">
+          <Button variant="ghost" size="sm" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Reports
           </Button>
-          <Button>
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
+        </Link>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Bill List</h1>
+            <p className="text-muted-foreground mt-1">All bills with payment status</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              Date Range
+            </Button>
+            <Button>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
         </div>
       </div>
       <Card className="p-6">
-        <div className="space-y-4">
-          <div className="grid grid-cols-6 font-semibold pb-2 border-b">
-            <span>Bill #</span>
-            <span>Vendor</span>
-            <span>Date</span>
-            <span>Due Date</span>
-            <span className="text-right">Amount</span>
-            <span className="text-right">Status</span>
-          </div>
-          {bills.map((bill) => (
-            <div key={bill.number} className="grid grid-cols-6 py-2 border-b items-center">
-              <span className="font-medium">{bill.number}</span>
-              <span>{bill.vendor}</span>
-              <span className="text-muted-foreground text-sm">{bill.date}</span>
-              <span className="text-muted-foreground text-sm">{bill.dueDate}</span>
-              <span className="text-right font-medium">{formatCurrency(bill.amount)}</span>
-              <div className="text-right">
-                <Badge
-                  variant={bill.status === "paid" ? "default" : bill.status === "overdue" ? "destructive" : "secondary"}
-                >
-                  {bill.status.charAt(0).toUpperCase() + bill.status.slice(1)}
-                </Badge>
-              </div>
-            </div>
-          ))}
-          <div className="grid grid-cols-6 pt-4 font-bold text-lg">
-            <span className="col-span-4">Total</span>
-            <span className="text-right">{formatCurrency(totalAmount)}</span>
-            <span></span>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4">Bill #</th>
+                <th className="text-left py-3 px-4">Vendor</th>
+                <th className="text-left py-3 px-4">Date</th>
+                <th className="text-left py-3 px-4">Due Date</th>
+                <th className="text-right py-3 px-4">Amount</th>
+                <th className="text-left py-3 px-4">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">BILL-2001</td>
+                <td className="py-3 px-4">Office Depot</td>
+                <td className="py-3 px-4">Jan 10, 2025</td>
+                <td className="py-3 px-4">Feb 9, 2025</td>
+                <td className="text-right py-3 px-4 font-medium">$2,400.00</td>
+                <td className="py-3 px-4">
+                  <Badge variant="default" className="bg-green-500">
+                    Paid
+                  </Badge>
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">BILL-2002</td>
+                <td className="py-3 px-4">Adobe Systems</td>
+                <td className="py-3 px-4">Jan 15, 2025</td>
+                <td className="py-3 px-4">Feb 14, 2025</td>
+                <td className="text-right py-3 px-4 font-medium">$1,200.00</td>
+                <td className="py-3 px-4">
+                  <Badge variant="secondary">Pending</Badge>
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">BILL-2003</td>
+                <td className="py-3 px-4">Google Ads</td>
+                <td className="py-3 px-4">Jan 20, 2025</td>
+                <td className="py-3 px-4">Jan 5, 2025</td>
+                <td className="text-right py-3 px-4 font-medium">$5,800.00</td>
+                <td className="py-3 px-4">
+                  <Badge variant="destructive">Overdue</Badge>
+                </td>
+              </tr>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">BILL-2004</td>
+                <td className="py-3 px-4">Legal Services LLC</td>
+                <td className="py-3 px-4">Feb 1, 2025</td>
+                <td className="py-3 px-4">Mar 3, 2025</td>
+                <td className="text-right py-3 px-4 font-medium">$8,500.00</td>
+                <td className="py-3 px-4">
+                  <Badge variant="outline">Draft</Badge>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </Card>
     </div>

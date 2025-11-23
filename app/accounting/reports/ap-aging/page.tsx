@@ -1,75 +1,97 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Download, Calendar } from "lucide-react"
-import { getAPAgingData } from "@/lib/accounting/data-service"
+import { Download, Calendar, ArrowLeft } from "lucide-react"
+import Link from "next/link"
 
-export default async function APAgingReport() {
-  const vendors = await getAPAgingData()
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  const totals = vendors.reduce(
-    (acc, vendor) => ({
-      current: acc.current + vendor.current,
-      days30: acc.days30 + vendor.days30,
-      days60: acc.days60 + vendor.days60,
-      days90: acc.days90 + vendor.days90,
-      total: acc.total + vendor.total,
-    }),
-    { current: 0, days30: 0, days60: 0, days90: 0, total: 0 },
-  )
-
+export default function APAgingReport() {
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">A/P Aging Summary</h1>
-          <p className="text-muted-foreground mt-1">Outstanding bills by age</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Calendar className="h-4 w-4 mr-2" />
-            As of Date
+      <div className="mb-6">
+        <Link href="/accounting/reports">
+          <Button variant="ghost" size="sm" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Reports
           </Button>
-          <Button>
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
+        </Link>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">A/P Aging Summary</h1>
+            <p className="text-muted-foreground mt-1">Outstanding bills by age</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              As of Date
+            </Button>
+            <Button>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
+          </div>
         </div>
       </div>
       <Card className="p-6">
-        <div className="space-y-4">
-          <div className="grid grid-cols-6 font-semibold pb-2 border-b text-sm">
-            <span>Vendor</span>
-            <span className="text-right">Current</span>
-            <span className="text-right">1-30 Days</span>
-            <span className="text-right">31-60 Days</span>
-            <span className="text-right">Over 90 Days</span>
-            <span className="text-right">Total</span>
-          </div>
-          {vendors.map((vendor) => (
-            <div key={vendor.name} className="grid grid-cols-6 py-2 border-b text-sm">
-              <span>{vendor.name}</span>
-              <span className="text-right font-medium">{formatCurrency(vendor.current)}</span>
-              <span className="text-right font-medium">{formatCurrency(vendor.days30)}</span>
-              <span className="text-right font-medium">{formatCurrency(vendor.days60)}</span>
-              <span className="text-right font-medium text-red-600">{formatCurrency(vendor.days90)}</span>
-              <span className="text-right font-bold">{formatCurrency(vendor.total)}</span>
-            </div>
-          ))}
-          <div className="grid grid-cols-6 pt-4 font-bold text-lg">
-            <span>Total</span>
-            <span className="text-right">{formatCurrency(totals.current)}</span>
-            <span className="text-right">{formatCurrency(totals.days30)}</span>
-            <span className="text-right">{formatCurrency(totals.days60)}</span>
-            <span className="text-right text-red-600">{formatCurrency(totals.days90)}</span>
-            <span className="text-right">{formatCurrency(totals.total)}</span>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4">Vendor</th>
+                <th className="text-right py-3 px-4">Current</th>
+                <th className="text-right py-3 px-4">1-30 Days</th>
+                <th className="text-right py-3 px-4">31-60 Days</th>
+                <th className="text-right py-3 px-4">61-90 Days</th>
+                <th className="text-right py-3 px-4">90+ Days</th>
+                <th className="text-right py-3 px-4">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">Office Depot</td>
+                <td className="text-right py-3 px-4">$2,400.00</td>
+                <td className="text-right py-3 px-4">$1,200.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4 font-medium">$3,600.00</td>
+              </tr>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">Adobe Systems</td>
+                <td className="text-right py-3 px-4">$1,200.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4 font-medium">$1,200.00</td>
+              </tr>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">Google Ads</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$5,800.00</td>
+                <td className="text-right py-3 px-4">$2,400.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4 font-medium text-red-600">$8,200.00</td>
+              </tr>
+              <tr className="border-b hover:bg-muted/50">
+                <td className="py-3 px-4">Legal Services LLC</td>
+                <td className="text-right py-3 px-4">$8,500.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4 font-medium">$8,500.00</td>
+              </tr>
+              <tr className="font-bold bg-muted/30">
+                <td className="py-3 px-4">Total</td>
+                <td className="text-right py-3 px-4">$12,100.00</td>
+                <td className="text-right py-3 px-4">$1,200.00</td>
+                <td className="text-right py-3 px-4">$5,800.00</td>
+                <td className="text-right py-3 px-4 text-red-600">$2,400.00</td>
+                <td className="text-right py-3 px-4">$0.00</td>
+                <td className="text-right py-3 px-4">$21,500.00</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </Card>
     </div>

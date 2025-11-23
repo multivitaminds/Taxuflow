@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import BankingClient from "@/components/banking-client"
+import { BankingClient } from "@/components/banking-client"
 
 export default function BankingPage() {
   return (

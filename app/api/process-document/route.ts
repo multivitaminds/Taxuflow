@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
+import { checkDemoMode } from "@/lib/demo-mode"
 import {
   AgentMemory,
   AgentCollaboration,
@@ -8,9 +9,37 @@ import {
   TaxOptimizationEngine,
   PredictiveTaxModel,
 } from "@/lib/ai/agent-intelligence"
+import { sendDocumentProcessedEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
+    const { isDemoMode } = await checkDemoMode()
+
+    if (isDemoMode) {
+      // This simulates the AI processing delay and returns realistic dummy data.
+      await new Promise((resolve) => setTimeout(resolve, 2000)) // Simulate processing time
+
+      return NextResponse.json({
+        success: true,
+        documentType: "w2",
+        analysis: {
+          documentType: "w2",
+          confidence: 98,
+          summary: "W-2 Wage and Tax Statement (Demo Mode)",
+          description: "W-2 form for Demo User - tax year 2024",
+          extractedData: {
+            employer_name: "Demo Corporation Inc.",
+            employee_name: "Demo User",
+            wages: 85000.0,
+            federal_tax_withheld: 12500.0,
+            tax_year: 2024,
+          },
+          deductions: [],
+        },
+        message: "Document processed successfully (Demo Mode)",
+      })
+    }
+
     console.log("[v0] Starting intelligent document processing")
 
     const supabase = await createClient()
@@ -59,8 +88,28 @@ export async function POST(request: NextRequest) {
         ai_description: analysisResult.description,
         ai_confidence: analysisResult.confidence,
         extracted_data: analysisResult.extractedData,
+        deductions: analysisResult.deductions,
+        processing_status: "completed",
+        processed_at: new Date().toISOString(),
       })
       .eq("id", documentId)
+
+    const { data: profile } = await supabase.from("user_profiles").select("full_name, email").eq("id", user.id).single()
+
+    if (profile?.email && analysisResult.extractedData) {
+      try {
+        await sendDocumentProcessedEmail(
+          profile.email,
+          profile.full_name || "there",
+          document.file_name,
+          analysisResult.documentType,
+          analysisResult.extractedData,
+        )
+      } catch (emailError) {
+        console.log("[v0] Email sending failed (non-critical):", emailError)
+        // Continue processing even if email fails
+      }
+    }
 
     const { data: taxDoc, error: taxDocError } = await supabase
       .from("tax_documents")
@@ -68,11 +117,9 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         document_id: documentId,
         document_type: analysisResult.documentType,
-        document_subtype: analysisResult.subtype,
         tax_year: analysisResult.taxYear,
         taxpayer_name: analysisResult.extractedData?.employee_name || analysisResult.extractedData?.recipient_name,
         spouse_name: analysisResult.extractedData?.spouse_name,
-        filing_status: analysisResult.filingStatus || analysisResult.extractedData?.filing_status || "single",
         extracted_data: analysisResult.extractedData,
         ai_summary: analysisResult.summary,
         ai_confidence: analysisResult.confidence,
@@ -82,39 +129,53 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (taxDocError) {
-      console.log("[v0] Error storing tax document:", taxDocError)
+      console.log("[v0] Error storing tax document:", taxDocError.message)
+      // Continue processing even if tax_documents insert fails
     }
-
-    await supabase.from("agent_activities").insert({
-      user_id: user.id,
-      agent_name: "Sophie",
-      agent_role: "Document Analyst",
-      activity_type: "analysis",
-      title: `Analyzed your ${analysisResult.documentType.toUpperCase()} document`,
-      description: analysisResult.description,
-      document_id: documentId,
-      result_data: {
-        documentType: analysisResult.documentType,
-        confidence: analysisResult.confidence,
-        keyFindings: analysisResult.keyFindings,
-      },
-    })
 
     let processingResults: any = {}
 
     if (analysisResult.documentType === "w2") {
-      const { data: w2Data } = await supabase
+      const { data: w2Data, error: w2Error } = await supabase
         .from("w2_data")
         .insert({
           user_id: user.id,
           document_id: documentId,
-          ...analysisResult.extractedData,
+          employer_name: analysisResult.extractedData.employer_name,
+          employer_ein: analysisResult.extractedData.employer_ein,
+          employer_address: analysisResult.extractedData.employer_address,
+          employee_name: analysisResult.extractedData.employee_name,
+          employee_ssn: analysisResult.extractedData.employee_ssn,
+          employee_address: analysisResult.extractedData.employee_address,
+          state: analysisResult.extractedData.state,
+          wages: analysisResult.extractedData.wages,
+          federal_tax_withheld: analysisResult.extractedData.federal_tax_withheld,
+          social_security_wages: analysisResult.extractedData.social_security_wages,
+          social_security_tax_withheld: analysisResult.extractedData.social_security_tax_withheld,
+          medicare_wages: analysisResult.extractedData.medicare_wages,
+          medicare_tax_withheld: analysisResult.extractedData.medicare_tax_withheld,
+          state_wages: analysisResult.extractedData.state_wages,
+          state_tax_withheld: analysisResult.extractedData.state_tax_withheld,
+          box_12_codes: analysisResult.extractedData.box_12_codes,
+          other_data: analysisResult.extractedData.other_data,
           extraction_confidence: analysisResult.confidence,
         })
         .select()
         .single()
 
-      processingResults = await processW2Document(user.id, w2Data, supabase)
+      if (w2Error || !w2Data) {
+        console.log("[v0] Error storing W-2 data:", w2Error?.message)
+        return NextResponse.json({
+          success: true,
+          documentType: analysisResult.documentType,
+          analysis: analysisResult,
+          warning: "Document analyzed but W-2 data storage failed. Please try again or contact support.",
+        })
+      }
+
+      if (w2Data) {
+        processingResults = await processW2Document(user.id, w2Data, supabase)
+      }
     } else if (analysisResult.documentType === "1099") {
       const { data: taxData } = await supabase
         .from("tax_data")
@@ -127,7 +188,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      processingResults = await process1099Document(user.id, taxData, supabase)
+      if (taxData) {
+        processingResults = await process1099Document(user.id, taxData, supabase)
+      }
     } else if (analysisResult.documentType === "1040") {
       const { data: taxReturnData } = await supabase
         .from("tax_return_data")
@@ -140,7 +203,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
 
-      processingResults = await process1040Document(user.id, taxReturnData, supabase)
+      if (taxReturnData) {
+        processingResults = await process1040Document(user.id, taxReturnData, supabase)
+      }
     } else {
       processingResults = await processGeneralDocument(user.id, analysisResult, supabase)
     }
@@ -201,7 +266,7 @@ Your task:
    - For W-2: employer name, EIN, employee name (FULL NAME), SSN, wages (box 1), federal tax withheld (box 2), social security wages (box 3), social security tax withheld (box 4), medicare wages (box 5), medicare tax withheld (box 6), state wages, state tax withheld, TAX YEAR, FILING STATUS (check if there's a spouse name indicating married filing jointly), etc.
    - For 1099: payer name, recipient name (FULL NAME), income amount, tax withheld, form type, TAX YEAR
    - For 1040: taxpayer name, spouse name (if married filing jointly), filing status, AGI, total tax, refund/owed, TAX YEAR
-   - For receipts: merchant name, date, amount, items purchased, payment method
+   - For receipts: merchant name, date, amount, items purchased, payment method, category (business expense, medical, charitable, etc.)
    - For other documents: extract all relevant financial information
 
 3. IMPORTANT: Detect filing status:
@@ -211,21 +276,22 @@ Your task:
 
 4. IMPORTANT: Always extract the taxpayer's FULL NAME (employee_name for W-2, recipient_name for 1099)
 5. IMPORTANT: Always extract the TAX YEAR from the document
-6. Provide a detailed description of what you see in the document
+6. IMPORTANT: For receipts and deductible expenses, identify the deduction category and amount
+7. Provide a detailed description of what you see in the document
 
 Return a JSON object with this EXACT structure:
 {
   "documentType": "w2",
   "subtype": null,
-  "taxYear": 2022,
+  "taxYear": 2024,
   "filingStatus": "married_joint",
   "description": "W-2 Wage and Tax Statement for Sam & Jane Lightson from [Employer Name] showing wages of $X and federal tax withheld of $Y",
-  "summary": "W-2 form for Sam & Jane Lightson - tax year 2022 (Married Filing Jointly)",
+  "summary": "W-2 form for Sam & Jane Lightson - tax year 2024 (Married Filing Jointly)",
   "confidence": 95,
   "keyFindings": [
     "Taxpayers: Sam & Jane Lightson",
     "Filing Status: Married Filing Jointly",
-    "Tax Year: 2022",
+    "Tax Year: 2024",
     "Total wages: $X",
     "Federal tax withheld: $Y",
     "Employer: [Name]"
@@ -236,7 +302,7 @@ Return a JSON object with this EXACT structure:
     "employee_name": "Sam Lightson",
     "spouse_name": "Jane Lightson",
     "employee_ssn": "XXX-XX-1234",
-    "tax_year": 2022,
+    "tax_year": 2024,
     "filing_status": "married_joint",
     "wages": 50000.00,
     "federal_tax_withheld": 5000.00,
@@ -247,7 +313,15 @@ Return a JSON object with this EXACT structure:
     "state_wages": 50000.00,
     "state_tax_withheld": 2000.00,
     "state": "CA"
-  }
+  },
+  "deductions": [
+    {
+      "category": "business_expense",
+      "description": "Office supplies",
+      "amount": 150.00,
+      "date": "2024-03-15"
+    }
+  ]
 }
 
 IMPORTANT: 
@@ -255,40 +329,30 @@ IMPORTANT:
 - Extract REAL values from the document, not placeholder values
 - ALWAYS include employee_name/recipient_name and tax_year in extractedData
 - If married filing jointly, include spouse_name and set filing_status to "married_joint"
+- For receipts, identify deductible categories: business_expense, medical, charitable, education, etc.
 - If you can't read a field clearly, omit it from extractedData
 - Be accurate with numbers - these are used for tax calculations
 - Set confidence based on document quality and readability
 
 Return ONLY valid JSON, no markdown or explanation.`
 
-    let text: string
-    try {
-      const result = await generateText({
-        model: "openai/gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "file",
-                data: uint8Array,
-                mediaType: mimeType,
-              },
-            ],
-          },
-        ],
-        maxTokens: 4000,
-      })
-      text = result.text
-    } catch (aiError: any) {
-      console.error("[v0] AI Gateway error:", aiError)
-      console.error("[v0] AI Gateway error message:", aiError?.message)
-      console.error("[v0] AI Gateway error cause:", aiError?.cause)
-
-      // If AI Gateway fails, throw to trigger fallback
-      throw new Error(`AI Gateway failed: ${aiError?.message || "Unknown error"}`)
-    }
+    const { text } = await generateText({
+      model: "openai/gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "file",
+              data: uint8Array,
+              mediaType: mimeType,
+            },
+          ],
+        },
+      ],
+      maxTokens: 4000,
+    })
 
     console.log("[v0] AI response received, parsing...")
 
@@ -308,20 +372,21 @@ Return ONLY valid JSON, no markdown or explanation.`
       subtype: analysis.subtype,
       taxYear: analysis.taxYear || new Date().getFullYear(),
       filingStatus: analysis.filingStatus || analysis.extractedData?.filing_status || "single",
-      description: analysis.description || `${document.file_name || document.name || "Document"} - Tax document`,
+      description: analysis.description || `${document.name} - Tax document`,
       summary: analysis.summary || "Document analyzed successfully",
       confidence: analysis.confidence || 85,
       keyFindings: analysis.keyFindings || [],
       extractedData: analysis.extractedData || {},
+      deductions: analysis.deductions || [],
     }
   } catch (error) {
     console.error("[v0] Error in AI analysis:", error)
     console.error("[v0] Error details:", error instanceof Error ? error.message : String(error))
     console.error("[v0] Error stack:", error instanceof Error ? error.stack : "No stack trace")
 
-    const fileName = (document.file_name || document.name || "").toLowerCase()
+    const fileName = document.name.toLowerCase()
     let documentType = "other"
-    let description = `Document: ${document.file_name || document.name || "Unknown"}`
+    let description = `Document: ${document.name}`
 
     if (fileName.includes("w-2") || fileName.includes("w2")) {
       documentType = "w2"
@@ -343,27 +408,16 @@ Return ONLY valid JSON, no markdown or explanation.`
       taxYear: new Date().getFullYear(),
       filingStatus: "single",
       description,
-      summary: `Analyzed ${document.file_name || document.name || "document"} (fallback mode - AI vision unavailable)`,
+      summary: `Analyzed ${document.name} (fallback mode - AI vision failed)`,
       confidence: 50,
-      keyFindings: [
-        "Document uploaded successfully",
-        "AI analysis unavailable - using filename detection",
-        "Manual review recommended for accurate data extraction",
-      ],
+      keyFindings: ["Document uploaded successfully", "Manual review recommended - AI analysis failed"],
       extractedData: {},
+      deductions: [],
     }
   }
 }
 
 async function processW2Document(userId: string, w2Data: any, supabase: any) {
-  if (!w2Data || !w2Data.wages) {
-    console.error("[v0] W-2 data is null or missing wages, cannot calculate taxes")
-    return {
-      error: "W-2 data extraction failed",
-      message: "Unable to extract wage information from the document. Please try uploading again or contact support.",
-    }
-  }
-
   console.log("[v0] Leo calculating refund...")
   const taxCalc = await calculateTaxes(userId, w2Data, supabase)
 
@@ -614,7 +668,7 @@ async function process1040Document(userId: string, taxReturnData: any, supabase:
 }
 
 async function processGeneralDocument(userId: string, analysis: any, supabase: any) {
-  const { documentType, extractedData, keyFindings } = analysis
+  const { documentType, extractedData, keyFindings, deductions } = analysis
 
   console.log("[v0] Leo analyzing financial impact...")
   await supabase.from("agent_activities").insert({
@@ -660,6 +714,7 @@ async function processGeneralDocument(userId: string, analysis: any, supabase: a
   return {
     message: `${documentType} document processed successfully`,
     keyFindings,
+    deductions,
   }
 }
 
@@ -668,47 +723,18 @@ async function calculateTaxes(userId: string, w2Data: any, supabase: any) {
   const federalWithheld = Number.parseFloat(w2Data.federal_tax_withheld) || 0
   const stateWithheld = Number.parseFloat(w2Data.state_tax_withheld) || 0
 
-  const filingStatus = w2Data.filing_status || "single"
-
-  const standardDeduction = filingStatus === "married_joint" ? 29200 : 14600 // 2024 standard deductions
+  const standardDeduction = 14600 // 2024 standard deduction
   const taxableIncome = Math.max(0, wages - standardDeduction)
 
   let federalTax = 0
-
-  if (filingStatus === "married_joint") {
-    // 2024 tax brackets for Married Filing Jointly
-    if (taxableIncome <= 23200) {
-      federalTax = taxableIncome * 0.1
-    } else if (taxableIncome <= 94300) {
-      federalTax = 2320 + (taxableIncome - 23200) * 0.12
-    } else if (taxableIncome <= 201050) {
-      federalTax = 10852 + (taxableIncome - 94300) * 0.22
-    } else if (taxableIncome <= 383900) {
-      federalTax = 34337 + (taxableIncome - 201050) * 0.24
-    } else if (taxableIncome <= 487450) {
-      federalTax = 78221 + (taxableIncome - 383900) * 0.32
-    } else if (taxableIncome <= 731200) {
-      federalTax = 111357 + (taxableIncome - 487450) * 0.35
-    } else {
-      federalTax = 196670 + (taxableIncome - 731200) * 0.37
-    }
+  if (taxableIncome <= 11600) {
+    federalTax = taxableIncome * 0.1
+  } else if (taxableIncome <= 47150) {
+    federalTax = 1160 + (taxableIncome - 11600) * 0.12
+  } else if (taxableIncome <= 100525) {
+    federalTax = 5426 + (taxableIncome - 47150) * 0.22
   } else {
-    // 2024 tax brackets for Single
-    if (taxableIncome <= 11600) {
-      federalTax = taxableIncome * 0.1
-    } else if (taxableIncome <= 47150) {
-      federalTax = 1160 + (taxableIncome - 11600) * 0.12
-    } else if (taxableIncome <= 100525) {
-      federalTax = 5426 + (taxableIncome - 47150) * 0.22
-    } else if (taxableIncome <= 191950) {
-      federalTax = 17168.5 + (taxableIncome - 100525) * 0.24
-    } else if (taxableIncome <= 243725) {
-      federalTax = 39110.5 + (taxableIncome - 191950) * 0.32
-    } else if (taxableIncome <= 609350) {
-      federalTax = 55678.5 + (taxableIncome - 243725) * 0.35
-    } else {
-      federalTax = 183647.25 + (taxableIncome - 609350) * 0.37
-    }
+    federalTax = 17168.5 + (taxableIncome - 100525) * 0.24
   }
 
   const stateTax = wages * 0.05
@@ -719,17 +745,25 @@ async function calculateTaxes(userId: string, w2Data: any, supabase: any) {
 
   const taxCalc = {
     user_id: userId,
+    tax_year: 2024,
     total_income: wages,
     adjusted_gross_income: wages,
     taxable_income: taxableIncome,
+    standard_deduction: standardDeduction,
+    itemized_deductions: 0,
+    total_deductions: standardDeduction,
+    total_credits: 0,
     federal_tax_liability: federalTax,
     state_tax_liability: stateTax,
+    tax_owed: totalTaxLiability,
     total_tax_withheld: totalWithheld,
+    federal_withholding: federalWithheld,
+    state_withholding: stateWithheld,
     estimated_refund: estimatedRefund > 0 ? estimatedRefund : 0,
     amount_owed: estimatedRefund < 0 ? Math.abs(estimatedRefund) : 0,
     confidence_level: "High",
     confidence_percentage: 96,
-    tax_year: w2Data.tax_year || 2024,
+    calculated_by: "Leo",
   }
 
   const { data } = await supabase.from("tax_calculations").upsert(taxCalc, { onConflict: "user_id" }).select().single()
@@ -744,7 +778,6 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
       type: "deduction",
       category: "education",
       name: "Student Loan Interest Deduction",
-      description: "Deduct up to $2,500 in student loan interest paid",
       amount: 2500,
       recommended_by: "Riley",
       confidence: 85,
@@ -756,7 +789,6 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
       type: "credit",
       category: "retirement",
       name: "Saver's Credit",
-      description: "Credit for contributions to retirement accounts",
       amount: 1000,
       recommended_by: "Riley",
       confidence: 75,
@@ -768,7 +800,6 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
       type: "deduction",
       category: "health",
       name: "Health Savings Account (HSA) Deduction",
-      description: "Deduct HSA contributions up to annual limit",
       amount: 3850,
       recommended_by: "Riley",
       confidence: 80,
@@ -777,9 +808,13 @@ async function findDeductions(userId: string, w2Data: any, supabase: any) {
     },
   ]
 
-  const { data } = await supabase.from("deductions_credits").insert(deductions).select()
-
-  return data || deductions
+  try {
+    const { data } = await supabase.from("deductions_credits").insert(deductions).select()
+    return data || deductions
+  } catch (error) {
+    console.log("[v0] Error inserting deductions (non-critical):", error)
+    return deductions
+  }
 }
 
 async function assessAuditRisk(w2Data: any, taxCalc: any) {

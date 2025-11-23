@@ -18,10 +18,13 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
   const [taxCalc, setTaxCalc] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
+  console.log("[v0] AuditRiskDetailsClient rendering", { user: !!user, profile: !!profile })
+
   const supabase = createClient()
 
   useEffect(() => {
     const fetchAuditData = async () => {
+      console.log("[v0] Fetching audit data for user", user.id)
       const { data, error } = await supabase
         .from("tax_calculations")
         .select("*")
@@ -30,6 +33,7 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
         .limit(1)
         .maybeSingle()
 
+      console.log("[v0] Audit data fetched", { hasData: !!data, error })
       if (data) {
         setTaxCalc(data)
       }
