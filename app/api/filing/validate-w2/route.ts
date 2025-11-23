@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { generateObject } from "ai"
+import { generateText } from "ai"
 import { z } from "zod"
 
 const validationSchema = z.object({
@@ -119,13 +119,12 @@ export async function POST(request: NextRequest) {
     let validation: any
 
     try {
-      const result = await generateObject({
+      const { text } = await generateText({
         model: "openai/gpt-4o",
-        schema: validationSchema,
         messages: [
           {
             role: "system",
-            content: `You are an expert IRS tax form validator. You MUST respond in valid JSON format matching this exact structure:
+            content: `You are an expert IRS tax form validator. You MUST respond with ONLY valid JSON matching this exact structure. Do not include markdown formatting or code blocks.
 
 {
   "valid": boolean,
@@ -171,11 +170,13 @@ IMPORTANT: Always return valid JSON. If there are no issues in a category, retur
             }),
           },
         ],
-        temperature: 0.3, // Lower temperature for more consistent structured output
+        temperature: 0.3,
         abortSignal: AbortSignal.timeout(20000), // 20 second timeout
       })
 
-      validation = result.object
+      // Clean the text response to ensure it's valid JSON
+      const cleanText = text.replace(/```json\n|\n```|```/g, "").trim()
+      validation = JSON.parse(cleanText)
     } catch (aiError) {
       const errorMessage = aiError instanceof Error ? aiError.message : String(aiError)
       console.log("[v0] AI validation failed:", errorMessage)
