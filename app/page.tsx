@@ -1,23 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import {
-  ArrowRight,
-  Check,
-  ChevronRight,
-  CreditCard,
-  Globe,
-  Layout,
-  Zap,
-  ShoppingBag,
-  PieChart,
-  Receipt,
-  Users,
-  BarChart3,
-  Building,
-  Wallet,
-  Package,
-  FileText,
-} from "lucide-react"
+import { ArrowRight, Check, ChevronRight, CreditCard, Globe, Layout, Zap, ShoppingBag, PieChart } from "lucide-react"
 
 export default function Home() {
   return (
@@ -181,98 +164,6 @@ export default function Home() {
               Reduce tax liability, stay compliant, automate bookkeeping, and manage your money with one unified
               financial platform. Taxu handles tax filing, accounting, payouts, and banking—so you can focus on growth.
             </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            <Link
-              href="https://taxu.io/services/invoicing"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-blue-200"
-            >
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <CreditCard className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Invoicing</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">Create professional invoices and get paid faster</p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/expense-tracking"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-green-200"
-            >
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <Receipt className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Expense Tracking</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">
-                Capture receipts and categorize expenses automatically
-              </p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/customer-management"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-purple-200"
-            >
-              <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <Users className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Customer Management</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">Track customer relationships and payment history</p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/financial-reports"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-orange-200"
-            >
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <BarChart3 className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Financial Reports</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">Real-time P&L, balance sheets, and cash flow</p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/vendor-management"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-red-200"
-            >
-              <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <Building className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Vendor Management</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">Manage bills and vendor relationships</p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/banking"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-cyan-200"
-            >
-              <div className="w-12 h-12 bg-cyan-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <Wallet className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Banking</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">Connect accounts and reconcile transactions</p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/products-services"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-yellow-200"
-            >
-              <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <Package className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Products & Services</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">Manage your product catalog and pricing</p>
-            </Link>
-
-            <Link
-              href="https://taxu.io/services/tax-filing"
-              className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-transparent hover:border-indigo-200"
-            >
-              <div className="w-12 h-12 bg-indigo-500 rounded-lg flex items-center justify-center mb-4 text-white group-hover:scale-110 transition-transform">
-                <FileText className="w-6 h-6" />
-              </div>
-              <h4 className="text-lg font-bold text-[#0a2540] mb-2">Tax Filing</h4>
-              <p className="text-sm text-[#425466] leading-relaxed">File W-2, 1099, 941, and more with AI</p>
-            </Link>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8">
