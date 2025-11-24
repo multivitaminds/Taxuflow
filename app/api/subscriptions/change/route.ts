@@ -1,14 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
+import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
 
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-//   apiVersion: "2024-11-20.acacia",
-// })
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-11-20.acacia",
+})
 
 export async function POST(req: NextRequest) {
-  if (process.env.NEXT_PHASE === "phase-production-build") return NextResponse.json({})
-
   try {
     const { newPriceId, newPlanId } = await req.json()
 

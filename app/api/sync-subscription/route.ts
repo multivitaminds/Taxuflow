@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server"
-import { stripe } from "@/lib/stripe"
+import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
 
-// const stripe = process.env.STRIPE_SECRET_KEY
-//   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-//       apiVersion: "2024-11-20.acacia",
-//     })
-//   : null
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-11-20.acacia",
+    })
+  : null
 
 export async function POST() {
-  if (process.env.NEXT_PHASE === "phase-production-build") return NextResponse.json({})
-
   try {
     let supabase
     try {

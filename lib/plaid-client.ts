@@ -11,8 +11,8 @@ export class PlaidClient {
 
   constructor() {
     this.config = {
-      clientId: process.env.PLAID_CLIENT_ID || "mock_client_id",
-      secret: process.env.PLAID_SECRET || "mock_secret",
+      clientId: process.env.PLAID_CLIENT_ID || "",
+      secret: process.env.PLAID_SECRET || "",
       env: (process.env.PLAID_ENV as "sandbox" | "development" | "production") || "sandbox",
     }
   }

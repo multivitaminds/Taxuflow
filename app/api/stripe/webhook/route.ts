@@ -3,15 +3,13 @@ import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_mock", {
-  apiVersion: "2022-11-15",
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-11-20.acacia",
 })
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_mock"
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
 export async function POST(req: Request) {
-  if (process.env.NEXT_PHASE === "phase-production-build") return NextResponse.json({})
-
   try {
     const body = await req.text()
     const headersList = await headers()

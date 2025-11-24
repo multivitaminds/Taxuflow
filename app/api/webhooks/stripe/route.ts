@@ -1,15 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import type Stripe from "stripe"
+import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe } from "@/lib/stripe"
 
-// const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-//   apiVersion: "2024-11-20.acacia",
-// })
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-11-20.acacia",
+})
 
 export async function POST(req: NextRequest) {
-  if (process.env.NEXT_PHASE === "phase-production-build") return NextResponse.json({})
-
   const body = await req.text()
   const signature = req.headers.get("stripe-signature")
 
@@ -21,7 +18,7 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET || "whsec_mock")
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch (err: any) {
     console.error("[v0] Webhook signature verification failed:", err.message)
     return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })

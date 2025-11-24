@@ -32,7 +32,7 @@ export const AI_MODELS: Record<AIModel, AIModelConfig> = {
     maxTokens: 3000,
     timeoutMs: 13000,
   },
-  o3: {
+  "o3": {
     name: "o3 Reasoning",
     modelId: "openai/o3",
     provider: "OpenAI",
@@ -64,13 +64,14 @@ export const AI_MODELS: Record<AIModel, AIModelConfig> = {
 // Get the model to use from environment variable, default to GPT-5.1
 export function getExtractionModel(): AIModelConfig {
   const modelKey = (process.env.EXTRACTION_MODEL || "gpt-5.1") as AIModel
-
+  
   const config = AI_MODELS[modelKey]
-
+  
   if (!config) {
+    console.warn(`[v0] Unknown model "${modelKey}", falling back to gpt-5.1`)
     return AI_MODELS["gpt-5.1"]
   }
-
+  
   return config
 }
 
@@ -78,11 +79,11 @@ export function getExtractionModel(): AIModelConfig {
 export function getComparisonModels(): [AIModelConfig, AIModelConfig] {
   const primaryModel = getExtractionModel()
   const comparisonModelKey = process.env.COMPARISON_MODEL as AIModel
-
+  
   if (comparisonModelKey && AI_MODELS[comparisonModelKey]) {
     return [primaryModel, AI_MODELS[comparisonModelKey]]
   }
-
+  
   // Default comparison: GPT-4o vs GPT-5.1 (both available)
   return [AI_MODELS["gpt-4o"], AI_MODELS["gpt-5.1"]]
 }
@@ -95,11 +96,11 @@ export function isComparisonModeEnabled(): boolean {
 export function getExtractionModelWithFallback(): AIModelConfig[] {
   const modelKey = (process.env.EXTRACTION_MODEL || "gpt-5.1") as AIModel
   const primaryConfig = AI_MODELS[modelKey]
-
+  
   if (!primaryConfig) {
     console.warn(`[v0] Unknown model "${modelKey}", falling back to gpt-5.1`)
     return [AI_MODELS["gpt-5.1"]]
   }
-
+  
   return [primaryConfig, AI_MODELS["gpt-4o"]]
 }

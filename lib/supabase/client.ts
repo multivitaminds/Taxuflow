@@ -3,14 +3,16 @@ import { createBrowserClient as createBrowserClientOriginal } from "@supabase/ss
 export function createClient() {
   // Don't create browser client on server
   if (typeof window === "undefined") {
+    console.log("[v0] Supabase client: Cannot create browser client on server")
     return null as any
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://example.supabase.co"
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-key"
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    console.warn("[v0] Supabase config missing on client, using mock values")
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.warn("[v0] Supabase config missing on client")
+    return null as any
   }
 
   return createBrowserClientOriginal(supabaseUrl, supabaseAnonKey)
@@ -21,7 +23,10 @@ export function getSupabaseBrowserClient() {
 }
 
 export function isSupabaseConfigured() {
-  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  return !!(
+    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  )
 }
 
 export const createBrowserClient = createClient
