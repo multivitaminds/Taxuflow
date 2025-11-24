@@ -1,6 +1,23 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, Check, ChevronRight, CreditCard, Globe, Layout, Zap, ShoppingBag, PieChart } from "lucide-react"
+import {
+  ArrowRight,
+  Check,
+  ChevronRight,
+  CreditCard,
+  Globe,
+  Layout,
+  Zap,
+  ShoppingBag,
+  PieChart,
+  FileText,
+  Receipt,
+  Users,
+  TrendingUp,
+  Building2,
+  DollarSign,
+  Package,
+} from "lucide-react"
 
 export default function Home() {
   return (
@@ -233,6 +250,99 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Business Services Section */}
+      <section className="py-32 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="mb-20 text-center">
+            <h2 className="text-[#635bff] font-semibold mb-6">Everything you need</h2>
+            <h3 className="text-4xl md:text-5xl font-bold text-[#0a2540] max-w-3xl mx-auto leading-tight">
+              A fully integrated suite of financial and tax products
+            </h3>
+            <p className="mt-6 text-xl text-[#425466] max-w-3xl mx-auto">
+              Everything you need to manage accounting, file taxes, and grow your business
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: FileText,
+                title: "Invoicing",
+                desc: "Create professional invoices and get paid faster",
+                href: "https://taxu.io/services/invoicing",
+                color: "bg-[#635bff]",
+              },
+              {
+                icon: Receipt,
+                title: "Expense Tracking",
+                desc: "Capture receipts and categorize expenses automatically",
+                href: "https://taxu.io/services/expense-tracking",
+                color: "bg-[#00d4ff]",
+              },
+              {
+                icon: Users,
+                title: "Customer Management",
+                desc: "Track customer relationships and payment history",
+                href: "https://taxu.io/services/customer-management",
+                color: "bg-[#7a73ff]",
+              },
+              {
+                icon: TrendingUp,
+                title: "Financial Reports",
+                desc: "Real-time P&L, balance sheets, and cash flow",
+                href: "https://taxu.io/services/financial-reports",
+                color: "bg-[#ff5c35]",
+              },
+              {
+                icon: Building2,
+                title: "Vendor Management",
+                desc: "Manage bills and vendor relationships",
+                href: "https://taxu.io/services/vendor-management",
+                color: "bg-[#df1b41]",
+              },
+              {
+                icon: DollarSign,
+                title: "Banking",
+                desc: "Connect accounts and reconcile transactions",
+                href: "https://taxu.io/services/banking",
+                color: "bg-[#00d4ff]",
+              },
+              {
+                icon: Package,
+                title: "Products & Services",
+                desc: "Manage your product catalog and pricing",
+                href: "https://taxu.io/services/products-services",
+                color: "bg-[#ffc043]",
+              },
+              {
+                icon: FileText,
+                title: "Tax Filing",
+                desc: "File W-2, 1099, 941, and more with AI",
+                href: "https://taxu.io/services/tax-filing",
+                color: "bg-[#635bff]",
+              },
+            ].map((service) => (
+              <Link
+                key={service.title}
+                href={service.href}
+                className="p-8 rounded-xl bg-[#f6f9fc] hover:bg-white hover:shadow-xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-gray-100"
+              >
+                <div
+                  className={`w-12 h-12 ${service.color} rounded-lg flex items-center justify-center mb-6 text-white`}
+                >
+                  <service.icon className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-bold text-[#0a2540] mb-3">{service.title}</h4>
+                <p className="text-[#425466] mb-6 text-sm leading-relaxed">{service.desc}</p>
+                <div className="text-[#635bff] font-medium text-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  Learn more <ChevronRight className="w-3 h-3 ml-1" />
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
