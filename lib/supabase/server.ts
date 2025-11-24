@@ -6,10 +6,24 @@ import { cookies } from "next/headers"
  * global variable. Always create a new client within each function when using it.
  */
 export async function createClient() {
+  if (process.env.NEXT_PHASE === "phase-production-build") return null as any
+
   const cookieStore = await cookies()
 
-  const supabaseUrl = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim()
-  const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)?.trim()
+  const supabaseUrl = (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://example.supabase.co"
+  )?.trim()
+  const supabaseAnonKey = (
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock-key"
+  )?.trim()
+
+  if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    console.warn("[v0] Supabase URL missing on server, using mock")
+  }
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.log("[v0] Supabase config missing on server:", {
@@ -50,7 +64,11 @@ export async function getSupabaseServerClient() {
 export async function createServiceRoleClient() {
   const cookieStore = await cookies()
 
-  const supabaseUrl = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim()
+  const supabaseUrl = (
+    process.env.SUPABASE_URL ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://example.supabase.co"
+  )?.trim()
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
 
   if (!supabaseUrl || !supabaseServiceKey) {

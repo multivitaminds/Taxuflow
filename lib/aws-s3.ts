@@ -2,12 +2,12 @@ import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } fro
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 export function createS3Client() {
-  const accessKeyId = process.env.TAXBANDITS_AWS_ACCESS_KEY
-  const secretAccessKey = process.env.TAXBANDITS_AWS_SECRET_KEY
-  const region = process.env.TAXBANDITS_AWS_REGION || "us-east-1"
+  const accessKeyId = process.env.TAXBANDITS_AWS_ACCESS_KEY || process.env.AWS_ACCESS_KEY_ID
+  const secretAccessKey = process.env.TAXBANDITS_AWS_SECRET_KEY || process.env.AWS_SECRET_ACCESS_KEY
+  const region = process.env.TAXBANDITS_AWS_REGION || process.env.AWS_REGION || "us-east-1"
 
   if (!accessKeyId || !secretAccessKey) {
-    console.error("[v0] AWS S3 credentials not configured for TaxBandits")
+    console.warn("[v0] AWS S3 credentials not configured")
     return null
   }
 
@@ -62,7 +62,7 @@ export async function uploadToS3(params: {
   return url
 }
 
-export async function getSignedDownloadUrl(key: string, expiresIn: number = 3600): Promise<string> {
+export async function getSignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
   const client = createS3Client()
 
   if (!client) {
@@ -108,8 +108,8 @@ export async function deleteFromS3(key: string): Promise<void> {
 
 export function isS3Configured(): boolean {
   return !!(
-    process.env.TAXBANDITS_AWS_ACCESS_KEY &&
-    process.env.TAXBANDITS_AWS_SECRET_KEY &&
-    (process.env.TAXBANDITS_AWS_S3_BUCKET || process.env.AWS_S3_BUCKET)
+    process.env.TAXBANDITS_AWS_ACCESS_KEY ||
+    (process.env.AWS_ACCESS_KEY_ID && process.env.TAXBANDITS_AWS_SECRET_KEY) ||
+    (process.env.AWS_SECRET_ACCESS_KEY && (process.env.TAXBANDITS_AWS_S3_BUCKET || process.env.AWS_S3_BUCKET))
   )
 }

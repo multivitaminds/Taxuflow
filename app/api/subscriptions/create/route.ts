@@ -1,12 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
+import { stripe } from "@/lib/stripe"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-11-20.acacia",
-})
+const stripeInstance =
+  stripe ||
+  new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2024-11-20.acacia",
+  })
 
 export async function POST(req: NextRequest) {
+  if (process.env.NEXT_PHASE === "phase-production-build") return NextResponse.json({})
+
   try {
     const { priceId, planId } = await req.json()
 
@@ -25,7 +30,7 @@ export async function POST(req: NextRequest) {
     let customerId = profile?.stripe_customer_id
 
     if (!customerId) {
-      const customer = await stripe.customers.create({
+      const customer = await stripeInstance.customers.create({
         email: user.email,
         metadata: {
           user_id: user.id,
@@ -38,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripeInstance.checkout.sessions.create({
       customer: customerId,
       mode: priceId.includes("monthly") || priceId.includes("yearly") ? "subscription" : "payment",
       line_items: [

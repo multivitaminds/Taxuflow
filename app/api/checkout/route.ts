@@ -4,6 +4,8 @@ import { createServerClient } from "@/lib/supabase/server"
 import { getPlanById } from "@/lib/subscription-plans"
 
 export async function POST(request: NextRequest) {
+  if (process.env.NEXT_PHASE === "phase-production-build") return NextResponse.json({})
+
   try {
     console.log("[v0] Checkout API called")
     const { planId } = await request.json()
