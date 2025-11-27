@@ -111,7 +111,7 @@ export default function SDKsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Updated hero section to use Stripe gradient and new styling */}
-      <section className="gradient-stripe-hero text-white pt-32 pb-20 px-6">
+      <section className="gradient-stripe-hero text-white pt-24 pb-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm font-medium mb-6 backdrop-blur-sm">
