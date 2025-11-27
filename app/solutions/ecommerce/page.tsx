@@ -3,6 +3,7 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle, Globe, DollarSign, Package, FileText } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function EcommercePage() {
   const challenges = [
@@ -29,7 +30,14 @@ export default function EcommercePage() {
     },
   ]
 
-  const platforms = ["Shopify", "WooCommerce", "BigCommerce", "Magento", "Salesforce Commerce", "Custom"]
+  const platforms = [
+    { name: "Shopify", logo: "/images/logos/shopify.png" },
+    { name: "WooCommerce", logo: "/images/logos/woocommerce.png" },
+    { name: "BigCommerce", logo: "/images/logos/bigcommerce.png" },
+    { name: "Magento", logo: "/images/logos/magento.png" },
+    { name: "Salesforce Commerce", logo: "/images/logos/salesforce.png" },
+    { name: "Custom", logo: null },
+  ]
 
   const benefits = [
     "Real-time tax calculation at checkout",
@@ -149,9 +157,19 @@ export default function EcommercePage() {
             {platforms.map((platform, index) => (
               <div
                 key={index}
-                className="aspect-square rounded-2xl border border-slate-200 bg-white flex items-center justify-center hover:shadow-lg transition-all"
+                className="aspect-square rounded-2xl border border-slate-200 bg-white flex items-center justify-center p-6 hover:shadow-lg transition-all"
               >
-                <span className="text-sm font-bold text-slate-400">{platform}</span>
+                {platform.logo ? (
+                  <Image
+                    src={platform.logo || "/placeholder.svg"}
+                    alt={`${platform.name} logo`}
+                    width={120}
+                    height={120}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <span className="text-sm font-bold text-slate-400">{platform.name}</span>
+                )}
               </div>
             ))}
           </div>
