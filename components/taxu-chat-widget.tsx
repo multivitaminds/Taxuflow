@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import React from "react"
 import {
   X,
   Send,
@@ -51,38 +52,47 @@ export function TaxuChatWidget() {
   const recognitionRef = useRef<any>(null)
   const pathname = usePathname()
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({
-    api: "/api/chat",
-    body: {
-      agent: currentAgent,
-      model: selectedModel,
-      context: getContextPrompt(pathname),
-    },
-    initialMessages: [
-      {
-        id: "welcome-" + Date.now(),
-        role: "assistant",
-        content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. How can I help you with your taxes today?`,
+  const welcomeMessageId = useRef(`welcome-${Date.now()}`).current
+
+  const chatConfig = React.useMemo(
+    () => ({
+      api: "/api/chat",
+      body: {
+        agent: currentAgent,
+        model: selectedModel,
+        context: getContextPrompt(pathname),
       },
-    ],
-    onError: (err) => {
-      console.error("[v0] Chat error:", err)
-    },
-  })
+      initialMessages: [
+        {
+          id: welcomeMessageId,
+          role: "assistant" as const,
+          content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. How can I help you with your taxes today?`,
+        },
+      ],
+      onError: (err: Error) => {
+        console.error("[v0] Chat error:", JSON.stringify({ error: err.message, details: err.toString() }))
+      },
+    }),
+    [currentAgent, selectedModel, pathname, welcomeMessageId],
+  )
+
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error, setInput } = useChat(chatConfig)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages, isLoading])
+    if (messages.length > 0) {
+      scrollToBottom()
+    }
+  }, [messages.length])
 
   useEffect(() => {
-    if (messages.length === 0 || (messages.length === 1 && messages[0].role === "assistant")) {
+    if (messages.length === 0) {
       setFeedbackGiven({})
     }
-  }, [currentAgent])
+  }, [messages.length])
 
   const handleVoiceInput = () => {
     if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
@@ -110,7 +120,7 @@ export function TaxuChatWidget() {
 
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript
-      handleInputChange(transcript)
+      setInput(transcript)
       setIsListening(false)
     }
 
@@ -376,7 +386,7 @@ export function TaxuChatWidget() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full ${isListening ? "text-red-500 bg-red-50" : ""}`}
+                className={`h-8 w-8 rounded-full transition-all ${isListening ? "text-red-500 bg-red-50" : ""}`}
                 onClick={handleVoiceInput}
               >
                 <Mic className={`w-4 h-4 ${isListening ? "animate-pulse" : ""}`} />
