@@ -22,7 +22,7 @@ export async function updateSession(request: NextRequest) {
       hasPublicUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
       hasPublicKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      path: request.nextUrl.pathname
+      path: request.nextUrl.pathname,
     })
     return NextResponse.next({ request })
   }
@@ -30,42 +30,31 @@ export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   try {
-    const supabase = createServerClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) =>
-              request.cookies.set(name, value)
-            )
-            supabaseResponse = NextResponse.next({ request })
-            cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
-            )
-          },
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
         },
-      }
-    )
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+        },
+      },
+    })
 
     // Do not run code between createServerClient and supabase.auth.getUser()
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    console.log("[v0] Middleware: User check", { 
+    console.log("[v0] Middleware: User check", {
       hasUser: !!user,
       path: request.nextUrl.pathname,
-      userId: user?.id
+      userId: user?.id,
     })
 
-    if (
-      user &&
-      (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")
-    ) {
+    if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")) {
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
       console.log("[v0] Middleware: Redirecting authenticated user to dashboard from", request.nextUrl.pathname)
@@ -73,11 +62,12 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (
-      request.nextUrl.pathname.startsWith("/dashboard") &&
+      (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/accounting")) &&
       !user
     ) {
       const url = request.nextUrl.clone()
       url.pathname = "/login"
+      url.searchParams.set("redirectTo", request.nextUrl.pathname)
       console.log("[v0] Middleware: Redirecting to login from", request.nextUrl.pathname)
       return NextResponse.redirect(url)
     }
