@@ -15,7 +15,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  serverComponentsExternalPackages: ['ai', '@ai-sdk/openai'],
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },

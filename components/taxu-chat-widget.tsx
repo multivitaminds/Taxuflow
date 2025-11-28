@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 import { agents as agentData } from "@/data/agents"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useChat } from "ai/react"
+import { useChat } from "ai"
 
 interface Message {
   id: string
