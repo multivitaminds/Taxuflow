@@ -5,18 +5,25 @@ import { uploadToS3, isS3Configured } from "@/lib/aws-s3"
 
 if (typeof window === "undefined") {
   const globalAny = global as any
-  globalAny.window = {
-    document: {
-      createElementNS: () => {
-        return {}
+  if (!globalAny.window) {
+    globalAny.window = {
+      document: {
+        createElementNS: () => {
+          return {}
+        },
       },
-    },
+    }
   }
-  globalAny.navigator = {}
-  globalAny.btoa = (str: string) => Buffer.from(str, "binary").toString("base64")
-  globalAny.atob = (b64: string) => Buffer.from(b64, "base64").toString("binary")
+  if (!globalAny.navigator) {
+    globalAny.navigator = {}
+  }
+  if (!globalAny.btoa) {
+    globalAny.btoa = (str: string) => Buffer.from(str, "binary").toString("base64")
+  }
+  if (!globalAny.atob) {
+    globalAny.atob = (b64: string) => Buffer.from(b64, "base64").toString("binary")
+  }
 }
-// </CHANGE>
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +48,6 @@ export async function POST(request: NextRequest) {
       user = authUser
       console.log("[v0] Paper package: Authenticated user:", user.email)
     }
-    // </CHANGE>
 
     const { formType, filingType, formData, taxYear } = await request.json()
 
@@ -61,7 +67,6 @@ export async function POST(request: NextRequest) {
         { status: 500 },
       )
     }
-    // </CHANGE>
 
     let yPos = 20
 

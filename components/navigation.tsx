@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Moon, Sun, Menu, X, ChevronDown } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import Link from "next/link"
 
 const navigationStructure = [
@@ -37,7 +37,7 @@ export function Navigation() {
   const [isDark, setIsDark] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [isVisible, setIsVisible] = useState(true)
-  const [lastScrollY, setLastScrollY] = useState(0)
+  const lastScrollY = useRef(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
 
@@ -50,19 +50,19 @@ export function Navigation() {
 
       if (currentScrollY < 10) {
         setIsVisible(true)
-      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
         setIsVisible(false)
-      } else if (currentScrollY < lastScrollY) {
+      } else if (currentScrollY < lastScrollY.current) {
         setIsVisible(true)
       }
 
-      setLastScrollY(currentScrollY)
+      lastScrollY.current = currentScrollY
       setIsScrolled(currentScrollY > 20)
     }
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [lastScrollY])
+  }, [])
 
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle("dark")

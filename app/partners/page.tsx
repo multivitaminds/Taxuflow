@@ -47,21 +47,21 @@ export default function PartnersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {partners.map((partner) => (
               <Card key={partner.name} className="p-8 border-neon/20 bg-card/50 backdrop-blur">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center p-2 overflow-hidden border border-gray-100">
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center p-3 overflow-hidden border border-gray-100 flex-shrink-0">
                     <Image
                       src={partner.logo || "/placeholder.svg"}
                       alt={`${partner.name} logo`}
-                      width={64}
-                      height={64}
+                      width={80}
+                      height={80}
                       className="w-full h-full object-contain"
                     />
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">{partner.name}</h3>
-                    <p className="text-sm text-muted-foreground">{partner.description}</p>
+                  <div className="pt-2">
+                    <p className="text-base text-muted-foreground">{partner.description}</p>
                   </div>
                 </div>
+                {/* </CHANGE> */}
                 <div className="space-y-3 mb-6">
                   {partner.features.map((feature, idx) => (
                     <div key={idx} className="flex items-center gap-3">
@@ -70,7 +70,8 @@ export default function PartnersPage() {
                     </div>
                   ))}
                 </div>
-                <Button className="w-full bg-neon hover:bg-neon/90 text-background">Connect {partner.name}</Button>
+                <Button className="w-full bg-neon hover:bg-neon/90 text-background">Connect</Button>
+                {/* </CHANGE> */}
               </Card>
             ))}
           </div>

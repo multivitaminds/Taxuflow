@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Copy, Check } from "lucide-react"
 import { useState } from "react"
+import Image from "next/image"
 
 const INIT_CODE = `import taxu
 import os
@@ -45,7 +46,7 @@ export default function PythonSDKPage() {
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-4">
-            <span className="text-5xl">🐍</span>
+            <Image src="/images/logos/python.png" alt="Python" width={64} height={64} className="object-contain" />
             <div>
               <h1 className="text-4xl font-bold text-white">Python SDK</h1>
               <p className="text-gray-500">v2.1.0</p>
