@@ -97,6 +97,7 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
 
   const fetchRecipient = async () => {
     try {
+      console.log("[v0] Fetching recipient:", recipientId)
       const response = await fetch(`/api/recipients/${recipientId}`)
       const data = await response.json()
       const r = data.recipient
@@ -116,6 +117,7 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
         notes: r.notes || "",
       })
     } catch (error) {
+      console.error("[v0] Error fetching recipient:", error)
       toast({
         title: "Error",
         description: "Failed to fetch recipient details",
@@ -126,9 +128,39 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.firstName || !formData.lastName) {
+      toast({
+        title: "Validation Error",
+        description: "First name and last name are required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.ssn && !formData.ein) {
+      toast({
+        title: "Validation Error",
+        description: "Either SSN or EIN is required",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!formData.streetAddress || !formData.city || !formData.state || !formData.zipCode) {
+      toast({
+        title: "Validation Error",
+        description: "Complete address is required",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
     try {
+      console.log("[v0] Submitting recipient form:", { ...formData, ssn: "***", ein: "***" })
+
       const url = recipientId ? `/api/recipients/${recipientId}` : "/api/recipients"
       const method = recipientId ? "PATCH" : "POST"
 
@@ -140,6 +172,8 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
 
       const data = await response.json()
 
+      console.log("[v0] Recipient API response:", { success: data.success, error: data.error })
+
       if (data.success) {
         toast({
           title: "Success",
@@ -147,9 +181,10 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
         })
         onSuccess()
       } else {
-        throw new Error(data.error)
+        throw new Error(data.error || "Failed to save recipient")
       }
     } catch (error) {
+      console.error("[v0] Error submitting recipient:", error)
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save recipient",
@@ -230,6 +265,7 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
               value={formData.ssn}
               onChange={(e) => setFormData({ ...formData, ssn: e.target.value, tinType: "SSN" })}
               placeholder="XXX-XX-XXXX"
+              maxLength={11}
             />
             <p className="text-xs text-muted-foreground">AES-256 encrypted at rest</p>
           </div>
@@ -243,6 +279,7 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
               value={formData.ein}
               onChange={(e) => setFormData({ ...formData, ein: e.target.value, tinType: "EIN" })}
               placeholder="XX-XXXXXXX"
+              maxLength={10}
             />
             <p className="text-xs text-muted-foreground">Encrypted and secure</p>
           </div>
@@ -305,7 +342,11 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button type="submit" disabled={isLoading} className="bg-purple-500 hover:bg-purple-600">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+          >
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {recipientId ? "Update Recipient" : "Add Recipient"}
           </Button>

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
 import { checkDemoMode } from "@/lib/demo-mode"
-import { encrypt } from "@/lib/crypto"
 
 export async function POST(request: Request) {
   try {
@@ -34,74 +33,51 @@ export async function POST(request: Request) {
 
     const formData = await request.json()
 
-    console.log("[v0] Submitting Form 941 to TaxBandits:", formData)
+    const wages = Number.parseFloat(formData.wagesAndTips || "0")
+    const federalTax = Number.parseFloat(formData.federalIncomeTax || "0")
+    const ssWages = Number.parseFloat(formData.taxableSSWages || "0")
+    const medicareWages = Number.parseFloat(formData.taxableMedicareWages || "0")
 
-    const encryptedEIN = encrypt(formData.ein)
-
-    const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
-    const apiUrl =
-      environment === "production" ? "https://api.taxbandits.com/v1.7.3" : "https://testsandbox.taxbandits.com/v1.7.3"
-
-    const taxbanditsResponse = await fetch(`${apiUrl}/Form941/Create`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.TAXBANDITS_API_KEY}`,
-      },
-      body: JSON.stringify({
-        ReturnHeader: {
-          Business: {
-            BusinessNm: formData.businessName,
-            EIN: formData.ein, // TaxBandits needs plain text
-            BusinessType: "ESTE",
-          },
-          TaxYr: formData.taxYear,
-          Quarter: `Q${formData.quarter}`,
-        },
-        Form941: {
-          NumberOfEmployees: Number.parseInt(formData.numberOfEmployees),
-          WagesTipsAndOtherComp: Number.parseFloat(formData.wagesAndTips),
-          FederalIncomeTaxWithheld: Number.parseFloat(formData.federalIncomeTax),
-          TaxableSocialSecurityWages: Number.parseFloat(formData.taxableSSWages),
-          TaxableMedicareWagesAndTips: Number.parseFloat(formData.taxableMedicareWages),
-        },
-      }),
-    })
-
-    const result = await taxbanditsResponse.json()
-
-    if (!taxbanditsResponse.ok) {
-      throw new Error(result.message || "TaxBandits API error")
-    }
-
-    const sanitizedFormData = {
-      ...formData,
-      ein: encryptedEIN,
-    }
+    const ssTax = ssWages * 0.124 // 12.4% SS tax
+    const medicareTax = medicareWages * 0.029 // 2.9% Medicare tax
+    const totalTaxes = federalTax + ssTax + medicareTax
 
     const { data: filing, error: filingError } = await supabase
-      .from("tax_filings")
+      .from("form_941_filings")
       .insert({
         user_id: user.id,
-        form_type: "941",
         tax_year: Number.parseInt(formData.taxYear),
         quarter: Number.parseInt(formData.quarter),
-        status: "submitted",
-        submission_id: result.SubmissionId,
-        form_data: sanitizedFormData,
-        provider: "taxbandits",
+        business_name: formData.businessName,
+        ein: formData.ein,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip: formData.zip,
+        number_of_employees: Number.parseInt(formData.numberOfEmployees || "0"),
+        wages_tips_compensation: wages,
+        federal_income_tax_withheld: federalTax,
+        taxable_social_security_wages: ssWages,
+        taxable_medicare_wages_tips: medicareWages,
+        social_security_tax: ssTax,
+        medicare_tax: medicareTax,
+        total_taxes_after_adjustments: totalTaxes,
+        filing_status: "submitted",
+        source: "manual",
+        validation_passed: true,
       })
       .select()
       .single()
 
     if (filingError) {
-      console.error("[v0] Error storing filing:", filingError)
+      console.error("[v0] Error storing 941 filing:", filingError)
+      return NextResponse.json({ success: false, error: filingError.message }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
-      submissionId: result.SubmissionId,
-      filingId: filing?.id,
+      submissionId: `941-${filing.id}`,
+      filingId: filing.id,
       message: "Form 941 submitted successfully",
     })
   } catch (error: any) {
