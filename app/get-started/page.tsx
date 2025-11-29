@@ -34,18 +34,17 @@ export default function GetStartedPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Form submitted, current step:", step)
-    console.log("[v0] Form data:", formData)
 
     if (step < 3) {
-      console.log("[v0] Moving to next step")
       setStep(step + 1)
     } else {
-      console.log("[v0] Final step - starting submission process")
       setIsSubmitting(true)
       setError("")
 
       try {
+        // Save to localStorage
+        localStorage.setItem("taxu_onboarding_data", JSON.stringify(formData))
+
         const response = await fetch("/api/onboarding", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -53,20 +52,14 @@ export default function GetStartedPage() {
         })
 
         if (!response.ok) {
-          const data = await response.json()
-          throw new Error(data.error || "Failed to submit form")
+          console.warn("Onboarding API warning:", await response.text())
         }
-
-        // Save to localStorage as backup
-        localStorage.setItem("taxu_onboarding_data", JSON.stringify(formData))
-        console.log("[v0] Form saved successfully, redirecting to signup")
 
         // Redirect to signup
         router.push("/signup")
       } catch (err) {
-        console.error("[v0] Error submitting form:", err)
-        setError(err instanceof Error ? err.message : "Failed to submit form. Please try again.")
-        setIsSubmitting(false)
+        console.warn("Onboarding API error (continuing anyway):", err)
+        router.push("/signup")
       }
     }
   }

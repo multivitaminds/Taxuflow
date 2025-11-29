@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { createAdminClient } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
 
@@ -16,20 +15,7 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
       return NextResponse.json({ error: "Missing filing ID" }, { status: 400 })
     }
 
-    // Create Supabase client safely
-    let supabase
-    try {
-      supabase = await createClient()
-    } catch (clientError) {
-      console.error("[v0] check-status: Failed to create Supabase client:", clientError)
-      return NextResponse.json(
-        {
-          error: "Database connection failed",
-          details: clientError instanceof Error ? clientError.message : String(clientError),
-        },
-        { status: 500 },
-      )
-    }
+    const supabase = await createClient()
 
     const {
       data: { user },
@@ -124,88 +110,73 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
     if (shouldAutoAccept) {
       console.log("[v0] check-status: Attempting sandbox auto-accept")
 
-      if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        console.error("[v0] check-status: SUPABASE_SERVICE_ROLE_KEY is missing!")
+      const updateData: any = {
+        taxbandits_status: "Accepted",
+        irs_status: "Accepted",
+        accepted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
+      if (tableName === "w2_filings") {
+        const wages = Number(filing.wages) || 0
+        const federalWithheld = Number(filing.federal_tax_withheld) || 0
+        // Simple refund calculation for demo
+        const standardDeduction = 13850
+        const taxableIncome = Math.max(0, wages - standardDeduction)
+        const estimatedTaxLiability = taxableIncome * 0.1
+        const refundAmount = federalWithheld - estimatedTaxLiability
+
+        updateData.refund_amount = Math.round(refundAmount * 100) / 100
+        updateData.refund_calculated_at = new Date().toISOString()
+      }
+
+      console.log("[v0] check-status: Updating database with user-scoped client...", updateData)
+
+      const { data: updatedRows, error: updateError } = await supabase
+        .from(tableName)
+        .update(updateData)
+        .eq("id", filing.id)
+        .eq("user_id", user.id) // Ensure we only update user's own filing
+        .select()
+
+      if (updateError) {
+        console.error("[v0] check-status: Database update failed:", updateError)
         return NextResponse.json(
           {
             success: false,
             status: "pending",
-            message:
-              "Configuration Error: SUPABASE_SERVICE_ROLE_KEY is missing. Please add it to Vercel Environment Variables.",
-            error_code: "MISSING_ENV_VAR",
+            message: "Failed to update filing status",
+            error: updateError.message,
           },
           { status: 500 },
         )
       }
 
-      try {
-        const adminSupabase = await createAdminClient()
-
-        const updateData: any = {
-          taxbandits_status: "Accepted",
-          irs_status: "Accepted",
-          accepted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-
-        if (tableName === "w2_filings") {
-          const wages = Number(filing.wages) || 0
-          const federalWithheld = Number(filing.federal_tax_withheld) || 0
-          // Simple refund calculation for demo
-          const standardDeduction = 13850
-          const taxableIncome = Math.max(0, wages - standardDeduction)
-          const estimatedTaxLiability = taxableIncome * 0.1
-          const refundAmount = federalWithheld - estimatedTaxLiability
-
-          updateData.refund_amount = Math.round(refundAmount * 100) / 100
-          updateData.refund_calculated_at = new Date().toISOString()
-        }
-
-        console.log("[v0] check-status: Updating database...", updateData)
-
-        const { data: updatedRows, error: updateError } = await adminSupabase
-          .from(tableName)
-          .update(updateData)
-          .eq("id", filing.id)
-          .select()
-
-        if (updateError) {
-          console.error("[v0] check-status: Database update failed:", updateError)
-          throw new Error(`Database update failed: ${updateError.message}`)
-        }
-
-        if (!updatedRows || updatedRows.length === 0) {
-          console.error(
-            "[v0] check-status: Update returned 0 rows! The filing ID might not exist or RLS is blocking it.",
-          )
-          // We will still return success to the UI so the user sees "Accepted", but log the critical error
-        } else {
-          console.log("[v0] check-status: Database updated successfully! Rows affected:", updatedRows.length)
-        }
-
-        return NextResponse.json({
-          success: true,
-          status: "accepted",
-          message: "Filing accepted (sandbox auto-accepted)",
-          refund_amount: updateData.refund_amount || null,
-          debug: {
-            source: "auto-accept",
-            processing_time: Date.now() - startTime,
-            db_updated: updatedRows && updatedRows.length > 0,
-          },
-        })
-      } catch (adminError) {
-        console.error("[v0] check-status: Admin operation failed:", adminError)
+      if (!updatedRows || updatedRows.length === 0) {
+        console.error("[v0] check-status: Update returned 0 rows! The filing ID might not exist or has been deleted.")
         return NextResponse.json(
           {
             success: false,
             status: "pending",
-            message: "Auto-accept failed during database update",
-            error: adminError instanceof Error ? adminError.message : "Unknown error",
+            message: "Filing not found or access denied",
           },
-          { status: 500 },
+          { status: 404 },
         )
       }
+
+      console.log("[v0] check-status: Database updated successfully! Rows affected:", updatedRows.length)
+
+      return NextResponse.json({
+        success: true,
+        status: "accepted",
+        message: "Filing accepted (sandbox auto-accepted)",
+        refund_amount: updateData.refund_amount || null,
+        debug: {
+          source: "auto-accept",
+          processing_time: Date.now() - startTime,
+          db_updated: true,
+        },
+      })
     }
 
     const secondsRemaining = Math.max(0, Math.ceil((fiveSeconds - filingAge) / 1000))

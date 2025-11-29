@@ -58,6 +58,16 @@ export default function BusinessGetStartedPage() {
     setIsSubmitting(true)
 
     try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "taxu_business_onboarding",
+          JSON.stringify({
+            ...formData,
+            timestamp: new Date().toISOString(),
+          }),
+        )
+      }
+
       const response = await fetch("/api/business-onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,7 +84,18 @@ export default function BusinessGetStartedPage() {
       router.push(`/signup?business=true&orgId=${data.organizationId}`)
     } catch (error) {
       console.error("Error submitting business information:", error)
-      alert("There was an error submitting your information. Please try again.")
+
+      // This ensures the flow continues even if API fails
+      if (typeof window !== "undefined") {
+        localStorage.setItem(
+          "taxu_business_onboarding",
+          JSON.stringify({
+            ...formData,
+            timestamp: new Date().toISOString(),
+          }),
+        )
+      }
+      router.push(`/signup?business=true`)
     } finally {
       setIsSubmitting(false)
     }
