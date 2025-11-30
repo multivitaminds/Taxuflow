@@ -66,7 +66,7 @@ export function TaxuChatWidget() {
         {
           id: welcomeMessageId,
           role: "assistant" as const,
-          content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent].role.toLowerCase()}. How can I help you with your taxes today?`,
+          content: `Hi! I'm ${currentAgent}, your AI ${agents[currentAgent]?.role?.toLowerCase() || "assistant"}. How can I help you with your taxes today?`,
         },
       ],
       onError: (err: Error) => {
@@ -156,6 +156,10 @@ export function TaxuChatWidget() {
     console.log(`[v0] Feedback for ${messageId}: ${type}`)
   }
 
+  if (!pathname) {
+    return null
+  }
+
   if (!isOpen) {
     return (
       <button
@@ -171,6 +175,10 @@ export function TaxuChatWidget() {
   }
 
   const agent = agents[currentAgent]
+
+  if (!agent) {
+    return null
+  }
 
   return (
     <Card className="fixed bottom-6 right-6 w-[400px] h-[650px] flex flex-col border-none shadow-2xl z-50 overflow-hidden rounded-2xl font-sans">
@@ -374,7 +382,7 @@ export function TaxuChatWidget() {
             </div>
 
             <Input
-              value={input}
+              value={input || ""}
               onChange={handleInputChange}
               placeholder="Message..."
               className="flex-1 border-none bg-transparent shadow-none focus-visible:ring-0 px-2 h-9 text-[15px]"
@@ -393,9 +401,9 @@ export function TaxuChatWidget() {
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || !(input || "").trim()}
                 size="icon"
-                className={`h-8 w-8 rounded-full transition-all ${input.trim() ? "bg-[#FF5722] text-white hover:bg-[#F4511E]" : "bg-gray-100 text-gray-400"}`}
+                className={`h-8 w-8 rounded-full transition-all ${(input || "").trim() ? "bg-[#FF5722] text-white hover:bg-[#F4511E]" : "bg-gray-100 text-gray-400"}`}
               >
                 <Send className="w-4 h-4" />
               </Button>
