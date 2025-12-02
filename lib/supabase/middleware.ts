@@ -13,15 +13,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
     console.log("[v0] Middleware: Supabase config not available", {
-      hasSupabaseUrl: !!process.env.SUPABASE_URL,
-      hasPublicUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
-      hasPublicKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       path: request.nextUrl.pathname,
     })
     return NextResponse.next({ request })
@@ -43,7 +39,6 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
-    // Do not run code between createServerClient and supabase.auth.getUser()
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -62,7 +57,10 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (
-      (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/accounting")) &&
+      (request.nextUrl.pathname.startsWith("/dashboard") ||
+        request.nextUrl.pathname.startsWith("/accounting") ||
+        request.nextUrl.pathname.startsWith("/neobank") ||
+        request.nextUrl.pathname.startsWith("/investment")) &&
       !user
     ) {
       const url = request.nextUrl.clone()

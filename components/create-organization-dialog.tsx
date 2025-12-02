@@ -1,18 +1,14 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from "lucide-react"
 
 interface CreateOrganizationDialogProps {
   open: boolean
@@ -33,6 +29,8 @@ export function CreateOrganizationDialog({ open, onClose, onSuccess }: CreateOrg
     setError(null)
     setLoading(true)
 
+    console.log("[v0] Creating organization:", formData.name)
+
     try {
       const response = await fetch("/api/organizations", {
         method: "POST",
@@ -40,17 +38,23 @@ export function CreateOrganizationDialog({ open, onClose, onSuccess }: CreateOrg
         body: JSON.stringify(formData),
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        const data = await response.json()
+        console.error("[v0] Organization creation failed:", data.error)
         throw new Error(data.error || "Failed to create organization")
       }
 
-      // Success
+      console.log("[v0] Organization created successfully:", data.organization?.id)
+
+      // Success - reset form and notify parent
       setFormData({ name: "", description: "" })
       onSuccess()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create organization")
+      const errorMessage = err instanceof Error ? err.message : "Failed to create organization"
+      console.error("[v0] Organization creation error:", errorMessage)
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -75,6 +79,7 @@ export function CreateOrganizationDialog({ open, onClose, onSuccess }: CreateOrg
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Acme Inc."
               required
+              disabled={loading}
             />
           </div>
 
@@ -86,14 +91,11 @@ export function CreateOrganizationDialog({ open, onClose, onSuccess }: CreateOrg
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Brief description of your organization"
               rows={3}
+              disabled={loading}
             />
           </div>
 
-          {error && (
-            <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950 p-3 rounded-md">
-              {error}
-            </div>
-          )}
+          {error && <div className="text-sm text-red-500 bg-red-50 dark:bg-red-950 p-3 rounded-md">{error}</div>}
 
           <div className="flex gap-3 justify-end">
             <Button type="button" variant="outline" onClick={onClose} disabled={loading}>

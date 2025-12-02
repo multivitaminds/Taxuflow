@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowRight, ArrowLeft, Building2, CheckCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { formatEIN } from "@/lib/format-utils"
 
 export default function BusinessGetStartedPage() {
   const router = useRouter()
@@ -236,7 +237,10 @@ export default function BusinessGetStartedPage() {
                   <Input
                     id="ein"
                     value={formData.ein}
-                    onChange={(e) => handleInputChange("ein", e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatEIN(e.target.value)
+                      handleInputChange("ein", formatted)
+                    }}
                     placeholder="XX-XXXXXXX"
                     maxLength={10}
                   />

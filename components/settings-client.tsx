@@ -1,17 +1,19 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Loader2, LogOut, RefreshCw } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowLeft, Save, Loader2, LogOut, RefreshCw, CreditCard, Zap } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import { updateProfile } from "@/app/actions/update-profile"
+import Link from "next/link"
+import { toast } from "@/components/ui/use-toast"
 
 interface SettingsClientProps {
   user: User
@@ -24,6 +26,9 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
 
   const [fullName, setFullName] = useState(profile?.full_name || "")
   const [email, setEmail] = useState(user.email || "")
+  const [userType, setUserType] = useState(profile?.user_type || "regular")
+  const [companyName, setCompanyName] = useState(profile?.company_name || "")
+
   const [loading, setLoading] = useState(false)
   const [nameLoading, setNameLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,22 +48,18 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
         throw new Error("Sign out failed")
       }
 
-      // Clear client-side storage
       if (typeof window !== "undefined") {
         localStorage.clear()
         sessionStorage.clear()
       }
 
-      // Force full page reload to clear all state and cookies
       window.location.href = "/login"
     } catch (error) {
       console.error("[v0] Sign out error:", error)
-      // Clear client-side storage
       if (typeof window !== "undefined") {
         localStorage.clear()
         sessionStorage.clear()
       }
-      // Force redirect even on error to ensure user is logged out
       window.location.href = "/login"
     }
   }
@@ -110,6 +111,34 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
     }
   }
 
+  const handleUpdateUserType = async () => {
+    setLoading(true)
+    setError(null)
+
+    try {
+      const { error: updateError } = await supabase
+        .from("user_profiles")
+        .update({
+          user_type: userType,
+          company_name: companyName,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
+
+      if (updateError) throw updateError
+
+      setSuccess(true)
+      setTimeout(() => {
+        router.refresh()
+      }, 1500)
+    } catch (err: any) {
+      console.error("[v0] Error updating user type:", err)
+      setError(err.message || "Failed to update account type")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleSyncSubscription = async () => {
     setSyncing(true)
     setError(null)
@@ -126,14 +155,27 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
       }
 
       console.log("[v0] Subscription synced:", data)
+
+      if (data.subscription?.tier === "free") {
+        toast({
+          title: "✅ Subscription Synced",
+          description: "You're currently on the free tier. Upgrade anytime to unlock premium features.",
+          duration: 4000,
+        })
+      } else {
+        toast({
+          title: "✅ Subscription Synced",
+          description: `Your ${data.subscription?.tier || "subscription"} plan is now synced.`,
+          duration: 3000,
+        })
+      }
+
       setSuccess(true)
 
-      // Refresh the page to show updated subscription
       setTimeout(() => {
         router.refresh()
       }, 1500)
     } catch (err: any) {
-      console.error("[v0] Sync error:", err)
       setError(err.message || "Failed to sync subscription")
     } finally {
       setSyncing(false)
@@ -141,8 +183,8 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="container mx-auto px-4 py-12 max-w-3xl">
+    <div className="min-h-screen bg-background pt-8">
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
         <Button onClick={() => router.push("/dashboard")} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
@@ -248,27 +290,107 @@ export function SettingsClient({ user, profile }: SettingsClientProps) {
           </Card>
 
           <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-            <h2 className="text-xl font-bold mb-4">Subscription</h2>
-            <p className="text-muted-foreground mb-4">
-              Current plan: <span className="font-semibold">{profile?.subscription_tier || "Free"}</span>
-            </p>
-            <div className="flex gap-3">
-              <Button onClick={() => router.push("/dashboard/subscription")} variant="outline">
-                Manage Subscription
-              </Button>
-              <Button onClick={handleSyncSubscription} variant="outline" disabled={syncing}>
-                {syncing ? (
+            <h2 className="text-xl font-bold mb-4">Account Type</h2>
+
+            {error && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="userType">User Type</Label>
+                <Select value={userType} onValueChange={setUserType}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select account type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="regular">Individual User</SelectItem>
+                    <SelectItem value="business">Business User</SelectItem>
+                    <SelectItem value="developer">Developer</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Changing your account type will update available features
+                </p>
+              </div>
+
+              {userType === "business" && (
+                <div>
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="Enter your company name"
+                    className="mt-2"
+                  />
+                </div>
+              )}
+
+              <Button
+                onClick={handleUpdateUserType}
+                disabled={loading || (userType === profile?.user_type && companyName === profile?.company_name)}
+                className="bg-neon hover:bg-neon/90 text-background"
+              >
+                {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Syncing...
+                    Updating...
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Sync Subscription
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Account Type
                   </>
                 )}
               </Button>
+            </div>
+          </Card>
+
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+            <h2 className="text-xl font-bold mb-4">Subscription</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-indigo-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  {profile?.subscription_tier === "free" ? (
+                    <Zap className="w-5 h-5 text-slate-600" />
+                  ) : (
+                    <CreditCard className="w-5 h-5 text-indigo-600" />
+                  )}
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {profile?.subscription_tier?.replace("-", " ").toUpperCase() || "FREE"}
+                    </p>
+                    <p className="text-sm text-slate-600">
+                      {profile?.subscription_status === "active" ? "Active" : "Inactive"}
+                    </p>
+                  </div>
+                </div>
+                <Link href="/dashboard/subscription">
+                  <Button variant="outline" className="bg-white">
+                    Manage Plan
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="flex gap-3">
+                <Button onClick={handleSyncSubscription} variant="outline" disabled={syncing}>
+                  {syncing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Syncing...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Sync Subscription
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </Card>
 

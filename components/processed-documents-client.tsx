@@ -156,7 +156,10 @@ export function ProcessedDocumentsClient({ user, profile }: ProcessedDocumentsCl
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+          <Card
+            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => router.push("/dashboard/documents/all")}
+          >
             <div className="flex items-center gap-3 mb-2">
               <CheckCircle2 className="w-5 h-5 text-green-500" />
               <span className="text-sm text-muted-foreground">Processed Documents</span>
@@ -164,7 +167,10 @@ export function ProcessedDocumentsClient({ user, profile }: ProcessedDocumentsCl
             <p className="text-3xl font-bold">{documents.length}</p>
           </Card>
 
-          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+          <Card
+            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => router.push("/dashboard")}
+          >
             <div className="flex items-center gap-3 mb-2">
               <Brain className="w-5 h-5 text-purple-500" />
               <span className="text-sm text-muted-foreground">AI Analyses</span>
@@ -172,13 +178,16 @@ export function ProcessedDocumentsClient({ user, profile }: ProcessedDocumentsCl
             <p className="text-3xl font-bold">{activities.length}</p>
           </Card>
 
-          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
+          <Card
+            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
+            onClick={() => router.push("/dashboard/documents/storage")}
+          >
             <div className="flex items-center gap-3 mb-2">
               <FileText className="w-5 h-5 text-blue-500" />
               <span className="text-sm text-muted-foreground">Total Size</span>
             </div>
             <p className="text-3xl font-bold">
-              {(documents.reduce((acc, d) => acc + d.file_size, 0) / 1024 / 1024).toFixed(1)} MB
+              {(documents.reduce((acc, d) => acc + (d.file_size || 0), 0) / 1024 / 1024).toFixed(1)} MB
             </p>
           </Card>
         </div>

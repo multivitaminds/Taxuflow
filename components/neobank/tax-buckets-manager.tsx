@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface TaxBucket {
   id: string
@@ -58,6 +59,15 @@ export function TaxBucketsManager() {
   const [buckets, setBuckets] = useState<TaxBucket[]>(initialBuckets)
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
+  const [isNewBucketOpen, setIsNewBucketOpen] = useState(false)
+  const [newBucketName, setNewBucketName] = useState("")
+  const [newBucketGoal, setNewBucketGoal] = useState("")
+  const [newBucketPercentage, setNewBucketPercentage] = useState("0")
+  const [newBucketColor, setNewBucketColor] = useState("#9333ea")
+
+  const [transferFromAccount, setTransferFromAccount] = useState("checking")
+  const [transferToBucket, setTransferToBucket] = useState(buckets[0]?.id || "")
+  const [transferAmount, setTransferAmount] = useState("")
 
   const totalBalance = buckets.reduce((acc, bucket) => acc + bucket.balance, 0)
   const totalGoal = buckets.reduce((acc, bucket) => acc + bucket.goal, 0)
@@ -65,6 +75,57 @@ export function TaxBucketsManager() {
 
   const updateBucketPercentage = (id: string, value: number) => {
     setBuckets(buckets.map((b) => (b.id === id ? { ...b, percentage: value } : b)))
+  }
+
+  const handleCreateBucket = () => {
+    if (!newBucketName.trim()) {
+      toast.error("Please enter a bucket name")
+      return
+    }
+
+    const newBucket: TaxBucket = {
+      id: `bucket-${Date.now()}`,
+      name: newBucketName.trim(),
+      balance: 0,
+      goal: Number.parseFloat(newBucketGoal) || 5000,
+      percentage: Number.parseFloat(newBucketPercentage) || 0,
+      color: newBucketColor,
+      liability: Number.parseFloat(newBucketGoal) || 5000,
+    }
+
+    setBuckets([...buckets, newBucket])
+    toast.success(`${newBucketName} bucket created successfully`)
+
+    setNewBucketName("")
+    setNewBucketGoal("")
+    setNewBucketPercentage("0")
+    setNewBucketColor("#9333ea")
+    setIsNewBucketOpen(false)
+
+    console.log("[v0] New bucket created:", newBucket)
+  }
+
+  const handleTransfer = () => {
+    const amount = Number.parseFloat(transferAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid amount")
+      return
+    }
+
+    const bucket = buckets.find((b) => b.id === transferToBucket)
+    if (!bucket) {
+      toast.error("Please select a bucket")
+      return
+    }
+
+    setBuckets(buckets.map((b) => (b.id === transferToBucket ? { ...b, balance: b.balance + amount } : b)))
+
+    toast.success(`$${amount.toLocaleString()} transferred to ${bucket.name}`)
+
+    setTransferAmount("")
+    setIsTransferOpen(false)
+
+    console.log("[v0] Transfer completed:", { amount, to: bucket.name })
   }
 
   const chartData = buckets.map((b) => ({
@@ -88,7 +149,10 @@ export function TaxBucketsManager() {
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer Funds
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm">
+          <Button
+            className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm"
+            onClick={() => setIsNewBucketOpen(true)}
+          >
             <Plus className="mr-2 h-4 w-4" /> New Bucket
           </Button>
         </div>
@@ -271,34 +335,134 @@ export function TaxBucketsManager() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>From</Label>
-              <Input value="Business Checking (****4291)" disabled />
+              <Select value={transferFromAccount} onValueChange={setTransferFromAccount}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="checking">Business Checking (****4291)</SelectItem>
+                  <SelectItem value="savings">Business Savings (****8372)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label>To</Label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                {buckets.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={transferToBucket} onValueChange={setTransferToBucket}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {buckets.map((bucket) => (
+                    <SelectItem key={bucket.id} value={bucket.id}>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: bucket.color }} />
+                        {bucket.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-2">
               <Label>Amount</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                <Input className="pl-9" placeholder="0.00" type="number" />
+                <Input
+                  className="pl-9"
+                  placeholder="0.00"
+                  type="number"
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                />
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button
-              onClick={() => {
-                toast.success("Transfer initiated successfully")
-                setIsTransferOpen(false)
-              }}
-            >
-              Transfer Funds
+            <Button onClick={handleTransfer}>Transfer Funds</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Bucket Dialog */}
+      <Dialog open={isNewBucketOpen} onOpenChange={setIsNewBucketOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create New Tax Bucket</DialogTitle>
+            <DialogDescription>
+              Set up a new bucket to automatically save for specific tax obligations
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-5 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="bucket-name">Bucket Name *</Label>
+              <Input
+                id="bucket-name"
+                placeholder="e.g., Quarterly Estimated Tax, Property Tax"
+                value={newBucketName}
+                onChange={(e) => setNewBucketName(e.target.value)}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="bucket-goal">Goal Amount</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+                <Input
+                  id="bucket-goal"
+                  className="pl-9"
+                  placeholder="5,000"
+                  type="number"
+                  value={newBucketGoal}
+                  onChange={(e) => setNewBucketGoal(e.target.value)}
+                />
+              </div>
+              <p className="text-xs text-slate-500">Target amount you want to save</p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="bucket-percentage">Auto-Save Percentage</Label>
+              <div className="flex items-center gap-4">
+                <Slider
+                  id="bucket-percentage"
+                  value={[Number.parseFloat(newBucketPercentage) || 0]}
+                  max={30}
+                  step={1}
+                  className="flex-1"
+                  onValueChange={(vals) => setNewBucketPercentage(vals[0].toString())}
+                />
+                <span className="text-sm font-bold text-[#635bff] bg-[#635bff]/10 px-3 py-1 rounded min-w-[60px] text-center">
+                  {newBucketPercentage}%
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">Percentage of deposits to save automatically</p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="bucket-color">Bucket Color</Label>
+              <div className="flex items-center gap-3">
+                <input
+                  id="bucket-color"
+                  type="color"
+                  value={newBucketColor}
+                  onChange={(e) => setNewBucketColor(e.target.value)}
+                  className="h-10 w-20 rounded border border-slate-200 cursor-pointer"
+                />
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-10 w-10 rounded-full border-2 border-slate-200"
+                    style={{ backgroundColor: newBucketColor }}
+                  />
+                  <code className="text-xs text-slate-600">{newBucketColor}</code>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNewBucketOpen(false)}>
+              Cancel
+            </Button>
+            <Button className="bg-[#635bff] hover:bg-[#5851e1]" onClick={handleCreateBucket}>
+              Create Bucket
             </Button>
           </DialogFooter>
         </DialogContent>

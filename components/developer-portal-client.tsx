@@ -155,7 +155,7 @@ export function DeveloperPortalClient() {
   }
 
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div className="space-y-8 max-w-6xl pt-8">
       <div>
         <h1 className="text-3xl font-bold mb-2">Welcome back, Developer</h1>
         <p className="text-muted-foreground">Manage your API keys, monitor usage, and access documentation.</p>

@@ -10,8 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Building2, Check, ChevronDown, Plus, User } from 'lucide-react'
-import { Badge } from "@/components/ui/badge"
+import { Building2, Check, ChevronDown, Plus, User } from "lucide-react"
 import { CreateOrganizationDialog } from "./create-organization-dialog"
 
 interface Organization {
@@ -42,12 +41,15 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
       const response = await fetch("/api/organizations")
       if (response.ok) {
         const data = await response.json()
+
+        console.log("[v0] Organizations loaded:", data.organizations?.length || 0)
+
         setOrganizations(data.organizations || [])
-        
+
         // Check if there's a saved preference
         const savedOrgId = localStorage.getItem("selectedOrganizationId")
         const savedMode = localStorage.getItem("organizationMode")
-        
+
         if (savedMode === "personal") {
           setIsPersonalMode(true)
           setSelectedOrgId(null)
@@ -55,15 +57,18 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
           setIsPersonalMode(false)
           setSelectedOrgId(savedOrgId)
         }
+      } else {
+        console.error("[v0] Failed to load organizations:", response.status)
       }
     } catch (error) {
-      console.error("Error loading organizations:", error)
+      console.error("[v0] Error loading organizations:", error)
     } finally {
       setLoading(false)
     }
   }
 
   const handleSelectPersonal = () => {
+    console.log("[v0] Switching to Personal mode")
     setIsPersonalMode(true)
     setSelectedOrgId(null)
     localStorage.setItem("organizationMode", "personal")
@@ -72,11 +77,18 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
   }
 
   const handleSelectOrganization = (orgId: string) => {
+    const org = organizations.find((o) => o.id === orgId)
+    console.log("[v0] Switching to Organization:", org?.name)
     setIsPersonalMode(false)
     setSelectedOrgId(orgId)
     localStorage.setItem("organizationMode", "organization")
     localStorage.setItem("selectedOrganizationId", orgId)
     window.location.reload() // Reload to fetch org data
+  }
+
+  const handleOrganizationCreated = async () => {
+    console.log("[v0] Organization created, reloading list...")
+    await loadOrganizations()
   }
 
   const selectedOrganization = organizations.find((org) => org.id === selectedOrgId)
@@ -95,27 +107,18 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            {isPersonalMode ? (
-              <User className="w-4 h-4" />
-            ) : (
-              <Building2 className="w-4 h-4" />
-            )}
+          <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+            {isPersonalMode ? <User className="w-4 h-4" /> : <Building2 className="w-4 h-4" />}
             <span className="max-w-[150px] truncate">{displayName}</span>
             <ChevronDown className="w-3 h-3 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[240px]">
-          <DropdownMenuLabel className="text-xs text-muted-foreground">
-            Switch Context
-          </DropdownMenuLabel>
+          <DropdownMenuLabel className="text-xs text-muted-foreground">Switch Context</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
+
           {/* Personal Mode */}
-          <DropdownMenuItem
-            onClick={handleSelectPersonal}
-            className="flex items-center justify-between cursor-pointer"
-          >
+          <DropdownMenuItem onClick={handleSelectPersonal} className="flex items-center justify-between cursor-pointer">
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
               <span>Personal</span>
@@ -126,9 +129,7 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
           {organizations.length > 0 && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs text-muted-foreground">
-                Organizations
-              </DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs text-muted-foreground">Organizations</DropdownMenuLabel>
             </>
           )}
 
@@ -143,19 +144,14 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
                 <Building2 className="w-4 h-4" />
                 <span className="truncate">{org.name}</span>
               </div>
-              {!isPersonalMode && selectedOrgId === org.id && (
-                <Check className="w-4 h-4 text-primary" />
-              )}
+              {!isPersonalMode && selectedOrgId === org.id && <Check className="w-4 h-4 text-primary" />}
             </DropdownMenuItem>
           ))}
 
           <DropdownMenuSeparator />
-          
+
           {/* Create Organization */}
-          <DropdownMenuItem
-            onClick={() => setShowCreateDialog(true)}
-            className="cursor-pointer text-primary"
-          >
+          <DropdownMenuItem onClick={() => setShowCreateDialog(true)} className="cursor-pointer text-primary">
             <Plus className="w-4 h-4 mr-2" />
             <span>Create Organization</span>
           </DropdownMenuItem>
@@ -165,7 +161,7 @@ export function OrganizationSelector({ userId }: OrganizationSelectorProps) {
       <CreateOrganizationDialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        onSuccess={loadOrganizations}
+        onSuccess={handleOrganizationCreated}
       />
     </>
   )

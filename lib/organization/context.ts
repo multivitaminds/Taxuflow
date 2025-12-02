@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createClientSafe } from "@/lib/supabase/server"
 
 export interface OrganizationContext {
   userId: string
@@ -12,18 +12,24 @@ export interface OrganizationContext {
  */
 export async function getOrganizationContext(): Promise<OrganizationContext | null> {
   try {
-    const supabase = await createServerClient()
+    const supabase = await createClientSafe()
 
-    // Get current user
+    if (!supabase) {
+      console.error("[v0] Failed to create Supabase client - missing environment variables")
+      return null
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log("[v0] No authenticated user found in organization context")
       return null
     }
 
-    // Get all organizations the user is a member of from books.org_members
+    console.log("[v0] Organization context - User authenticated:", user.id)
+
     const { data: orgMemberships, error } = await supabase
       .from("org_members")
       .select("org_id")
@@ -31,8 +37,7 @@ export async function getOrganizationContext(): Promise<OrganizationContext | nu
       .order("created_at", { ascending: true })
 
     if (error) {
-      console.error("Error fetching org memberships:", error)
-      // Return context with no org access
+      console.error("[v0] Error fetching org memberships:", error)
       return {
         userId: user.id,
         organizationId: null,
@@ -43,6 +48,12 @@ export async function getOrganizationContext(): Promise<OrganizationContext | nu
 
     const organizationIds = orgMemberships?.map((m) => m.org_id) || []
 
+    console.log("[v0] Organization context created:", {
+      userId: user.id,
+      organizationCount: organizationIds.length,
+      hasAccess: organizationIds.length > 0,
+    })
+
     return {
       userId: user.id,
       organizationId: organizationIds[0] || null, // Default to first org
@@ -50,7 +61,7 @@ export async function getOrganizationContext(): Promise<OrganizationContext | nu
       hasOrganizationAccess: organizationIds.length > 0,
     }
   } catch (error) {
-    console.error("Error getting organization context:", error)
+    console.error("[v0] Error getting organization context:", error)
     return null
   }
 }
@@ -58,12 +69,14 @@ export async function getOrganizationContext(): Promise<OrganizationContext | nu
 /**
  * Check if user has access to a specific organization
  */
-export async function hasOrganizationAccess(
-  userId: string,
-  organizationId: string
-): Promise<boolean> {
+export async function hasOrganizationAccess(userId: string, organizationId: string): Promise<boolean> {
   try {
-    const supabase = await createServerClient()
+    const supabase = await createClientSafe()
+
+    if (!supabase) {
+      console.error("[v0] Failed to create Supabase client for access check")
+      return false
+    }
 
     const { data, error } = await supabase
       .from("org_members")
@@ -73,13 +86,13 @@ export async function hasOrganizationAccess(
       .maybeSingle()
 
     if (error) {
-      console.error("Error checking org access:", error)
+      console.error("[v0] Error checking org access:", error)
       return false
     }
 
     return !!data
   } catch (error) {
-    console.error("Error in hasOrganizationAccess:", error)
+    console.error("[v0] Error in hasOrganizationAccess:", error)
     return false
   }
 }

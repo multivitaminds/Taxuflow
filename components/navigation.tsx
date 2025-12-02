@@ -73,19 +73,17 @@ export function Navigation() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 transform ${
         isVisible ? "translate-y-0" : "-translate-y-full"
-      } ${isScrolled ? "bg-[#0A2540] shadow-md py-2" : "bg-[#0A2540] py-4"}`}
+      } ${isScrolled ? "bg-[#0A2540] shadow-md py-1.5" : "bg-[#0A2540] py-2"}`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14">
-          {" "}
-          {/* Fixed height to 64-72px equivalent */}
-          <div className="flex items-center gap-8">
-            <Link href="/" className="text-2xl font-bold tracking-tight flex items-center gap-1 pl-2">
+        <div className="flex items-center justify-between h-10">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="text-xl font-bold tracking-tight flex items-center gap-0.5 pl-1">
               <span className="text-white">Tax</span>
-              <span className="text-[#4C6FFF]">u</span> {/* Used Accent Blue from instructions */}
+              <span className="text-[#4C6FFF]">u</span>
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-8">
+            <nav className="hidden lg:flex items-center gap-6">
               {navigationStructure.map((item) => {
                 if ("items" in item) {
                   return (
@@ -96,7 +94,7 @@ export function Navigation() {
                       onMouseLeave={() => setOpenDropdown(null)}
                     >
                       <button
-                        className={`flex items-center gap-1 text-[15px] font-medium transition-colors py-2
+                        className={`flex items-center gap-1 text-sm font-medium transition-colors py-1
                           ${openDropdown === item.label ? "text-white opacity-100" : "text-white/80 hover:text-white"}
                         `}
                       >
@@ -135,7 +133,7 @@ export function Navigation() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="text-[15px] font-medium text-white/80 hover:text-white transition-colors"
+                      className="text-sm font-medium text-white/80 hover:text-white transition-colors"
                     >
                       {item.label}
                     </Link>
@@ -145,7 +143,7 @@ export function Navigation() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-[15px] font-medium text-white/80 hover:text-white transition-colors"
+                    className="text-sm font-medium text-white/80 hover:text-white transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -153,7 +151,7 @@ export function Navigation() {
               })}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -164,23 +162,30 @@ export function Navigation() {
             </Button>
 
             <Link href="/login" className="hidden sm:inline-block">
-              <Button variant="ghost" className="text-white hover:text-white hover:bg-white/10 font-medium text-[15px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:text-white hover:bg-white/10 font-medium text-sm h-8 px-4"
+              >
                 Sign In
               </Button>
             </Link>
             <Link href="/get-started" className="hidden sm:inline-block">
-              <Button className="bg-[#4C6FFF] hover:bg-[#3b5bdb] text-white font-medium rounded-full px-6 transition-all shadow-lg shadow-blue-900/20">
+              <Button
+                size="sm"
+                className="bg-[#4C6FFF] hover:bg-[#3b5bdb] text-white font-medium rounded-full text-sm h-8 px-5 transition-all shadow-lg shadow-blue-900/20"
+              >
                 Get Started
               </Button>
             </Link>
 
             <Button
               variant="ghost"
-              size="icon"
-              className="lg:hidden text-white hover:bg-white/10"
+              size="sm"
+              className="lg:hidden text-white hover:bg-white/10 h-8 w-8 p-0"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           </div>
         </div>

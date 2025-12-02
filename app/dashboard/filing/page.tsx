@@ -1,23 +1,23 @@
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
-import { FilingDashboardClient } from "@/components/filing-dashboard-client"
+import { FilingDashboardEnhanced } from "@/components/filing-dashboard-enhanced"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
 export default async function FilingDashboardPage() {
   console.log("[v0] Filing page: Starting to load")
-  
+
   const cookieStore = await cookies()
   const isDemoMode = cookieStore.get("demo_mode")?.value === "true"
-  
+
   if (isDemoMode) {
     console.log("[v0] Filing page: Using demo mode, showing demo filings")
     const demoUser = {
       id: "demo-user-id",
       email: "demo@taxu.com",
     }
-    
+
     const demoFilings = [
       {
         id: "demo-filing-1",
@@ -52,8 +52,8 @@ export default async function FilingDashboardPage() {
         updated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       },
     ]
-    
-    return <FilingDashboardClient user={demoUser as any} filings={demoFilings} />
+
+    return <FilingDashboardEnhanced user={demoUser as any} filings={demoFilings} />
   }
 
   let supabase
@@ -80,7 +80,7 @@ export default async function FilingDashboardPage() {
       console.log("[v0] Filing page: No authenticated user, redirecting to login", authError)
       redirect("/login?redirect=/dashboard/filing")
     }
-    
+
     user = authUser
   } catch (error) {
     console.error("[v0] Filing page: Error getting user:", error)
@@ -89,7 +89,7 @@ export default async function FilingDashboardPage() {
 
   let w2Filings = []
   let nec1099Filings = []
-  
+
   try {
     const { data: w2Data, error: w2Error } = await supabase
       .from("w2_filings")
@@ -127,7 +127,6 @@ export default async function FilingDashboardPage() {
   )
 
   const transformedW2Filings = w2Filings.map((filing) => {
-    // Use the refund_amount from database if it exists, otherwise calculate it
     let refundAmount = filing.refund_amount || null
 
     if (!refundAmount && filing.irs_status === "accepted") {
@@ -136,21 +135,22 @@ export default async function FilingDashboardPage() {
       const ssWithheld = filing.social_security_tax || 0
       const medicareWithheld = filing.medicare_tax || 0
 
-      // Simple refund calculation
       const standardDeduction = 13850
       const taxableIncome = Math.max(0, wages - standardDeduction)
-      const estimatedTax = taxableIncome * 0.1 // 10% bracket
+      const estimatedTax = taxableIncome * 0.1
       const totalWithheld = federalWithheld + ssWithheld + medicareWithheld
 
       refundAmount = Math.max(0, Math.round(totalWithheld - estimatedTax))
     }
+
+    const normalizedStatus = (filing.irs_status || "").toLowerCase()
 
     return {
       id: filing.id,
       tax_year: filing.tax_year,
       form_type: "W-2" as const,
       filing_status:
-        filing.irs_status === "accepted" ? "accepted" : filing.irs_status === "rejected" ? "rejected" : "pending",
+        normalizedStatus === "accepted" ? "accepted" : normalizedStatus === "rejected" ? "rejected" : "pending",
       submission_id: filing.submission_id || "",
       irs_status: filing.irs_status,
       refund_amount: refundAmount,
@@ -164,29 +164,33 @@ export default async function FilingDashboardPage() {
     }
   })
 
-  const transformedNecFilings = nec1099Filings.map((filing) => ({
-    id: filing.id,
-    tax_year: filing.tax_year,
-    form_type: "1099-NEC" as const,
-    filing_status:
-      filing.irs_status === "accepted" ? "accepted" : filing.irs_status === "rejected" ? "rejected" : "pending",
-    submission_id: filing.submission_id || "",
-    irs_status: filing.irs_status,
-    refund_amount: null, // 1099-NEC doesn't have refunds
-    filed_at: filing.submitted_at,
-    accepted_at: filing.accepted_at,
-    rejected_at: filing.rejected_at,
-    rejection_reasons: filing.rejection_reasons,
-    provider_name: "IRS E-File",
-    created_at: filing.created_at,
-    updated_at: filing.updated_at,
-  }))
+  const transformedNecFilings = nec1099Filings.map((filing) => {
+    const normalizedStatus = (filing.irs_status || "").toLowerCase()
+
+    return {
+      id: filing.id,
+      tax_year: filing.tax_year,
+      form_type: "1099-NEC" as const,
+      filing_status:
+        normalizedStatus === "accepted" ? "accepted" : normalizedStatus === "rejected" ? "rejected" : "pending",
+      submission_id: filing.submission_id || "",
+      irs_status: filing.irs_status,
+      refund_amount: null,
+      filed_at: filing.submitted_at,
+      accepted_at: filing.accepted_at,
+      rejected_at: filing.rejected_at,
+      rejection_reasons: filing.rejection_reasons,
+      provider_name: "IRS E-File",
+      created_at: filing.created_at,
+      updated_at: filing.updated_at,
+    }
+  })
 
   const allFilings = [...transformedW2Filings, ...transformedNecFilings].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   )
 
   console.log(`[v0] Filing page: Rendering with ${allFilings.length} total filings`)
-  
-  return <FilingDashboardClient user={user} filings={allFilings} />
+
+  return <FilingDashboardEnhanced user={user} filings={allFilings} />
 }

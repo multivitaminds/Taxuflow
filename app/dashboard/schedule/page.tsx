@@ -1,11 +1,11 @@
-import { redirect } from 'next/navigation'
-import { createServerClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import { ScheduleClient } from "@/components/schedule-client"
 
 export default async function SchedulePage() {
   try {
-    const supabase = await createServerClient()
-    
+    const supabase = await createClient()
+
     if (!supabase) {
       // Supabase not configured, redirect to demo mode dashboard
       redirect("/dashboard")

@@ -116,7 +116,7 @@ export function DocumentsDetailsClient({ user, profile }: DocumentsDetailsClient
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-8 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-neon border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading documents...</p>
@@ -126,8 +126,8 @@ export function DocumentsDetailsClient({ user, profile }: DocumentsDetailsClient
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen bg-background pt-8">
+      <div className="container mx-auto px-4 py-6">
         <Button onClick={() => router.push("/dashboard")} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard

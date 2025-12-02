@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
+import { createUserWithBankAccount } from "@/app/actions/auth-enhanced"
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
@@ -59,31 +60,31 @@ export async function GET(request: Request) {
         .maybeSingle()
 
       if (!existingProfile) {
-        // Create profile for OAuth users
-        await supabase.from("user_profiles").insert({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
-        })
+        console.log("[v0] Creating new user profile with automatic bank accounts")
+        await createUserWithBankAccount(
+          data.user.id,
+          data.user.email!,
+          data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User",
+          data.user.user_metadata?.user_type || "regular",
+        )
       }
 
       const response = NextResponse.redirect(new URL("/dashboard", request.url))
 
-      // Set session cookies explicitly
       const {
         data: { session },
       } = await supabase.auth.getSession()
       if (session) {
         response.cookies.set("sb-access-token", session.access_token, {
           path: "/",
-          maxAge: 60 * 60 * 24 * 7, // 7 days
+          maxAge: 60 * 60 * 24 * 7,
           httpOnly: true,
           secure: true,
           sameSite: "lax",
         })
         response.cookies.set("sb-refresh-token", session.refresh_token, {
           path: "/",
-          maxAge: 60 * 60 * 24 * 30, // 30 days
+          maxAge: 60 * 60 * 24 * 30,
           httpOnly: true,
           secure: true,
           sameSite: "lax",

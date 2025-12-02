@@ -10,10 +10,12 @@ import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Settings, Building2, DollarSign, Bell, Shield, Download, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { formatEIN } from "@/lib/format-utils"
 
 export function AccountingSettingsClient() {
   const { toast } = useToast()
   const [companyName, setCompanyName] = useState("My Company")
+  const [taxId, setTaxId] = useState("")
   const [fiscalYearStart, setFiscalYearStart] = useState("january")
   const [currency, setCurrency] = useState("USD")
   const [emailNotifications, setEmailNotifications] = useState(true)
@@ -57,7 +59,16 @@ export function AccountingSettingsClient() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="taxId">Tax ID / EIN</Label>
-              <Input id="taxId" placeholder="XX-XXXXXXX" />
+              <Input
+                id="taxId"
+                placeholder="XX-XXXXXXX"
+                value={taxId}
+                onChange={(e) => {
+                  const formatted = formatEIN(e.target.value)
+                  setTaxId(formatted)
+                }}
+                maxLength={10}
+              />
             </div>
           </div>
           <div className="space-y-2">

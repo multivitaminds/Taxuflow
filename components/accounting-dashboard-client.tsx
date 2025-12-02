@@ -144,30 +144,26 @@ export function AccountingDashboardClient({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="border-b border-slate-200 bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-4xl font-bold text-slate-900">Accounting Hub</h1>
-              <p className="text-slate-600">Comprehensive financial management for your business</p>
-            </div>
-            <div className="flex gap-3">
-              <Button variant="outline" size="default" className="bg-white border-slate-300">
-                <Download className="h-4 w-4 mr-2" />
-                Export Data
+      <div className="container mx-auto px-6 pt-6 pb-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold text-slate-900">Accounting Hub</h1>
+            <p className="text-slate-600">Comprehensive financial management for your business</p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" size="default" className="bg-white border-slate-300">
+              <Download className="h-4 w-4 mr-2" />
+              Export Data
+            </Button>
+            <Link href="/accounting/invoices/new">
+              <Button size="default" className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                New Invoice
               </Button>
-              <Link href="/accounting/invoices/new">
-                <Button size="default" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Invoice
-                </Button>
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-6 pt-24 pb-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-4">

@@ -1,97 +1,17 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, ArrowDownRight, CreditCard, Plus, PiggyBank, ShieldCheck, Download } from "lucide-react"
+import { ArrowUpRight, CreditCard, Plus, ShieldCheck, Download } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-// Mock data simulating database tables
-const accountData = {
-  balance: 142500.0,
-  checking: 85000.0,
-  savings: 45000.0,
-  taxBuckets: 12500.0,
-  accountNumber: "****4291",
-  routingNumber: "****8821",
-}
-
-const transactions = [
-  {
-    id: "txn_1",
-    merchant: "AWS Web Services",
-    amount: -2450.0,
-    date: "Today, 2:45 PM",
-    type: "purchase",
-    status: "pending",
-    icon: (
-      <div className="bg-orange-100 p-2 rounded-full">
-        <CreditCard className="h-4 w-4 text-orange-600" />
-      </div>
-    ),
-  },
-  {
-    id: "txn_2",
-    merchant: "Client Payment - Stripe Payout",
-    amount: 12500.0,
-    date: "Yesterday",
-    type: "deposit",
-    status: "completed",
-    icon: (
-      <div className="bg-green-100 p-2 rounded-full">
-        <ArrowDownRight className="h-4 w-4 text-green-600" />
-      </div>
-    ),
-  },
-  {
-    id: "txn_3",
-    merchant: "WeWork Office",
-    amount: -4500.0,
-    date: "Oct 24",
-    type: "purchase",
-    status: "completed",
-    icon: (
-      <div className="bg-blue-100 p-2 rounded-full">
-        <Building2 className="h-4 w-4 text-blue-600" />
-      </div>
-    ),
-  },
-  {
-    id: "txn_4",
-    merchant: "Tax Bucket Auto-Transfer",
-    amount: -3750.0,
-    date: "Oct 24",
-    type: "transfer",
-    status: "completed",
-    icon: (
-      <div className="bg-purple-100 p-2 rounded-full">
-        <PiggyBank className="h-4 w-4 text-purple-600" />
-      </div>
-    ),
-  },
-  {
-    id: "txn_5",
-    merchant: "Apple Store",
-    amount: -2199.0,
-    date: "Oct 22",
-    type: "purchase",
-    status: "completed",
-    icon: (
-      <div className="bg-gray-100 p-2 rounded-full">
-        <CreditCard className="h-4 w-4 text-gray-600" />
-      </div>
-    ),
-  },
-]
-
-const taxBuckets = [
-  { name: "Federal Tax", balance: 8500.0, goal: 15000.0, color: "bg-[#635bff]" },
-  { name: "State Tax", balance: 2500.0, goal: 4000.0, color: "bg-[#00d4ff]" },
-  { name: "Sales Tax", balance: 1500.0, goal: 2000.0, color: "bg-[#32d74b]" },
-]
+import { getNeobankAccounts, getAccountBalance } from "@/app/actions/neobank/get-accounts"
+import { getNeobankTransactions } from "@/app/actions/neobank/get-transactions"
+import { getNeobankCards } from "@/app/actions/neobank/get-cards"
+import { createNeobankAccount } from "@/app/actions/neobank/create-account"
+import { useToast } from "@/hooks/use-toast"
 
 function Building2({ className }: { className?: string }) {
   return (
@@ -117,6 +37,85 @@ function Building2({ className }: { className?: string }) {
 }
 
 export function NeobankDashboard() {
+  const [accountData, setAccountData] = useState<any>(null)
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [cards, setCards] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true)
+
+      const [balanceRes, accountsRes, transactionsRes, cardsRes] = await Promise.all([
+        getAccountBalance(),
+        getNeobankAccounts(),
+        getNeobankTransactions(5),
+        getNeobankCards(),
+      ])
+
+      if (accountsRes.data && accountsRes.data.length === 0) {
+        // No accounts found, create a default checking account
+        await createNeobankAccount("checking")
+        // Reload data
+        const newAccountsRes = await getNeobankAccounts()
+        setAccountData(newAccountsRes.data?.[0])
+      } else {
+        setAccountData(balanceRes)
+      }
+
+      setTransactions(transactionsRes.data || [])
+      setCards(cardsRes.data || [])
+      setLoading(false)
+    }
+
+    loadData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#635bff] mx-auto"></div>
+          <p className="text-slate-500">Loading your banking data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!accountData || accountData.totalBalance === 0) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="pt-12 pb-12 text-center">
+            <div className="bg-[#635bff]/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <CreditCard className="h-8 w-8 text-[#635bff]" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Welcome to Taxu Neobank</h3>
+            <p className="text-slate-500 mb-6">Create your first account to get started with banking features.</p>
+            <Button
+              className="bg-[#635bff] hover:bg-[#5851e1] text-white"
+              onClick={async () => {
+                const result = await createNeobankAccount("checking")
+                if (result.data) {
+                  toast({
+                    title: "Account created",
+                    description: "Your checking account has been created successfully.",
+                  })
+                  window.location.reload()
+                }
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" /> Create Checking Account
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const balance = accountData.totalBalance || 0
+
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">
       {/* Header */}
@@ -146,25 +145,19 @@ export function NeobankDashboard() {
           <CardContent className="relative z-10">
             <div className="flex items-baseline gap-1">
               <span className="text-4xl md:text-5xl font-bold">
-                ${accountData.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                ${balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </span>
               <span className="text-green-400 text-sm font-medium flex items-center bg-green-400/10 px-2 py-1 rounded-full">
                 <ArrowUpRight className="h-3 w-3 mr-1" /> +4.2%
               </span>
             </div>
-            <div className="mt-8 grid grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <p className="text-xs text-slate-400 uppercase">Checking</p>
-                <p className="text-lg font-semibold">${accountData.checking.toLocaleString()}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-slate-400 uppercase">Savings</p>
-                <p className="text-lg font-semibold">${accountData.savings.toLocaleString()}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs text-slate-400 uppercase">Tax Buckets</p>
-                <p className="text-lg font-semibold text-[#00d4ff]">${accountData.taxBuckets.toLocaleString()}</p>
-              </div>
+            <div className="mt-8 grid grid-cols-2 gap-4">
+              {accountData.accounts?.map((acc: any, idx: number) => (
+                <div key={idx} className="space-y-1">
+                  <p className="text-xs text-slate-400 uppercase">{acc.account_type}</p>
+                  <p className="text-lg font-semibold">${Number(acc.balance || 0).toLocaleString()}</p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -181,32 +174,36 @@ export function NeobankDashboard() {
                   variant="secondary"
                   className="bg-white/20 text-white border-none hover:bg-white/30 backdrop-blur-sm"
                 >
-                  Business Debit
+                  {cards.length > 0 ? "Business Card" : "No Card"}
                 </Badge>
               </div>
               <CreditCard className="h-6 w-6 opacity-80" />
             </div>
 
-            <div className="space-y-4 relative z-10 mt-8">
-              <div className="text-2xl font-mono tracking-wider opacity-90">•••• •••• •••• 4291</div>
-              <div className="flex justify-between items-end">
-                <div className="space-y-1">
-                  <p className="text-xs opacity-70 uppercase">Card Holder</p>
-                  <p className="font-medium">ALEXANDER SMITH</p>
+            {cards.length > 0 ? (
+              <div className="space-y-4 relative z-10 mt-8">
+                <div className="text-2xl font-mono tracking-wider opacity-90">
+                  •••• •••• •••• {cards[0].card_number_last4}
                 </div>
-                <div className="text-right space-y-1">
-                  <p className="text-xs opacity-70 uppercase">Expires</p>
-                  <p className="font-medium">12/28</p>
+                <div className="flex justify-between items-end">
+                  <div className="space-y-1">
+                    <p className="text-xs opacity-70 uppercase">Card Holder</p>
+                    <p className="font-medium">{cards[0].cardholder_name || "ACCOUNT HOLDER"}</p>
+                  </div>
+                  <div className="text-right space-y-1">
+                    <p className="text-xs opacity-70 uppercase">Expires</p>
+                    <p className="font-medium">{cards[0].expiration_date || "••/••"}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/20">
-              <span className="text-sm opacity-80">Visa Business</span>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-8">
-                Manage <ArrowUpRight className="ml-1 h-3 w-3" />
-              </Button>
-            </div>
+            ) : (
+              <div className="space-y-4 relative z-10 mt-8 text-center">
+                <p className="text-sm opacity-80">No virtual card created yet</p>
+                <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-none">
+                  Request Card
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -252,76 +249,61 @@ export function NeobankDashboard() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="divide-y divide-slate-100">
-                {transactions.map((txn) => (
-                  <div
-                    key={txn.id}
-                    className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      {txn.icon}
-                      <div>
-                        <p className="font-medium text-sm text-[#0a2540]">{txn.merchant}</p>
-                        <p className="text-xs text-slate-500">{txn.date}</p>
+              {transactions.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">
+                  <p>No transactions yet. Your transaction history will appear here.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {transactions.map((txn) => (
+                    <div
+                      key={txn.id}
+                      className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="bg-blue-100 p-2 rounded-full">
+                          <CreditCard className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-[#0a2540]">
+                            {txn.merchant_name || txn.description || "Transaction"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(txn.transaction_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={cn(
+                            "font-medium text-sm",
+                            Number(txn.amount) > 0 ? "text-green-600" : "text-[#0a2540]",
+                          )}
+                        >
+                          {Number(txn.amount) > 0 ? "+" : ""}
+                          {Number(txn.amount).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                        </p>
+                        <Badge
+                          variant="secondary"
+                          className="text-[10px] px-1.5 py-0 h-5 bg-slate-100 text-slate-600 hover:bg-slate-100"
+                        >
+                          {txn.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={cn("font-medium text-sm", txn.amount > 0 ? "text-green-600" : "text-[#0a2540]")}>
-                        {txn.amount > 0 ? "+" : ""}
-                        {txn.amount.toLocaleString("en-US", { style: "currency", currency: "USD" })}
-                      </p>
-                      <Badge
-                        variant="secondary"
-                        className={cn(
-                          "text-[10px] px-1.5 py-0 h-5",
-                          txn.status === "pending"
-                            ? "bg-orange-100 text-orange-700 hover:bg-orange-100"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-100",
-                        )}
-                      >
-                        {txn.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="tax-buckets" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {taxBuckets.map((bucket) => (
-              <Card key={bucket.name} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-sm font-medium text-slate-600">{bucket.name}</CardTitle>
-                    <div className={cn("h-2 w-2 rounded-full", bucket.color)}></div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-2xl font-bold text-[#0a2540]">${bucket.balance.toLocaleString()}</span>
-                      <span className="text-xs text-slate-400 ml-2">/ ${bucket.goal.toLocaleString()}</span>
-                    </div>
-                    <Progress value={(bucket.balance / bucket.goal) * 100} className="h-2" />
-                    <div className="flex justify-between items-center text-xs text-slate-500">
-                      <span>{((bucket.balance / bucket.goal) * 100).toFixed(0)}% Funded</span>
-                      <span className="text-[#635bff] font-medium cursor-pointer">Auto-save ON</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            <Card className="border-slate-200 border-dashed shadow-none bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer flex flex-col items-center justify-center p-6 h-full min-h-[180px]">
-              <div className="bg-white p-3 rounded-full shadow-sm mb-3">
-                <Plus className="h-6 w-6 text-[#635bff]" />
-              </div>
-              <p className="font-medium text-[#0a2540]">Create New Bucket</p>
-              <p className="text-xs text-slate-500 mt-1 text-center">Save for equipment, payroll, or custom goals</p>
-            </Card>
-          </div>
+          {/* Tax Buckets Content */}
+        </TabsContent>
+
+        <TabsContent value="cards" className="space-y-4">
+          {/* Cards Content */}
         </TabsContent>
       </Tabs>
     </div>

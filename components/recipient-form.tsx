@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Lock } from "lucide-react"
 import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { formatSSN, formatEIN } from "@/lib/format-utils"
 
 const US_STATES = [
   "AL",
@@ -263,7 +264,10 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
             <Input
               id="ssn"
               value={formData.ssn}
-              onChange={(e) => setFormData({ ...formData, ssn: e.target.value, tinType: "SSN" })}
+              onChange={(e) => {
+                const formatted = formatSSN(e.target.value)
+                setFormData({ ...formData, ssn: formatted, tinType: "SSN" })
+              }}
               placeholder="XXX-XX-XXXX"
               maxLength={11}
             />
@@ -277,7 +281,10 @@ export function RecipientForm({ recipientId, onSuccess }: RecipientFormProps) {
             <Input
               id="ein"
               value={formData.ein}
-              onChange={(e) => setFormData({ ...formData, ein: e.target.value, tinType: "EIN" })}
+              onChange={(e) => {
+                const formatted = formatEIN(e.target.value)
+                setFormData({ ...formData, ein: formatted, tinType: "EIN" })
+              }}
               placeholder="XX-XXXXXXX"
               maxLength={10}
             />

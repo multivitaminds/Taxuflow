@@ -29,8 +29,8 @@ export function BankingDashboardClient({ user }: BankingDashboardClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen bg-background pt-8">
+      <div className="container mx-auto px-4 py-6">
         <div className="mb-8">
           <Button variant="ghost" onClick={() => router.push("/dashboard")} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />

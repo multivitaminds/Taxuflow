@@ -129,7 +129,7 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-8 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-neon border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading documents...</p>
@@ -139,8 +139,8 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20">
-      <div className="container mx-auto px-4 py-12">
+    <div className="min-h-screen bg-background pt-8 pr-8">
+      <div className="container mx-auto px-4 py-6">
         <Button onClick={() => router.push("/dashboard/documents")} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Documents
@@ -213,21 +213,23 @@ export function AllDocumentsClient({ user, profile }: AllDocumentsClientProps) {
               <Button
                 variant={filterType === "all" ? "default" : "outline"}
                 onClick={() => setFilterType("all")}
-                className={filterType === "all" ? "bg-neon text-background" : ""}
+                className={filterType === "all" ? "bg-neon text-background hover:bg-neon/90" : "hover:bg-neon/10"}
               >
                 All
               </Button>
               <Button
                 variant={filterType === "processed" ? "default" : "outline"}
                 onClick={() => setFilterType("processed")}
-                className={filterType === "processed" ? "bg-neon text-background" : ""}
+                className={filterType === "processed" ? "bg-neon text-background hover:bg-neon/90" : "hover:bg-neon/10"}
               >
                 Processed
               </Button>
               <Button
                 variant={filterType === "processing" ? "default" : "outline"}
                 onClick={() => setFilterType("processing")}
-                className={filterType === "processing" ? "bg-neon text-background" : ""}
+                className={
+                  filterType === "processing" ? "bg-neon text-background hover:bg-neon/90" : "hover:bg-neon/10"
+                }
               >
                 Processing
               </Button>

@@ -374,6 +374,51 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
         return Promise.race([promise, timeoutPromise])
       }
 
+      const { data: w2Filings, error: w2Error } = await fetchWithTimeout(
+        supabase.from("w2_filings").select("*").eq("user_id", user.id),
+      )
+
+      if (w2Error) {
+        console.error("[v0] Error fetching W-2 filings:", w2Error)
+      }
+
+      let totalRefund = 0
+      let totalIncome = 0
+      let totalWithheld = 0
+      let acceptedFilings = 0
+      let pendingFilings = 0
+
+      if (w2Filings && w2Filings.length > 0) {
+        w2Filings.forEach((filing) => {
+          const wages = filing.wages || 0
+          const federalWithheld = filing.federal_tax_withheld || 0
+
+          totalIncome += wages
+          totalWithheld += federalWithheld
+
+          const status = (filing.irs_status || "").toLowerCase()
+          if (status === "accepted") {
+            acceptedFilings++
+            totalRefund += filing.refund_amount || 0
+          } else if (!status || status === "pending") {
+            pendingFilings++
+          }
+        })
+      }
+
+      const documentsComplete = (documents.length / 10) * 100
+      const confidence = Math.min(95, Math.round(documentsComplete))
+
+      let auditRisk = "Low"
+      if (totalRefund > 50000) auditRisk = "Medium"
+      if (totalRefund > 100000) auditRisk = "High"
+
+      setTaxCalc({
+        estimated_refund: totalRefund,
+        confidence_percentage: confidence,
+        audit_risk_score: auditRisk,
+      })
+
       const { data: docsData, error: docsError } = await fetchWithTimeout(
         supabase.from("documents").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       )
@@ -806,11 +851,11 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   }
 
   return (
-    <>
-      <DashboardHeader userName={fullUserName} userEmail={user?.email || ""} userId={user?.id} />
+    <div className="space-y-6 pr-12">
+      <DashboardHeader fullUserName={fullUserName} userName={userName} selectedAgent={selectedAgent} />
 
-      <div className="min-h-screen bg-background pt-20">
-        <div className="container mx-auto px-4 py-12">
+      <div className="min-h-screen bg-background pt-8">
+        <div className="container mx-auto px-4 py-6">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}</h1>
             <p className="text-muted-foreground">
@@ -827,7 +872,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
                 <TrendingUp className="w-5 h-5 text-neon" />
                 <span className="text-xs text-muted-foreground">Estimated</span>
               </div>
-              <div className="text-2xl font-bold text-neon">${taxCalc?.estimated_refund?.toFixed(0) || "0"}</div>
+              <div className="text-2xl font-bold text-neon">${taxCalc?.estimated_refund?.toLocaleString() || "0"}</div>
               <div className="text-sm text-muted-foreground">Expected Refund</div>
             </Card>
 
@@ -1298,6 +1343,6 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
