@@ -46,7 +46,7 @@ export function AccountingSidebar() {
   return (
     <div
       className={cn(
-        "fixed left-0 top-0 h-screen bg-[#f7f9fc] border-r border-slate-200 transition-all duration-300 z-40",
+        "fixed left-0 top-[48px] h-[calc(100vh-48px)] bg-[#f7f9fc] border-r border-slate-200 transition-all duration-300 z-40",
         collapsed ? "w-16" : "w-64",
       )}
     >
@@ -68,7 +68,7 @@ export function AccountingSidebar() {
         </Button>
       </div>
 
-      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
+      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-188px)]">
         {navigation.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
           return (

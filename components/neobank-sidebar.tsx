@@ -38,11 +38,11 @@ export function NeobankSidebar() {
   return (
     <div
       className={cn(
-        "fixed left-0 top-0 h-screen bg-[#f7f9fc] border-r border-slate-200 transition-all duration-300 z-40",
+        "fixed left-0 top-[38px] h-[calc(100vh-38px)] bg-[#f7f9fc] border-r border-slate-200 transition-all duration-300 z-40",
         collapsed ? "w-16" : "w-64",
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
+      <div className="flex items-center justify-between p-4 bg-white">
         {!collapsed && (
           <Link href="/neobank" className="text-xl font-bold flex items-center gap-2">
             <span className="text-[#0a2540]">Tax</span>
@@ -60,7 +60,7 @@ export function NeobankSidebar() {
         </Button>
       </div>
 
-      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
+      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-180px)]">
         {navigation.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/neobank" && pathname?.startsWith(item.href + "/"))
           return (

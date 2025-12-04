@@ -7,11 +7,10 @@ export default function DeveloperLayout({ children }: { children: React.ReactNod
       {/* Top Navigation */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-slate-200">
         <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-[48px]">
             <div className="flex items-center gap-8">
               <Link href="/" className="text-2xl font-bold flex items-center gap-1">
-                <span className="text-[#0a2540]">Tax</span>
-                <span className="text-[#635bff]">u</span>
+                <span className="text-[#0a2540]">Taxu</span>
                 <span className="ml-2 text-xs font-bold text-white bg-[#635bff] px-2 py-0.5 rounded-full tracking-wide">
                   DOCS
                 </span>

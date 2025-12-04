@@ -4,7 +4,8 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, ExternalLink } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface SubscriptionCheckoutButtonProps {
   planId: string
@@ -22,12 +23,11 @@ export function SubscriptionCheckoutButton({
   disabled = false,
 }: SubscriptionCheckoutButtonProps) {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { toast } = useToast()
 
   const handleCheckout = async () => {
     try {
       setLoading(true)
-      setError(null)
       console.log("[v0] Starting checkout for plan:", planId)
 
       const response = await fetch("/api/checkout", {
@@ -44,23 +44,54 @@ export function SubscriptionCheckoutButton({
       if (!response.ok) {
         const errorMessage = data.details || data.error || "Failed to create checkout session"
         console.error("[v0] Checkout failed:", errorMessage)
-        setError(errorMessage)
-        alert(`Checkout failed: ${errorMessage}`)
+
+        toast({
+          title: "Checkout Failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
+
         setLoading(false)
         return
       }
 
       if (data.url) {
         console.log("[v0] Redirecting to checkout:", data.url)
-        window.location.href = data.url
+
+        const checkoutWindow = window.open(data.url, "_blank", "noopener,noreferrer")
+
+        if (!checkoutWindow) {
+          // Popup was blocked, show instructions
+          toast({
+            title: "Popup Blocked",
+            description: "Please allow popups for this site and try again. Or copy the checkout link.",
+            variant: "destructive",
+          })
+
+          // Fallback: try direct navigation
+          window.location.href = data.url
+        } else {
+          // Show success message that checkout opened in new tab
+          toast({
+            title: "Checkout Opened",
+            description: "Please complete your purchase in the new tab that just opened.",
+          })
+
+          setLoading(false)
+        }
       } else {
         throw new Error("No checkout URL returned")
       }
     } catch (error) {
       console.error("[v0] Checkout error:", error)
       const errorMessage = error instanceof Error ? error.message : "Failed to start checkout"
-      setError(errorMessage)
-      alert(`Failed to start checkout: ${errorMessage}`)
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
+
       setLoading(false)
     }
   }
@@ -73,7 +104,10 @@ export function SubscriptionCheckoutButton({
           Loading...
         </>
       ) : (
-        children
+        <>
+          {children}
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </>
       )}
     </Button>
   )

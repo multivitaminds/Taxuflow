@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 let supabaseInstance: SupabaseClient | null = null
 
+const originalFetch = typeof window !== "undefined" ? window.fetch.bind(window) : fetch
+
 export function createClient() {
   // Don't create browser client on server
   if (typeof window === "undefined") {
@@ -22,7 +24,39 @@ export function createClient() {
     return supabaseInstance
   }
 
+  const customFetch: typeof fetch = async (input, init) => {
+    try {
+      // Use the original fetch to avoid recursion
+      const response = await originalFetch(input, init)
+      return response
+    } catch (error: any) {
+      // In v0 preview, network requests to Supabase auth endpoints may fail due to CORS/security
+      console.warn("[v0] Supabase fetch failed (expected in v0 preview):", error?.message)
+
+      // Return a mock error response that Supabase can handle gracefully
+      return new Response(
+        JSON.stringify({
+          error: "network_error",
+          error_description: "Network request blocked in preview environment",
+        }),
+        {
+          status: 0, // Network error status
+          statusText: "Network Error",
+          headers: { "Content-Type": "application/json" },
+        },
+      )
+    }
+  }
+
   supabaseInstance = createBrowserClientOriginal(supabaseUrl, supabaseAnonKey, {
+    global: {
+      fetch: customFetch,
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: true,
+      detectSessionInUrl: false, // Prevent auth callback issues in preview
+    },
     cookies: {
       get(name: string) {
         // Use document.cookie for client-side cookie access

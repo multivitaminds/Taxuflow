@@ -23,13 +23,11 @@ export function AppHeader({ userName, isDemoMode }: AppHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white">
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className="flex h-[38px] items-center justify-between px-6">
         {/* Logo and Demo Mode Badge */}
         <div className="flex items-center gap-4">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="text-2xl font-bold">
-              Tax<span className="text-indigo-600">u</span>
-            </span>
+            <span className="text-2xl font-bold">Taxu</span>
           </Link>
           {isDemoMode && (
             <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">

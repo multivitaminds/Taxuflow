@@ -25,7 +25,7 @@ export default async function AccountingLayout({ children }: { children: React.R
 
       <div className="flex">
         <AccountingSidebar />
-        <main className="flex-1 ml-64 pr-12">{children}</main>
+        <main className="flex-1 ml-64 pr-12 pt-[48px]">{children}</main>
       </div>
     </div>
   )

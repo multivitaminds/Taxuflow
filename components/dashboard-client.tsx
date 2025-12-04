@@ -28,7 +28,6 @@ import type { User } from "@supabase/ssr"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { DocumentUpload } from "@/components/document-upload"
 import { agents } from "@/data/agents"
-import { DashboardHeader } from "@/components/dashboard-header"
 
 interface DashboardClientProps {
   user: User | null // Allow null for client-side auth fallback
@@ -851,13 +850,12 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
   }
 
   return (
-    <div className="space-y-6 pr-12">
-      <DashboardHeader fullUserName={fullUserName} userName={userName} selectedAgent={selectedAgent} />
-
-      <div className="min-h-screen bg-background pt-8">
-        <div className="container mx-auto px-4 py-6">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}</h1>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="space-y-8 pb-6">
+          {/* Welcome Section */}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-balance">Welcome back, {userName}</h1>
             <p className="text-muted-foreground">
               Your 2024 tax filing is {completionPercentage()}% complete • Sam is monitoring your progress
             </p>
@@ -872,7 +870,9 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
                 <TrendingUp className="w-5 h-5 text-neon" />
                 <span className="text-xs text-muted-foreground">Estimated</span>
               </div>
-              <div className="text-2xl font-bold text-neon">${taxCalc?.estimated_refund?.toLocaleString() || "0"}</div>
+              <div className="text-2xl font-bold text-neon">
+                ${taxCalc?.estimated_refund?.toLocaleString("en-US", { maximumFractionDigits: 0 }) || "0"}
+              </div>
               <div className="text-sm text-muted-foreground">Expected Refund</div>
             </Card>
 
@@ -1310,39 +1310,39 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
             </div>
           </div>
         </div>
-
-        {showUploadModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <Card className="w-full max-w-2xl p-6 border-neon/20 bg-card">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Upload Tax Documents</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowUploadModal(false)
-                    setAutoRefresh(false)
-                  }}
-                >
-                  ✕
-                </Button>
-              </div>
-
-              <DocumentUpload onUploadComplete={handleUploadComplete} />
-
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-sm text-muted-foreground">Supported formats: PDF, JPG, PNG, DOCX (max 10MB)</p>
-                {autoRefresh && (
-                  <p className="text-xs text-neon mt-2 flex items-center gap-2">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Dashboard auto-refreshing...
-                  </p>
-                )}
-              </div>
-            </Card>
-          </div>
-        )}
       </div>
+
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl p-6 border-neon/20 bg-card">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Upload Tax Documents</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setShowUploadModal(false)
+                  setAutoRefresh(false)
+                }}
+              >
+                ✕
+              </Button>
+            </div>
+
+            <DocumentUpload onUploadComplete={handleUploadComplete} />
+
+            <div className="mt-6 pt-6 border-t border-border">
+              <p className="text-sm text-muted-foreground">Supported formats: PDF, JPG, PNG, DOCX (max 10MB)</p>
+              {autoRefresh && (
+                <p className="text-xs text-neon mt-2 flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Dashboard auto-refreshing...
+                </p>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

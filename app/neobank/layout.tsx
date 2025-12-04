@@ -27,7 +27,7 @@ export default async function NeobankLayout({ children }: { children: React.Reac
 
         <div className="flex">
           <NeobankSidebar />
-          <main className="flex-1 ml-64 pr-12 transition-all duration-300 ease-in-out">{children}</main>
+          <main className="flex-1 ml-64 pr-12 pt-12 transition-all duration-300 ease-in-out">{children}</main>
         </div>
       </div>
     </DashboardProvider>
