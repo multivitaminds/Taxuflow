@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 
-export async function createNeobankAccount(accountType: "checking" | "savings", nickname?: string) {
+export async function createNeobankAccount(accountType: "checking" | "savings") {
   const supabase = await createClient()
 
   const {
@@ -27,7 +27,6 @@ export async function createNeobankAccount(accountType: "checking" | "savings", 
         balance: 0,
         currency: "USD",
         status: "active",
-        nickname: nickname || `${accountType.charAt(0).toUpperCase() + accountType.slice(1)} Account`,
       },
     ])
     .select()

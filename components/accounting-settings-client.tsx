@@ -14,18 +14,91 @@ import { formatEIN } from "@/lib/format-utils"
 
 export function AccountingSettingsClient() {
   const { toast } = useToast()
-  const [companyName, setCompanyName] = useState("My Company")
-  const [taxId, setTaxId] = useState("")
+  const [companyName, setCompanyName] = useState("Taxu, Inc")
+  const [taxId, setTaxId] = useState("12-3456789")
+  const [address, setAddress] = useState("1767 Tearose Ln")
+  const [city, setCity] = useState("Cherry Hill")
+  const [state, setState] = useState("NJ")
+  const [zip, setZip] = useState("08003")
   const [fiscalYearStart, setFiscalYearStart] = useState("january")
-  const [currency, setCurrency] = useState("USD")
+  const [currency, setCurrency] = useState("EUR")
+  const [accountingMethod, setAccountingMethod] = useState("cash")
+  const [taxYear, setTaxYear] = useState("calendar")
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [autoBackup, setAutoBackup] = useState(true)
 
+  const [isConnectingQBO, setIsConnectingQBO] = useState(false)
+  const [isConnectingXero, setIsConnectingXero] = useState(false)
+
+  const [autoTaxCalculation, setAutoTaxCalculation] = useState(true)
+  const [salesTaxRate, setSalesTaxRate] = useState("8.5")
+  const [stripeEnabled, setStripeEnabled] = useState(false)
+  const [approvalThreshold, setApprovalThreshold] = useState("5000")
+
   const handleSave = () => {
+    console.log("[v0] Save Changes clicked")
     toast({
       title: "Settings saved",
       description: "Your accounting settings have been updated successfully.",
     })
+  }
+
+  const handleConnectQuickBooks = async () => {
+    setIsConnectingQBO(true)
+    try {
+      const response = await fetch("/api/books/qbo/connect")
+      const data = await response.json()
+
+      if (data.error) {
+        toast({
+          title: "Configuration Required",
+          description: data.message || "Please configure QuickBooks credentials in environment variables",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Redirect to QuickBooks OAuth
+      window.location.href = data.authUrl
+    } catch (error) {
+      console.error("[v0] QuickBooks connect error:", error)
+      toast({
+        title: "Connection Failed",
+        description: "Failed to initiate QuickBooks connection. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsConnectingQBO(false)
+    }
+  }
+
+  const handleConnectXero = async () => {
+    setIsConnectingXero(true)
+    try {
+      const response = await fetch("/api/books/xero/connect")
+      const data = await response.json()
+
+      if (data.error) {
+        toast({
+          title: "Configuration Required",
+          description: data.message || "Please configure Xero credentials in environment variables",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Redirect to Xero OAuth
+      window.location.href = data.authUrl
+    } catch (error) {
+      console.error("[v0] Xero connect error:", error)
+      toast({
+        title: "Connection Failed",
+        description: "Failed to initiate Xero connection. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsConnectingXero(false)
+    }
   }
 
   return (
@@ -35,7 +108,11 @@ export function AccountingSettingsClient() {
           <h1 className="text-3xl font-bold tracking-tight">Accounting Settings</h1>
           <p className="text-muted-foreground mt-2">Configure your accounting preferences and integrations</p>
         </div>
-        <Button onClick={handleSave} className="bg-[#635bff] hover:bg-[#5851df] text-white">
+        <Button
+          onClick={handleSave}
+          className="bg-[#635bff] hover:bg-[#5851df] text-white cursor-pointer relative z-10"
+          type="button"
+        >
           Save Changes
         </Button>
       </div>
@@ -73,20 +150,25 @@ export function AccountingSettingsClient() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="address">Business Address</Label>
-            <Input id="address" placeholder="Enter business address" />
+            <Input
+              id="address"
+              placeholder="Enter business address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="city">City</Label>
-              <Input id="city" placeholder="City" />
+              <Input id="city" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="state">State</Label>
-              <Input id="state" placeholder="State" />
+              <Input id="state" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="zip">ZIP Code</Label>
-              <Input id="zip" placeholder="ZIP" />
+              <Input id="zip" placeholder="ZIP" value={zip} onChange={(e) => setZip(e.target.value)} />
             </div>
           </div>
         </div>
@@ -140,7 +222,7 @@ export function AccountingSettingsClient() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="accountingMethod">Accounting Method</Label>
-              <Select defaultValue="accrual">
+              <Select value={accountingMethod} onValueChange={setAccountingMethod}>
                 <SelectTrigger id="accountingMethod">
                   <SelectValue />
                 </SelectTrigger>
@@ -152,7 +234,7 @@ export function AccountingSettingsClient() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="taxYear">Tax Year</Label>
-              <Select defaultValue="calendar">
+              <Select value={taxYear} onValueChange={setTaxYear}>
                 <SelectTrigger id="taxYear">
                   <SelectValue />
                 </SelectTrigger>
@@ -162,6 +244,45 @@ export function AccountingSettingsClient() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Tax Settings */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <DollarSign className="h-5 w-5 text-[#635bff]" />
+          <h2 className="text-xl font-semibold">Tax Settings</h2>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="autoTax">Automatic Tax Calculation</Label>
+              <p className="text-sm text-muted-foreground">Automatically calculate sales tax on transactions</p>
+            </div>
+            <Switch id="autoTax" checked={autoTaxCalculation} onCheckedChange={setAutoTaxCalculation} />
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <Label htmlFor="salesTaxRate">Default Sales Tax Rate (%)</Label>
+            <Input
+              id="salesTaxRate"
+              type="number"
+              step="0.01"
+              value={salesTaxRate}
+              onChange={(e) => setSalesTaxRate(e.target.value)}
+              placeholder="8.5"
+            />
+          </div>
+          <Separator />
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Tax Jurisdictions</Label>
+              <p className="text-sm text-muted-foreground">Manage state and local tax rates</p>
+            </div>
+            <Button variant="outline" asChild>
+              <a href="/accounting/settings/tax-jurisdictions">Manage</a>
+            </Button>
           </div>
         </div>
       </Card>
@@ -246,6 +367,74 @@ export function AccountingSettingsClient() {
         </div>
       </Card>
 
+      {/* Payment Gateways */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <DollarSign className="h-5 w-5 text-[#635bff]" />
+          <h2 className="text-xl font-semibold">Payment Gateways</h2>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 border rounded-lg hover:border-[#635bff] transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">Stripe</h3>
+                <p className="text-sm text-muted-foreground">Accept credit cards and ACH payments</p>
+                {stripeEnabled && <span className="text-xs text-green-600 font-medium">Connected</span>}
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => setStripeEnabled(!stripeEnabled)}>
+              {stripeEnabled ? "Disconnect" : "Connect"}
+            </Button>
+          </div>
+          <div className="flex items-center justify-between p-4 border rounded-lg hover:border-[#635bff] transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <DollarSign className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-medium">PayPal</h3>
+                <p className="text-sm text-muted-foreground">Accept PayPal payments</p>
+              </div>
+            </div>
+            <Button variant="outline">Connect</Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* User Roles & Permissions */}
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <Shield className="h-5 w-5 text-[#635bff]" />
+          <h2 className="text-xl font-semibold">User Roles & Permissions</h2>
+        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Manage User Roles</Label>
+              <p className="text-sm text-muted-foreground">Configure permissions for different user types</p>
+            </div>
+            <Button variant="outline" asChild>
+              <a href="/accounting/settings/roles">Manage Roles</a>
+            </Button>
+          </div>
+          <Separator />
+          <div className="space-y-2">
+            <Label htmlFor="approvalThreshold">Approval Threshold ($)</Label>
+            <p className="text-sm text-muted-foreground mb-2">Transactions above this amount require approval</p>
+            <Input
+              id="approvalThreshold"
+              type="number"
+              value={approvalThreshold}
+              onChange={(e) => setApprovalThreshold(e.target.value)}
+              placeholder="5000"
+            />
+          </div>
+        </div>
+      </Card>
+
       {/* Integrations */}
       <Card className="p-6">
         <div className="flex items-center gap-2 mb-6">
@@ -253,7 +442,7 @@ export function AccountingSettingsClient() {
           <h2 className="text-xl font-semibold">Integrations</h2>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex items-center justify-between p-4 border rounded-lg hover:border-[#635bff] transition-colors">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-green-600" />
@@ -263,9 +452,11 @@ export function AccountingSettingsClient() {
                 <p className="text-sm text-muted-foreground">Connect to QuickBooks Online</p>
               </div>
             </div>
-            <Button variant="outline">Connect</Button>
+            <Button variant="outline" onClick={handleConnectQuickBooks} disabled={isConnectingQBO}>
+              {isConnectingQBO ? "Connecting..." : "Connect"}
+            </Button>
           </div>
-          <div className="flex items-center justify-between p-4 border rounded-lg">
+          <div className="flex items-center justify-between p-4 border rounded-lg hover:border-[#635bff] transition-colors">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Building2 className="h-6 w-6 text-blue-600" />
@@ -275,10 +466,14 @@ export function AccountingSettingsClient() {
                 <p className="text-sm text-muted-foreground">Sync with Xero accounting</p>
               </div>
             </div>
-            <Button variant="outline">Connect</Button>
+            <Button variant="outline" onClick={handleConnectXero} disabled={isConnectingXero}>
+              {isConnectingXero ? "Connecting..." : "Connect"}
+            </Button>
           </div>
         </div>
       </Card>
     </div>
   )
 }
+
+export default AccountingSettingsClient

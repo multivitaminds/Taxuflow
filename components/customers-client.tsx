@@ -79,6 +79,12 @@ export function CustomersClient() {
               <p className="text-muted-foreground">Manage your customer relationships</p>
             </div>
             <div className="flex items-center gap-3">
+              <Link href="/portal/customer">
+                <Button variant="outline" size="lg" className="gap-2 bg-transparent">
+                  <User className="h-5 w-5" />
+                  Customer Portal
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 size="lg"

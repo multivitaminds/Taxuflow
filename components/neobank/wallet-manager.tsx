@@ -147,9 +147,9 @@ export function WalletManager() {
   const handleCreateAccount = async () => {
     setIsCreating(true)
 
-    console.log("[v0] Creating new account:", { type: selectedAccountType, nickname: accountNickname })
+    console.log("[v0] Creating new account:", { type: selectedAccountType })
 
-    const result = await createNeobankAccount(selectedAccountType, accountNickname || undefined)
+    const result = await createNeobankAccount(selectedAccountType)
 
     if (result.error) {
       console.error("[v0] Error creating account:", result.error)

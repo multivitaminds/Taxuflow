@@ -1,7 +1,7 @@
 "use client"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, TrendingUp, DollarSign, PieChart, Download, Calendar, ArrowRight } from "lucide-react"
+import { FileText, TrendingUp, DollarSign, PieChart, Download, Calendar, ArrowRight, BarChart3 } from "lucide-react"
 import Link from "next/link"
 
 export default function ReportsClient() {
@@ -26,6 +26,17 @@ export default function ReportsClient() {
           description: "Cash inflows and outflows",
           icon: DollarSign,
           href: "/accounting/reports/cash-flow",
+        },
+      ],
+    },
+    {
+      title: "Comparative Analysis",
+      reports: [
+        {
+          name: "Comparative Reports",
+          description: "Year-over-Year and Quarter-over-Quarter analysis",
+          icon: TrendingUp,
+          href: "/accounting/reports/comparative",
         },
       ],
     },
@@ -130,10 +141,55 @@ export default function ReportsClient() {
 
   return (
     <div className="p-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Reports</h1>
-        <p className="text-muted-foreground mt-1">Financial reports and analytics</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Reports</h1>
+          <p className="text-muted-foreground mt-1">Financial reports and analytics</p>
+        </div>
+        <Link href="/accounting/reports/analytics">
+          <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Advanced Analytics
+          </Button>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-5 w-5 text-green-500" />
+            <span className="text-sm font-medium">Revenue</span>
+          </div>
+          <p className="text-2xl font-bold">$524,892</p>
+          <p className="text-xs text-muted-foreground mt-1">This month</p>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp className="h-5 w-5 text-red-500" />
+            <span className="text-sm font-medium">Expenses</span>
+          </div>
+          <p className="text-2xl font-bold">$337,658</p>
+          <p className="text-xs text-muted-foreground mt-1">This month</p>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <DollarSign className="h-5 w-5 text-blue-500" />
+            <span className="text-sm font-medium">Net Profit</span>
+          </div>
+          <p className="text-2xl font-bold">$187,234</p>
+          <p className="text-xs text-muted-foreground mt-1">This month</p>
+        </Card>
+
+        <Card className="p-4 bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+          <div className="flex items-center gap-2 mb-2">
+            <PieChart className="h-5 w-5 text-purple-500" />
+            <span className="text-sm font-medium">Margin</span>
+          </div>
+          <p className="text-2xl font-bold">35.7%</p>
+          <p className="text-xs text-muted-foreground mt-1">Profit margin</p>
+        </Card>
       </div>
 
       {/* Report Categories */}

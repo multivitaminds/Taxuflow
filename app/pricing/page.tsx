@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -6,6 +7,12 @@ import Link from "next/link"
 import { SubscriptionCheckoutButton } from "@/components/subscription-checkout-button"
 import { AddOnCheckoutButton } from "@/components/addon-checkout-button"
 import { getIndividualPlans, getBusinessPlans, ADD_ONS } from "@/lib/subscription-plans"
+
+export const metadata: Metadata = {
+  title: "Pricing - Taxu | Premium Tax Filing at Better Value",
+  description:
+    "AI-powered tax filing starting at $49. 20-40% cheaper than TurboTax. Professional accuracy, transparent pricing.",
+}
 
 export default function PricingPage() {
   const individualPlans = getIndividualPlans()

@@ -18,6 +18,8 @@ import {
   CreditCard,
   Package,
   AlertCircle,
+  Settings2,
+  RefreshCw,
 } from "lucide-react"
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts"
 import { useEffect, useState } from "react"
@@ -38,12 +40,17 @@ export function AccountingDashboardClient({
   allInvoices,
 }: AccountingDashboardClientProps) {
   const [mounted, setMounted] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState(new Date())
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Calculate metrics
+  const handleRefresh = () => {
+    setLastRefresh(new Date())
+    window.location.reload()
+  }
+
   const totalRevenue = invoices
     .filter((inv) => inv.status === "paid")
     .reduce((sum, inv) => sum + Number.parseFloat(inv.total_amount || 0), 0)
@@ -151,6 +158,21 @@ export function AccountingDashboardClient({
             <p className="text-slate-600">Comprehensive financial management for your business</p>
           </div>
           <div className="flex gap-3">
+            <Button
+              variant="outline"
+              size="default"
+              onClick={handleRefresh}
+              className="bg-white border-slate-300 hover:bg-slate-50"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Link href="/accounting/dashboard/customize">
+              <Button variant="outline" size="default" className="bg-white border-slate-300 hover:bg-slate-50">
+                <Settings2 className="h-4 w-4 mr-2" />
+                Customize
+              </Button>
+            </Link>
             <Button variant="outline" size="default" className="bg-white border-slate-300">
               <Download className="h-4 w-4 mr-2" />
               Export Data
@@ -162,6 +184,17 @@ export function AccountingDashboardClient({
               </Button>
             </Link>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-slate-500">
+          <p>
+            Last updated: {lastRefresh.toLocaleTimeString()} - {lastRefresh.toLocaleDateString()}
+          </p>
+          <Link href="/accounting/dashboard/customize">
+            <Button variant="link" size="sm" className="text-blue-600">
+              Customize your dashboard layout →
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

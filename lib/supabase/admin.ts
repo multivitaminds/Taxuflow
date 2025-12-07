@@ -1,5 +1,5 @@
 import "server-only"
-import { createClient } from "@supabase/supabase-js"
+import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 
 export function createAdminClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
@@ -9,10 +9,12 @@ export function createAdminClient() {
     throw new Error("Missing Supabase admin credentials (URL or Service Role Key)")
   }
 
-  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+  return createSupabaseClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   })
 }
+
+export const createClient = createAdminClient

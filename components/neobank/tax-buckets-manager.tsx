@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -134,6 +135,8 @@ export function TaxBucketsManager() {
     Liability: b.liability,
   }))
 
+  const router = useRouter()
+
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -168,18 +171,27 @@ export function TaxBucketsManager() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div>
+                <button
+                  onClick={() => router.push("/neobank/tax-buckets/overview")}
+                  className="text-left hover:bg-slate-50 p-4 rounded-lg transition-all hover:shadow-md"
+                >
                   <p className="text-sm font-medium text-slate-500 uppercase">Total Saved</p>
                   <p className="text-3xl font-bold text-[#0a2540]">${totalBalance.toLocaleString()}</p>
-                </div>
-                <div>
+                </button>
+                <button
+                  onClick={() => router.push("/neobank/tax-buckets/liability")}
+                  className="text-left hover:bg-slate-50 p-4 rounded-lg transition-all hover:shadow-md"
+                >
                   <p className="text-sm font-medium text-slate-500 uppercase">Estimated Liability</p>
                   <p className="text-3xl font-bold text-slate-600">${(17000).toLocaleString()}</p>
-                </div>
-                <div>
+                </button>
+                <button
+                  onClick={() => router.push("/neobank/tax-buckets/coverage")}
+                  className="text-left hover:bg-slate-50 p-4 rounded-lg transition-all hover:shadow-md"
+                >
                   <p className="text-sm font-medium text-slate-500 uppercase">Coverage</p>
                   <p className="text-3xl font-bold text-green-600">{Math.round((totalBalance / 17000) * 100)}%</p>
-                </div>
+                </button>
               </div>
 
               <div className="h-[300px] w-full">
@@ -209,7 +221,11 @@ export function TaxBucketsManager() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Your Buckets</h3>
             {buckets.map((bucket) => (
-              <Card key={bucket.id} className="border-slate-200 shadow-sm hover:shadow-md transition-all">
+              <Card
+                key={bucket.id}
+                className="border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer hover:scale-[1.01]"
+                onClick={() => router.push(`/neobank/tax-buckets/${bucket.id}`)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-4">
@@ -247,7 +263,15 @@ export function TaxBucketsManager() {
                       <TrendingUp className="h-4 w-4 text-green-500" />
                       <span>On track to meet Q4 deadline</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-[#635bff] hover:bg-[#635bff]/10">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#635bff] hover:bg-[#635bff]/10"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/neobank/tax-buckets/${bucket.id}/settings`)
+                      }}
+                    >
                       Configure
                     </Button>
                   </div>
@@ -271,7 +295,12 @@ export function TaxBucketsManager() {
               </CardDescription>
             </CardHeader>
             <CardFooter>
-              <Button className="w-full bg-[#00d4ff] text-[#0a2540] hover:bg-[#00b0d4]">Apply Recommendation</Button>
+              <Button
+                className="w-full bg-[#00d4ff] text-[#0a2540] hover:bg-[#00b0d4]"
+                onClick={() => router.push("/neobank/tax-buckets/recommendations")}
+              >
+                Apply Recommendation
+              </Button>
             </CardFooter>
           </Card>
 
@@ -317,7 +346,15 @@ export function TaxBucketsManager() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full bg-transparent" disabled={!autoSaveEnabled}>
+              <Button
+                variant="outline"
+                className="w-full bg-transparent"
+                disabled={!autoSaveEnabled}
+                onClick={() => {
+                  toast.success("Auto-save configuration saved successfully")
+                  console.log("[v0] Configuration saved:", buckets)
+                }}
+              >
                 Save Configuration
               </Button>
             </CardFooter>

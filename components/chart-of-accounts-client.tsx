@@ -105,7 +105,14 @@ export default function ChartOfAccountsClient() {
               {filteredAccounts.map((account) => (
                 <tr key={account.id} className="border-b hover:bg-muted/50 transition-colors">
                   <td className="p-4 font-mono text-sm">{account.code}</td>
-                  <td className="p-4 font-medium">{account.name}</td>
+                  <td className="p-4 font-medium">
+                    <a
+                      href={`/accounting/chart-of-accounts/${account.id}`}
+                      className="hover:text-primary transition-colors hover:underline"
+                    >
+                      {account.name}
+                    </a>
+                  </td>
                   <td className="p-4">
                     <Badge variant="outline" className="capitalize">
                       {account.type}
@@ -115,7 +122,13 @@ export default function ChartOfAccountsClient() {
                     ${account.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                   </td>
                   <td className="p-4 text-center">
-                    {account.subAccounts > 0 && <Badge variant="secondary">{account.subAccounts}</Badge>}
+                    {account.subAccounts > 0 && (
+                      <a href={`/accounting/chart-of-accounts/${account.id}/sub-accounts`}>
+                        <Badge variant="secondary" className="cursor-pointer hover:bg-secondary/80">
+                          {account.subAccounts}
+                        </Badge>
+                      </a>
+                    )}
                   </td>
                   <td className="p-4 text-right">
                     <Button variant="ghost" size="sm">

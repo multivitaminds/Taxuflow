@@ -409,6 +409,42 @@ Rules:
       throw aiError
     }
 
+    // AI returns flat structure (payer_name, payer_ein, etc.) but validation expects nested objects
+    if (extractedData.documentType === "1099-nec" || extractedData.documentType === "1099-misc") {
+      // Check if data is in flat format and needs restructuring
+      if (!extractedData.payer && (extractedData.payer_name || extractedData.payer_ein)) {
+        console.log("[v0] Restructuring 1099 data from flat to nested format")
+
+        // Build payer object from flat fields
+        extractedData.payer = {
+          name: extractedData.payer_name,
+          ein: extractedData.payer_ein,
+          address: extractedData.payer_address,
+          street: extractedData.payer_address?.street,
+          city: extractedData.payer_address?.city,
+          state: extractedData.payer_address?.state,
+          zipCode: extractedData.payer_address?.zipCode || extractedData.payer_address?.zip,
+        }
+      }
+
+      if (!extractedData.recipient && (extractedData.recipient_name || extractedData.recipient_tin)) {
+        // Build recipient object from flat fields
+        extractedData.recipient = {
+          name: extractedData.recipient_name,
+          ssn: extractedData.recipient_ssn || extractedData.recipient_tin,
+          ein: extractedData.recipient_ein,
+          address: extractedData.recipient_address,
+          street: extractedData.recipient_address?.street,
+          city: extractedData.recipient_address?.city,
+          state: extractedData.recipient_address?.state,
+          zipCode: extractedData.recipient_address?.zipCode || extractedData.recipient_address?.zip,
+        }
+      }
+
+      console.log("[v0] Restructured payer:", extractedData.payer?.name)
+      console.log("[v0] Restructured recipient:", extractedData.recipient?.name)
+    }
+
     if (extractedData.documentType === "w2") {
       const hasEmployerData = extractedData.employer_name || extractedData.employer?.name
       const hasEmployerEIN = extractedData.employer_ein || extractedData.employer?.ein

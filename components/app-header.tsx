@@ -6,6 +6,8 @@ import { Settings, LogOut, Sparkles } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
+import { NotificationBell } from "@/components/notification-bell"
+import { CompanySwitcher } from "@/components/company-switcher"
 
 interface AppHeaderProps {
   userName?: string
@@ -35,10 +37,13 @@ export function AppHeader({ userName, isDemoMode }: AppHeaderProps) {
               Demo Mode
             </Badge>
           )}
+          <CompanySwitcher />
         </div>
 
-        {/* Right Side: User Name, Settings, Sign Out */}
+        {/* Right Side: Notifications, User Name, Settings, Sign Out */}
         <div className="flex items-center gap-4">
+          <NotificationBell />
+
           {userName && <span className="text-sm font-medium text-slate-700">{userName}</span>}
 
           <Link href="/dashboard/settings">

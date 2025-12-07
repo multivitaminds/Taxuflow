@@ -15,6 +15,15 @@ import {
   TrendingUp,
   MapPin,
   Bitcoin,
+  FileText,
+  Sparkles,
+  TrendingDown,
+  Target,
+  Globe,
+  Store,
+  Shield,
+  Smartphone,
+  RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -23,12 +32,31 @@ const navigation = [
   { name: "Overview", href: "/neobank", icon: LayoutDashboard },
   { name: "Accounts", href: "/neobank/accounts", icon: Wallet },
   { name: "Cards", href: "/neobank/cards", icon: CreditCard },
+  { name: "Virtual Cards", href: "/neobank/virtual-cards", icon: Smartphone },
   { name: "Transactions", href: "/neobank/transactions", icon: History },
   { name: "Transfers", href: "/neobank/transfers", icon: ArrowLeftRight },
+  { name: "International", href: "/neobank/international", icon: Globe },
+  { name: "Multi-Currency", href: "/neobank/multi-currency", icon: Globe },
+  { name: "Bill Pay", href: "/neobank/bill-pay", icon: FileText },
+  { name: "Subscriptions", href: "/neobank/subscriptions", icon: RefreshCw },
   { name: "Tax Buckets", href: "/neobank/tax-buckets", icon: PiggyBank },
+  { name: "Budgets", href: "/neobank/budgets", icon: TrendingDown },
+  { name: "Goals", href: "/neobank/goals", icon: Target },
+  { name: "Savings Auto", href: "/neobank/savings-automation", icon: PiggyBank },
+  { name: "Cash Flow", href: "/neobank/cash-flow", icon: TrendingUp },
+  { name: "Investments", href: "/neobank/investments", icon: TrendingUp },
+  { name: "Wealth", href: "/neobank/wealth", icon: Sparkles },
+  { name: "Robo-Advisor", href: "/neobank/robo-advisor", icon: Sparkles },
+  { name: "Business", href: "/neobank/business", icon: Building2 },
+  { name: "Loans", href: "/neobank/loans", icon: CreditCard },
+  { name: "Credit Score", href: "/neobank/credit-score", icon: Shield },
+  { name: "Merchant", href: "/neobank/merchant", icon: Store },
+  { name: "Insurance", href: "/neobank/insurance", icon: Shield },
   { name: "Spending", href: "/neobank/spending", icon: TrendingUp },
-  { name: "Crypto", href: "/neobank/crypto", icon: Bitcoin }, // Added Crypto link
+  { name: "Crypto", href: "/neobank/crypto", icon: Bitcoin },
   { name: "ATMs", href: "/neobank/atms", icon: MapPin },
+  { name: "Reports", href: "/neobank/reports", icon: FileText },
+  { name: "Insights", href: "/neobank/insights", icon: Sparkles },
 ]
 
 export function NeobankSidebar() {

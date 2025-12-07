@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Form1099NEC } from "@/components/forms/form-1099-nec"
 import { DocumentUpload } from "@/components/forms/document-upload"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
+import { PayrollIntegration } from "@/components/payroll-integration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
 import { useDashboard } from "@/components/dashboard-provider"
@@ -126,8 +127,9 @@ export default function File1099NECPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-background/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-4 bg-background/50 backdrop-blur-sm">
             <TabsTrigger value="upload">📄 Upload 1099-NEC</TabsTrigger>
+            <TabsTrigger value="payroll">💼 Payroll Sync</TabsTrigger>
             <TabsTrigger value="quickbooks">📊 QuickBooks</TabsTrigger>
             <TabsTrigger value="manual">✍️ Manual Entry</TabsTrigger>
           </TabsList>
@@ -139,6 +141,10 @@ export default function File1099NECPage() {
               formType="1099-NEC"
               expectedDocType="1099-nec"
             />
+          </TabsContent>
+
+          <TabsContent value="payroll" className="mt-6">
+            <PayrollIntegration formType="1099-NEC" />
           </TabsContent>
 
           <TabsContent value="quickbooks" className="mt-6">

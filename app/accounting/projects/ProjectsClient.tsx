@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plus, Search, FolderKanban, Clock, DollarSign, Users } from "lucide-react"
+import Link from "next/link"
 
 export default function ProjectsClient() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -136,49 +137,51 @@ export default function ProjectsClient() {
       {/* Projects Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
-          <Card key={project.id} className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{project.name}</h3>
-                  <p className="text-sm text-muted-foreground">{project.client}</p>
+          <Link key={project.id} href={`/accounting/projects/${project.id}`}>
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="space-y-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg">{project.name}</h3>
+                    <p className="text-sm text-muted-foreground">{project.client}</p>
+                  </div>
+                  <Badge className={getStatusColor(project.status)}>{getStatusLabel(project.status)}</Badge>
                 </div>
-                <Badge className={getStatusColor(project.status)}>{getStatusLabel(project.status)}</Badge>
-              </div>
 
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progress</span>
-                  <span className="font-medium">{project.progress}%</span>
+                {/* Progress Bar */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Progress</span>
+                    <span className="font-medium">{project.progress}%</span>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-600 rounded-full" style={{ width: `${project.progress}%` }} />
+                  </div>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full" style={{ width: `${project.progress}%` }} />
-                </div>
-              </div>
 
-              {/* Budget Info */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div>
-                  <p className="text-xs text-muted-foreground">Budget</p>
-                  <p className="font-semibold">${project.budget.toLocaleString()}</p>
+                {/* Budget Info */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Budget</p>
+                    <p className="font-semibold">${project.budget.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Spent</p>
+                    <p className="font-semibold">${project.spent.toLocaleString()}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Spent</p>
-                  <p className="font-semibold">${project.spent.toLocaleString()}</p>
-                </div>
-              </div>
 
-              {/* Time & Due Date */}
-              <div className="flex items-center justify-between text-sm pt-2 border-t">
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{project.hours}h logged</span>
+                {/* Time & Due Date */}
+                <div className="flex items-center justify-between text-sm pt-2 border-t">
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>{project.hours}h logged</span>
+                  </div>
+                  <span className="text-muted-foreground">Due {project.dueDate}</span>
                 </div>
-                <span className="text-muted-foreground">Due {project.dueDate}</span>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

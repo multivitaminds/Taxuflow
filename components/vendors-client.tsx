@@ -5,14 +5,26 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Building2, Phone, Mail, DollarSign, FileText, MoreVertical } from "lucide-react"
+import {
+  Plus,
+  Search,
+  Building2,
+  Phone,
+  Mail,
+  DollarSign,
+  FileText,
+  MoreVertical,
+  TrendingUp,
+  Calendar,
+  ArrowUpRight,
+} from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import Link from "next/link"
 
 export function VendorsClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showNewVendorDialog, setShowNewVendorDialog] = useState(false)
 
-  // Mock data
   const vendors = [
     {
       id: "1",
@@ -22,6 +34,9 @@ export function VendorsClient() {
       balance: 2450.0,
       openBills: 3,
       status: "active",
+      category: "Office Supplies",
+      paymentTerms: "Net 30",
+      totalSpent: 24500.0,
     },
     {
       id: "2",
@@ -31,6 +46,9 @@ export function VendorsClient() {
       balance: 5200.0,
       openBills: 2,
       status: "active",
+      category: "IT Services",
+      paymentTerms: "Net 15",
+      totalSpent: 45600.0,
     },
     {
       id: "3",
@@ -40,110 +58,183 @@ export function VendorsClient() {
       balance: 0,
       openBills: 0,
       status: "active",
+      category: "Marketing",
+      paymentTerms: "Due on Receipt",
+      totalSpent: 32100.0,
     },
   ]
 
   const stats = [
-    { label: "Total Vendors", value: "24", icon: Building2 },
-    { label: "Active Vendors", value: "18", icon: Building2 },
-    { label: "Total Payable", value: "$12,450", icon: DollarSign },
-    { label: "Open Bills", value: "8", icon: FileText },
+    { label: "Total Vendors", value: "24", icon: Building2, color: "blue", href: "/accounting/vendors/all" },
+    { label: "Active Vendors", value: "18", icon: TrendingUp, color: "green", href: "/accounting/vendors/active" },
+    {
+      label: "Total Payable",
+      value: "$12,450",
+      icon: DollarSign,
+      color: "orange",
+      href: "/accounting/vendors/payables",
+    },
+    { label: "Open Bills", value: "8", icon: FileText, color: "red", href: "/accounting/vendors/bills" },
   ]
 
   return (
-    <div className="p-8 space-y-6">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Vendors</h1>
-          <p className="text-muted-foreground mt-1">Manage your vendors and bills</p>
+          <h1 className="text-3xl font-bold text-slate-900">Vendors</h1>
+          <p className="text-slate-600 mt-1">Manage your vendors and supplier relationships</p>
         </div>
-        <Button onClick={() => setShowNewVendorDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Vendor
-        </Button>
+        <div className="flex gap-3">
+          <Link href="/portal/vendor">
+            <Button variant="outline" className="bg-white">
+              <Building2 className="h-4 w-4 mr-2" />
+              Vendor Portal
+            </Button>
+          </Link>
+          <Button variant="outline" className="bg-white">
+            <FileText className="h-4 w-4 mr-2" />
+            Reports
+          </Button>
+          <Link href="/accounting/vendors/new">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              New Vendor
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-2xl font-bold mt-1">{stat.value}</p>
+          <Link key={stat.label} href={stat.href}>
+            <Card className="p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1 cursor-pointer bg-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600 font-medium">{stat.label}</p>
+                  <p className="text-3xl font-bold text-slate-900 mt-1">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-xl bg-${stat.color}-50`}>
+                  <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+                </div>
               </div>
-              <stat.icon className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
 
-      {/* Search and Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search vendors..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      <Card className="p-4 bg-white shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Search vendors by name, email, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button variant="outline">Filter</Button>
+          <Button variant="outline">Sort</Button>
         </div>
-        <Button variant="outline">Filter</Button>
-      </div>
+      </Card>
 
-      {/* Vendors Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {vendors.map((vendor) => (
-          <Card key={vendor.id} className="p-6 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-6 w-6 text-primary" />
+          <Link key={vendor.id} href={`/accounting/vendors/${vendor.id}`}>
+            <Card className="p-6 hover:shadow-xl transition-all duration-200 hover:-translate-y-1 group bg-white border border-slate-200">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
+                    {vendor.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+                      {vendor.name}
+                    </h3>
+                    <Badge variant="default" className="mt-1">
+                      {vendor.category}
+                    </Badge>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.preventDefault()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>Edit Vendor</DropdownMenuItem>
+                    <DropdownMenuItem>Create Bill</DropdownMenuItem>
+                    <DropdownMenuItem>View Transactions</DropdownMenuItem>
+                    <DropdownMenuItem>Payment History</DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="space-y-2 text-sm mb-4">
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Mail className="h-4 w-4 text-slate-400" />
+                  <span>{vendor.email}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Phone className="h-4 w-4 text-slate-400" />
+                  <span>{vendor.phone}</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-600">
+                  <Calendar className="h-4 w-4 text-slate-400" />
+                  <span>Terms: {vendor.paymentTerms}</span>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-500 font-medium mb-1">Balance Due</p>
+                  <p className="text-lg font-bold text-orange-600">${vendor.balance.toFixed(2)}</p>
                 </div>
                 <div>
-                  <h3 className="font-semibold">{vendor.name}</h3>
-                  <Badge variant={vendor.status === "active" ? "default" : "secondary"}>{vendor.status}</Badge>
+                  <p className="text-xs text-slate-500 font-medium mb-1">Open Bills</p>
+                  <p className="text-lg font-bold text-slate-900">{vendor.openBills}</p>
                 </div>
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Edit Vendor</DropdownMenuItem>
-                  <DropdownMenuItem>Create Bill</DropdownMenuItem>
-                  <DropdownMenuItem>View Transactions</DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{vendor.email}</span>
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-500">Total Spent</span>
+                  <span className="font-semibold text-slate-900">${vendor.totalSpent.toLocaleString()}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
-                <span>{vendor.phone}</span>
-              </div>
-            </div>
 
-            <div className="mt-4 pt-4 border-t flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">Balance Due</p>
-                <p className="text-lg font-bold">${vendor.balance.toFixed(2)}</p>
+              <div className="mt-4 flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 bg-transparent"
+                  onClick={(e) => {
+                    e.preventDefault()
+                  }}
+                >
+                  <FileText className="h-3 w-3 mr-1" />
+                  New Bill
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="flex-1 bg-transparent"
+                  onClick={(e) => {
+                    e.preventDefault()
+                  }}
+                >
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  Details
+                </Button>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-muted-foreground">Open Bills</p>
-                <p className="text-lg font-bold">{vendor.openBills}</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
     </div>

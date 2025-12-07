@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { TrendingUp, TrendingDown, PieChart, DollarSign, Target, Download } from "lucide-react"
+import Link from "next/link"
 import {
   Area,
   AreaChart,
@@ -46,8 +47,8 @@ export function PortfolioDashboard({
   transactions,
 }: {
   user: any
-  holdings: any[]
-  transactions: any[]
+  holdings?: any[]
+  transactions?: any[]
 }) {
   const displayHoldings =
     holdings && holdings.length > 0
@@ -94,7 +95,7 @@ export function PortfolioDashboard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="p-8 space-y-6">
+      <div className="p-8 pr-12 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -107,68 +108,95 @@ export function PortfolioDashboard({
             )}
           </div>
           <div className="flex gap-3">
-            <Button variant="outline" className="gap-2 bg-transparent">
+            <Button
+              variant="outline"
+              className="gap-2 bg-transparent hover:bg-white hover:shadow-md transition-all"
+              onClick={() => {
+                // Export functionality
+                const csv = [
+                  "Symbol,Name,Shares,Avg Cost,Current Price,Value,Gain/Loss,Tax Impact",
+                  ...displayHoldings.map(
+                    (h) =>
+                      `${h.symbol},${h.name},${h.shares},${h.avgCost},${h.currentPrice},${h.value},${h.gain},${h.taxImpact}`,
+                  ),
+                ].join("\n")
+                const blob = new Blob([csv], { type: "text/csv" })
+                const url = window.URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = "portfolio-report.csv"
+                a.click()
+              }}
+            >
               <Download className="h-4 w-4" />
               Export Report
             </Button>
-            <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white gap-2">
-              <Target className="h-4 w-4" />
-              Rebalance Portfolio
-            </Button>
+            <Link href="/investment/tax-optimizer">
+              <Button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white gap-2 hover:from-indigo-700 hover:to-purple-700 transition-all">
+                <Target className="h-4 w-4" />
+                Rebalance Portfolio
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Total Value</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">${totalValue.toLocaleString()}</p>
+          <Link href="/investment/performance">
+            <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-lg hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600 font-medium">Total Value</p>
+                  <p className="text-2xl font-bold text-slate-900 mt-1">${totalValue.toLocaleString()}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <DollarSign className="h-6 w-6 text-indigo-600" />
+                </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-indigo-600" />
+              <div className="flex items-center gap-1 mt-4 text-sm">
+                <TrendingUp className="h-4 w-4 text-green-600" />
+                <span className="text-green-600 font-medium">+8.2%</span>
+                <span className="text-slate-500">this month</span>
               </div>
-            </div>
-            <div className="flex items-center gap-1 mt-4 text-sm">
-              <TrendingUp className="h-4 w-4 text-green-600" />
-              <span className="text-green-600 font-medium">+8.2%</span>
-              <span className="text-slate-500">this month</span>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Total Gain/Loss</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">+${totalGain.toLocaleString()}</p>
+          <Link href="/investment/performance">
+            <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-lg hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600 font-medium">Total Gain/Loss</p>
+                  <p className="text-2xl font-bold text-green-600 mt-1">+${totalGain.toLocaleString()}</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                  <TrendingUp className="h-6 w-6 text-green-600" />
+                </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                <TrendingUp className="h-6 w-6 text-green-600" />
+              <div className="flex items-center gap-1 mt-4 text-sm">
+                <span className="text-green-600 font-semibold">+{totalGainPercent}%</span>
+                <span className="text-slate-500">total return</span>
               </div>
-            </div>
-            <div className="flex items-center gap-1 mt-4 text-sm">
-              <span className="text-green-600 font-semibold">+{totalGainPercent}%</span>
-              <span className="text-slate-500">total return</span>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-slate-600 font-medium">Tax Savings</p>
-                <p className="text-2xl font-bold text-purple-600 mt-1">$3,245</p>
+          <Link href="/investment/tax-optimizer">
+            <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-lg hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-600 font-medium">Tax Savings</p>
+                  <p className="text-2xl font-bold text-purple-600 mt-1">$3,245</p>
+                </div>
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
+                  <Target className="h-6 w-6 text-purple-600" />
+                </div>
               </div>
-              <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center">
-                <Target className="h-6 w-6 text-purple-600" />
+              <div className="flex items-center gap-1 mt-4 text-sm">
+                <span className="text-slate-500">via tax-loss harvesting</span>
               </div>
-            </div>
-            <div className="flex items-center gap-1 mt-4 text-sm">
-              <span className="text-slate-500">via tax-loss harvesting</span>
-            </div>
-          </Card>
+            </Card>
+          </Link>
 
-          <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <Card className="p-6 bg-white border-slate-200 shadow-sm hover:shadow-lg hover:scale-105 transition-all">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-600 font-medium">Holdings</p>
@@ -258,13 +286,15 @@ export function PortfolioDashboard({
             </ResponsiveContainer>
             <div className="space-y-3 mt-6">
               {allocationData.map((sector) => (
-                <div key={sector.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: sector.color }} />
-                    <span className="text-sm text-slate-700">{sector.name}</span>
+                <Link key={sector.name} href="/investment/markets">
+                  <div className="flex items-center justify-between hover:bg-slate-50 p-2 rounded-lg transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: sector.color }} />
+                      <span className="text-sm text-slate-700">{sector.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900">{sector.value}%</span>
                   </div>
-                  <span className="text-sm font-semibold text-slate-900">{sector.value}%</span>
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
@@ -274,9 +304,11 @@ export function PortfolioDashboard({
         <Card className="p-6 bg-white border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-slate-900">Current Holdings</h3>
-            <Button variant="outline" size="sm">
-              View All
-            </Button>
+            <Link href="/investment/portfolio">
+              <Button variant="outline" size="sm" className="hover:bg-slate-50 bg-transparent">
+                View All
+              </Button>
+            </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -294,54 +326,58 @@ export function PortfolioDashboard({
               </thead>
               <tbody>
                 {displayHoldings.map((holding) => (
-                  <tr key={holding.symbol} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                    <td className="py-4 px-4">
-                      <span className="font-semibold text-slate-900">{holding.symbol}</span>
-                    </td>
-                    <td className="py-4 px-4 text-sm text-slate-600">{holding.name}</td>
-                    <td className="py-4 px-4 text-right text-sm text-slate-900">{holding.shares}</td>
-                    <td className="py-4 px-4 text-right text-sm text-slate-600">${holding.avgCost.toFixed(2)}</td>
-                    <td className="py-4 px-4 text-right text-sm text-slate-900">${holding.currentPrice.toFixed(2)}</td>
-                    <td className="py-4 px-4 text-right text-sm font-medium text-slate-900">
-                      ${holding.value.toLocaleString()}
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {holding.gain >= 0 ? (
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-600" />
-                        )}
-                        <span
+                  <Link key={holding.symbol} href={`/investment/markets?symbol=${holding.symbol}`} className="contents">
+                    <tr className="border-b border-slate-100 hover:bg-indigo-50 transition-colors cursor-pointer">
+                      <td className="py-4 px-4">
+                        <span className="font-semibold text-slate-900">{holding.symbol}</span>
+                      </td>
+                      <td className="py-4 px-4 text-sm text-slate-600">{holding.name}</td>
+                      <td className="py-4 px-4 text-right text-sm text-slate-900">{holding.shares}</td>
+                      <td className="py-4 px-4 text-right text-sm text-slate-600">${holding.avgCost.toFixed(2)}</td>
+                      <td className="py-4 px-4 text-right text-sm text-slate-900">
+                        ${holding.currentPrice.toFixed(2)}
+                      </td>
+                      <td className="py-4 px-4 text-right text-sm font-medium text-slate-900">
+                        ${holding.value.toLocaleString()}
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {holding.gain >= 0 ? (
+                            <TrendingUp className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-600" />
+                          )}
+                          <span
+                            className={
+                              holding.gain >= 0
+                                ? "text-green-600 font-medium text-sm"
+                                : "text-red-600 font-medium text-sm"
+                            }
+                          >
+                            {holding.gain >= 0 ? "+" : ""}${Math.abs(holding.gain).toFixed(2)} (
+                            {holding.gainPercent >= 0 ? "+" : ""}
+                            {holding.gainPercent}%)
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Badge
+                          variant="outline"
                           className={
-                            holding.gain >= 0
-                              ? "text-green-600 font-medium text-sm"
-                              : "text-red-600 font-medium text-sm"
+                            holding.taxImpact === "High"
+                              ? "border-red-300 bg-red-50 text-red-700"
+                              : holding.taxImpact === "Medium"
+                                ? "border-yellow-300 bg-yellow-50 text-yellow-700"
+                                : holding.taxImpact === "Low"
+                                  ? "border-green-300 bg-green-50 text-green-700"
+                                  : "border-slate-300 bg-slate-50 text-slate-700"
                           }
                         >
-                          {holding.gain >= 0 ? "+" : ""}${Math.abs(holding.gain).toFixed(2)} (
-                          {holding.gainPercent >= 0 ? "+" : ""}
-                          {holding.gainPercent}%)
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-center">
-                      <Badge
-                        variant="outline"
-                        className={
-                          holding.taxImpact === "High"
-                            ? "border-red-300 bg-red-50 text-red-700"
-                            : holding.taxImpact === "Medium"
-                              ? "border-yellow-300 bg-yellow-50 text-yellow-700"
-                              : holding.taxImpact === "Low"
-                                ? "border-green-300 bg-green-50 text-green-700"
-                                : "border-slate-300 bg-slate-50 text-slate-700"
-                        }
-                      >
-                        {holding.taxImpact}
-                      </Badge>
-                    </td>
-                  </tr>
+                          {holding.taxImpact}
+                        </Badge>
+                      </td>
+                    </tr>
+                  </Link>
                 ))}
               </tbody>
             </table>

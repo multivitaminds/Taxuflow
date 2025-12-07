@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock } from "lucide-react"
+import { Plus, Search, FileText, Send, CheckCircle, XCircle, Clock, Copy, Repeat } from "lucide-react"
+import Link from "next/link"
 
 export default function EstimatesClient() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -52,10 +53,28 @@ export default function EstimatesClient() {
   ]
 
   const stats = [
-    { label: "Total Estimates", value: "24", icon: FileText, color: "text-blue-600" },
-    { label: "Sent", value: "8", icon: Send, color: "text-purple-600" },
-    { label: "Accepted", value: "12", icon: CheckCircle, color: "text-green-600" },
-    { label: "Total Value", value: "$125,500", icon: Clock, color: "text-orange-600" },
+    {
+      label: "Total Estimates",
+      value: "24",
+      icon: FileText,
+      color: "text-blue-600",
+      link: "/accounting/estimates?status=all",
+    },
+    { label: "Sent", value: "8", icon: Send, color: "text-purple-600", link: "/accounting/estimates?status=sent" },
+    {
+      label: "Accepted",
+      value: "12",
+      icon: CheckCircle,
+      color: "text-green-600",
+      link: "/accounting/estimates?status=accepted",
+    },
+    {
+      label: "Total Value",
+      value: "$125,500",
+      icon: Clock,
+      color: "text-orange-600",
+      link: "/accounting/estimates/analytics",
+    },
   ]
 
   const getStatusColor = (status: string) => {
@@ -91,27 +110,39 @@ export default function EstimatesClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Estimates</h1>
-          <p className="text-muted-foreground">Create and manage estimates for customers</p>
+          <h1 className="text-3xl font-bold">Estimates & Quotes</h1>
+          <p className="text-muted-foreground">Create and manage pricing proposals for customers</p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Estimate
-        </Button>
+        <div className="flex gap-2">
+          <Link href="/accounting/estimates/templates">
+            <Button variant="outline" className="gap-2 bg-transparent">
+              <Copy className="h-4 w-4" />
+              Templates
+            </Button>
+          </Link>
+          <Link href="/accounting/estimates/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Estimate
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-2xl font-bold mt-1">{stat.value}</p>
+          <Link key={stat.label} href={stat.link}>
+            <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                </div>
+                <stat.icon className={`h-8 w-8 ${stat.color}`} />
               </div>
-              <stat.icon className={`h-8 w-8 ${stat.color}`} />
-            </div>
-          </Card>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -147,6 +178,49 @@ export default function EstimatesClient() {
         </div>
       </Card>
 
+      {/* Quick Action Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Link href="/accounting/estimates/templates">
+          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <Copy className="h-6 w-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Quote Templates</h3>
+                <p className="text-sm text-muted-foreground">Manage reusable templates</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/accounting/estimates/versions">
+          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Repeat className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Version History</h3>
+                <p className="text-sm text-muted-foreground">Track quote revisions</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+        <Link href="/accounting/estimates/analytics">
+          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold">Win Rate Analytics</h3>
+                <p className="text-sm text-muted-foreground">Track conversion metrics</p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+      </div>
+
       {/* Estimates Table */}
       <Card>
         <div className="overflow-x-auto">
@@ -179,9 +253,11 @@ export default function EstimatesClient() {
                     </Badge>
                   </td>
                   <td className="p-4 text-right">
-                    <Button variant="ghost" size="sm">
-                      View
-                    </Button>
+                    <Link href={`/accounting/estimates/${estimate.id}`}>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </Link>
                   </td>
                 </tr>
               ))}
