@@ -34,11 +34,9 @@ export function DeveloperPortalClient() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/developer/stats?period=7d")
+      const response = await fetch("/api/developer/stats")
       const data = await response.json()
-
-      if (response.ok && data.success) {
-        console.log("[v0] Loaded developer stats:", data.data)
+      if (data.success) {
         setStats(data.data)
       }
     } catch (error) {
@@ -48,11 +46,9 @@ export function DeveloperPortalClient() {
 
   const fetchKeys = async () => {
     try {
-      const response = await fetch("/api/developer/keys")
+      const response = await fetch("/api/developer/keys/list")
       const data = await response.json()
-
-      if (response.ok && data.success) {
-        console.log("[v0] Loaded API keys:", data.keys)
+      if (data.keys) {
         setKeys(data.keys)
       }
     } catch (error) {
@@ -78,7 +74,7 @@ export function DeveloperPortalClient() {
     }
 
     try {
-      const response = await fetch("/api/developer/keys", {
+      const response = await fetch("/api/developer/keys/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -89,8 +85,8 @@ export function DeveloperPortalClient() {
 
       const data = await response.json()
 
-      if (response.ok && data.success) {
-        setCreatedKey(data.key)
+      if (response.ok) {
+        setCreatedKey(data.apiKey)
         setNewKeyName("")
         fetchKeys()
         toast({
@@ -279,20 +275,20 @@ export function DeveloperPortalClient() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/developer/docs/getting-started">
+                <Link href="/docs/introduction">
                   <span>Read the Documentation</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/developer/docs/api/overview">
+                <Link href="/docs/api-reference">
                   <span>API Reference</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/developer/shell">
-                  <span>Test in Workbench</span>
+                <Link href="https://github.com/taxu/examples">
+                  <span>View Example Projects</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
@@ -310,20 +306,24 @@ export function DeveloperPortalClient() {
               <p className="text-sm opacity-90 mb-4">
                 Our support team is available 24/7 to help you with any integration issues.
               </p>
-              <Button variant="secondary" className="w-full" asChild>
-                <Link href="/developer/support">Contact Support</Link>
+              <Button variant="secondary" className="w-full">
+                Contact Support
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Create Key Modal */}
+      {/* Create Key Modal (Preserved) */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          {/* ... existing modal code ... */}
+          {/* simplified for brevity in this edit block, assuming I keep the existing modal code but just wrap it */}
           <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full">
             <h3 className="text-2xl font-bold mb-6">Create API Key</h3>
+            {/* ... rest of modal logic ... */}
             {createdKey ? (
+              // ... existing success state ...
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                   <p className="text-sm text-accent font-semibold mb-2">
@@ -349,6 +349,7 @@ export function DeveloperPortalClient() {
                 </Button>
               </div>
             ) : (
+              // ... existing form state ...
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Key Name</label>
