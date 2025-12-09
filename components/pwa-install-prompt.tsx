@@ -8,16 +8,26 @@ import { Card } from "@/components/ui/card"
 export function PWAInstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted || typeof window === "undefined") return
+
     const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e)
 
-      // Check if user has dismissed before
-      const dismissed = localStorage.getItem("pwa-prompt-dismissed")
-      if (!dismissed) {
-        setShowPrompt(true)
+      try {
+        const dismissed = localStorage.getItem("pwa-prompt-dismissed")
+        if (!dismissed) {
+          setShowPrompt(true)
+        }
+      } catch (error) {
+        console.warn("[v0] localStorage not available:", error)
       }
     }
 
@@ -26,7 +36,7 @@ export function PWAInstallPrompt() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handler)
     }
-  }, [])
+  }, [mounted])
 
   const handleInstall = async () => {
     if (!deferredPrompt) return
@@ -43,11 +53,15 @@ export function PWAInstallPrompt() {
   }
 
   const handleDismiss = () => {
-    localStorage.setItem("pwa-prompt-dismissed", "true")
+    try {
+      localStorage.setItem("pwa-prompt-dismissed", "true")
+    } catch (error) {
+      console.warn("[v0] localStorage not available:", error)
+    }
     setShowPrompt(false)
   }
 
-  if (!showPrompt) return null
+  if (!mounted || !showPrompt) return null
 
   return (
     <Card className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 p-4 shadow-lg border-2 border-primary/20">

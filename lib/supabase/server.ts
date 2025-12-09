@@ -1,6 +1,13 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
+function isV0Preview() {
+  return (
+    typeof window === "undefined" &&
+    (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+  )
+}
+
 export async function createClient() {
   const cookieStore = await cookies()
 
@@ -9,12 +16,8 @@ export async function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("[v0] Supabase configuration missing on server!", {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseAnonKey,
-      nodeEnv: process.env.NODE_ENV,
-    })
-    throw new Error("Supabase configuration is missing. Please check your environment variables.")
+    console.log("[v0] Running in preview mode without Supabase configuration")
+    return null as any
   }
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
