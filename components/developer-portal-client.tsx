@@ -24,19 +24,35 @@ export function DeveloperPortalClient() {
   const [newKeyName, setNewKeyName] = useState("")
   const [newKeyEnvironment, setNewKeyEnvironment] = useState<"production" | "test">("test")
   const [createdKey, setCreatedKey] = useState<string | null>(null)
+  const [stats, setStats] = useState<any>(null)
   const { toast } = useToast()
 
   useEffect(() => {
-    // Simulating data loading for the dashboard
-    setTimeout(() => setLoading(false), 1000)
     fetchKeys()
+    fetchStats()
   }, [])
+
+  const fetchStats = async () => {
+    try {
+      const response = await fetch("/api/developer/stats?period=7d")
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        console.log("[v0] Loaded developer stats:", data.data)
+        setStats(data.data)
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching stats:", error)
+    }
+  }
 
   const fetchKeys = async () => {
     try {
-      const response = await fetch("/api/developer/keys/list")
+      const response = await fetch("/api/developer/keys")
       const data = await response.json()
-      if (data.keys) {
+
+      if (response.ok && data.success) {
+        console.log("[v0] Loaded API keys:", data.keys)
         setKeys(data.keys)
       }
     } catch (error) {
@@ -62,7 +78,7 @@ export function DeveloperPortalClient() {
     }
 
     try {
-      const response = await fetch("/api/developer/keys/create", {
+      const response = await fetch("/api/developer/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -73,8 +89,8 @@ export function DeveloperPortalClient() {
 
       const data = await response.json()
 
-      if (response.ok) {
-        setCreatedKey(data.apiKey)
+      if (response.ok && data.success) {
+        setCreatedKey(data.key)
         setNewKeyName("")
         fetchKeys()
         toast({
@@ -169,8 +185,8 @@ export function DeveloperPortalClient() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45.2k</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <div className="text-2xl font-bold">{stats ? stats.totalRequests?.toLocaleString() : "0"}</div>
+            <p className="text-xs text-muted-foreground">Last 7 days</p>
           </CardContent>
         </Card>
         <Card>
@@ -179,8 +195,10 @@ export function DeveloperPortalClient() {
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124ms</div>
-            <p className="text-xs text-muted-foreground">-12ms from last month</p>
+            <div className="text-2xl font-bold">{stats ? `${Math.round(stats.avgResponseTime)}ms` : "0ms"}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.avgResponseTime < 150 ? "Excellent performance" : "Good performance"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -189,8 +207,8 @@ export function DeveloperPortalClient() {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">99.9%</div>
-            <p className="text-xs text-muted-foreground">+0.1% from last month</p>
+            <div className="text-2xl font-bold">{stats ? `${stats.successRate.toFixed(1)}%` : "0%"}</div>
+            <p className="text-xs text-muted-foreground">{stats?.successfulRequests || 0} successful requests</p>
           </CardContent>
         </Card>
         <Card>
@@ -200,7 +218,9 @@ export function DeveloperPortalClient() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{keys.length}</div>
-            <p className="text-xs text-muted-foreground">Across 2 environments</p>
+            <p className="text-xs text-muted-foreground">
+              {keys.filter((k) => k.environment === "production").length} production
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -259,20 +279,20 @@ export function DeveloperPortalClient() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/docs/introduction">
+                <Link href="/developer/docs/getting-started">
                   <span>Read the Documentation</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/docs/api-reference">
+                <Link href="/developer/docs/api/overview">
                   <span>API Reference</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="https://github.com/taxu/examples">
-                  <span>View Example Projects</span>
+                <Link href="/developer/shell">
+                  <span>Test in Workbench</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
@@ -290,24 +310,20 @@ export function DeveloperPortalClient() {
               <p className="text-sm opacity-90 mb-4">
                 Our support team is available 24/7 to help you with any integration issues.
               </p>
-              <Button variant="secondary" className="w-full">
-                Contact Support
+              <Button variant="secondary" className="w-full" asChild>
+                <Link href="/developer/support">Contact Support</Link>
               </Button>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Create Key Modal (Preserved) */}
+      {/* Create Key Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          {/* ... existing modal code ... */}
-          {/* simplified for brevity in this edit block, assuming I keep the existing modal code but just wrap it */}
           <div className="bg-card border border-border rounded-2xl p-8 max-w-md w-full">
             <h3 className="text-2xl font-bold mb-6">Create API Key</h3>
-            {/* ... rest of modal logic ... */}
             {createdKey ? (
-              // ... existing success state ...
               <div className="space-y-4">
                 <div className="p-4 rounded-lg bg-accent/10 border border-accent/20">
                   <p className="text-sm text-accent font-semibold mb-2">
@@ -333,7 +349,6 @@ export function DeveloperPortalClient() {
                 </Button>
               </div>
             ) : (
-              // ... existing form state ...
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium mb-2 block">Key Name</label>

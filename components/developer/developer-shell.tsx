@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Play, Copy, Eye, EyeOff, RefreshCw, X, Code, Webhook, Terminal } from "lucide-react"
@@ -79,29 +79,72 @@ export function DeveloperShell() {
   const [selectedLanguage, setSelectedLanguage] = useState("nodejs")
   const [searchQuery, setSearchQuery] = useState("")
   const [showApiExplorer, setShowApiExplorer] = useState(true)
-  const [shellHistory, setShellHistory] = useState<string[]>([
-    '$ taxu w2_forms create --employee_name="John Doe" --wages=75000',
-    "$ taxu accounts list",
-    "$ taxu transactions retrieve txn_1234567890",
-  ])
+  const [shellHistory, setShellHistory] = useState<string[]>([])
   const [activeTab, setActiveTab] = useState("overview")
   const [commandInput, setCommandInput] = useState("")
   const [shellOutput, setShellOutput] = useState<Array<{ type: "command" | "output" | "error"; text: string }>>([])
   const [showCodeBlock, setShowCodeBlock] = useState(true)
+
+  useEffect(() => {
+    const loadSavedRequests = async () => {
+      try {
+        const response = await fetch("/api/developer/test-requests")
+        if (response.ok) {
+          const { requests } = await response.json()
+          // Update state with saved requests
+          console.log("[v0] Loaded saved test requests:", requests)
+          setShellHistory(requests)
+        }
+      } catch (error) {
+        console.error("[v0] Failed to load test requests:", error)
+      }
+    }
+
+    loadSavedRequests()
+  }, [])
 
   const filteredResources = RESOURCES.map((category) => ({
     ...category,
     items: category.items.filter((item) => item.toLowerCase().includes(searchQuery.toLowerCase())),
   })).filter((category) => category.items.length > 0)
 
-  const executeCommand = () => {
+  const executeCommand = async () => {
     if (!commandInput.trim()) return
 
-    setShellOutput((prev) => [
-      ...prev,
-      { type: "command", text: `$ ${commandInput}` },
-      { type: "output", text: `Executing: ${commandInput}\nSuccess! Response received.` },
-    ])
+    setShellOutput((prev) => [...prev, { type: "command", text: `$ ${commandInput}` }])
+
+    try {
+      // Execute the API request through the execute endpoint
+      const response = await fetch("/api/developer/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          method: selectedMethod || "GET",
+          endpoint: selectedResource || "/api/v1/status",
+          headers: {},
+          body: null,
+          saveRequest: true,
+          requestName: `Shell: ${commandInput}`,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setShellOutput((prev) => [
+          ...prev,
+          {
+            type: "output",
+            text: `Success! Response (${data.responseTime}ms):\n${JSON.stringify(data.responseBody, null, 2)}`,
+          },
+        ])
+      } else {
+        setShellOutput((prev) => [...prev, { type: "error", text: `Error: ${data.error || "Request failed"}` }])
+      }
+    } catch (error) {
+      setShellOutput((prev) => [...prev, { type: "error", text: `Error executing command: ${error}` }])
+    }
+
     setCommandInput("")
   }
 

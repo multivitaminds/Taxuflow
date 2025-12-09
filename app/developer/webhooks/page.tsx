@@ -5,18 +5,42 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import { useState } from "react"
-import { Copy, Check, Webhook, Zap, Shield, Clock, ChevronRight, ExternalLink } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Copy, Check, Webhook, Zap, Shield, Clock, ChevronRight, ExternalLink, AlertCircle } from "lucide-react"
 
 export default function WebhooksPage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [selectedLanguage, setSelectedLanguage] = useState("node")
+  const [recentEvents, setRecentEvents] = useState<any[]>([])
+  const [recentDeliveries, setRecentDeliveries] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const copyToClipboard = (code: string, id: string) => {
-    navigator.clipboard.writeText(code)
-    setCopiedCode(id)
-    setTimeout(() => setCopiedCode(null), 2000)
-  }
+  useEffect(() => {
+    const fetchWebhookData = async () => {
+      try {
+        const [eventsRes, deliveriesRes] = await Promise.all([
+          fetch("/api/developer/webhooks/events?limit=5"),
+          fetch("/api/developer/webhooks/deliveries?limit=5"),
+        ])
+
+        if (eventsRes.ok) {
+          const eventsData = await eventsRes.json()
+          setRecentEvents(eventsData.events || [])
+        }
+
+        if (deliveriesRes.ok) {
+          const deliveriesData = await deliveriesRes.json()
+          setRecentDeliveries(deliveriesData.deliveries || [])
+        }
+      } catch (error) {
+        console.error("[v0] Failed to fetch webhook data:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchWebhookData()
+  }, [])
 
   const verificationExamples = {
     node: `// Node.js with Express
@@ -210,6 +234,12 @@ end`,
     },
   ]
 
+  const copyToClipboard = (code: string, id: string) => {
+    navigator.clipboard.writeText(code)
+    setCopiedCode(id)
+    setTimeout(() => setCopiedCode(null), 2000)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
       {/* Hero Section */}
@@ -251,6 +281,58 @@ end`,
       </div>
 
       <div className="container mx-auto px-6 py-16 max-w-7xl">
+        {/* Recent Webhook Events */}
+        <section className="mb-20">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-bold text-[#0a2540]">Recent Webhook Events</h2>
+            <Link href="/developer-portal">
+              <Button variant="outline" className="gap-2 bg-transparent">
+                View All Events
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
+
+          {loading ? (
+            <Card className="p-8 text-center text-slate-600">Loading webhook events...</Card>
+          ) : recentEvents.length > 0 ? (
+            <div className="space-y-4">
+              {recentEvents.map((event) => (
+                <Card key={event.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <code className="text-sm font-mono text-[#635bff] font-semibold bg-[#635bff]/10 px-3 py-1 rounded">
+                          {event.event_type}
+                        </code>
+                        <Badge variant="secondary" className="capitalize">
+                          {event.event_category}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-slate-600 mb-3">
+                        Event ID: <code className="font-mono text-xs">{event.id}</code>
+                      </p>
+                      <div className="text-xs text-slate-500">{new Date(event.created_at).toLocaleString()}</div>
+                    </div>
+                    <Button variant="ghost" size="sm">
+                      View Details
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center">
+              <AlertCircle className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No webhook events yet</h3>
+              <p className="text-slate-600 mb-4">Webhook events will appear here once you start using the Taxu API</p>
+              <Link href="/developer-portal">
+                <Button className="bg-[#635bff] hover:bg-[#5651df]">Set Up Webhooks</Button>
+              </Link>
+            </Card>
+          )}
+        </section>
+
         {/* How It Works */}
         <section className="mb-20">
           <h2 className="text-3xl font-bold text-[#0a2540] mb-8">How Webhooks Work</h2>

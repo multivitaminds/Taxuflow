@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Key, BookOpen, Webhook, BarChart3, Terminal, Zap, ArrowRight, Copy, Check } from "lucide-react"
+import { Key, BookOpen, Webhook, BarChart3, Terminal, Zap, ArrowRight, Copy, Check, Activity } from "lucide-react"
 import Link from "next/link"
 import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 
@@ -12,10 +12,27 @@ export function DeveloperDashboard({ user, profile }: any) {
   const router = useRouter()
   const [apiKeys, setApiKeys] = useState<any[]>([])
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [stats, setStats] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadApiKeys()
+    loadStats()
   }, [])
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch("/api/developer/stats")
+      const data = await response.json()
+      if (data.success) {
+        setStats(data.data)
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching stats:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const loadApiKeys = async () => {
     const supabase = getSupabaseBrowserClient()
@@ -90,6 +107,53 @@ export function DeveloperDashboard({ user, profile }: any) {
           <h1 className="text-4xl font-bold text-white mb-2">Developer Portal</h1>
           <p className="text-lg text-slate-400">Build tax automation into your products with Taxu APIs</p>
         </div>
+
+        {/* Real-time Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-slate-400 text-sm">Total Requests</span>
+                <BarChart3 className="w-4 h-4 text-indigo-400" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">{stats.totalRequests?.toLocaleString() || "0"}</div>
+              <div className="text-xs text-green-400">Last 7 days</div>
+            </Card>
+
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-slate-400 text-sm">Success Rate</span>
+                <Zap className="w-4 h-4 text-green-400" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {stats.successRate ? `${stats.successRate.toFixed(1)}%` : "0%"}
+              </div>
+              <div className="text-xs text-slate-400">{stats.successfulRequests || 0} successful</div>
+            </Card>
+
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-slate-400 text-sm">Avg Response Time</span>
+                <Activity className="w-4 h-4 text-blue-400" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {stats.avgResponseTime ? `${Math.round(stats.avgResponseTime)}ms` : "0ms"}
+              </div>
+              <div className="text-xs text-slate-400">Average latency</div>
+            </Card>
+
+            <Card className="bg-white/5 backdrop-blur-xl border-white/10 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-slate-400 text-sm">Error Rate</span>
+                <Activity className="w-4 h-4 text-red-400" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {stats.errorRate ? `${stats.errorRate.toFixed(1)}%` : "0%"}
+              </div>
+              <div className="text-xs text-red-400">{stats.failedRequests || 0} failed</div>
+            </Card>
+          </div>
+        )}
 
         {/* API Keys Section */}
         <Card className="bg-white/5 backdrop-blur-xl border-white/10 p-8 mb-12">
