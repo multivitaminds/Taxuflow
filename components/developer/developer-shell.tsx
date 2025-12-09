@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Play, Copy, Eye, EyeOff, RefreshCw, X, Code, Zap, Webhook, Terminal } from "lucide-react"
+import { Search, Play, Copy, Eye, EyeOff, RefreshCw, X, Code, Webhook, Terminal } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -111,7 +111,7 @@ export function DeveloperShell() {
   }
 
   return (
-    <div className="flex h-screen bg-white dark:bg-slate-950">
+    <div className="flex h-screen bg-[#f6f9fc] dark:bg-slate-950">
       {/* Main Shell Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navigation - Enhanced with Stripe styling */}
@@ -119,9 +119,9 @@ export function DeveloperShell() {
           <div className="flex items-center justify-between px-6 py-3">
             <div className="flex items-center gap-4">
               <h1 className="text-xl font-semibold text-[#0a2540] dark:text-white">Workbench</h1>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-sm font-medium border border-indigo-100 dark:border-indigo-800">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Sandbox Mode</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-sm font-medium border border-indigo-100 dark:border-indigo-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                <span>Test Mode</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -129,64 +129,64 @@ export function DeveloperShell() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowApiExplorer(!showApiExplorer)}
-                className="text-slate-600 dark:text-slate-400 hover:text-[#635bff] hover:bg-slate-50"
+                className="text-slate-600 dark:text-slate-400 hover:text-[#635bff] hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
               >
                 {showApiExplorer ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                {showApiExplorer ? "Hide" : "Show"} API Explorer
+                API Explorer
               </Button>
-              <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400">
+              <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400 hover:bg-slate-100">
                 + New pane
               </Button>
             </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="px-6">
-            <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-none h-auto p-0 space-x-8">
+            <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-none h-auto p-0 space-x-6">
               <TabsTrigger
                 value="overview"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Overview
               </TabsTrigger>
               <TabsTrigger
                 value="webhooks"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Webhooks
               </TabsTrigger>
               <TabsTrigger
                 value="events"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Events
               </TabsTrigger>
               <TabsTrigger
                 value="logs"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Logs
               </TabsTrigger>
               <TabsTrigger
                 value="health"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Health
               </TabsTrigger>
               <TabsTrigger
                 value="inspector"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Inspector
               </TabsTrigger>
               <TabsTrigger
                 value="shell"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
               >
                 Shell
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="overview" className="mt-0 p-6 overflow-auto">
+            <TabsContent value="overview" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
               <div className="max-w-5xl">
                 <pre className="text-[#635bff] dark:text-[#8b7dff] mb-6 font-mono text-[10px] leading-tight select-none">
                   {`
@@ -205,12 +205,12 @@ export function DeveloperShell() {
                   Taxu resources in test mode:
                 </p>
 
-                <div className="space-y-4 mb-8">
+                <div className="space-y-3 mb-8">
                   <div className="flex items-start gap-3">
                     <span className="text-slate-400 mt-0.5">—</span>
                     <div className="flex-1">
                       <span className="text-slate-700 dark:text-slate-300">View supported Taxu commands: </span>
-                      <code className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded">
+                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
                         taxu help
                       </code>
                     </div>
@@ -219,7 +219,7 @@ export function DeveloperShell() {
                     <span className="text-slate-400 mt-0.5">—</span>
                     <div className="flex-1">
                       <span className="text-slate-700 dark:text-slate-300">Find webhook events: </span>
-                      <code className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded">
+                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
                         taxu trigger [event]
                       </code>
                     </div>
@@ -228,7 +228,7 @@ export function DeveloperShell() {
                     <span className="text-slate-400 mt-0.5">—</span>
                     <div className="flex-1">
                       <span className="text-slate-700 dark:text-slate-300">Listen for webhook events: </span>
-                      <code className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded">
+                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
                         taxu listen
                       </code>
                     </div>
@@ -237,11 +237,11 @@ export function DeveloperShell() {
                     <span className="text-slate-400 mt-0.5">—</span>
                     <div className="flex-1">
                       <span className="text-slate-700 dark:text-slate-300">Call Taxu APIs: </span>
-                      <code className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded">
+                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
                         taxu [api resource] [operation]
                       </code>
                       <span className="text-slate-700 dark:text-slate-300"> (e.g., </span>
-                      <code className="inline-block px-2 py-0.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded">
+                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
                         taxu w2_forms list
                       </code>
                       <span className="text-slate-700 dark:text-slate-300">)</span>
@@ -249,13 +249,13 @@ export function DeveloperShell() {
                   </div>
                 </div>
 
-                <div className="bg-[#1e293b] rounded-lg overflow-hidden shadow-lg border border-slate-700">
-                  <div className="bg-[#0f172a] px-4 py-2 flex items-center justify-between border-b border-slate-700">
+                <div className="bg-[#1e293b] rounded-lg overflow-hidden shadow-xl border border-slate-700">
+                  <div className="bg-[#0f172a] px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
                     <span className="text-xs font-mono text-slate-400">Shell</span>
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-                      <div className="w-3 h-3 rounded-full bg-slate-600"></div>
-                      <div className="w-3 h-3 rounded-full bg-slate-600"></div>
+                    <div className="flex gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
                     </div>
                   </div>
                   <div className="p-4 font-mono text-sm">
@@ -281,7 +281,7 @@ export function DeveloperShell() {
               </div>
             </TabsContent>
 
-            <TabsContent value="webhooks" className="mt-0 p-6 overflow-auto">
+            <TabsContent value="webhooks" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
               <div className="max-w-5xl">
                 <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">Webhook Testing</h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
@@ -289,45 +289,47 @@ export function DeveloperShell() {
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-indigo-300 transition-colors">
+                  <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-700 transition-all hover:shadow-md">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-                        <Webhook className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm">
+                        <Webhook className="w-5 h-5 text-white" />
                       </div>
                       <h4 className="font-semibold text-[#0a2540] dark:text-white">Trigger Events</h4>
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                       Trigger test webhook events to your endpoint
                     </p>
-                    <code className="text-xs bg-slate-900 text-slate-300 px-3 py-2 rounded block">
+                    <code className="text-xs bg-slate-900 text-slate-300 px-3 py-2 rounded block font-mono">
                       $ taxu trigger w2.created
                     </code>
                   </div>
 
-                  <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-indigo-300 transition-colors">
+                  <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-green-300 dark:hover:border-green-700 transition-all hover:shadow-md">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                        <Terminal className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-sm">
+                        <Terminal className="w-5 h-5 text-white" />
                       </div>
                       <h4 className="font-semibold text-[#0a2540] dark:text-white">Listen Mode</h4>
                     </div>
                     <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                       Listen for incoming webhook events
                     </p>
-                    <code className="text-xs bg-slate-900 text-slate-300 px-3 py-2 rounded block">$ taxu listen</code>
+                    <code className="text-xs bg-slate-900 text-slate-300 px-3 py-2 rounded block font-mono">
+                      $ taxu listen
+                    </code>
                   </div>
                 </div>
               </div>
             </TabsContent>
 
-            <TabsContent value="events" className="mt-0 p-6 overflow-auto">
+            <TabsContent value="events" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
               <div className="max-w-5xl">
                 <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">Event Log</h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
                   View all API events and webhook deliveries in real-time.
                 </p>
 
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm">
                   <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent Events</span>
@@ -342,11 +344,11 @@ export function DeveloperShell() {
                     ].map((item, i) => (
                       <div
                         key={i}
-                        className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                          <code className="text-sm text-indigo-600 dark:text-indigo-400">{item.event}</code>
+                          <div className="w-2 h-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50"></div>
+                          <code className="text-sm text-indigo-600 dark:text-indigo-400 font-mono">{item.event}</code>
                         </div>
                         <span className="text-sm text-slate-500">{item.time}</span>
                       </div>
@@ -356,26 +358,39 @@ export function DeveloperShell() {
               </div>
             </TabsContent>
 
-            <TabsContent value="logs" className="mt-0 p-6">
-              <h3 className="text-xl font-semibold mb-3">API Request Logs</h3>
-              <p className="text-slate-600">View detailed logs of all API requests and responses.</p>
-            </TabsContent>
-
-            <TabsContent value="health" className="mt-0 p-6">
-              <h3 className="text-xl font-semibold mb-3">System Health</h3>
-              <p className="text-slate-600">Monitor API health and performance metrics.</p>
-            </TabsContent>
-
-            <TabsContent value="inspector" className="mt-0 p-6">
-              <h3 className="text-xl font-semibold mb-3">API Inspector</h3>
-              <p className="text-slate-600">Inspect API requests, responses, and debug issues.</p>
-            </TabsContent>
-
-            <TabsContent value="shell" className="mt-0 p-6 overflow-auto">
+            <TabsContent value="logs" className="mt-0 p-6 bg-white dark:bg-slate-950">
               <div className="max-w-5xl">
-                <div className="bg-[#1e293b] rounded-lg overflow-hidden shadow-lg border border-slate-700">
-                  <div className="bg-[#0f172a] px-4 py-2 flex items-center justify-between border-b border-slate-700">
+                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">API Request Logs</h3>
+                <p className="text-slate-600 dark:text-slate-400">
+                  View detailed logs of all API requests and responses.
+                </p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="health" className="mt-0 p-6 bg-white dark:bg-slate-950">
+              <div className="max-w-5xl">
+                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">System Health</h3>
+                <p className="text-slate-600 dark:text-slate-400">Monitor API health and performance metrics.</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="inspector" className="mt-0 p-6 bg-white dark:bg-slate-950">
+              <div className="max-w-5xl">
+                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">API Inspector</h3>
+                <p className="text-slate-600 dark:text-slate-400">Inspect API requests, responses, and debug issues.</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="shell" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
+              <div className="max-w-5xl">
+                <div className="bg-[#1e293b] rounded-lg overflow-hidden shadow-xl border border-slate-700">
+                  <div className="bg-[#0f172a] px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
                     <span className="text-xs font-mono text-slate-400">Taxu Shell v1.0.0 - Interactive Mode</span>
+                    <div className="flex gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
+                      <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+                      <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
+                    </div>
                   </div>
                   <div className="p-4 font-mono text-sm min-h-[500px] max-h-[600px] overflow-auto">
                     <div className="text-green-400 mb-4">
@@ -418,33 +433,33 @@ export function DeveloperShell() {
       </div>
 
       {showApiExplorer && (
-        <div className="w-[440px] border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col shadow-2xl">
+        <div className="w-[440px] border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col shadow-xl">
           {/* Explorer Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-            <h2 className="font-semibold text-[#0a2540] dark:text-white">API Explorer</h2>
+            <h2 className="font-semibold text-[#0a2540] dark:text-white text-lg">API Explorer</h2>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowApiExplorer(false)}
-              className="h-8 w-8 p-0 hover:bg-slate-200 dark:hover:bg-slate-800"
+              className="h-8 w-8 p-0 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
             >
               <X className="w-4 h-4" />
             </Button>
           </div>
 
-          <div className="p-4 space-y-3 border-b border-slate-200 dark:border-slate-800">
+          <div className="p-4 space-y-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
             <Select value={selectedResource} onValueChange={setSelectedResource}>
-              <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+              <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-indigo-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
                 <SelectValue placeholder="Resource" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
                 {filteredResources.map((category) => (
                   <div key={category.category}>
-                    <div className="px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 sticky top-0">
+                    <div className="px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 sticky top-0 uppercase tracking-wide">
                       {category.category}
                     </div>
                     {category.items.map((item) => (
-                      <SelectItem key={item} value={item} className="pl-4">
+                      <SelectItem key={item} value={item} className="pl-4 cursor-pointer">
                         {item}
                       </SelectItem>
                     ))}
@@ -454,13 +469,13 @@ export function DeveloperShell() {
             </Select>
 
             <Select value={selectedMethod} onValueChange={setSelectedMethod} disabled={!selectedResource}>
-              <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700">
+              <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-indigo-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
                 <SelectValue placeholder="Method" />
               </SelectTrigger>
               <SelectContent>
                 {selectedResource &&
                   METHODS[selectedResource as keyof typeof METHODS]?.map((method) => (
-                    <SelectItem key={method} value={method}>
+                    <SelectItem key={method} value={method} className="cursor-pointer">
                       {method}
                     </SelectItem>
                   ))}
@@ -474,57 +489,63 @@ export function DeveloperShell() {
                 placeholder="Search resources..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
+                className="pl-9 h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
               />
             </div>
           </div>
 
           {/* Parameters & Code */}
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900/20">
             {selectedResource && selectedMethod ? (
               <div className="p-4 space-y-4">
                 <Tabs defaultValue="parameters" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-slate-100 dark:bg-slate-900">
+                  <TabsList className="grid w-full grid-cols-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                     <TabsTrigger
                       value="parameters"
-                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800"
+                      className="data-[state=active]:bg-indigo-50 dark:data-[state=active]:bg-indigo-900/30 data-[state=active]:text-indigo-700 dark:data-[state=active]:text-indigo-400 font-medium"
                     >
                       Parameters
                     </TabsTrigger>
                     <TabsTrigger
                       value="headers"
-                      className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800"
+                      className="data-[state=active]:bg-indigo-50 dark:data-[state=active]:bg-indigo-900/30 data-[state=active]:text-indigo-700 dark:data-[state=active]:text-indigo-400 font-medium"
                     >
                       Headers
                     </TabsTrigger>
                   </TabsList>
-                  <TabsContent value="parameters" className="space-y-3 mt-4">
+                  <TabsContent
+                    value="parameters"
+                    className="space-y-3 mt-4 bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800"
+                  >
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
                         amount
                       </label>
-                      <Input placeholder="1099" className="h-9" />
+                      <Input placeholder="1099" className="h-9 border-slate-300 dark:border-slate-700" />
                       <span className="text-xs text-slate-500 mt-1 block">number</span>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
                         currency
                       </label>
-                      <Input placeholder="usd" className="h-9" />
+                      <Input placeholder="usd" className="h-9 border-slate-300 dark:border-slate-700" />
                       <span className="text-xs text-slate-500 mt-1 block">string</span>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
                         tax_year
-                        <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-1.5 py-0.5 rounded font-medium">
+                        <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-2 py-0.5 rounded-full font-medium">
                           Optional
                         </span>
                       </label>
-                      <Input placeholder="2024" className="h-9" />
+                      <Input placeholder="2024" className="h-9 border-slate-300 dark:border-slate-700" />
                       <span className="text-xs text-slate-500 mt-1 block">number</span>
                     </div>
                   </TabsContent>
-                  <TabsContent value="headers" className="mt-4">
+                  <TabsContent
+                    value="headers"
+                    className="mt-4 bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800"
+                  >
                     <p className="text-sm text-slate-600 dark:text-slate-400 py-4 text-center">
                       No custom headers required
                     </p>
@@ -541,7 +562,7 @@ export function DeveloperShell() {
                         <SelectItem
                           key={lang.value}
                           value={lang.value}
-                          className="text-slate-100 focus:bg-slate-700 focus:text-white"
+                          className="text-slate-100 focus:bg-slate-700 focus:text-white cursor-pointer"
                         >
                           {lang.label}
                         </SelectItem>
@@ -551,7 +572,7 @@ export function DeveloperShell() {
                 </div>
 
                 {showCodeBlock && (
-                  <div className="bg-[#1e293b] rounded-lg overflow-hidden border border-slate-700">
+                  <div className="bg-[#1e293b] rounded-lg overflow-hidden border border-slate-700 shadow-lg">
                     <div className="flex items-center justify-between px-4 py-2 bg-[#0f172a] border-b border-slate-700">
                       <span className="text-xs font-mono text-slate-400">Code Example</span>
                       <Button
@@ -574,8 +595,8 @@ export function DeveloperShell() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center mb-4">
-                  <Code className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/20 flex items-center justify-center mb-4 shadow-sm">
+                  <Code className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">
                   Select a resource and method to get started
@@ -587,9 +608,9 @@ export function DeveloperShell() {
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2.5 bg-slate-50 dark:bg-slate-900/50">
+          <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2.5 bg-white dark:bg-slate-950">
             <Button
-              className="w-full bg-[#635bff] hover:bg-[#5046e5] text-white h-10 font-medium shadow-sm"
+              className="w-full bg-[#635bff] hover:bg-[#5046e5] text-white h-10 font-medium shadow-sm hover:shadow-md transition-all"
               disabled={!selectedResource || !selectedMethod}
             >
               <Play className="w-4 h-4 mr-2" />
@@ -599,7 +620,7 @@ export function DeveloperShell() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 h-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="flex-1 h-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-400"
                 onClick={() => setShowCodeBlock(!showCodeBlock)}
               >
                 {showCodeBlock ? "Hide" : "Show"} code
@@ -607,7 +628,7 @@ export function DeveloperShell() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 h-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="flex-1 h-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-400"
               >
                 <RefreshCw className="w-3 h-3 mr-1.5" />
                 Reset
