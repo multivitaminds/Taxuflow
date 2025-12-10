@@ -1,639 +1,653 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Play, Copy, Eye, EyeOff, RefreshCw, X, Code, Webhook, Terminal } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Search,
+  Play,
+  Copy,
+  Save,
+  FolderOpen,
+  Settings,
+  Book,
+  History,
+  ChevronRight,
+  Loader2,
+  Code2,
+  X,
+  Clock,
+  Zap,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { SyntaxHighlighter } from "./syntax-highlighter"
 
-const RESOURCES = [
-  {
-    category: "Tax Filing",
-    items: ["W-2 Forms", "1099-NEC Forms", "Form 941", "Tax Returns", "Filing Status", "E-file Submissions"],
-  },
-  { category: "Neobank", items: ["Accounts", "Transactions", "Cards", "Transfers", "Bill Pay", "Spending Analysis"] },
-  { category: "Investment", items: ["Portfolios", "Holdings", "Trades", "Market Data", "Performance", "Dividends"] },
-  { category: "Accounting", items: ["Invoices", "Customers", "Vendors", "Payments", "Bills", "Expenses"] },
-]
-
-const METHODS = {
-  "W-2 Forms": ["Create", "List", "Retrieve", "Update", "Delete", "Submit"],
-  "1099-NEC Forms": ["Create", "List", "Retrieve", "Update", "Delete", "Submit"],
-  Accounts: ["Create", "List", "Retrieve", "Update", "Close"],
-  Transactions: ["Create", "List", "Retrieve", "Search"],
-  Portfolios: ["Create", "List", "Retrieve", "Update", "Rebalance"],
-  Invoices: ["Create", "List", "Retrieve", "Update", "Send", "Void"],
+const API_ENDPOINTS = {
+  "Tax Filing": [
+    { name: "Create W-2", method: "POST", path: "/api/v1/tax-filing/w2" },
+    { name: "List W-2s", method: "GET", path: "/api/v1/tax-filing/w2" },
+    { name: "Create 1099-NEC", method: "POST", path: "/api/v1/tax-filing/1099-nec" },
+    { name: "List 1099-NECs", method: "GET", path: "/api/v1/tax-filing/1099-nec" },
+    { name: "Submit Filing", method: "POST", path: "/api/v1/tax-filing/submit" },
+    { name: "Get Filing Status", method: "GET", path: "/api/v1/tax-filing/{id}/status" },
+  ],
+  Neobank: [
+    { name: "Create Account", method: "POST", path: "/api/v1/neobank/accounts" },
+    { name: "List Accounts", method: "GET", path: "/api/v1/neobank/accounts" },
+    { name: "Get Account", method: "GET", path: "/api/v1/neobank/accounts/{id}" },
+    { name: "Create Transaction", method: "POST", path: "/api/v1/neobank/transactions" },
+    { name: "List Transactions", method: "GET", path: "/api/v1/neobank/transactions" },
+    { name: "Create Card", method: "POST", path: "/api/v1/neobank/cards" },
+  ],
+  Investment: [
+    { name: "Create Portfolio", method: "POST", path: "/api/v1/investment/portfolios" },
+    { name: "List Portfolios", method: "GET", path: "/api/v1/investment/portfolios" },
+    { name: "Get Holdings", method: "GET", path: "/api/v1/investment/holdings" },
+    { name: "Create Trade", method: "POST", path: "/api/v1/investment/trades" },
+    { name: "Get Performance", method: "GET", path: "/api/v1/investment/performance" },
+  ],
+  Accounting: [
+    { name: "Create Invoice", method: "POST", path: "/api/v1/accounting/invoices" },
+    { name: "List Invoices", method: "GET", path: "/api/v1/accounting/invoices" },
+    { name: "Create Customer", method: "POST", path: "/api/v1/accounting/customers" },
+    { name: "List Customers", method: "GET", path: "/api/v1/accounting/customers" },
+    { name: "Record Payment", method: "POST", path: "/api/v1/accounting/payments" },
+  ],
 }
 
-const LANGUAGES = [
-  { value: "curl", label: "cURL" },
-  { value: "taxu-cli", label: "Taxu CLI" },
-  { value: "nodejs", label: "Node.js" },
-  { value: "python", label: "Python" },
-  { value: "ruby", label: "Ruby" },
-  { value: "php", label: "PHP" },
-  { value: "java", label: "Java" },
-  { value: "go", label: "Go" },
-  { value: "dotnet", label: ".NET" },
-]
+const CODE_TEMPLATES = {
+  curl: (method: string, path: string, body: string) => `curl -X ${method} https://api.taxu.com${path} \\
+  -H "Authorization: Bearer sk_test_..." \\
+  -H "Content-Type: application/json"${body ? ` \\\n  -d '${body}'` : ""}`,
+  nodejs: (method: string, path: string, body: string) => `const taxu = require('taxu')('sk_test_...');
 
-const CODE_EXAMPLES = {
-  nodejs: `// Set your secret key
-const taxu = require('taxu')('sk_test_51Sigt...')
+const response = await taxu.${path.split("/").pop()}${method === "POST" ? `.create(${body || "{}"})` : `.list()`};
+console.log(response);`,
+  python: (method: string, path: string, body: string) => `import taxu
+taxu.api_key = "sk_test_..."
 
-const w2 = await taxu.w2Forms.create({
-  employee_name: 'John Doe',
-  ssn: '123-45-6789',
-  wages: 75000,
-  federal_tax_withheld: 12500,
-  tax_year: 2024
-})
+response = taxu.${path.split("/").pop().charAt(0).toUpperCase() + path.split("/").pop().slice(1)}${method === "POST" ? `.create(${body || "{}"})` : `.list()`}
+print(response)`,
+  go: (method: string, path: string, body: string) => `package main
 
-console.log(w2)`,
-  python: `# Set your secret key
-import taxu
-taxu.api_key = "sk_test_51Sigt..."
-
-w2 = taxu.W2Form.create(
-  employee_name="John Doe",
-  ssn="123-45-6789",
-  wages=75000,
-  federal_tax_withheld=12500,
-  tax_year=2024
+import (
+  "github.com/taxu/taxu-go"
 )
 
-print(w2)`,
-  curl: `curl https://api.taxu.com/v1/w2-forms \\
-  -u sk_test_51Sigt...: \\
-  -d employee_name="John Doe" \\
-  -d ssn="123-45-6789" \\
-  -d wages=75000 \\
-  -d federal_tax_withheld=12500 \\
-  -d tax_year=2024`,
+func main() {
+  taxu.Key = "sk_test_..."
+  
+  params := &taxu.Params{}
+  result, _ := taxu.${path.split("/").pop()}.${method === "POST" ? "Create" : "List"}(params)
+}`,
+  php: (method: string, path: string, body: string) => `<?php
+require_once('vendor/autoload.php');
+
+\\Taxu\\Taxu::setApiKey('sk_test_...');
+
+$result = \\Taxu\\${path.split("/").pop()}::${method === "POST" ? "create" : "all"}(${body || "[]"});
+print_r($result);`,
 }
 
 export function DeveloperShell() {
-  const [selectedResource, setSelectedResource] = useState<string>("")
-  const [selectedMethod, setSelectedMethod] = useState<string>("")
-  const [selectedLanguage, setSelectedLanguage] = useState("nodejs")
+  const [selectedEndpoint, setSelectedEndpoint] = useState<any>(null)
+  const [selectedLanguage, setSelectedLanguage] = useState("curl")
+  const [requestBody, setRequestBody] = useState("")
+  const [responseData, setResponseData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("request")
   const [searchQuery, setSearchQuery] = useState("")
-  const [showApiExplorer, setShowApiExplorer] = useState(true)
-  const [shellHistory, setShellHistory] = useState<string[]>([
-    '$ taxu w2_forms create --employee_name="John Doe" --wages=75000',
-    "$ taxu accounts list",
-    "$ taxu transactions retrieve txn_1234567890",
-  ])
-  const [activeTab, setActiveTab] = useState("overview")
-  const [commandInput, setCommandInput] = useState("")
-  const [shellOutput, setShellOutput] = useState<Array<{ type: "command" | "output" | "error"; text: string }>>([])
-  const [showCodeBlock, setShowCodeBlock] = useState(true)
+  const [savedRequests, setSavedRequests] = useState<any[]>([])
+  const [showSidebar, setShowSidebar] = useState(true)
+  const [requestHistory, setRequestHistory] = useState<any[]>([])
 
-  const filteredResources = RESOURCES.map((category) => ({
-    ...category,
-    items: category.items.filter((item) => item.toLowerCase().includes(searchQuery.toLowerCase())),
-  })).filter((category) => category.items.length > 0)
+  useEffect(() => {
+    // Fetch saved test requests from API
+    fetch("/api/developer/test-requests")
+      .then((res) => res.json())
+      .then((data) => setSavedRequests(data.requests || []))
+      .catch(console.error)
+  }, [])
 
-  const executeCommand = () => {
-    if (!commandInput.trim()) return
+  const executeRequest = async () => {
+    if (!selectedEndpoint) return
 
-    setShellOutput((prev) => [
-      ...prev,
-      { type: "command", text: `$ ${commandInput}` },
-      { type: "output", text: `Executing: ${commandInput}\nSuccess! Response received.` },
-    ])
-    setCommandInput("")
+    setIsLoading(true)
+    setActiveTab("response")
+
+    const startTime = Date.now()
+
+    try {
+      const response = await fetch("/api/developer/execute", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          method: selectedEndpoint.method,
+          endpoint: selectedEndpoint.path,
+          headers: {},
+          body: requestBody ? JSON.parse(requestBody) : null,
+        }),
+      })
+
+      const data = await response.json()
+
+      const responseTime = Date.now() - startTime
+
+      setResponseData({
+        status: data.status || response.status,
+        data: data.data || data,
+        responseTime: data.responseTime || responseTime,
+        headers: {
+          "content-type": response.headers.get("content-type") || "application/json",
+          "x-response-time": `${responseTime}ms`,
+        },
+      })
+
+      setRequestHistory((prev) => [
+        {
+          endpoint: selectedEndpoint,
+          timestamp: new Date().toISOString(),
+          status: data.status || response.status,
+          duration: data.responseTime || responseTime,
+        },
+        ...prev.slice(0, 9),
+      ])
+    } catch (error) {
+      setResponseData({
+        status: 500,
+        error: error.message,
+        data: { error: error.message },
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const copyCode = () => {
-    const code = CODE_EXAMPLES[selectedLanguage as keyof typeof CODE_EXAMPLES]
-    navigator.clipboard.writeText(code)
+  const saveRequest = async () => {
+    if (!selectedEndpoint) return
+
+    const saved = await fetch("/api/developer/test-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        request_name: selectedEndpoint.name,
+        method: selectedEndpoint.method,
+        endpoint: selectedEndpoint.path,
+        body: requestBody,
+      }),
+    }).then((res) => res.json())
+
+    setSavedRequests((prev) => [saved, ...prev])
   }
+
+  const generatedCode =
+    selectedEndpoint && CODE_TEMPLATES[selectedLanguage as keyof typeof CODE_TEMPLATES]
+      ? CODE_TEMPLATES[selectedLanguage as keyof typeof CODE_TEMPLATES](
+          selectedEndpoint.method,
+          selectedEndpoint.path,
+          requestBody,
+        )
+      : ""
+
+  const filteredEndpoints = Object.entries(API_ENDPOINTS).reduce((acc, [category, endpoints]) => {
+    const filtered = endpoints.filter(
+      (ep) =>
+        ep.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ep.path.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+    if (filtered.length > 0) {
+      acc[category] = filtered
+    }
+    return acc
+  }, {} as any)
 
   return (
-    <div className="flex h-screen bg-[#f6f9fc] dark:bg-slate-950">
-      {/* Main Shell Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation - Enhanced with Stripe styling */}
-        <div className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
-          <div className="flex items-center justify-between px-6 py-3">
-            <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold text-[#0a2540] dark:text-white">Workbench</h1>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-sm font-medium border border-indigo-100 dark:border-indigo-800">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                <span>Test Mode</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
+    <div className="flex h-screen bg-[#0a0e1a]">
+      {showSidebar && (
+        <div className="w-80 border-r border-white/10 bg-[#0d1117] flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-semibold text-lg text-white">API Explorer</h2>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowApiExplorer(!showApiExplorer)}
-                className="text-slate-600 dark:text-slate-400 hover:text-[#635bff] hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-white/10"
+                onClick={() => setShowSidebar(false)}
               >
-                {showApiExplorer ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-                API Explorer
-              </Button>
-              <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-400 hover:bg-slate-100">
-                + New pane
+                <X className="h-4 w-4" />
               </Button>
             </div>
-          </div>
-
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="px-6">
-            <TabsList className="bg-transparent border-b border-slate-200 dark:border-slate-800 rounded-none h-auto p-0 space-x-6">
-              <TabsTrigger
-                value="overview"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger
-                value="webhooks"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Webhooks
-              </TabsTrigger>
-              <TabsTrigger
-                value="events"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Events
-              </TabsTrigger>
-              <TabsTrigger
-                value="logs"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Logs
-              </TabsTrigger>
-              <TabsTrigger
-                value="health"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Health
-              </TabsTrigger>
-              <TabsTrigger
-                value="inspector"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Inspector
-              </TabsTrigger>
-              <TabsTrigger
-                value="shell"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-[#635bff] data-[state=active]:text-[#635bff] data-[state=active]:bg-transparent pb-3 px-0 font-medium text-slate-600 hover:text-slate-900"
-              >
-                Shell
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <pre className="text-[#635bff] dark:text-[#8b7dff] mb-6 font-mono text-[10px] leading-tight select-none">
-                  {`
-  ████████╗ █████╗ ██╗  ██╗██╗   ██╗
-  ╚══██╔══╝██╔══██╗╚██╗██╔╝██║   ██║
-     ██║   ███████║ ╚███╔╝ ██║   ██║
-     ██║   ██╔══██║ ██╔██╗ ██║   ██║
-     ██║   ██║  ██║██╔╝ ██╗╚██████╔╝
-     ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ 
-`}
-                </pre>
-
-                <h2 className="text-2xl font-semibold text-[#0a2540] dark:text-white mb-3">Welcome to Taxu Shell!</h2>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed mb-8">
-                  Taxu Shell is a browser-based shell with the Taxu CLI pre-installed. You can use it to manage your
-                  Taxu resources in test mode:
-                </p>
-
-                <div className="space-y-3 mb-8">
-                  <div className="flex items-start gap-3">
-                    <span className="text-slate-400 mt-0.5">—</span>
-                    <div className="flex-1">
-                      <span className="text-slate-700 dark:text-slate-300">View supported Taxu commands: </span>
-                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
-                        taxu help
-                      </code>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-slate-400 mt-0.5">—</span>
-                    <div className="flex-1">
-                      <span className="text-slate-700 dark:text-slate-300">Find webhook events: </span>
-                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
-                        taxu trigger [event]
-                      </code>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-slate-400 mt-0.5">—</span>
-                    <div className="flex-1">
-                      <span className="text-slate-700 dark:text-slate-300">Listen for webhook events: </span>
-                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
-                        taxu listen
-                      </code>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="text-slate-400 mt-0.5">—</span>
-                    <div className="flex-1">
-                      <span className="text-slate-700 dark:text-slate-300">Call Taxu APIs: </span>
-                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
-                        taxu [api resource] [operation]
-                      </code>
-                      <span className="text-slate-700 dark:text-slate-300"> (e.g., </span>
-                      <code className="inline-block px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 font-mono text-sm rounded border border-indigo-100 dark:border-indigo-800">
-                        taxu w2_forms list
-                      </code>
-                      <span className="text-slate-700 dark:text-slate-300">)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-[#1e293b] rounded-lg overflow-hidden shadow-xl border border-slate-700">
-                  <div className="bg-[#0f172a] px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
-                    <span className="text-xs font-mono text-slate-400">Shell</span>
-                    <div className="flex gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
-                    </div>
-                  </div>
-                  <div className="p-4 font-mono text-sm">
-                    <div className="space-y-2 mb-4">
-                      {shellHistory.map((cmd, i) => (
-                        <div key={i} className="text-slate-300">
-                          {cmd}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-green-400">Shell &gt;</span>
-                      <Input
-                        value={commandInput}
-                        onChange={(e) => setCommandInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && executeCommand()}
-                        placeholder="taxu w2_forms create --amount=1099 --currency=usd"
-                        className="flex-1 bg-transparent border-none text-slate-100 focus-visible:ring-0 focus-visible:ring-offset-0 font-mono placeholder:text-slate-600"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="webhooks" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">Webhook Testing</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                  Test webhook integrations by triggering events or listening to real-time webhook deliveries.
-                </p>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-700 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-sm">
-                        <Webhook className="w-5 h-5 text-white" />
-                      </div>
-                      <h4 className="font-semibold text-[#0a2540] dark:text-white">Trigger Events</h4>
-                    </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                      Trigger test webhook events to your endpoint
-                    </p>
-                    <code className="text-xs bg-slate-900 text-slate-300 px-3 py-2 rounded block font-mono">
-                      $ taxu trigger w2.created
-                    </code>
-                  </div>
-
-                  <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-lg hover:border-green-300 dark:hover:border-green-700 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-sm">
-                        <Terminal className="w-5 h-5 text-white" />
-                      </div>
-                      <h4 className="font-semibold text-[#0a2540] dark:text-white">Listen Mode</h4>
-                    </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                      Listen for incoming webhook events
-                    </p>
-                    <code className="text-xs bg-slate-900 text-slate-300 px-3 py-2 rounded block font-mono">
-                      $ taxu listen
-                    </code>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="events" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">Event Log</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                  View all API events and webhook deliveries in real-time.
-                </p>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shadow-sm">
-                  <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Recent Events</span>
-                      <span className="text-xs text-slate-500">Last 24 hours</span>
-                    </div>
-                  </div>
-                  <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                    {[
-                      { event: "w2.created", time: "2 minutes ago", status: "success" },
-                      { event: "account.updated", time: "15 minutes ago", status: "success" },
-                      { event: "transaction.created", time: "1 hour ago", status: "success" },
-                    ].map((item, i) => (
-                      <div
-                        key={i}
-                        className="p-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50"></div>
-                          <code className="text-sm text-indigo-600 dark:text-indigo-400 font-mono">{item.event}</code>
-                        </div>
-                        <span className="text-sm text-slate-500">{item.time}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="logs" className="mt-0 p-6 bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">API Request Logs</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  View detailed logs of all API requests and responses.
-                </p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="health" className="mt-0 p-6 bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">System Health</h3>
-                <p className="text-slate-600 dark:text-slate-400">Monitor API health and performance metrics.</p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="inspector" className="mt-0 p-6 bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <h3 className="text-xl font-semibold text-[#0a2540] dark:text-white mb-3">API Inspector</h3>
-                <p className="text-slate-600 dark:text-slate-400">Inspect API requests, responses, and debug issues.</p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="shell" className="mt-0 p-6 overflow-auto bg-white dark:bg-slate-950">
-              <div className="max-w-5xl">
-                <div className="bg-[#1e293b] rounded-lg overflow-hidden shadow-xl border border-slate-700">
-                  <div className="bg-[#0f172a] px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
-                    <span className="text-xs font-mono text-slate-400">Taxu Shell v1.0.0 - Interactive Mode</span>
-                    <div className="flex gap-2">
-                      <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                      <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                      <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
-                    </div>
-                  </div>
-                  <div className="p-4 font-mono text-sm min-h-[500px] max-h-[600px] overflow-auto">
-                    <div className="text-green-400 mb-4">
-                      Welcome to Taxu Shell! Type 'help' for available commands.
-                    </div>
-
-                    {/* Shell Output */}
-                    {shellOutput.map((line, i) => (
-                      <div
-                        key={i}
-                        className={
-                          line.type === "command"
-                            ? "text-slate-300 mb-1"
-                            : line.type === "error"
-                              ? "text-red-400 mb-3"
-                              : "text-slate-400 mb-3 whitespace-pre-line"
-                        }
-                      >
-                        {line.text}
-                      </div>
-                    ))}
-
-                    {/* Command Input */}
-                    <div className="flex items-center gap-2 sticky bottom-0 bg-[#1e293b] pt-2">
-                      <span className="text-green-400">$</span>
-                      <Input
-                        value={commandInput}
-                        onChange={(e) => setCommandInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && executeCommand()}
-                        placeholder="Enter command..."
-                        className="flex-1 bg-transparent border-none text-slate-100 focus-visible:ring-0 focus-visible:ring-offset-0 font-mono placeholder:text-slate-600"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-
-      {showApiExplorer && (
-        <div className="w-[440px] border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 flex flex-col shadow-xl">
-          {/* Explorer Header */}
-          <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-            <h2 className="font-semibold text-[#0a2540] dark:text-white text-lg">API Explorer</h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowApiExplorer(false)}
-              className="h-8 w-8 p-0 hover:bg-slate-200 dark:hover:bg-slate-800 rounded"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-
-          <div className="p-4 space-y-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-            <Select value={selectedResource} onValueChange={setSelectedResource}>
-              <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-indigo-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                <SelectValue placeholder="Resource" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                {filteredResources.map((category) => (
-                  <div key={category.category}>
-                    <div className="px-2 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 sticky top-0 uppercase tracking-wide">
-                      {category.category}
-                    </div>
-                    {category.items.map((item) => (
-                      <SelectItem key={item} value={item} className="pl-4 cursor-pointer">
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedMethod} onValueChange={setSelectedMethod} disabled={!selectedResource}>
-              <SelectTrigger className="w-full h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-indigo-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
-                <SelectValue placeholder="Method" />
-              </SelectTrigger>
-              <SelectContent>
-                {selectedResource &&
-                  METHODS[selectedResource as keyof typeof METHODS]?.map((method) => (
-                    <SelectItem key={method} value={method} className="cursor-pointer">
-                      {method}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-
-            {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
               <Input
-                placeholder="Search resources..."
+                placeholder="Search endpoints..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                className="pl-9 h-9 bg-[#161b22] border-white/10 text-white placeholder:text-gray-500 focus:border-indigo-500 focus:ring-indigo-500/20"
               />
             </div>
           </div>
 
-          {/* Parameters & Code */}
-          <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900/20">
-            {selectedResource && selectedMethod ? (
-              <div className="p-4 space-y-4">
-                <Tabs defaultValue="parameters" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <TabsTrigger
-                      value="parameters"
-                      className="data-[state=active]:bg-indigo-50 dark:data-[state=active]:bg-indigo-900/30 data-[state=active]:text-indigo-700 dark:data-[state=active]:text-indigo-400 font-medium"
-                    >
-                      Parameters
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="headers"
-                      className="data-[state=active]:bg-indigo-50 dark:data-[state=active]:bg-indigo-900/30 data-[state=active]:text-indigo-700 dark:data-[state=active]:text-indigo-400 font-medium"
-                    >
-                      Headers
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent
-                    value="parameters"
-                    className="space-y-3 mt-4 bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800"
-                  >
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
-                        amount
-                      </label>
-                      <Input placeholder="1099" className="h-9 border-slate-300 dark:border-slate-700" />
-                      <span className="text-xs text-slate-500 mt-1 block">number</span>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 block">
-                        currency
-                      </label>
-                      <Input placeholder="usd" className="h-9 border-slate-300 dark:border-slate-700" />
-                      <span className="text-xs text-slate-500 mt-1 block">string</span>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-2">
-                        tax_year
-                        <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 px-2 py-0.5 rounded-full font-medium">
-                          Optional
-                        </span>
-                      </label>
-                      <Input placeholder="2024" className="h-9 border-slate-300 dark:border-slate-700" />
-                      <span className="text-xs text-slate-500 mt-1 block">number</span>
-                    </div>
-                  </TabsContent>
-                  <TabsContent
-                    value="headers"
-                    className="mt-4 bg-white dark:bg-slate-900 p-4 rounded-lg border border-slate-200 dark:border-slate-800"
-                  >
-                    <p className="text-sm text-slate-600 dark:text-slate-400 py-4 text-center">
-                      No custom headers required
-                    </p>
-                  </TabsContent>
-                </Tabs>
-
-                <div>
-                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                    <SelectTrigger className="w-full bg-[#1e293b] text-slate-100 border-slate-700 hover:bg-[#0f172a] h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0f172a] border-slate-700">
-                      {LANGUAGES.map((lang) => (
-                        <SelectItem
-                          key={lang.value}
-                          value={lang.value}
-                          className="text-slate-100 focus:bg-slate-700 focus:text-white cursor-pointer"
-                        >
-                          {lang.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          {/* Endpoints List */}
+          <ScrollArea className="flex-1">
+            <div className="p-2">
+              {Object.entries(filteredEndpoints).map(([category, endpoints]) => (
+                <div key={category} className="mb-4">
+                  <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    {category}
+                  </div>
+                  <div className="space-y-0.5">
+                    {(endpoints as any[]).map((endpoint) => (
+                      <button
+                        key={endpoint.path}
+                        onClick={() => {
+                          setSelectedEndpoint(endpoint)
+                          setRequestBody("")
+                          setResponseData(null)
+                        }}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg hover:bg-white/5 transition-all ${
+                          selectedEndpoint?.path === endpoint.path ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] font-mono px-2 py-0.5 ${
+                              endpoint.method === "GET"
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : endpoint.method === "POST"
+                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                  : endpoint.method === "PUT"
+                                    ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                                    : "bg-red-500/20 text-red-400 border border-red-500/30"
+                            }`}
+                          >
+                            {endpoint.method}
+                          </Badge>
+                          <span className="text-sm font-medium truncate text-white">{endpoint.name}</span>
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1 font-mono truncate">{endpoint.path}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+              ))}
+            </div>
+          </ScrollArea>
 
-                {showCodeBlock && (
-                  <div className="bg-[#1e293b] rounded-lg overflow-hidden border border-slate-700 shadow-lg">
-                    <div className="flex items-center justify-between px-4 py-2 bg-[#0f172a] border-b border-slate-700">
-                      <span className="text-xs font-mono text-slate-400">Code Example</span>
+          {/* Saved Collections */}
+          <div className="border-t border-white/10 p-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-start bg-transparent border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+              onClick={() => {}}
+            >
+              <FolderOpen className="h-4 w-4 mr-2" />
+              Saved Requests ({savedRequests.length})
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <div className="h-14 border-b border-white/10 bg-[#0d1117] px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {!showSidebar && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-400 hover:text-white hover:bg-white/10"
+                onClick={() => setShowSidebar(true)}
+              >
+                <ChevronRight className="h-4 w-4 mr-2" />
+                Show Explorer
+              </Button>
+            )}
+            <h1 className="text-xl font-semibold text-white">Taxu Workbench</h1>
+            <Badge className="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/20">
+              <Zap className="h-3 w-3 mr-1" />
+              Test Mode
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-white/10">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </Button>
+            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-white/10">
+              <Book className="h-4 w-4 mr-2" />
+              Docs
+            </Button>
+            <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white hover:bg-white/10">
+              <Settings className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Request/Response Area */}
+        {selectedEndpoint ? (
+          <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0e1a]">
+            <div className="border-b border-white/10 bg-gradient-to-r from-[#0d1117] to-[#161b22] px-6 py-4">
+              <div className="flex items-center gap-3 mb-2">
+                <Badge
+                  className={`text-xs font-mono px-2.5 py-1 ${
+                    selectedEndpoint.method === "GET"
+                      ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                      : selectedEndpoint.method === "POST"
+                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                        : selectedEndpoint.method === "PUT"
+                          ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                          : "bg-red-500/20 text-red-400 border border-red-500/30"
+                  }`}
+                >
+                  {selectedEndpoint.method}
+                </Badge>
+                <h2 className="text-lg font-semibold text-white">{selectedEndpoint.name}</h2>
+              </div>
+              <code className="text-sm text-gray-400 font-mono">{selectedEndpoint.path}</code>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+              <div className="border-b border-white/10 px-6 bg-[#0d1117]">
+                <TabsList className="h-12 bg-transparent p-0 space-x-6">
+                  <TabsTrigger
+                    value="request"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-500 data-[state=active]:bg-transparent data-[state=active]:text-white h-12 text-gray-400"
+                  >
+                    Request
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="response"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-500 data-[state=active]:bg-transparent data-[state=active]:text-white h-12 text-gray-400"
+                  >
+                    Response
+                    {responseData && (
+                      <Badge
+                        className={`ml-2 ${
+                          responseData.error
+                            ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                            : "bg-green-500/20 text-green-400 border border-green-500/30"
+                        }`}
+                      >
+                        {responseData.error ? "Error" : "200"}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="code"
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-indigo-500 data-[state=active]:bg-transparent data-[state=active]:text-white h-12 text-gray-400"
+                  >
+                    <Code2 className="h-4 w-4 mr-2" />
+                    Code
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="request" className="flex-1 overflow-auto m-0 bg-[#0a0e1a]">
+                <div className="p-6 space-y-6">
+                  {/* Request Body */}
+                  {selectedEndpoint.method !== "GET" && (
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-gray-300">Request Body (JSON)</label>
+                      <Textarea
+                        value={requestBody}
+                        onChange={(e) => setRequestBody(e.target.value)}
+                        placeholder={`{\n  "employee_name": "John Doe",\n  "ssn": "123-45-6789",\n  "wages": 75000\n}`}
+                        className="font-mono text-sm min-h-[300px] bg-[#161b22] border-white/10 text-white placeholder:text-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20"
+                      />
+                    </div>
+                  )}
+
+                  {/* Headers */}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block text-gray-300">Headers</label>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <Input
+                          value="Authorization"
+                          disabled
+                          className="flex-1 bg-[#161b22] border-white/10 text-gray-400"
+                        />
+                        <Input
+                          value="Bearer sk_test_..."
+                          disabled
+                          className="flex-1 bg-[#161b22] border-white/10 text-gray-400"
+                        />
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          value="Content-Type"
+                          disabled
+                          className="flex-1 bg-[#161b22] border-white/10 text-gray-400"
+                        />
+                        <Input
+                          value="application/json"
+                          disabled
+                          className="flex-1 bg-[#161b22] border-white/10 text-gray-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Button
+                      onClick={executeRequest}
+                      disabled={isLoading}
+                      className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4 mr-2" />
+                      )}
+                      Send Request
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={saveRequest}
+                      className="bg-transparent border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="response" className="flex-1 overflow-auto m-0 bg-[#0a0e1a]">
+                <div className="p-6">
+                  {isLoading ? (
+                    <div className="flex flex-col items-center justify-center h-64">
+                      <Loader2 className="h-12 w-12 animate-spin text-indigo-500 mb-4" />
+                      <p className="text-sm text-gray-400">Executing request...</p>
+                    </div>
+                  ) : responseData ? (
+                    <div className="space-y-4">
+                      <div className={`rounded-lg p-4 ${responseData.error ? "status-error" : "status-success"}`}>
+                        <div className="flex items-center gap-3">
+                          {responseData.error ? (
+                            <XCircle className="h-5 w-5 text-red-400" />
+                          ) : (
+                            <CheckCircle2 className="h-5 w-5 text-green-400" />
+                          )}
+                          <span className={`font-semibold ${responseData.error ? "text-red-400" : "text-green-400"}`}>
+                            {responseData.error ? "Request Failed" : "Request Successful"}
+                          </span>
+                          {responseData.duration && (
+                            <Badge className="ml-auto bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {responseData.duration}ms
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-white/10 overflow-hidden code-block-dark">
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#161b22]">
+                          <span className="text-sm font-medium text-gray-300">Response Body</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-gray-400 hover:text-white hover:bg-white/10"
+                          >
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copy
+                          </Button>
+                        </div>
+                        <ScrollArea className="max-h-[500px]">
+                          <pre className="p-4 overflow-x-auto">
+                            <SyntaxHighlighter code={JSON.stringify(responseData.data, null, 2)} language="json" />
+                          </pre>
+                        </ScrollArea>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-64 text-center">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center mb-4 border border-indigo-500/30">
+                        <Code2 className="h-10 w-10 text-indigo-400" />
+                      </div>
+                      <p className="text-sm text-gray-400">Send a request to see the response here</p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="code" className="flex-1 overflow-auto m-0 bg-[#0a0e1a]">
+                <div className="p-6 space-y-4">
+                  {/* Language Selector */}
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-300">Language</label>
+                    <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                      <SelectTrigger className="w-48 bg-[#161b22] border-white/10 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#161b22] border-white/10">
+                        <SelectItem value="curl">cURL</SelectItem>
+                        <SelectItem value="nodejs">Node.js</SelectItem>
+                        <SelectItem value="python">Python</SelectItem>
+                        <SelectItem value="go">Go</SelectItem>
+                        <SelectItem value="php">PHP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="rounded-lg border border-white/10 overflow-hidden code-block-dark">
+                    <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-[#161b22]">
+                      <span className="text-sm font-medium text-gray-300">Code Example</span>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={copyCode}
-                        className="h-7 px-2 text-slate-400 hover:text-white hover:bg-slate-700"
+                        className="h-7 px-2 text-gray-400 hover:text-white hover:bg-white/10"
                       >
-                        <Copy className="w-3 h-3 mr-1.5" />
-                        <span className="text-xs">Copy</span>
+                        <Copy className="h-3 w-3 mr-1" />
+                        Copy
                       </Button>
                     </div>
-                    <div className="p-4 font-mono text-xs text-slate-300 overflow-x-auto max-h-64">
-                      <pre>
-                        <code>{CODE_EXAMPLES[selectedLanguage as keyof typeof CODE_EXAMPLES]}</code>
+                    <ScrollArea className="max-h-[600px]">
+                      <pre className="p-4 overflow-x-auto">
+                        <SyntaxHighlighter code={generatedCode} language={selectedLanguage} />
                       </pre>
-                    </div>
+                    </ScrollArea>
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/20 flex items-center justify-center mb-4 shadow-sm">
-                  <Code className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 </div>
-                <p className="text-sm font-medium text-slate-900 dark:text-white mb-1">
-                  Select a resource and method to get started
-                </p>
-                <p className="text-xs text-slate-500">
-                  Choose from Tax Filing, Neobank, Investment, or Accounting APIs
-                </p>
-              </div>
-            )}
+              </TabsContent>
+            </Tabs>
           </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-[#0a0e1a]">
+            <div className="mb-8 font-mono text-xs sm:text-sm text-indigo-400/60 select-none leading-tight">
+              <pre className="whitespace-pre">
+                {`     /////    //////    //  //  //  //  
+    /// ///  ///  ///  //  //  //  //  
+       //    ////////   //////   //  //  
+      //     //    //   //  //   //  //  
+     //      //    //   //  //   //  //  `}
+              </pre>
+            </div>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2.5 bg-white dark:bg-slate-950">
-            <Button
-              className="w-full bg-[#635bff] hover:bg-[#5046e5] text-white h-10 font-medium shadow-sm hover:shadow-md transition-all"
-              disabled={!selectedResource || !selectedMethod}
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Run request
-            </Button>
-            <div className="flex gap-2">
+            <h3 className="text-2xl font-bold mb-2 text-white">Welcome to Taxu Shell!</h3>
+            <p className="text-sm text-gray-400 max-w-2xl mb-4">
+              Taxu Shell is a browser-based shell with the Taxu CLI pre-installed. You can use it to test your Taxu
+              resources in real-time:
+            </p>
+
+            <div className="text-left text-sm text-gray-400 max-w-2xl mb-6 space-y-2 font-mono">
+              <div className="flex items-start gap-2">
+                <span className="text-gray-500">—</span>
+                <div>
+                  View supported Taxu commands: <span className="text-indigo-400">taxu help ▷</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-gray-500">—</span>
+                <div>
+                  Test tax filing endpoints: <span className="text-indigo-400">taxu filings create ▷</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="text-gray-500">—</span>
+                <div>
+                  Manage API keys: <span className="text-indigo-400">taxu keys list ▷</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
               <Button
                 variant="outline"
-                size="sm"
-                className="flex-1 h-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-400"
-                onClick={() => setShowCodeBlock(!showCodeBlock)}
+                className="bg-transparent border-white/10 text-gray-300 hover:bg-white/5 hover:text-white"
               >
-                {showCodeBlock ? "Hide" : "Show"} code
+                <Book className="h-4 w-4 mr-2" />
+                View Documentation
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 h-9 bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-indigo-400"
-              >
-                <RefreshCw className="w-3 h-3 mr-1.5" />
-                Reset
+              <Button className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white">
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Load Saved Request
               </Button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {requestHistory.length > 0 && (
+        <div className="w-72 border-l border-white/10 bg-[#0d1117] overflow-auto">
+          <div className="p-4 border-b border-white/10">
+            <h3 className="font-semibold text-sm text-white">Recent Requests</h3>
+          </div>
+          <div className="p-2 space-y-2">
+            {requestHistory.map((req, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedEndpoint(req.endpoint)}
+                className="w-full text-left p-3 rounded-lg hover:bg-white/5 transition-all"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge
+                    className={`text-[10px] font-mono px-2 py-0.5 ${
+                      req.status >= 200 && req.status < 300
+                        ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                        : "bg-red-500/20 text-red-400 border border-red-500/30"
+                    }`}
+                  >
+                    {req.status}
+                  </Badge>
+                  <span className="text-xs font-medium truncate text-white">{req.endpoint.name}</span>
+                </div>
+                <div className="text-[11px] text-gray-400 flex items-center justify-between">
+                  <span>{new Date(req.timestamp).toLocaleTimeString()}</span>
+                  <span>{req.duration}ms</span>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
       )}

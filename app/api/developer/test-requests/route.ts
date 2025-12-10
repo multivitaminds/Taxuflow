@@ -1,80 +1,62 @@
 import { createClient } from "@/lib/supabase/server"
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 
-// GET - List all test requests for the current user
-export async function GET(request: Request) {
+// GET - List all saved test requests for the user
+export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 })
-    }
-
-    // Get authenticated user
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const collectionId = searchParams.get("collection_id")
-    const saved = searchParams.get("saved")
+    const isFavorite = searchParams.get("favorite") === "true"
 
-    // Build query
     let query = supabase
       .from("developer_test_requests")
       .select("*")
       .eq("user_id", user.id)
+      .eq("is_saved", true)
       .order("created_at", { ascending: false })
 
     if (collectionId) {
       query = query.eq("collection_id", collectionId)
     }
 
-    if (saved === "true") {
-      query = query.eq("is_saved", true)
+    if (isFavorite) {
+      query = query.eq("is_favorite", true)
     }
 
-    const { data: testRequests, error } = await query
+    const { data: requests, error } = await query
 
-    if (error) {
-      console.error("[v0] Error fetching test requests:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) throw error
 
-    return NextResponse.json({ testRequests })
+    return NextResponse.json({ requests })
   } catch (error) {
-    console.error("[v0] Error in test-requests GET:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error fetching test requests:", error)
+    return NextResponse.json({ error: "Failed to fetch test requests" }, { status: 500 })
   }
 }
 
-// POST - Create a new test request
-export async function POST(request: Request) {
+// POST - Create or save a new test request
+export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 })
-    }
-
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
-    const { request_name, method, endpoint, headers, body: requestBody, collection_id, is_saved = true } = body
-
-    if (!request_name || !method || !endpoint) {
-      return NextResponse.json({ error: "Missing required fields: request_name, method, endpoint" }, { status: 400 })
-    }
+    const { request_name, method, endpoint, headers, body: requestBody, environment, is_favorite } = body
 
     const { data: testRequest, error } = await supabase
       .from("developer_test_requests")
@@ -83,98 +65,72 @@ export async function POST(request: Request) {
         request_name,
         method,
         endpoint,
-        headers: headers || {},
-        body: requestBody || null,
-        collection_id: collection_id || null,
-        is_saved,
+        headers,
+        body: requestBody,
+        environment: environment || "test",
+        is_saved: true,
+        is_favorite: is_favorite || false,
       })
       .select()
       .single()
 
-    if (error) {
-      console.error("[v0] Error creating test request:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) throw error
 
-    return NextResponse.json({ testRequest }, { status: 201 })
+    return NextResponse.json({ request: testRequest }, { status: 201 })
   } catch (error) {
-    console.error("[v0] Error in test-requests POST:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error creating test request:", error)
+    return NextResponse.json({ error: "Failed to create test request" }, { status: 500 })
   }
 }
 
 // PATCH - Update a test request
-export async function PATCH(request: Request) {
+export async function PATCH(request: NextRequest) {
   try {
     const supabase = await createClient()
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 })
-    }
-
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     const body = await request.json()
-    const { id, request_name, method, endpoint, headers, body: requestBody, is_saved } = body
+    const { id, ...updates } = body
 
     if (!id) {
-      return NextResponse.json({ error: "Missing required field: id" }, { status: 400 })
+      return NextResponse.json({ error: "Request ID is required" }, { status: 400 })
     }
-
-    // Verify ownership
-    const { data: existing } = await supabase.from("developer_test_requests").select("user_id").eq("id", id).single()
-
-    if (!existing || existing.user_id !== user.id) {
-      return NextResponse.json({ error: "Test request not found or access denied" }, { status: 404 })
-    }
-
-    const updates: any = { updated_at: new Date().toISOString() }
-    if (request_name) updates.request_name = request_name
-    if (method) updates.method = method
-    if (endpoint) updates.endpoint = endpoint
-    if (headers) updates.headers = headers
-    if (requestBody !== undefined) updates.body = requestBody
-    if (is_saved !== undefined) updates.is_saved = is_saved
 
     const { data: testRequest, error } = await supabase
       .from("developer_test_requests")
-      .update(updates)
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id)
+      .eq("user_id", user.id)
       .select()
       .single()
 
-    if (error) {
-      console.error("[v0] Error updating test request:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) throw error
 
-    return NextResponse.json({ testRequest })
+    return NextResponse.json({ request: testRequest })
   } catch (error) {
-    console.error("[v0] Error in test-requests PATCH:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error updating test request:", error)
+    return NextResponse.json({ error: "Failed to update test request" }, { status: 500 })
   }
 }
 
 // DELETE - Delete a test request
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     const supabase = await createClient()
-    if (!supabase) {
-      return NextResponse.json({ error: "Database not configured" }, { status: 500 })
-    }
-
     const {
       data: { user },
-      error: authError,
     } = await supabase.auth.getUser()
 
-    if (authError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
@@ -182,26 +138,16 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id")
 
     if (!id) {
-      return NextResponse.json({ error: "Missing required parameter: id" }, { status: 400 })
+      return NextResponse.json({ error: "Request ID is required" }, { status: 400 })
     }
 
-    // Verify ownership before deleting
-    const { data: existing } = await supabase.from("developer_test_requests").select("user_id").eq("id", id).single()
+    const { error } = await supabase.from("developer_test_requests").delete().eq("id", id).eq("user_id", user.id)
 
-    if (!existing || existing.user_id !== user.id) {
-      return NextResponse.json({ error: "Test request not found or access denied" }, { status: 404 })
-    }
-
-    const { error } = await supabase.from("developer_test_requests").delete().eq("id", id)
-
-    if (error) {
-      console.error("[v0] Error deleting test request:", error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
+    if (error) throw error
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] Error in test-requests DELETE:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("[v0] Error deleting test request:", error)
+    return NextResponse.json({ error: "Failed to delete test request" }, { status: 500 })
   }
 }

@@ -532,6 +532,63 @@
     touch-action: pan-y;
     user-select: none;
   }
+
+  /* Adding world-class syntax highlighting for code blocks */
+  /* Premium syntax highlighting colors */
+  .syntax-keyword {
+    color: #c678dd;
+  }
+
+  .syntax-string {
+    color: #98c379;
+  }
+
+  .syntax-number {
+    color: #d19a66;
+  }
+
+  .syntax-function {
+    color: #61afef;
+  }
+
+  .syntax-comment {
+    color: #5c6370;
+    font-style: italic;
+  }
+
+  .syntax-property {
+    color: #e06c75;
+  }
+
+  .syntax-operator {
+    color: #56b6c2;
+  }
+
+  .syntax-punctuation {
+    color: #abb2bf;
+  }
+
+  /* Dark terminal-style code block */
+  .code-block-dark {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border: 1px solid rgba(99, 91, 255, 0.2);
+  }
+
+  /* Response status indicators */
+  .status-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%);
+    border-left: 3px solid #10b981;
+  }
+
+  .status-error {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+    border-left: 3px solid #ef4444;
+  }
+
+  .status-warning {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+    border-left: 3px solid #f59e0b;
+  }
 }
 
 /* Mobile-specific responsive overrides */
