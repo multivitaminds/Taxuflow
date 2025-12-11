@@ -306,6 +306,10 @@ export default function DeveloperPortal() {
                 <h4 className="text-lg font-bold text-[#635bff] group-hover:underline mb-2">CLI</h4>
                 <p className="text-gray-600 text-sm">Command-line tools for developers</p>
               </Link>
+              <Link href="/developer/shell" className="group">
+                <h4 className="text-lg font-bold text-[#635bff] group-hover:underline mb-2">Taxu Shell</h4>
+                <p className="text-gray-600 text-sm">Interactive browser-based shell for testing APIs</p>
+              </Link>
             </div>
           </div>
         </div>

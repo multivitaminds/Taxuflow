@@ -133,7 +133,7 @@ export default function GettingStartedPage() {
             </div>
             <h2 className="text-3xl font-bold text-[#0a2540]">Developer setup</h2>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card className="group relative overflow-hidden border-2 border-slate-200 bg-white hover:border-[#635bff] transition-all duration-300 hover:shadow-lg">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#635bff]/5 rounded-full -mr-16 -mt-16 group-hover:bg-[#635bff]/10 transition-colors" />
               <div className="relative p-8">
@@ -168,6 +168,25 @@ export default function GettingStartedPage() {
                   className="inline-flex items-center gap-2 text-[#635bff] hover:text-[#5851df] font-semibold group/link"
                 >
                   Manage API keys
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
+                </Link>
+              </div>
+            </Card>
+            <Card className="group relative overflow-hidden border-2 border-slate-200 bg-white hover:border-[#635bff] transition-all duration-300 hover:shadow-lg">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#635bff]/5 rounded-full -mr-16 -mt-16 group-hover:bg-[#635bff]/10 transition-colors" />
+              <div className="relative p-8">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-cyan-100 text-cyan-600 mb-4 group-hover:bg-cyan-600 group-hover:text-white transition-colors">
+                  <Terminal className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-[#0a2540]">Try Taxu Shell</h3>
+                <p className="text-slate-600 mb-6 leading-relaxed">
+                  Interactive browser-based shell with pre-configured CLI for testing APIs instantly.
+                </p>
+                <Link
+                  href="/developer/shell"
+                  className="inline-flex items-center gap-2 text-[#635bff] hover:text-[#5851df] font-semibold group/link"
+                >
+                  Open Shell
                   <ArrowRight className="w-4 h-4 transition-transform group-hover/link:translate-x-1" />
                 </Link>
               </div>

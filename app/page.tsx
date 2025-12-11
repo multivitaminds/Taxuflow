@@ -290,26 +290,31 @@ export default function Home() {
                 icon: Zap,
                 title: "AI",
                 desc: "Powering the next generation of AI startups with flexible billing and payments.",
+                href: "/solutions/ai",
               },
               {
                 icon: Layout,
                 title: "SaaS",
                 desc: "Manage recurring revenue and subscription lifecycles with ease.",
+                href: "/solutions/saas",
               },
               {
                 icon: ShoppingBag,
                 title: "Ecommerce",
                 desc: "Unified online and in-person payments for modern retailers.",
+                href: "/solutions/ecommerce",
               },
               {
                 icon: Globe,
                 title: "Platforms",
                 desc: "Enable payments for your software platform or marketplace.",
+                href: "/solutions/platforms",
               },
             ].map((item) => (
-              <div
+              <Link
                 key={item.title}
-                className="p-8 rounded-xl bg-[#f6f9fc] hover:bg-white hover:shadow-xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-gray-100"
+                href={item.href}
+                className="p-8 rounded-xl bg-[#f6f9fc] hover:bg-white hover:shadow-xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-gray-100 block"
               >
                 <item.icon className="w-8 h-8 text-[#635bff] mb-6" />
                 <h4 className="text-xl font-bold text-[#0a2540] mb-3">{item.title}</h4>
@@ -317,7 +322,7 @@ export default function Home() {
                 <div className="text-[#635bff] font-medium text-sm flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                   Learn more <ChevronRight className="w-3 h-3 ml-1" />
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>

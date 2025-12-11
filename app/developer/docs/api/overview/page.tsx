@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { ArrowRight, Key, Zap, CheckCircle2, Code2 } from "lucide-react"
+import { ArrowRight, Key, Zap, CheckCircle2, Code2, Terminal } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "API Overview - Taxu Developer Docs",
@@ -238,10 +238,11 @@ export default function APIOverview() {
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
-                  href="/developer/workbench"
-                  className="px-6 py-3 rounded-lg border border-white/20 hover:border-white/40 text-white font-medium transition-all"
+                  href="/developer/shell"
+                  className="px-6 py-3 rounded-lg border border-white/20 hover:border-white/40 text-white font-medium transition-all inline-flex items-center gap-2"
                 >
-                  Try Workbench
+                  <Terminal className="w-4 h-4" />
+                  Try Shell
                 </Link>
               </div>
             </section>

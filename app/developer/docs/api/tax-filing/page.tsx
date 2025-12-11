@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Code2, FileText, CheckCircle, AlertCircle } from "lucide-react"
+import { SyntaxHighlighter } from "@/components/developer/syntax-highlighter"
 
 export default function TaxFilingAPIPage() {
   const endpoints = [
@@ -181,9 +182,9 @@ export default function TaxFilingAPIPage() {
               {/* Example 1: Calculate Taxes */}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-[#0a2540] mb-4">Calculate Federal Tax</h3>
-                <div className="bg-[#0d1117] rounded-xl p-6 border border-gray-800 overflow-x-auto">
-                  <pre className="font-mono text-sm text-white">
-                    <code>{`// Calculate federal tax liability
+                <SyntaxHighlighter
+                  language="javascript"
+                  code={`// Calculate federal tax liability
 const taxu = require('@taxu/taxu-js')('your_api_key');
 
 const result = await taxu.tax.calculate({
@@ -211,17 +212,16 @@ console.log(result);
 //     socialSecurity: 4650,
 //     medicare: 1088
 //   }
-// }`}</code>
-                  </pre>
-                </div>
+// }`}
+                />
               </div>
 
               {/* Example 2: E-File Return */}
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-[#0a2540] mb-4">E-File Tax Return</h3>
-                <div className="bg-[#0d1117] rounded-xl p-6 border border-gray-800 overflow-x-auto">
-                  <pre className="font-mono text-sm text-white">
-                    <code>{`// Submit tax return for e-filing
+                <SyntaxHighlighter
+                  language="javascript"
+                  code={`// Submit tax return for e-filing
 const filing = await taxu.tax.efile({
   taxpayer: {
     ssn: '123-45-6789',
@@ -257,9 +257,8 @@ console.log(filing);
 //   acknowledgmentCode: 'ACK123456',
 //   estimatedRefund: 12,
 //   refundDate: '2024-05-01'
-// }`}</code>
-                  </pre>
-                </div>
+// }`}
+                />
               </div>
             </section>
 

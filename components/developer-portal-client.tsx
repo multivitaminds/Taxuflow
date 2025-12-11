@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Key, Copy, Activity, BarChart3, CheckCircle2, ExternalLink, Shield } from "lucide-react"
+import { Key, Copy, Activity, BarChart3, CheckCircle2, ExternalLink, Shield, Terminal } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -259,19 +259,28 @@ export function DeveloperPortalClient() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/docs/introduction">
+                <Link href="/developer/shell">
+                  <span className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4" />
+                    Taxu Shell
+                  </span>
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </Button>
+              <Button variant="ghost" className="w-full justify-between" asChild>
+                <Link href="/developer/docs/getting-started">
                   <span>Read the Documentation</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/docs/api-reference">
+                <Link href="/developer/docs/api/overview">
                   <span>API Reference</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="https://github.com/taxu/examples">
+                <Link href="/developer/examples">
                   <span>View Example Projects</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>

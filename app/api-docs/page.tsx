@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer"
 import { Copy, Check } from "lucide-react"
 import { useState } from "react"
 import Link from "next/link"
+import { SyntaxHighlighter } from "@/components/developer/syntax-highlighter"
 
 export default function ApiDocsPage() {
   return (
@@ -411,17 +412,17 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
   }
 
   return (
-    <div className="relative rounded-xl bg-[#0d1117] border border-[#30363d] overflow-hidden shadow-lg">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#30363d] bg-[#161b22]">
-        <span className="text-xs font-mono text-[#7d8590]">{language}</span>
+    <div className="relative rounded-xl bg-gradient-to-br from-[#0d1117] to-[#161b22] border border-[#30363d] overflow-hidden shadow-2xl">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-[#30363d] bg-[#161b22]/80 backdrop-blur-sm">
+        <span className="text-xs font-mono text-[#7d8590] uppercase tracking-wider font-semibold">{language}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-2 text-xs text-[#7d8590] hover:text-[#58a6ff] transition-colors"
+          className="flex items-center gap-2 text-xs text-[#7d8590] hover:text-[#58a6ff] transition-colors px-2 py-1 rounded hover:bg-[#30363d]/50"
         >
           {copied ? (
             <>
-              <Check className="w-4 h-4" />
-              Copied
+              <Check className="w-4 h-4 text-green-400" />
+              <span className="text-green-400">Copied!</span>
             </>
           ) : (
             <>
@@ -432,7 +433,7 @@ function CodeBlock({ language, code }: { language: string; code: string }) {
         </button>
       </div>
       <pre className="p-4 overflow-x-auto">
-        <code className="text-sm font-mono text-[#c9d1d9]">{code}</code>
+        <SyntaxHighlighter code={code} language={language} />
       </pre>
     </div>
   )
@@ -454,30 +455,35 @@ function ApiEndpoint({
   responseExample?: string
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border bg-card p-6 hover:border-primary/20 transition-colors">
       <div className="flex items-center gap-3 mb-4">
         <span
           className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold ${
             method === "GET"
-              ? "bg-blue-500/10 text-blue-500 border border-blue-500/20"
+              ? "bg-blue-500/10 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/10"
               : method === "POST"
-                ? "bg-green-500/10 text-green-500 border border-green-500/20"
-                : "bg-orange-500/10 text-orange-500 border border-orange-500/20"
+                ? "bg-green-500/10 text-green-400 border border-green-500/30 shadow-lg shadow-green-500/10"
+                : "bg-orange-500/10 text-orange-400 border border-orange-500/30 shadow-lg shadow-orange-500/10"
           }`}
         >
           {method}
         </span>
-        <code className="font-mono text-sm text-foreground">{path}</code>
+        <code className="font-mono text-sm text-foreground bg-background/50 px-3 py-1 rounded border border-border">
+          {path}
+        </code>
       </div>
       <h3 className="text-xl font-bold mb-2 text-foreground">{title}</h3>
-      <p className="text-foreground/70 mb-6">{description}</p>
+      <p className="text-foreground/70 mb-6 leading-relaxed">{description}</p>
 
       {requestExample && (
         <div className="mb-4">
-          <h4 className="text-sm font-semibold mb-2 text-foreground">Request</h4>
-          <div className="rounded-lg bg-[#0d1117] border border-[#30363d] p-4 overflow-x-auto">
-            <pre className="text-xs font-mono text-[#c9d1d9]">
-              <code>{requestExample}</code>
+          <h4 className="text-sm font-semibold mb-2 text-foreground flex items-center gap-2">
+            <span className="w-1 h-4 bg-blue-500 rounded-full"></span>
+            Request
+          </h4>
+          <div className="rounded-lg bg-gradient-to-br from-[#0d1117] to-[#161b22] border border-[#30363d] p-4 overflow-x-auto shadow-lg">
+            <pre className="text-xs font-mono">
+              <SyntaxHighlighter code={requestExample} language="json" />
             </pre>
           </div>
         </div>
@@ -485,10 +491,13 @@ function ApiEndpoint({
 
       {responseExample && (
         <div>
-          <h4 className="text-sm font-semibold mb-2 text-foreground">Response</h4>
-          <div className="rounded-lg bg-[#0d1117] border border-[#30363d] p-4 overflow-x-auto">
-            <pre className="text-xs font-mono text-[#c9d1d9]">
-              <code>{responseExample}</code>
+          <h4 className="text-sm font-semibold mb-2 text-foreground flex items-center gap-2">
+            <span className="w-1 h-4 bg-green-500 rounded-full"></span>
+            Response
+          </h4>
+          <div className="rounded-lg bg-gradient-to-br from-[#0d1117] to-[#161b22] border border-[#30363d] p-4 overflow-x-auto shadow-lg">
+            <pre className="text-xs font-mono">
+              <SyntaxHighlighter code={responseExample} language="json" />
             </pre>
           </div>
         </div>
