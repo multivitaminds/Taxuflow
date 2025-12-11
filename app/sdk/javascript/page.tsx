@@ -3,6 +3,7 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Copy, Terminal, CheckCircle2, Github, Download, Star } from "lucide-react"
 import Link from "next/link"
+import { SyntaxHighlighter } from "@/components/developer/syntax-highlighter"
 
 export default function JavaScriptSDKPage() {
   return (
@@ -58,7 +59,7 @@ export default function JavaScriptSDKPage() {
           {/* Installation */}
           <section className="mb-16">
             <h2 className="text-3xl font-bold mb-6">Installation</h2>
-            <div className="rounded-xl border border-accent/20 bg-card p-6">
+            <div className="rounded-xl border border-accent/20 bg-[#282a36] p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Terminal className="w-4 h-4" />
@@ -68,8 +69,8 @@ export default function JavaScriptSDKPage() {
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
-              <pre className="font-mono text-accent">
-                <code>npm install @taxu/taxu-js</code>
+              <pre className="font-mono">
+                <SyntaxHighlighter code="npm install @taxu/taxu-js" language="bash" />
               </pre>
             </div>
             <div className="mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
@@ -85,9 +86,10 @@ export default function JavaScriptSDKPage() {
           {/* Quick Start */}
           <section className="mb-16">
             <h2 className="text-3xl font-bold mb-6">Quick Start</h2>
-            <div className="rounded-xl border border-border bg-card p-6">
-              <pre className="font-mono text-sm text-accent overflow-x-auto">
-                <code>{`import { TaxuClient } from '@taxu/taxu-js';
+            <div className="rounded-xl border border-border bg-[#282a36] p-6">
+              <pre className="font-mono overflow-x-auto">
+                <SyntaxHighlighter
+                  code={`import { TaxuClient } from '@taxu/taxu-js';
 
 const taxu = new TaxuClient({
   apiKey: process.env.TAXU_API_KEY,
@@ -101,7 +103,9 @@ const estimate = await taxu.refunds.estimate({
   deductions: ['standard']
 });
 
-console.log(\`Estimated refund: $\${estimate.amount}\`);`}</code>
+console.log(\`Estimated refund: $\${estimate.amount}\`);`}
+                  language="javascript"
+                />
               </pre>
             </div>
           </section>
@@ -111,10 +115,11 @@ console.log(\`Estimated refund: $\${estimate.amount}\`);`}</code>
             <h2 className="text-3xl font-bold mb-6">Core Features</h2>
             <div className="space-y-6">
               {/* Returns */}
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="text-xl font-bold mb-4">Tax Returns</h3>
-                <pre className="font-mono text-sm text-accent overflow-x-auto">
-                  <code>{`// Create a new tax return
+              <div className="rounded-xl border border-border bg-[#282a36] p-6">
+                <h3 className="text-xl font-bold mb-4 text-white">Tax Returns</h3>
+                <pre className="font-mono overflow-x-auto">
+                  <SyntaxHighlighter
+                    code={`// Create a new tax return
 const taxReturn = await taxu.returns.create({
   userId: 'user_123',
   taxYear: 2024,
@@ -129,15 +134,18 @@ await taxu.returns.addIncome(taxReturn.id, {
 });
 
 // File the return
-const filed = await taxu.returns.file(taxReturn.id);`}</code>
+const filed = await taxu.returns.file(taxReturn.id);`}
+                    language="javascript"
+                  />
                 </pre>
               </div>
 
               {/* Documents */}
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="text-xl font-bold mb-4">Document Upload</h3>
-                <pre className="font-mono text-sm text-accent overflow-x-auto">
-                  <code>{`// Upload and parse documents
+              <div className="rounded-xl border border-border bg-[#282a36] p-6">
+                <h3 className="text-xl font-bold mb-4 text-white">Document Upload</h3>
+                <pre className="font-mono overflow-x-auto">
+                  <SyntaxHighlighter
+                    code={`// Upload and parse documents
 const document = await taxu.documents.upload({
   file: fs.createReadStream('./w2.pdf'),
   type: 'W2',
@@ -146,15 +154,18 @@ const document = await taxu.documents.upload({
 
 // Get parsed data
 console.log(document.parsed);
-// { employer: 'Acme Corp', wages: 85000, ... }`}</code>
+// { employer: 'Acme Corp', wages: 85000, ... }`}
+                    language="javascript"
+                  />
                 </pre>
               </div>
 
               {/* Webhooks */}
-              <div className="rounded-xl border border-border bg-card p-6">
-                <h3 className="text-xl font-bold mb-4">Webhooks</h3>
-                <pre className="font-mono text-sm text-accent overflow-x-auto">
-                  <code>{`// Verify webhook signature
+              <div className="rounded-xl border border-border bg-[#282a36] p-6">
+                <h3 className="text-xl font-bold mb-4 text-white">Webhooks</h3>
+                <pre className="font-mono overflow-x-auto">
+                  <SyntaxHighlighter
+                    code={`// Verify webhook signature
 app.post('/webhooks/taxu', (req, res) => {
   const signature = req.headers['taxu-signature'];
   
@@ -173,7 +184,9 @@ app.post('/webhooks/taxu', (req, res) => {
   }
   
   res.json({ received: true });
-});`}</code>
+});`}
+                    language="javascript"
+                  />
                 </pre>
               </div>
             </div>
@@ -193,8 +206,10 @@ app.post('/webhooks/taxu', (req, res) => {
                   </p>
                 </div>
               </div>
-              <pre className="font-mono text-sm text-accent overflow-x-auto">
-                <code>{`import { TaxuClient, TaxReturn, FilingStatus } from '@taxu/taxu-js';
+              <div className="rounded-lg bg-[#282a36] p-4">
+                <pre className="font-mono overflow-x-auto">
+                  <SyntaxHighlighter
+                    code={`import { TaxuClient, TaxReturn, FilingStatus } from '@taxu/taxu-js';
 
 const taxu = new TaxuClient({ apiKey: process.env.TAXU_API_KEY });
 
@@ -203,8 +218,11 @@ const taxReturn: TaxReturn = await taxu.returns.create({
   userId: 'user_123',
   taxYear: 2024,
   filingStatus: status
-});`}</code>
-              </pre>
+});`}
+                    language="typescript"
+                  />
+                </pre>
+              </div>
             </div>
           </section>
 

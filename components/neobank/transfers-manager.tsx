@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -89,6 +90,7 @@ export function TransfersManager() {
   const [amount, setAmount] = useState("")
   const [transferType, setTransferType] = useState("ach")
   const [activeTab, setActiveTab] = useState("send")
+  const router = useRouter()
 
   const handleTransfer = () => {
     toast.success("Transfer initiated successfully")
@@ -559,6 +561,7 @@ export function TransfersManager() {
               {recentTransfers.map((transfer) => (
                 <div
                   key={transfer.id}
+                  onClick={() => router.push(`/neobank/transactions/${transfer.id}`)}
                   className="flex items-center gap-4 p-6 hover:bg-slate-50 transition-colors cursor-pointer"
                 >
                   {/* Icon */}
@@ -614,7 +617,11 @@ export function TransfersManager() {
             </div>
           </CardContent>
           <CardFooter className="border-t border-slate-100">
-            <Button variant="ghost" className="w-full text-[#635bff] hover:bg-[#635bff]/5">
+            <Button
+              variant="ghost"
+              className="w-full text-[#635bff] hover:bg-[#635bff]/5"
+              onClick={() => router.push("/neobank/transactions/all")}
+            >
               View All Transactions
             </Button>
           </CardFooter>
