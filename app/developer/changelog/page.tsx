@@ -150,19 +150,23 @@ export default function ChangelogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      <div className="max-w-4xl mx-auto px-24 py-12">
         {/* Header */}
         <div className="mb-12">
-          <Badge className="mb-4 bg-blue-500/10 text-blue-400 border-blue-500/20">Changelog</Badge>
+          <Badge className="mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg">
+            Changelog
+          </Badge>
           <h1 className="text-4xl font-bold mb-4">Product Updates</h1>
-          <p className="text-xl text-gray-400">Stay up to date with new features, improvements, and bug fixes</p>
+          <p className="text-xl text-muted-foreground">
+            Stay up to date with new features, improvements, and bug fixes
+          </p>
         </div>
 
         {/* Releases */}
         <div className="space-y-8">
           {releases.map((release) => (
-            <Card key={release.version} className="bg-[#111] border-gray-800 p-8">
+            <Card key={release.version} className="bg-white/80 backdrop-blur border-0 shadow-lg p-8">
               {/* Release Header */}
               <div className="flex items-start justify-between mb-6">
                 <div>
@@ -183,8 +187,8 @@ export default function ChangelogPage() {
                   return (
                     <div key={idx} className="flex gap-4">
                       <div className="flex-shrink-0">
-                        <div className="w-10 h-10 rounded-lg bg-[#0A0A0A] border border-gray-800 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-gray-400" />
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg">
+                          <Icon className="w-5 h-5 text-white" />
                         </div>
                       </div>
                       <div className="flex-1">
@@ -221,16 +225,18 @@ export default function ChangelogPage() {
         </div>
 
         {/* Subscribe */}
-        <Card className="bg-[#111] border-gray-800 p-8 mt-12 text-center">
+        <Card className="bg-white/80 backdrop-blur border-0 shadow-lg p-8 mt-12 text-center">
           <h2 className="text-2xl font-bold mb-2">Stay Updated</h2>
-          <p className="text-gray-400 mb-6">Subscribe to our changelog to get notified about new releases</p>
+          <p className="text-muted-foreground mb-6">Subscribe to our changelog to get notified about new releases</p>
           <div className="flex gap-3 max-w-md mx-auto">
             <input
               type="email"
               placeholder="your@email.com"
-              className="flex-1 px-4 py-2 bg-[#0A0A0A] border border-gray-800 rounded-lg focus:outline-none focus:border-purple-500"
+              className="flex-1 px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20"
             />
-            <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-semibold">Subscribe</button>
+            <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-lg">
+              Subscribe
+            </button>
           </div>
         </Card>
       </div>

@@ -19,8 +19,10 @@ import {
   Award,
   Briefcase,
   Download,
+  Upload,
 } from "lucide-react"
 import Link from "next/link"
+import { BulkUploadDialog } from "@/components/bulk-upload-dialog"
 
 // Mock employee data - replace with real data from Supabase
 const mockEmployees = [
@@ -113,6 +115,7 @@ const mockEmployees = [
 export function EmployeesClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [employees] = useState(mockEmployees)
+  const [showBulkUpload, setShowBulkUpload] = useState(false)
 
   const filteredEmployees = employees.filter(
     (employee) =>
@@ -142,6 +145,15 @@ export function EmployeesClient() {
               <p className="text-muted-foreground">Manage your team and payroll</p>
             </div>
             <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 bg-transparent"
+                onClick={() => setShowBulkUpload(true)}
+              >
+                <Upload className="h-5 w-5" />
+                Bulk Upload
+              </Button>
               <Link href="/accounting/employees/reports">
                 <Button variant="outline" size="lg" className="gap-2 bg-transparent">
                   <Download className="h-5 w-5" />
@@ -338,6 +350,16 @@ export function EmployeesClient() {
           </Link>
         </div>
       </div>
+
+      {/* Bulk Upload Dialog */}
+      <BulkUploadDialog
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        onComplete={() => {
+          // Reload employees after successful upload
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }

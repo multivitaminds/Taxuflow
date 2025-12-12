@@ -27,10 +27,9 @@ export function DashboardLayout({ children, demoBanner }: { children: React.Reac
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {demoBanner}
+      {demoBanner && <div className="fixed top-0 left-0 right-0 z-50">{demoBanner}</div>}
 
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 h-16">
+      <header className="sticky top-14 left-0 right-0 z-40 bg-white border-b border-slate-200 h-16">
         <div className="flex items-center justify-between h-full px-4 pr-12">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -67,9 +66,8 @@ export function DashboardLayout({ children, demoBanner }: { children: React.Reac
         </div>
       </header>
 
-      {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
+        className={`fixed left-0 top-30 bottom-0 w-64 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -81,8 +79,7 @@ export function DashboardLayout({ children, demoBanner }: { children: React.Reac
         <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Main Content */}
-      <main className="lg:ml-64 pt-16">{children}</main>
+      <main className="lg:ml-64 pt-30">{children}</main>
     </div>
   )
 }

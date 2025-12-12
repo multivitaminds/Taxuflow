@@ -17,13 +17,16 @@ import {
   TrendingUp,
   Calendar,
   ArrowUpRight,
+  Upload,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
+import { BulkUploadDialog } from "@/components/bulk-upload-dialog" // Added bulk upload dialog
 
 export function VendorsClient() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showNewVendorDialog, setShowNewVendorDialog] = useState(false)
+  const [showBulkUpload, setShowBulkUpload] = useState(false) // Added state for bulk upload dialog
 
   const vendors = [
     {
@@ -91,6 +94,10 @@ export function VendorsClient() {
               Vendor Portal
             </Button>
           </Link>
+          <Button variant="outline" className="bg-white" onClick={() => setShowBulkUpload(true)}>
+            <Upload className="h-4 w-4 mr-2" />
+            Bulk Upload
+          </Button>
           <Button variant="outline" className="bg-white">
             <FileText className="h-4 w-4 mr-2" />
             Reports
@@ -237,6 +244,15 @@ export function VendorsClient() {
           </Link>
         ))}
       </div>
+
+      <BulkUploadDialog
+        open={showBulkUpload}
+        onOpenChange={setShowBulkUpload}
+        onComplete={() => {
+          // Reload vendors after successful upload
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle2, Info } from "lucide-react"
+import { CheckCircle2, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface DemoModeBannerProps {
@@ -41,12 +41,12 @@ export function DemoModeBanner({ isDemoMode }: DemoModeBannerProps) {
   }, [])
 
   const handleSwitchToLive = async () => {
-    window.location.href = "/dashboard/activate-account"
+    window.location.href = "/activate"
   }
 
   if (showLiveBanner && isVisible) {
     return (
-      <div className="w-full bg-emerald-600 text-white py-2.5 px-4 flex items-center justify-center gap-2 sticky top-0 z-50">
+      <div className="w-full bg-emerald-600 text-white py-3 px-6 flex items-center justify-center gap-2 h-12 border-b border-white/10">
         <div className="flex items-center gap-2 text-sm">
           <CheckCircle2 className="h-5 w-5" />
           <span className="font-semibold">Live Account</span>
@@ -62,21 +62,30 @@ export function DemoModeBanner({ isDemoMode }: DemoModeBannerProps) {
   }
 
   return (
-    <div className="w-full bg-[#635bff] text-white py-2.5 px-4 flex items-center justify-center gap-2 sticky top-0 z-50">
-      <div className="flex items-center gap-2 text-sm">
-        <div className="flex items-center gap-2 px-2 py-1 bg-white/10 rounded">
-          <span className="font-semibold">Demo Mode</span>
-          <Info className="h-4 w-4" />
+    <div className="w-full bg-[#0A2540] text-white h-14 px-6 flex items-center justify-between border-b border-white/10">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 font-medium text-sm">
+          <Shield className="h-4 w-4" />
+          <span>Sandbox Mode</span>
         </div>
-        <span>You're on Demo Mode—your space to explore Taxu features</span>
       </div>
-      <Button
-        size="sm"
-        onClick={handleSwitchToLive}
-        className="ml-4 bg-white text-[#635bff] hover:bg-gray-100 font-semibold"
-      >
-        Switch to live account
-      </Button>
+
+      <div className="flex-1 flex items-center justify-center px-8 max-w-4xl mx-auto">
+        <span className="text-sm text-white/90 text-center">
+          You're currently testing Taxu's payment system. Activate your live account to begin processing real customer
+          payments, onboarding clients, and receiving payouts.
+        </span>
+      </div>
+
+      <div className="flex items-center">
+        <Button
+          size="sm"
+          onClick={handleSwitchToLive}
+          className="bg-[#17C964] hover:bg-[#12A150] text-white font-medium px-4 h-9 rounded-md transition-colors shadow-none"
+        >
+          Activate Live Account →
+        </Button>
+      </div>
     </div>
   )
 }
