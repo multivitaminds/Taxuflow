@@ -195,7 +195,7 @@ export default function DevelopersPage() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20 mb-8">
             <Code className="w-4 h-4" />
@@ -242,9 +242,9 @@ export default function DevelopersPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background-alt to-accent/5">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Developer-First API</h2>
             <p className="text-xl text-muted-foreground">Built for speed, reliability, and ease of integration</p>
           </div>
@@ -270,9 +270,9 @@ export default function DevelopersPage() {
       </section>
 
       {/* API Endpoints */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Core Endpoints</h2>
             <p className="text-xl text-muted-foreground">Everything you need to build tax features</p>
           </div>
@@ -285,12 +285,14 @@ export default function DevelopersPage() {
               >
                 <span
                   className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold ${
-                    endpoint.method === "GET" ? "bg-blue-500/10 text-blue-500" : "bg-green-500/10 text-green-500"
+                    endpoint.method === "GET"
+                      ? "bg-gradient-to-r from-blue-500/20 to-blue-600/10 text-blue-400 border border-blue-500/30"
+                      : "bg-gradient-to-r from-green-500/20 to-green-600/10 text-green-400 border border-green-500/30"
                   }`}
                 >
                   {endpoint.method}
                 </span>
-                <code className="font-mono text-sm flex-1">{endpoint.path}</code>
+                <code className="font-mono text-sm flex-1 text-primary">{endpoint.path}</code>
                 <span className="text-sm text-muted-foreground hidden sm:block">{endpoint.description}</span>
               </div>
             ))}
@@ -308,21 +310,24 @@ export default function DevelopersPage() {
       </section>
 
       {/* Use Cases */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-accent/5 via-background-alt to-primary/5">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Common Use Cases</h2>
             <p className="text-xl text-muted-foreground">See what you can build with Taxu API</p>
           </div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             {useCases.map((useCase, index) => (
-              <div key={index} className="rounded-2xl border border-border bg-card p-8">
+              <div
+                key={index}
+                className="rounded-2xl border border-primary/20 bg-card p-6 hover:border-primary/40 transition-all hover:shadow-lg hover:shadow-primary/10"
+              >
                 <h3 className="text-2xl font-bold mb-2">{useCase.title}</h3>
-                <p className="text-muted-foreground mb-6">{useCase.description}</p>
-                <div className="rounded-xl bg-background-alt border border-border p-6 overflow-x-auto">
-                  <pre className="text-sm font-mono text-cyan-400">
-                    <code>{useCase.code}</code>
+                <p className="text-muted-foreground mb-4">{useCase.description}</p>
+                <div className="rounded-xl bg-gradient-to-br from-[#0d1117] to-[#161b22] border border-primary/30 p-5 overflow-x-auto shadow-lg">
+                  <pre className="text-sm font-mono">
+                    <code className="text-cyan-300">{useCase.code}</code>
                   </pre>
                 </div>
               </div>
@@ -332,9 +337,9 @@ export default function DevelopersPage() {
       </section>
 
       {/* Embeddable Components Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Embeddable Components</h2>
             <p className="text-xl text-muted-foreground">Drop-in UI components for instant integration</p>
           </div>
@@ -343,13 +348,13 @@ export default function DevelopersPage() {
             {embeddableComponents.map((component, index) => (
               <div
                 key={index}
-                className="rounded-2xl border border-border bg-card p-6 hover:border-primary/50 transition-all"
+                className="rounded-2xl border border-border bg-card p-6 hover:border-accent/50 transition-all hover:shadow-lg hover:shadow-accent/10"
               >
                 <h3 className="text-xl font-bold mb-2">{component.title}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{component.description}</p>
-                <div className="rounded-lg bg-background-alt border border-border p-4 mb-4 overflow-x-auto">
-                  <pre className="text-xs font-mono text-cyan-400">
-                    <code>{component.code}</code>
+                <div className="rounded-lg bg-gradient-to-br from-[#0d1117] to-[#1a1f2e] border border-accent/30 p-3 mb-4 overflow-x-auto">
+                  <pre className="text-xs font-mono">
+                    <code className="text-emerald-300">{component.code}</code>
                   </pre>
                 </div>
                 <p className="text-xs text-muted-foreground italic">{component.preview}</p>
@@ -360,9 +365,9 @@ export default function DevelopersPage() {
       </section>
 
       {/* Webhook Events Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 via-background-alt to-accent/5">
         <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Webhook Events</h2>
             <p className="text-xl text-muted-foreground">Real-time notifications for critical tax events</p>
           </div>
@@ -371,7 +376,7 @@ export default function DevelopersPage() {
             {webhookEvents.map((webhook, index) => (
               <div
                 key={index}
-                className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors"
+                className="flex items-start gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/30 transition-colors hover:shadow-md"
               >
                 <Webhook className="w-5 h-5 text-primary mt-1 flex-shrink-0" />
                 <div>
@@ -382,11 +387,11 @@ export default function DevelopersPage() {
             ))}
           </div>
 
-          <div className="mt-8 rounded-xl bg-card border border-border p-6">
+          <div className="mt-6 rounded-xl bg-card border border-primary/20 p-6">
             <h3 className="text-lg font-bold mb-4">Example Webhook Payload</h3>
-            <div className="rounded-lg bg-background-alt border border-border p-4 overflow-x-auto">
-              <pre className="text-sm font-mono text-cyan-400">
-                <code>{`{
+            <div className="rounded-lg bg-gradient-to-br from-[#0d1117] to-[#161b22] border border-primary/30 p-4 overflow-x-auto shadow-lg">
+              <pre className="text-sm font-mono">
+                <code className="text-amber-300">{`{
   "event": "return.filed",
   "timestamp": "2025-04-15T10:30:00Z",
   "data": {
@@ -404,9 +409,9 @@ export default function DevelopersPage() {
       </section>
 
       {/* Real-World Integration Examples */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Trusted by Industry Leaders</h2>
             <p className="text-xl text-muted-foreground">See how companies use Taxu API in production</p>
           </div>
@@ -431,9 +436,9 @@ export default function DevelopersPage() {
       </section>
 
       {/* API Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-accent/5 via-background-alt to-primary/5">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">API Pricing</h2>
             <p className="text-xl text-muted-foreground">Flexible plans that scale with your business</p>
           </div>
@@ -474,7 +479,7 @@ export default function DevelopersPage() {
       </section>
 
       {/* SDK Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl">
           <div className="rounded-2xl border border-primary/30 bg-card p-12 text-center shadow-lg">
             <Github className="w-16 h-16 text-primary mx-auto mb-6" />
@@ -521,7 +526,7 @@ export default function DevelopersPage() {
       </section>
 
       {/* Support Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background-alt">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 to-accent/5">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h2 className="text-4xl sm:text-5xl font-bold mb-4">Developer Support</h2>

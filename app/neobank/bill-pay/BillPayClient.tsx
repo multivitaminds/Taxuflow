@@ -9,6 +9,8 @@ import { Calendar, DollarSign, CheckCircle2, Clock, Plus, History, Building2, Za
 
 export default function BillPayClient() {
   const [selectedTab, setSelectedTab] = useState("upcoming")
+  const [payingBill, setPayingBill] = useState<any>(null)
+  const [selectedCard, setSelectedCard] = useState<string | null>(null)
 
   const stats = {
     upcomingBills: 8,
@@ -105,6 +107,21 @@ export default function BillPayClient() {
     }
   }
 
+  const handlePayBill = (bill: any) => {
+    setPayingBill(bill)
+    console.log("[v0] Paying bill:", bill.payee)
+  }
+
+  const handleCardClick = (cardType: string) => {
+    setSelectedCard(cardType)
+    console.log("[v0] Clicked card:", cardType)
+  }
+
+  const confirmPayment = () => {
+    console.log("[v0] Payment confirmed for:", payingBill?.payee)
+    setPayingBill(null)
+  }
+
   return (
     <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
       <div className="flex items-center justify-between">
@@ -119,7 +136,10 @@ export default function BillPayClient() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-[#635bff] hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-[#635bff] hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("upcoming")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-[#635bff]" />
@@ -132,7 +152,10 @@ export default function BillPayClient() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("total-due")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-orange-600" />
@@ -145,7 +168,10 @@ export default function BillPayClient() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("auto-pay")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-green-600" />
@@ -158,7 +184,10 @@ export default function BillPayClient() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("overdue")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-blue-600" />
@@ -193,6 +222,7 @@ export default function BillPayClient() {
                 <div
                   key={bill.id}
                   className="p-4 border border-slate-200 rounded-lg hover:shadow-md hover:border-[#635bff] transition-all cursor-pointer bg-white"
+                  onClick={() => handleCardClick(`bill-${bill.id}`)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -233,7 +263,14 @@ export default function BillPayClient() {
                   </div>
                   {!bill.autoPay && (
                     <div className="mt-3 pt-3 border-t border-slate-100">
-                      <Button size="sm" className="bg-[#635bff] hover:bg-[#5248e5] text-white">
+                      <Button
+                        size="sm"
+                        className="bg-[#635bff] hover:bg-[#5248e5] text-white"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handlePayBill(bill)
+                        }}
+                      >
                         Pay Now
                       </Button>
                     </div>
@@ -316,6 +353,44 @@ export default function BillPayClient() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {payingBill && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setPayingBill(null)}
+        >
+          <Card className="w-full max-w-md m-4" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>Confirm Payment</CardTitle>
+              <CardDescription>Review and confirm your bill payment</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Payee:</span>
+                  <span className="font-semibold">{payingBill.payee}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Amount:</span>
+                  <span className="font-semibold text-lg">${payingBill.amount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Due Date:</span>
+                  <span className="font-semibold">{payingBill.dueDate}</span>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setPayingBill(null)}>
+                  Cancel
+                </Button>
+                <Button className="flex-1 bg-[#635bff]" onClick={confirmPayment}>
+                  Confirm Payment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

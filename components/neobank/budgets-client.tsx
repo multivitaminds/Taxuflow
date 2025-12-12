@@ -25,6 +25,7 @@ import Link from "next/link"
 
 export function BudgetsClient() {
   const [selectedPeriod, setSelectedPeriod] = useState("current")
+  const [selectedCard, setSelectedCard] = useState<string | null>(null)
 
   const overallStats = {
     totalBudget: 8500,
@@ -103,6 +104,11 @@ export function BudgetsClient() {
     { name: "Internet", amount: 79, date: "May 10", category: "Utilities", status: "pending" },
   ]
 
+  const handleCardClick = (cardType: string) => {
+    setSelectedCard(cardType)
+    console.log("[v0] Clicked budget card:", cardType)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -119,7 +125,10 @@ export function BudgetsClient() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-4">
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-[#635bff]">
+        <Card
+          className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-[#635bff]"
+          onClick={() => handleCardClick("total-budget")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">Total Budget</CardDescription>
             <CardTitle className="text-2xl">${overallStats.totalBudget.toLocaleString()}</CardTitle>
@@ -132,7 +141,10 @@ export function BudgetsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-orange-500">
+        <Card
+          className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-orange-500"
+          onClick={() => handleCardClick("total-spent")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">Total Spent</CardDescription>
             <CardTitle className="text-2xl">${overallStats.totalSpent.toLocaleString()}</CardTitle>
@@ -145,7 +157,10 @@ export function BudgetsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-emerald-500">
+        <Card
+          className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-emerald-500"
+          onClick={() => handleCardClick("remaining")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">Remaining</CardDescription>
             <CardTitle className="text-2xl">${overallStats.remaining.toLocaleString()}</CardTitle>
@@ -158,7 +173,10 @@ export function BudgetsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-red-500">
+        <Card
+          className="hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-l-red-500"
+          onClick={() => handleCardClick("over-budget")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">Over Budget</CardDescription>
             <CardTitle className="text-2xl">1</CardTitle>

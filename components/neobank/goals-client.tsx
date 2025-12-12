@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { useState } from "react"
 import {
   Plus,
   Target,
@@ -102,6 +103,13 @@ export function GoalsClient() {
     },
   ]
 
+  const [selectedCard, setSelectedCard] = useState<string | null>(null)
+
+  const handleCardClick = (cardType: string) => {
+    setSelectedCard(cardType)
+    console.log("[v0] Clicked goal card:", cardType)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -118,7 +126,10 @@ export function GoalsClient() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-[#635bff]">
+        <Card
+          className="hover:shadow-lg transition-shadow border-l-4 border-l-[#635bff] cursor-pointer"
+          onClick={() => handleCardClick("total-saved")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">Total Saved</CardDescription>
             <CardTitle className="text-2xl">${totalSaved.toLocaleString()}</CardTitle>
@@ -131,7 +142,10 @@ export function GoalsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
+        <Card
+          className="hover:shadow-lg transition-shadow border-l-4 border-l-blue-500 cursor-pointer"
+          onClick={() => handleCardClick("target")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">Target Amount</CardDescription>
             <CardTitle className="text-2xl">${totalGoals.toLocaleString()}</CardTitle>
@@ -144,7 +158,10 @@ export function GoalsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500">
+        <Card
+          className="hover:shadow-lg transition-shadow border-l-4 border-l-emerald-500 cursor-pointer"
+          onClick={() => handleCardClick("on-track")}
+        >
           <CardHeader className="pb-3">
             <CardDescription className="text-xs font-medium">On Track</CardDescription>
             <CardTitle className="text-2xl">{goals.filter((g) => g.onTrack).length}</CardTitle>

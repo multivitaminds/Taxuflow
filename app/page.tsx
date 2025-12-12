@@ -153,10 +153,10 @@ export default function Home() {
       </section>
 
       {/* Modular Solutions */}
-      <section className="py-32 bg-[#f6f9fc]">
+      <section className="py-16 bg-[#f6f9fc]">
         <div className="container mx-auto px-6">
-          <div className="mb-20">
-            <h2 className="text-[#635bff] font-semibold mb-6">Modular solutions</h2>
+          <div className="mb-12">
+            <h2 className="text-[#635bff] font-semibold mb-4">Modular solutions</h2>
             <h3 className="text-4xl md:text-5xl font-bold text-[#0a2540] max-w-2xl leading-tight">
               A fully integrated suite of tax, bookkeeping, banking, and payout products
             </h3>
@@ -238,11 +238,11 @@ export default function Home() {
       </section>
 
       {/* Global Scale */}
-      <section className="py-32 bg-[#0a2540] text-white relative overflow-hidden clip-diagonal">
+      <section className="py-16 bg-[#0a2540] text-white relative overflow-hidden clip-diagonal">
         <div className="absolute inset-0 bg-[url('https://assets.ctfassets.net/fzn2n1nzq965/3W0Nn6j6j6j6j6j6j6j6j6/5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c5c/globe.png')] bg-no-repeat bg-right-bottom opacity-20" />
         <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-2xl mb-20">
-            <h2 className="text-[#00d4ff] font-semibold mb-6">Global scale</h2>
+          <div className="max-w-2xl mb-12">
+            <h2 className="text-[#00d4ff] font-semibold mb-4">Global scale</h2>
             <h3 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
               The backbone for modern tax, compliance, and financial operations.
             </h3>
@@ -252,7 +252,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-12">
+          <div className="grid md:grid-cols-4 gap-10">
             <div>
               <div className="text-3xl font-bold mb-2 border-l-4 border-[#00d4ff] pl-4">500M+</div>
               <div className="text-[#adbdcc] pl-4">API requests per day</div>
@@ -274,9 +274,9 @@ export default function Home() {
       </section>
 
       {/* Support for any business type */}
-      <section className="py-32 bg-white">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-6">
-          <div className="mb-20">
+          <div className="mb-12">
             <h3 className="text-3xl md:text-4xl font-bold text-[#0a2540] mb-6">Built for all business types</h3>
             <p className="text-xl text-[#425466] max-w-3xl">
               From gig workers and small businesses to startups, creators, marketplaces, and enterprises. If money
@@ -284,7 +284,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-4 gap-8">
             {[
               {
                 icon: Zap,
@@ -329,12 +329,12 @@ export default function Home() {
       </section>
 
       {/* Developers Section */}
-      <section className="py-32 bg-[#0a2540] text-white relative overflow-hidden">
+      <section className="py-16 bg-[#0a2540] text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#635bff]/20 to-transparent" />
         <div className="container mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 items-center">
             <div>
-              <h2 className="text-[#00d4ff] font-semibold mb-6">Designed for developers</h2>
+              <h2 className="text-[#00d4ff] font-semibold mb-4">Designed for developers</h2>
               <h3 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
                 Build tax, bookkeeping, and financial workflows faster with powerful APIs.
               </h3>
@@ -410,7 +410,7 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="py-32 bg-white border-t border-gray-100">
+      <section className="py-16 bg-white border-t border-gray-100">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl">
             <h3 className="text-4xl font-bold text-[#0a2540] mb-6">Ready to get started?</h3>
@@ -438,9 +438,10 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#f6f9fc] py-20 border-t border-gray-200">
+      <footer className="bg-[#f6f9fc] py-12 border-t border-gray-200">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-16">
+          {/* Reduced grid gap from gap-12 to gap-10 */}
+          <div className="grid md:grid-cols-4 gap-10 mb-10">
             <div>
               <div className="font-bold text-[#0a2540] mb-6">Products</div>
               <ul className="space-y-3">

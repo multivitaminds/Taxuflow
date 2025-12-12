@@ -21,6 +21,7 @@ import {
   Plus,
 } from "lucide-react"
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Bar, BarChart, Cell } from "recharts"
+import { useRouter } from "next/navigation"
 
 const portfolioData = [
   { month: "Jan", value: 125000, returns: 8500 },
@@ -183,8 +184,12 @@ const aiRecommendations = [
   },
 ]
 
-export default function InvestmentsClient() {
+export function InvestmentsClient() {
   const [activeTab, setActiveTab] = useState("overview")
+  const router = useRouter()
+  const [showAddInvestment, setShowAddInvestment] = useState(false)
+  const [showWatchList, setShowWatchList] = useState(false)
+  const [selectedHolding, setSelectedHolding] = useState<any>(null)
 
   const totalValue = holdings.reduce((sum, h) => sum + h.value, 0)
   const totalCost = holdings.reduce((sum, h) => sum + h.shares * h.avgCost, 0)
@@ -192,6 +197,29 @@ export default function InvestmentsClient() {
   const returnPercentage = ((totalReturn / totalCost) * 100).toFixed(2)
   const todayChange = 2450.5
   const todayChangePercent = 1.49
+
+  const handleAddInvestment = () => {
+    setShowAddInvestment(true)
+  }
+
+  const handleWatchList = () => {
+    setShowWatchList(true)
+  }
+
+  const handleCardClick = (type: string) => {
+    // Navigate to drill-down pages or show modals
+    console.log("[v0] Clicked card:", type)
+  }
+
+  const handleHoldingClick = (holding: any) => {
+    setSelectedHolding(holding)
+    console.log("[v0] Viewing holding:", holding.symbol)
+  }
+
+  const handleAIAction = (action: string) => {
+    console.log("[v0] AI action:", action)
+    // Implement AI recommendation actions
+  }
 
   return (
     <div className="space-y-6">
@@ -202,11 +230,11 @@ export default function InvestmentsClient() {
           <p className="text-slate-600 mt-2">Track stocks, ETFs, crypto, and performance analytics</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="bg-white">
+          <Button variant="outline" className="bg-white" onClick={handleWatchList}>
             <Eye className="h-4 w-4 mr-2" />
             Watch List
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#4f46e5]">
+          <Button className="bg-[#635bff] hover:bg-[#4f46e5]" onClick={handleAddInvestment}>
             <Plus className="h-4 w-4 mr-2" />
             Add Investment
           </Button>
@@ -215,7 +243,10 @@ export default function InvestmentsClient() {
 
       {/* Summary Cards */}
       <div className="grid md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-[#0a2540] to-[#1e3a5f] text-white border-none hover:shadow-lg transition-all cursor-pointer">
+        <Card
+          className="bg-gradient-to-br from-[#0a2540] to-[#1e3a5f] text-white border-none hover:shadow-lg transition-all cursor-pointer"
+          onClick={() => handleCardClick("total-value")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
@@ -233,7 +264,10 @@ export default function InvestmentsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-all cursor-pointer group">
+        <Card
+          className="hover:shadow-md transition-all cursor-pointer group"
+          onClick={() => handleCardClick("daily-change")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
@@ -251,7 +285,10 @@ export default function InvestmentsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-all cursor-pointer group">
+        <Card
+          className="hover:shadow-md transition-all cursor-pointer group"
+          onClick={() => handleCardClick("total-return")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
@@ -269,7 +306,10 @@ export default function InvestmentsClient() {
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-all cursor-pointer group">
+        <Card
+          className="hover:shadow-md transition-all cursor-pointer group"
+          onClick={() => handleCardClick("holdings")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
@@ -378,6 +418,7 @@ export default function InvestmentsClient() {
                     <div
                       key={holding.id}
                       className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-100 hover:border-[#635bff]/30 hover:shadow-sm transition-all cursor-pointer"
+                      onClick={() => handleHoldingClick(holding)}
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#635bff] to-[#8f8bf5] flex items-center justify-center text-white font-bold">
@@ -424,10 +465,10 @@ export default function InvestmentsClient() {
                   <CardDescription>Complete list of your investments</CardDescription>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => console.log("[v0] Filter by type")}>
                     Filter by Type
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => console.log("[v0] Sort by return")}>
                     Sort by Return
                   </Button>
                 </div>
@@ -454,6 +495,7 @@ export default function InvestmentsClient() {
                       <tr
                         key={holding.id}
                         className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-colors"
+                        onClick={() => handleHoldingClick(holding)}
                       >
                         <td className="py-3 px-4">
                           <span className="font-bold text-[#0a2540]">{holding.symbol}</span>
@@ -562,7 +604,10 @@ export default function InvestmentsClient() {
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="hover:shadow-md transition-all cursor-pointer">
+            <Card
+              className="hover:shadow-md transition-all cursor-pointer"
+              onClick={() => handleCardClick("avg-return")}
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-emerald-50 rounded-lg">
@@ -576,7 +621,10 @@ export default function InvestmentsClient() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-all cursor-pointer">
+            <Card
+              className="hover:shadow-md transition-all cursor-pointer"
+              onClick={() => handleCardClick("volatility")}
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-blue-50 rounded-lg">
@@ -590,7 +638,10 @@ export default function InvestmentsClient() {
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-all cursor-pointer">
+            <Card
+              className="hover:shadow-md transition-all cursor-pointer"
+              onClick={() => handleCardClick("sharpe-ratio")}
+            >
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
                   <div className="p-3 bg-purple-50 rounded-lg">
@@ -710,6 +761,7 @@ export default function InvestmentsClient() {
                     <div
                       key={holding.id}
                       className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                      onClick={() => handleHoldingClick(holding)}
                     >
                       <div className="flex items-center gap-3">
                         <span className="font-bold text-[#0a2540]">{holding.symbol}</span>
@@ -805,7 +857,12 @@ export default function InvestmentsClient() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-slate-600 mb-4">{rec.description}</p>
-                  <Button variant="outline" size="sm" className="w-full bg-transparent">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full bg-transparent"
+                    onClick={() => handleAIAction(rec.action)}
+                  >
                     {rec.action}
                   </Button>
                 </CardContent>
@@ -874,6 +931,126 @@ export default function InvestmentsClient() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {showAddInvestment && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowAddInvestment(false)}
+        >
+          <Card className="w-full max-w-md m-4" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>Add Investment</CardTitle>
+              <CardDescription>Add a new stock, ETF, or crypto to your portfolio</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Symbol</label>
+                <input type="text" placeholder="e.g., AAPL, BTC" className="w-full mt-1 px-3 py-2 border rounded-md" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Shares/Amount</label>
+                <input type="number" placeholder="0" className="w-full mt-1 px-3 py-2 border rounded-md" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Purchase Price</label>
+                <input type="number" placeholder="0.00" className="w-full mt-1 px-3 py-2 border rounded-md" />
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowAddInvestment(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 bg-[#635bff]"
+                  onClick={() => {
+                    console.log("[v0] Adding investment")
+                    setShowAddInvestment(false)
+                  }}
+                >
+                  Add Investment
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {showWatchList && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowWatchList(false)}
+        >
+          <Card className="w-full max-w-2xl m-4" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>Watch List</CardTitle>
+              <CardDescription>Stocks and assets you're monitoring</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="p-3 border rounded-lg flex items-center justify-between">
+                  <span className="font-medium">TSLA - Tesla Inc.</span>
+                  <span className="text-emerald-600">+2.4%</span>
+                </div>
+                <div className="p-3 border rounded-lg flex items-center justify-between">
+                  <span className="font-medium">ETH - Ethereum</span>
+                  <span className="text-red-600">-1.2%</span>
+                </div>
+              </div>
+              <Button className="w-full mt-4" onClick={() => setShowWatchList(false)}>
+                Close
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {selectedHolding && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setSelectedHolding(null)}
+        >
+          <Card className="w-full max-w-2xl m-4" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <CardTitle>
+                {selectedHolding.symbol} - {selectedHolding.name}
+              </CardTitle>
+              <CardDescription>Investment Details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-slate-600">Current Value</p>
+                  <p className="text-2xl font-bold">${selectedHolding.value.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Total Return</p>
+                  <p className="text-2xl font-bold text-emerald-600">+${selectedHolding.return.toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Shares Owned</p>
+                  <p className="text-lg font-semibold">{selectedHolding.shares}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Average Cost</p>
+                  <p className="text-lg font-semibold">${selectedHolding.avgCost}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" className="flex-1 bg-transparent">
+                  Buy More
+                </Button>
+                <Button variant="outline" className="flex-1 bg-transparent">
+                  Sell
+                </Button>
+                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setSelectedHolding(null)}>
+                  Close
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
+
+export default InvestmentsClient

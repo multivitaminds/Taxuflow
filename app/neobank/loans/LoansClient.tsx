@@ -24,14 +24,19 @@ import Link from "next/link"
 
 export default function LoansClient() {
   const [selectedTab, setSelectedTab] = useState("overview")
+  const [selectedCard, setSelectedCard] = useState<string | null>(null)
 
-  // Mock data
+  const handleCardClick = (cardType: string) => {
+    setSelectedCard(cardType)
+    console.log("[v0] Clicked loan card:", cardType)
+  }
+
   const loansSummary = {
     totalDebt: 145250.0,
     monthlyPayment: 2845.0,
     totalInterest: 28340.0,
     debtToIncomeRatio: 28,
-    trend: -5.2, // Negative means decreasing debt
+    trend: -5.2,
   }
 
   const loans = [
@@ -150,7 +155,6 @@ export default function LoansClient() {
 
   return (
     <div className="p-6 space-y-6 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#0a2540]">Loans & Credit</h1>
@@ -162,9 +166,11 @@ export default function LoansClient() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-[#635bff] hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-[#635bff] hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("total-debt")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-[#635bff]" />
@@ -180,7 +186,10 @@ export default function LoansClient() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-green-500 hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("monthly-payment")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-green-600" />
@@ -193,7 +202,10 @@ export default function LoansClient() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-orange-500 hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("total-interest")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-orange-600" />
@@ -206,7 +218,10 @@ export default function LoansClient() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer">
+        <Card
+          className="border-l-4 border-l-blue-500 hover:shadow-lg transition-shadow cursor-pointer"
+          onClick={() => handleCardClick("debt-ratio")}
+        >
           <CardHeader className="pb-2">
             <CardDescription className="flex items-center gap-2">
               <Percent className="h-4 w-4 text-blue-600" />
@@ -220,7 +235,6 @@ export default function LoansClient() {
         </Card>
       </div>
 
-      {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList className="bg-white border border-slate-200">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -230,7 +244,6 @@ export default function LoansClient() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          {/* Active Loans */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

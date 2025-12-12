@@ -83,9 +83,9 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Section */}
-      <section className="py-24 px-4 bg-white">
+      <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="grid md:grid-cols-2 gap-10 items-center">
             <div>
               <h2 className="text-4xl font-bold mb-6 text-[#0a2540]">Our Mission</h2>
               <p className="text-lg text-slate-600 mb-6 leading-relaxed">
@@ -127,9 +127,9 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-24 px-4 bg-[#f6f9fc] clip-diagonal">
+      <section className="py-16 px-4 bg-[#f6f9fc] clip-diagonal">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Our Values</h2>
             <p className="text-lg text-slate-600">The principles that guide everything we do</p>
           </div>
@@ -151,9 +151,9 @@ export default function AboutPage() {
       </section>
 
       {/* Timeline Section */}
-      <section className="py-24 px-4 bg-white">
+      <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-4xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Our Journey</h2>
             <p className="text-lg text-slate-600">Key milestones in our mission to transform tax filing</p>
           </div>
@@ -174,9 +174,9 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-24 px-4 bg-[#f6f9fc] clip-diagonal">
+      <section className="py-16 px-4 bg-[#f6f9fc] clip-diagonal">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <h2 className="text-4xl font-bold mb-4 text-[#0a2540]">Leadership Team</h2>
             <p className="text-lg text-slate-600">Meet the people building the future of tax filing</p>
           </div>
@@ -201,7 +201,7 @@ export default function AboutPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-4 bg-[#0a2540] text-white relative overflow-hidden">
+      <section className="py-20 px-4 bg-[#0a2540] text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-[#635bff]/20 to-transparent"></div>
         <div className="container mx-auto max-w-4xl text-center relative z-10">
