@@ -2,9 +2,20 @@ import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function updateSession(request: NextRequest) {
+  const publicPaths = [
+    "/",
+    "/login",
+    "/signup",
+    "/get-started",
+    "/businesses",
+    "/auth",
+    "/api/webhooks",
+    "/neobank/onboarding",
+  ]
+  const isPublicPath = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path))
+
   const demoMode = request.cookies.get("demo_mode")?.value === "true"
   if (demoMode) {
-    console.log("[v0] Middleware: Demo mode active")
     if (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup") {
       const url = request.nextUrl.clone()
       url.pathname = "/dashboard"
@@ -17,9 +28,6 @@ export async function updateSession(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.log("[v0] Middleware: Supabase config not available", {
-      path: request.nextUrl.pathname,
-    })
     return NextResponse.next({ request })
   }
 
@@ -39,35 +47,29 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    if (!isPublicPath) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    console.log("[v0] Middleware: User check", {
-      hasUser: !!user,
-      path: request.nextUrl.pathname,
-      userId: user?.id,
-    })
+      if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/dashboard"
+        return NextResponse.redirect(url)
+      }
 
-    if (user && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/signup")) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/dashboard"
-      console.log("[v0] Middleware: Redirecting authenticated user to dashboard from", request.nextUrl.pathname)
-      return NextResponse.redirect(url)
-    }
-
-    if (
-      (request.nextUrl.pathname.startsWith("/dashboard") ||
-        request.nextUrl.pathname.startsWith("/accounting") ||
-        request.nextUrl.pathname.startsWith("/neobank") ||
-        request.nextUrl.pathname.startsWith("/investment")) &&
-      !user
-    ) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/login"
-      url.searchParams.set("redirectTo", request.nextUrl.pathname)
-      console.log("[v0] Middleware: Redirecting to login from", request.nextUrl.pathname)
-      return NextResponse.redirect(url)
+      if (
+        (request.nextUrl.pathname.startsWith("/dashboard") ||
+          request.nextUrl.pathname.startsWith("/accounting") ||
+          request.nextUrl.pathname.startsWith("/neobank") ||
+          request.nextUrl.pathname.startsWith("/investment")) &&
+        !user
+      ) {
+        const url = request.nextUrl.clone()
+        url.pathname = "/login"
+        url.searchParams.set("redirectTo", request.nextUrl.pathname)
+        return NextResponse.redirect(url)
+      }
     }
 
     return supabaseResponse
