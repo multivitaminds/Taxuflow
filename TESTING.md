@@ -6,7 +6,7 @@ This project includes comprehensive testing coverage across unit tests, integrat
 
 ## Test Structure
 
-\`\`\`
+```
 __tests__/
 ├── unit/                  # Unit tests for individual components
 │   ├── components/        # Component tests
@@ -18,12 +18,12 @@ __tests__/
 │   ├── accounting/      # Accounting E2E tests
 │   └── neobank/        # Neobank E2E tests
 └── performance/        # Performance benchmarks
-\`\`\`
+```
 
 ## Running Tests
 
 ### Unit Tests
-\`\`\`bash
+```bash
 # Run all unit tests
 npm test
 
@@ -32,27 +32,27 @@ npm run test:ci
 
 # Generate coverage report
 npm run test:coverage
-\`\`\`
+```
 
 ### E2E Tests
-\`\`\`bash
+```bash
 # Run E2E tests
 npm run test:e2e
 
 # Run E2E tests with UI
 npm run test:e2e:ui
-\`\`\`
+```
 
 ### Performance Tests
-\`\`\`bash
+```bash
 # Run Lighthouse performance tests
 npm run test:performance
-\`\`\`
+```
 
 ## Writing Tests
 
 ### Unit Test Example
-\`\`\`typescript
+```typescript
 import { render, screen } from '@testing-library/react'
 import { MyComponent } from './MyComponent'
 
@@ -62,17 +62,17 @@ describe('MyComponent', () => {
     expect(screen.getByText('Hello')).toBeInTheDocument()
   })
 })
-\`\`\`
+```
 
 ### E2E Test Example
-\`\`\`typescript
+```typescript
 import { test, expect } from '@playwright/test'
 
 test('navigates to dashboard', async ({ page }) => {
   await page.goto('/dashboard')
   await expect(page.locator('h1')).toContainText('Dashboard')
 })
-\`\`\`
+```
 
 ## Performance Guidelines
 
@@ -95,7 +95,7 @@ test('navigates to dashboard', async ({ page }) => {
 
 Add to your CI pipeline:
 
-\`\`\`yaml
+```yaml
 # .github/workflows/test.yml
 name: Tests
 on: [push, pull_request]
@@ -108,7 +108,7 @@ jobs:
       - run: npm ci
       - run: npm run test:ci
       - run: npm run test:e2e
-\`\`\`
+```
 
 ## Coverage Requirements
 
@@ -129,7 +129,7 @@ Maintain minimum coverage:
 
 ## Debugging Tests
 
-\`\`\`bash
+```bash
 # Run specific test file
 npm test -- MyComponent.test.tsx
 
@@ -141,7 +141,7 @@ npm test -- --verbose
 
 # Debug with Chrome DevTools
 node --inspect-brk node_modules/.bin/jest --runInBand
-\`\`\`
+```
 
 ## Resources
 

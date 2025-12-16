@@ -114,7 +114,7 @@ export default function SalesOrdersClient() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-border bg-card pt-3.5">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>

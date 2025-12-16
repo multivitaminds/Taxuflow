@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
-
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -23,6 +22,7 @@ import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { createTaxBucket, getTaxBuckets } from "@/app/actions/neobank"
 
 interface TaxBucket {
   id: string
@@ -34,30 +34,8 @@ interface TaxBucket {
   liability: number // Estimated tax liability
 }
 
-const initialBuckets: TaxBucket[] = [
-  {
-    id: "fed",
-    name: "Federal Income Tax",
-    balance: 8500.0,
-    goal: 15000.0,
-    percentage: 15,
-    color: "#635bff",
-    liability: 12000,
-  },
-  {
-    id: "state",
-    name: "State Tax (CA)",
-    balance: 2500.0,
-    goal: 4000.0,
-    percentage: 5,
-    color: "#00d4ff",
-    liability: 3200,
-  },
-  { id: "sales", name: "Sales Tax", balance: 1500.0, goal: 2000.0, percentage: 2, color: "#32d74b", liability: 1800 },
-]
-
 export function TaxBucketsManager() {
-  const [buckets, setBuckets] = useState<TaxBucket[]>(initialBuckets)
+  const [buckets, setBuckets] = useState<TaxBucket[]>([])
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true)
   const [isTransferOpen, setIsTransferOpen] = useState(false)
   const [isNewBucketOpen, setIsNewBucketOpen] = useState(false)
@@ -67,8 +45,10 @@ export function TaxBucketsManager() {
   const [newBucketColor, setNewBucketColor] = useState("#9333ea")
 
   const [transferFromAccount, setTransferFromAccount] = useState("checking")
-  const [transferToBucket, setTransferToBucket] = useState(buckets[0]?.id || "")
+  const [transferToBucket, setTransferToBucket] = useState("")
   const [transferAmount, setTransferAmount] = useState("")
+
+  const [isPending, startTransition] = useTransition()
 
   const totalBalance = buckets.reduce((acc, bucket) => acc + bucket.balance, 0)
   const totalGoal = buckets.reduce((acc, bucket) => acc + bucket.goal, 0)
@@ -84,26 +64,39 @@ export function TaxBucketsManager() {
       return
     }
 
-    const newBucket: TaxBucket = {
-      id: `bucket-${Date.now()}`,
-      name: newBucketName.trim(),
-      balance: 0,
-      goal: Number.parseFloat(newBucketGoal) || 5000,
-      percentage: Number.parseFloat(newBucketPercentage) || 0,
-      color: newBucketColor,
-      liability: Number.parseFloat(newBucketGoal) || 5000,
-    }
+    startTransition(async () => {
+      const result = await createTaxBucket({
+        name: newBucketName.trim(),
+        percentage: Number.parseFloat(newBucketPercentage) || 0,
+        goal_amount: Number.parseFloat(newBucketGoal) || 5000,
+      })
 
-    setBuckets([...buckets, newBucket])
-    toast.success(`${newBucketName} bucket created successfully`)
+      if (result.error) {
+        toast.error(result.error)
+      } else {
+        toast.success(`${newBucketName} bucket created successfully`)
+        // Refresh buckets
+        const updated = await getTaxBuckets()
+        if (updated.success && updated.data) {
+          setBuckets(
+            updated.data.map((b: any) => ({
+              id: b.id,
+              name: b.name,
+              balance: b.current_balance,
+              goal: b.goal_amount,
+              percentage: b.percentage,
+              color: "#9333ea",
+              liability: b.goal_amount,
+            })),
+          )
+        }
+      }
 
-    setNewBucketName("")
-    setNewBucketGoal("")
-    setNewBucketPercentage("0")
-    setNewBucketColor("#9333ea")
-    setIsNewBucketOpen(false)
-
-    console.log("[v0] New bucket created:", newBucket)
+      setNewBucketName("")
+      setNewBucketGoal("")
+      setNewBucketPercentage("0")
+      setIsNewBucketOpen(false)
+    })
   }
 
   const handleTransfer = () => {
@@ -136,6 +129,25 @@ export function TaxBucketsManager() {
   }))
 
   const router = useRouter()
+
+  useEffect(() => {
+    startTransition(async () => {
+      const result = await getTaxBuckets()
+      if (result.success && result.data) {
+        setBuckets(
+          result.data.map((b: any) => ({
+            id: b.id,
+            name: b.name,
+            balance: b.current_balance,
+            goal: b.goal_amount,
+            percentage: b.percentage,
+            color: "#9333ea",
+            liability: b.goal_amount,
+          })),
+        )
+      }
+    })
+  }, [])
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">

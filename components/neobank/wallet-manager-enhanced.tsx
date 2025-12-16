@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -15,36 +15,12 @@ import {
   Sparkles,
   Target,
   DollarSign,
+  Plus,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
-
-const accounts = [
-  {
-    id: "acc_1",
-    type: "checking",
-    balance: 85000.0,
-    accountNumber: "4291 8821 0034",
-    routingNumber: "121000248",
-    status: "active",
-    nickname: "Business Checking",
-    monthlyInflow: 45000,
-    monthlyOutflow: 38000,
-    trend: "+8.5%",
-  },
-  {
-    id: "acc_2",
-    type: "savings",
-    balance: 45000.0,
-    accountNumber: "4291 8821 0056",
-    routingNumber: "121000248",
-    status: "active",
-    nickname: "Emergency Fund",
-    apy: 4.5,
-    interestEarned: 168.75,
-    trend: "+2.1%",
-  },
-]
+import { getNeobankAccounts } from "@/app/actions/neobank/get-accounts"
+import { getNeobankTransactions } from "@/app/actions/neobank/get-transactions"
 
 const aiInsights = [
   {
@@ -65,13 +41,63 @@ const aiInsights = [
 ]
 
 export function WalletManagerEnhanced() {
+  const [accounts, setAccounts] = useState<any[]>([])
+  const [transactions, setTransactions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [showBalance, setShowBalance] = useState(true)
   const [showAccountNumbers, setShowAccountNumbers] = useState(false)
   const [selectedTab, setSelectedTab] = useState("overview")
-  const { toast } = useToast()
+  const { toast: toastHook } = useToast()
 
-  const totalBalance = accounts.reduce((sum, acc) => acc.balance, 0)
-  const totalMonthlyInflow = accounts.reduce((sum, acc) => acc.monthlyInflow || 0, 0)
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  async function loadData() {
+    setLoading(true)
+
+    const [accountsResult, transactionsResult] = await Promise.all([getNeobankAccounts(), getNeobankTransactions()])
+
+    if (accountsResult.data && accountsResult.data.length > 0) {
+      setAccounts(accountsResult.data)
+    }
+
+    if (transactionsResult.data && transactionsResult.data.length > 0) {
+      setTransactions(transactionsResult.data)
+    }
+
+    setLoading(false)
+  }
+
+  const totalBalance = accounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0)
+  const totalMonthlyInflow = transactions
+    .filter((t) => t.transaction_type === "credit")
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-slate-500">Loading accounts...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (accounts.length === 0) {
+    return (
+      <div className="p-8 max-w-7xl mx-auto">
+        <div className="flex flex-col items-center justify-center h-64 space-y-4">
+          <Building2 className="h-16 w-16 text-slate-300" />
+          <h3 className="text-xl font-semibold text-slate-600">No Accounts Yet</h3>
+          <p className="text-slate-500">Create your first account to get started</p>
+          <Button className="bg-[#635bff] hover:bg-[#5851e1]">
+            <Plus className="mr-2 h-4 w-4" /> Create Account
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">
@@ -98,13 +124,13 @@ export function WalletManagerEnhanced() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <h4 className="font-semibold text-[#0a2540] group-hover:text-[#635bff] transition-colors">
+                    <h4 className="font-semibold text-base text-[#0a2540] group-hover:text-[#635bff] transition-colors">
                       {insight.title}
                     </h4>
                     <Badge
                       variant="secondary"
                       className={cn(
-                        "shrink-0",
+                        "shrink-0 text-[10px]",
                         insight.impact === "high" && "bg-red-100 text-red-700",
                         insight.impact === "medium" && "bg-orange-100 text-orange-700",
                       )}
@@ -112,21 +138,21 @@ export function WalletManagerEnhanced() {
                       {insight.impact}
                     </Badge>
                   </div>
-                  <p className="text-sm text-slate-600 mt-1">{insight.description}</p>
+                  <p className="text-xs text-slate-600 mt-1">{insight.description}</p>
                   {insight.savingsAmount && (
-                    <div className="mt-3 flex items-center gap-2 text-sm">
+                    <div className="mt-3 flex items-center gap-2 text-xs">
                       <Target className="h-4 w-4 text-green-600" />
                       <span className="font-medium text-green-600">Save ${insight.savingsAmount}/month</span>
                     </div>
                   )}
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
                       <div className="flex items-center gap-1">
                         <Sparkles className="h-3 w-3" />
                         <span>AI Confidence: {insight.confidence}%</span>
                       </div>
                     </div>
-                    <Button size="sm" variant="ghost" className="text-[#635bff] hover:bg-[#635bff]/10">
+                    <Button size="sm" variant="ghost" className="text-[#635bff] hover:bg-[#635bff]/10 h-8 text-xs">
                       View Details
                     </Button>
                   </div>
@@ -141,25 +167,25 @@ export function WalletManagerEnhanced() {
         <TabsList className="bg-white p-1 border border-slate-200 shadow-sm rounded-lg h-auto">
           <TabsTrigger
             value="overview"
-            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2"
+            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2 text-xs h-8"
           >
             Overview
           </TabsTrigger>
           <TabsTrigger
             value="accounts"
-            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2"
+            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2 text-xs h-8"
           >
             My Accounts
           </TabsTrigger>
           <TabsTrigger
             value="analytics"
-            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2"
+            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2 text-xs h-8"
           >
             Analytics
           </TabsTrigger>
           <TabsTrigger
             value="external"
-            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2"
+            className="data-[state=active]:bg-[#635bff] data-[state=active]:text-white py-2 text-xs h-8"
           >
             External Links
           </TabsTrigger>
@@ -170,11 +196,13 @@ export function WalletManagerEnhanced() {
             <Card className="group hover:shadow-lg transition-all cursor-pointer border-slate-200 hover:border-[#635bff]/30">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-slate-500 uppercase tracking-wider">Total Balance</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Total Balance</p>
                   <Building2 className="h-5 w-5 text-[#635bff]/60 group-hover:text-[#635bff] transition-colors" />
                 </div>
-                <p className="text-2xl font-bold text-[#0a2540]">${totalBalance.toLocaleString()}</p>
-                <div className="flex items-center gap-1 mt-2 text-sm text-green-600">
+                <p className="text-xl font-bold text-[#0a2540]">
+                  {showBalance ? `$${totalBalance.toLocaleString()}` : "••••••"}
+                </p>
+                <div className="flex items-center gap-1 mt-2 text-xs text-green-600">
                   <TrendingUp className="h-4 w-4" />
                   <span>+4.2% this month</span>
                 </div>
@@ -184,11 +212,11 @@ export function WalletManagerEnhanced() {
             <Card className="group hover:shadow-lg transition-all cursor-pointer border-slate-200 hover:border-[#635bff]/30">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-slate-500 uppercase tracking-wider">Monthly Inflow</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Monthly Inflow</p>
                   <ArrowDownRight className="h-5 w-5 text-green-600/60 group-hover:text-green-600 transition-colors" />
                 </div>
-                <p className="text-2xl font-bold text-[#0a2540]">${totalMonthlyInflow.toLocaleString()}</p>
-                <div className="flex items-center gap-1 mt-2 text-sm text-slate-500">
+                <p className="text-xl font-bold text-[#0a2540]">${totalMonthlyInflow.toLocaleString()}</p>
+                <div className="flex items-center gap-1 mt-2 text-xs text-slate-500">
                   <span>Across all accounts</span>
                 </div>
               </CardContent>
@@ -197,10 +225,10 @@ export function WalletManagerEnhanced() {
             <Card className="group hover:shadow-lg transition-all cursor-pointer border-slate-200 hover:border-[#635bff]/30">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-slate-500 uppercase tracking-wider">Savings Rate</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Savings Rate</p>
                   <Target className="h-5 w-5 text-blue-600/60 group-hover:text-blue-600 transition-colors" />
                 </div>
-                <p className="text-2xl font-bold text-[#0a2540]">34.5%</p>
+                <p className="text-xl font-bold text-[#0a2540]">34.5%</p>
                 <div className="mt-2">
                   <Progress value={34.5} className="h-2" />
                 </div>
@@ -210,18 +238,17 @@ export function WalletManagerEnhanced() {
             <Card className="group hover:shadow-lg transition-all cursor-pointer border-slate-200 hover:border-[#635bff]/30">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-slate-500 uppercase tracking-wider">Interest Earned</p>
+                  <p className="text-xs text-slate-500 uppercase tracking-wider">Interest Earned</p>
                   <DollarSign className="h-5 w-5 text-emerald-600/60 group-hover:text-emerald-600 transition-colors" />
                 </div>
-                <p className="text-2xl font-bold text-[#0a2540]">$168.75</p>
-                <div className="flex items-center gap-1 mt-2 text-sm text-slate-500">
+                <p className="text-xl font-bold text-[#0a2540]">$168.75</p>
+                <div className="flex items-center gap-1 mt-2 text-xs text-slate-500">
                   <span>This month (4.5% APY)</span>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Enhanced Account Cards */}
           <div className="space-y-4">
             {accounts.map((account) => (
               <Card
@@ -235,22 +262,22 @@ export function WalletManagerEnhanced() {
                         <Building2 className="h-6 w-6 text-[#635bff]" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg group-hover:text-[#635bff] transition-colors">
+                        <CardTitle className="text-base group-hover:text-[#635bff] transition-colors">
                           {account.nickname}
                         </CardTitle>
-                        <p className="text-sm text-slate-500 capitalize">{account.type} Account</p>
+                        <p className="text-xs text-slate-500 capitalize">{account.type} Account</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge
                         variant="secondary"
-                        className="bg-green-100 text-green-700 hover:bg-green-100 capitalize flex items-center gap-1"
+                        className="bg-green-100 text-green-700 hover:bg-green-100 capitalize flex items-center gap-1 text-[10px]"
                       >
                         <TrendingUp className="h-3 w-3" /> {account.trend}
                       </Badge>
                       <Badge
                         variant="secondary"
-                        className="bg-green-100 text-green-700 hover:bg-green-100 capitalize flex items-center gap-1"
+                        className="bg-green-100 text-green-700 hover:bg-green-100 capitalize flex items-center gap-1 text-[10px]"
                       >
                         <CheckCircle2 className="h-3 w-3" /> {account.status}
                       </Badge>
@@ -291,7 +318,62 @@ export function WalletManagerEnhanced() {
           </div>
         </TabsContent>
 
-        {/* ... existing tabs code ... */}
+        <TabsContent value="accounts" className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {accounts.map((account) => (
+              <Card
+                key={account.id}
+                className="group hover:shadow-lg transition-all duration-300 cursor-pointer border-slate-200 hover:border-[#635bff]/30"
+              >
+                <CardHeader className="border-b border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-gradient-to-br from-[#635bff]/10 to-[#00d4ff]/10 p-3 rounded-lg group-hover:from-[#635bff]/20 group-hover:to-[#00d4ff]/20 transition-all">
+                        <Building2 className="h-6 w-6 text-[#635bff]" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base group-hover:text-[#635bff] transition-colors">
+                          {account.nickname}
+                        </CardTitle>
+                        <p className="text-xs text-slate-500 capitalize">{account.type} Account</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-700 hover:bg-green-100 capitalize flex items-center gap-1 text-[10px]"
+                      >
+                        <TrendingUp className="h-3 w-3" /> {account.trend}
+                      </Badge>
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-700 hover:bg-green-100 capitalize flex items-center gap-1 text-[10px]"
+                      >
+                        <CheckCircle2 className="h-3 w-3" /> {account.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-slate-500 uppercase tracking-wider">Balance</p>
+                    <DollarSign className="h-5 w-5 text-[#635bff]/60 group-hover:text-[#635bff] transition-colors" />
+                  </div>
+                  <p className="text-2xl font-bold text-[#0a2540]">${Number(account.balance).toLocaleString()}</p>
+                  {showAccountNumbers && (
+                    <div className="mt-3 flex items-center gap-2 text-sm">
+                      <span className="font-medium">Account Number: {account.accountNumber}</span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="external" className="space-y-6">
+          {/* External Links Content */}
+        </TabsContent>
       </Tabs>
     </div>
   )

@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
+import Image from "next/image"
 import { Package, ArrowRight, CheckCircle2, ExternalLink } from "lucide-react"
 
 export const metadata: Metadata = {
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
 const serverSdks = [
   {
     name: "Node.js",
-    icon: "⬢",
+    icon: (
+      <Image src="/icons/nodejs.png" alt="Node.js" width={48} height={48} className="w-full h-full object-contain" />
+    ),
     color: "from-green-500 to-green-600",
     install: "npm install taxu",
     docs: "/developer/docs/sdks/nodejs",
@@ -18,7 +21,9 @@ const serverSdks = [
   },
   {
     name: "Python",
-    icon: "🐍",
+    icon: (
+      <Image src="/icons/python.png" alt="Python" width={48} height={48} className="w-full h-full object-contain" />
+    ),
     color: "from-blue-500 to-blue-600",
     install: "pip install taxu",
     docs: "/developer/docs/sdks/python",
@@ -26,7 +31,7 @@ const serverSdks = [
   },
   {
     name: "Ruby",
-    icon: "💎",
+    icon: <Image src="/icons/ruby.png" alt="Ruby" width={48} height={48} className="w-full h-full object-contain" />,
     color: "from-red-500 to-red-600",
     install: "gem install taxu",
     docs: "/developer/docs/sdks/ruby",
@@ -34,7 +39,7 @@ const serverSdks = [
   },
   {
     name: "PHP",
-    icon: "🐘",
+    icon: <Image src="/icons/php.png" alt="PHP" width={48} height={48} className="w-full h-full object-contain" />,
     color: "from-purple-500 to-purple-600",
     install: "composer require taxu/taxu-php",
     docs: "/developer/docs/sdks/php",
@@ -42,7 +47,7 @@ const serverSdks = [
   },
   {
     name: "Go",
-    icon: "🔷",
+    icon: <Image src="/icons/go.png" alt="Go" width={48} height={48} className="w-full h-full object-contain" />,
     color: "from-cyan-500 to-cyan-600",
     install: "go get github.com/taxu/taxu-go",
     docs: "/developer/docs/sdks/go",
@@ -50,7 +55,7 @@ const serverSdks = [
   },
   {
     name: "Java",
-    icon: "☕",
+    icon: <Image src="/icons/java.png" alt="Java" width={48} height={48} className="w-full h-full object-contain" />,
     color: "from-orange-500 to-orange-600",
     install: 'implementation "com.taxu:taxu-java:1.0.0"',
     docs: "/developer/docs/sdks/java",
@@ -58,7 +63,7 @@ const serverSdks = [
   },
   {
     name: ".NET",
-    icon: "🔷",
+    icon: <Image src="/icons/dotnet.png" alt=".NET" width={48} height={48} className="w-full h-full object-contain" />,
     color: "from-indigo-500 to-indigo-600",
     install: "dotnet add package Taxu.net",
     docs: "/developer/docs/sdks/dotnet",

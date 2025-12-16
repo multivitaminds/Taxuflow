@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "@/lib/supabase/client"
 import DiagnosticsClient from "@/components/diagnostics-client"
 
 export default function DiagnosticsPage() {
@@ -12,10 +12,7 @@ export default function DiagnosticsPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      )
+      const supabase = createClient()
 
       const {
         data: { session },

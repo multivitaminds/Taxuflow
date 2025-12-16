@@ -6,7 +6,7 @@ export default function AccountsPage() {
   return (
     <>
       <DemoModeBanner isDemoMode={true} />
-      <div className="mt-8">
+      <div className="mt-3.5">
         <Suspense fallback={<div className="p-8 text-[#0a2540]">Loading accounts...</div>}>
           <WalletManagerEnhanced />
         </Suspense>

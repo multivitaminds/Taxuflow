@@ -37,7 +37,7 @@ Sign up at [TaxBandits Developer Portal](https://developer.taxbandits.com):
 
 Add to your Vercel project (Vars section in v0 sidebar):
 
-\`\`\`bash
+```bash
 TAXBANDITS_API_KEY=your_api_key_here
 TAXBANDITS_USER_TOKEN=your_user_token_here
 TAXBANDITS_ENVIRONMENT=sandbox  # or 'production'
@@ -49,7 +49,7 @@ TAXBANDITS_AWS_ACCESS_KEY=your_aws_access_key_id
 TAXBANDITS_AWS_SECRET_KEY=your_aws_secret_access_key
 TAXBANDITS_AWS_S3_BUCKET=expressirsforms
 TAXBANDITS_AWS_REGION=us-east-1
-\`\`\`
+```
 
 ### 3. Set Up Webhooks
 
@@ -66,16 +66,16 @@ Configure webhook in TaxBandits dashboard:
 
 Execute the SQL script to create the tax_filings table:
 
-\`\`\`bash
+```bash
 # In v0, go to Scripts folder and run:
 scripts/setup-tax-filings.sql
-\`\`\`
+```
 
 ## Usage
 
 ### Individual Tax Return
 
-\`\`\`typescript
+```typescript
 import { createEFileProvider } from '@/lib/efile/provider-factory'
 
 const provider = createEFileProvider()
@@ -126,17 +126,17 @@ const result = await provider.submitReturn({
 
 console.log('Submission ID:', result.submissionId)
 console.log('Status:', result.status)
-\`\`\`
+```
 
 ### Check Filing Status
 
-\`\`\`typescript
+```typescript
 const status = await provider.getFilingStatus(submissionId)
 
 console.log('IRS Status:', status.irsStatus)
 console.log('Accepted:', status.acceptedAt)
 console.log('Refund Status:', status.refundStatus)
-\`\`\`
+```
 
 ## API Endpoints
 
@@ -144,7 +144,7 @@ console.log('Refund Status:', status.refundStatus)
 Submit a tax return for e-filing
 
 **Request:**
-\`\`\`json
+```json
 {
   "taxReturn": { /* TaxReturn object */ },
   "bankInfo": {
@@ -154,10 +154,10 @@ Submit a tax return for e-filing
   },
   "consent": true
 }
-\`\`\`
+```
 
 **Response:**
-\`\`\`json
+```json
 {
   "success": true,
   "filingId": "uuid",
@@ -166,13 +166,13 @@ Submit a tax return for e-filing
   "message": "Return submitted successfully",
   "estimatedProcessingTime": "24-48 hours"
 }
-\`\`\`
+```
 
 ### GET /api/filing/status?filingId=uuid
 Check filing status
 
 **Response:**
-\`\`\`json
+```json
 {
   "filingId": "uuid",
   "submissionId": "TB-12345",
@@ -184,7 +184,7 @@ Check filing status
     "estimatedDate": "2024-01-22T00:00:00Z"
   }
 }
-\`\`\`
+```
 
 ### POST /api/filing/webhook
 Webhook handler for TaxBandits status updates (internal)
@@ -195,9 +195,9 @@ Webhook handler for TaxBandits status updates (internal)
 
 The integration defaults to sandbox mode for testing:
 
-\`\`\`bash
+```bash
 TAXBANDITS_ENVIRONMENT=sandbox
-\`\`\`
+```
 
 **Sandbox features:**
 - $5,000 BanditCash for testing
@@ -209,9 +209,9 @@ TAXBANDITS_ENVIRONMENT=sandbox
 
 For local development without TaxBandits credentials:
 
-\`\`\`bash
+```bash
 EFILE_PROVIDER=mock
-\`\`\`
+```
 
 The mock provider simulates:
 - 95% success rate
@@ -221,7 +221,7 @@ The mock provider simulates:
 
 ## Architecture
 
-\`\`\`
+```
 ┌─────────────────┐
 │   Taxu App      │
 │  (Next.js)      │
@@ -251,7 +251,7 @@ The mock provider simulates:
          │      IRS      │
          │   (E-File)    │
          └───────────────┘
-\`\`\`
+```
 
 ## Error Handling
 

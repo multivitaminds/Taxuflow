@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Play, Copy, Check } from "lucide-react"
+import Image from "next/image"
 
 export default function PlaygroundPage() {
   const [apiKey, setApiKey] = useState("sk_test_...")
@@ -195,10 +196,39 @@ export default function PlaygroundPage() {
               <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-border p-6 shadow-lg">
                 <h3 className="text-lg font-bold text-foreground mb-4">Generate Code</h3>
                 <Tabs defaultValue="nodejs">
-                  <TabsList className="bg-muted">
-                    <TabsTrigger value="nodejs">Node.js</TabsTrigger>
-                    <TabsTrigger value="python">Python</TabsTrigger>
-                    <TabsTrigger value="curl">cURL</TabsTrigger>
+                  <TabsList className="bg-muted flex-wrap h-auto">
+                    <TabsTrigger value="nodejs" className="flex items-center gap-2">
+                      <Image src="/icons/nodejs.png" alt="Node.js" width={16} height={16} className="w-4 h-4" />
+                      Node.js
+                    </TabsTrigger>
+                    <TabsTrigger value="python" className="flex items-center gap-2">
+                      <Image src="/icons/python.png" alt="Python" width={16} height={16} className="w-4 h-4" />
+                      Python
+                    </TabsTrigger>
+                    <TabsTrigger value="ruby" className="flex items-center gap-2">
+                      <Image src="/icons/ruby.png" alt="Ruby" width={16} height={16} className="w-4 h-4" />
+                      Ruby
+                    </TabsTrigger>
+                    <TabsTrigger value="php" className="flex items-center gap-2">
+                      <Image src="/icons/php.png" alt="PHP" width={16} height={16} className="w-4 h-4" />
+                      PHP
+                    </TabsTrigger>
+                    <TabsTrigger value="go" className="flex items-center gap-2">
+                      <Image src="/icons/go.png" alt="Go" width={16} height={16} className="w-4 h-4" />
+                      Go
+                    </TabsTrigger>
+                    <TabsTrigger value="java" className="flex items-center gap-2">
+                      <Image src="/icons/java.png" alt="Java" width={16} height={16} className="w-4 h-4" />
+                      Java
+                    </TabsTrigger>
+                    <TabsTrigger value="dotnet" className="flex items-center gap-2">
+                      <Image src="/icons/dotnet.png" alt=".NET" width={16} height={16} className="w-4 h-4" />
+                      .NET
+                    </TabsTrigger>
+                    <TabsTrigger value="curl" className="flex items-center gap-2">
+                      <Image src="/icons/curl.png" alt="cURL" width={16} height={16} className="w-4 h-4" />
+                      cURL
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="nodejs">
                     <pre className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-4 text-emerald-400 font-mono text-xs overflow-x-auto border border-primary/20 shadow-lg">
@@ -220,6 +250,75 @@ client = taxu.Client('${apiKey}')
 result = client.tax.calculate_refund(${requestBody})
 
 print(result)`}
+                    </pre>
+                  </TabsContent>
+                  <TabsContent value="ruby">
+                    <pre className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-4 text-red-400 font-mono text-xs overflow-x-auto border border-red-500/20 shadow-lg">
+                      {`require 'taxu'
+
+client = Taxu::Client.new('${apiKey}')
+
+result = client.tax.calculate_refund(${requestBody})
+
+puts result`}
+                    </pre>
+                  </TabsContent>
+                  <TabsContent value="php">
+                    <pre className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-4 text-purple-400 font-mono text-xs overflow-x-auto border border-purple-500/20 shadow-lg">
+                      {`<?php
+require 'vendor/autoload.php';
+
+$client = new \\Taxu\\Client('${apiKey}');
+
+$result = $client->tax->calculateRefund(${requestBody});
+
+print_r($result);`}
+                    </pre>
+                  </TabsContent>
+                  <TabsContent value="go">
+                    <pre className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-4 text-cyan-300 font-mono text-xs overflow-x-auto border border-cyan-500/20 shadow-lg">
+                      {`package main
+
+import (
+    "github.com/taxu/taxu-go"
+    "fmt"
+)
+
+func main() {
+    client := taxu.NewClient("${apiKey}")
+    
+    result, _ := client.Tax.CalculateRefund(${requestBody})
+    
+    fmt.Println(result)
+}`}
+                    </pre>
+                  </TabsContent>
+                  <TabsContent value="java">
+                    <pre className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-4 text-orange-400 font-mono text-xs overflow-x-auto border border-orange-500/20 shadow-lg">
+                      {`import com.taxu.Taxu;
+import com.taxu.model.TaxRefund;
+
+public class Main {
+    public static void main(String[] args) {
+        Taxu taxu = new Taxu("${apiKey}");
+        
+        TaxRefund result = taxu.tax()
+            .calculateRefund(${requestBody});
+        
+        System.out.println(result);
+    }
+}`}
+                    </pre>
+                  </TabsContent>
+                  <TabsContent value="dotnet">
+                    <pre className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg p-4 text-indigo-400 font-mono text-xs overflow-x-auto border border-indigo-500/20 shadow-lg">
+                      {`using Taxu;
+
+var client = new TaxuClient("${apiKey}");
+
+var result = await client.Tax.CalculateRefundAsync(${requestBody});
+
+Console.WriteLine(result);`}
                     </pre>
                   </TabsContent>
                   <TabsContent value="curl">

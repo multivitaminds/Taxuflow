@@ -132,7 +132,6 @@ const navigationGroups = [
     ],
   },
 ]
-// </CHANGE>
 
 export function NeobankSidebar() {
   const pathname = usePathname()
@@ -152,21 +151,8 @@ export function NeobankSidebar() {
   }
 
   return (
-    <div className="fixed left-0 top-[38px] h-[calc(100vh-38px)] bg-white border-r border-slate-200/60 transition-all duration-300 z-40 w-64 shadow-[0_0_40px_rgba(0,0,0,0.04)]">
-      <div className="relative p-5 border-b border-slate-100/80 bg-gradient-to-br from-slate-50/80 via-white to-indigo-50/20">
-        <Link href="/neobank" className="text-xl font-bold flex items-center gap-2">
-          <span className="text-[#0f172a] tracking-tight">Tax</span>
-          <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 bg-clip-text text-transparent">
-            u
-          </span>
-          <span className="text-slate-400 text-[10px] font-semibold ml-1.5 uppercase tracking-widest">Banking</span>
-        </Link>
-        <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
-      </div>
-      {/* </CHANGE> */}
-
-      <nav className="p-3 space-y-0.5 overflow-y-auto h-[calc(100vh-180px)] custom-scrollbar">
-        {/* </CHANGE> */}
+    <div className="fixed left-0 top-11 h-[calc(100vh-44px)] bg-white border-r border-slate-200/60 transition-all duration-300 z-40 w-64 shadow-[0_0_40px_rgba(0,0,0,0.04)]">
+      <nav className="p-3 space-y-0.5 overflow-y-auto h-[calc(100vh-120px)] custom-scrollbar">
         {navigationGroups.map((item) => {
           if (item.type === "single") {
             const isActive = pathname === item.href
@@ -192,7 +178,6 @@ export function NeobankSidebar() {
                 />
                 <span className="relative z-10">{item.name}</span>
               </Link>
-              // </CHANGE>
             )
           }
 
@@ -228,7 +213,6 @@ export function NeobankSidebar() {
                   )}
                 />
               </button>
-              {/* </CHANGE> */}
 
               {isExpanded && item.items && (
                 <div className="ml-4 pl-4 border-l border-slate-100/80 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
@@ -256,11 +240,9 @@ export function NeobankSidebar() {
                         />
                         <span>{subItem.name}</span>
                       </Link>
-                      // </CHANGE>
                     )
                   })}
                 </div>
-                // </CHANGE>
               )}
             </div>
           )
@@ -279,7 +261,6 @@ export function NeobankSidebar() {
           </Button>
         </Link>
       </div>
-      {/* </CHANGE> */}
     </div>
   )
 }

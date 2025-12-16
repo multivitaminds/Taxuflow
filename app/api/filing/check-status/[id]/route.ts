@@ -27,7 +27,6 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch filing
     let filing: any = null
     let tableName = ""
 
@@ -60,7 +59,6 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
       return NextResponse.json({ error: "Filing not found" }, { status: 404 })
     }
 
-    // Check if already accepted
     const taxbanditsStatus = filing.taxbandits_status?.toLowerCase()
     const irsStatus = filing.irs_status?.toLowerCase()
     const currentStatus = taxbanditsStatus || irsStatus || "pending"
@@ -81,21 +79,22 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
       })
     }
 
-    // Sandbox Auto-Accept Logic
     const environment = process.env.TAXBANDITS_ENVIRONMENT || "sandbox"
 
-    // Calculate filing age safely
     let filingAge = 0
     if (filing.created_at) {
       const createdTime = new Date(filing.created_at).getTime()
       if (!isNaN(createdTime)) {
         filingAge = Date.now() - createdTime
       } else {
-        console.warn("[v0] check-status: Invalid created_at date:", filing.created_at)
-        // If date is invalid, assume it's old enough to process
+        console.warn("[v0] check-status: Invalid created_at date, using current time")
         filingAge = 999999
       }
+    } else {
+      console.warn("[v0] check-status: No created_at date found, treating as old filing")
+      filingAge = 999999
     }
+    // </CHANGE>
 
     const fiveSeconds = 5 * 1000
     const shouldAutoAccept = environment === "sandbox" && filingAge > fiveSeconds
@@ -120,7 +119,6 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
       if (tableName === "w2_filings") {
         const wages = Number(filing.wages) || 0
         const federalWithheld = Number(filing.federal_tax_withheld) || 0
-        // Simple refund calculation for demo
         const standardDeduction = 13850
         const taxableIncome = Math.max(0, wages - standardDeduction)
         const estimatedTaxLiability = taxableIncome * 0.1
@@ -136,7 +134,7 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
         .from(tableName)
         .update(updateData)
         .eq("id", filing.id)
-        .eq("user_id", user.id) // Ensure we only update user's own filing
+        .eq("user_id", user.id)
         .select()
 
       if (updateError) {
@@ -147,22 +145,31 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
             status: "pending",
             message: "Failed to update filing status",
             error: updateError.message,
+            debug: {
+              errorCode: updateError.code,
+              errorDetails: updateError.details,
+            },
           },
           { status: 500 },
         )
       }
 
       if (!updatedRows || updatedRows.length === 0) {
-        console.error("[v0] check-status: Update returned 0 rows! The filing ID might not exist or has been deleted.")
+        console.error("[v0] check-status: Update returned 0 rows")
         return NextResponse.json(
           {
             success: false,
             status: "pending",
             message: "Filing not found or access denied",
+            debug: {
+              filingId: filing.id,
+              userId: user.id,
+            },
           },
           { status: 404 },
         )
       }
+      // </CHANGE>
 
       console.log("[v0] check-status: Database updated successfully! Rows affected:", updatedRows.length)
 
@@ -197,6 +204,9 @@ export async function GET(req: NextRequest, props: { params: { id: string } }) {
       {
         error: "Internal Server Error",
         message: error instanceof Error ? error.message : "Unknown error",
+        debug: {
+          stack: error instanceof Error ? error.stack : undefined,
+        },
       },
       { status: 500 },
     )

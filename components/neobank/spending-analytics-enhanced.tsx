@@ -28,11 +28,11 @@ import {
   Sparkles,
   Target,
   DollarSign,
-  Download,
   ArrowUpRight,
   ArrowDownRight,
   Filter,
   CheckCircle,
+  Plus,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -150,26 +150,17 @@ export function SpendingAnalyticsEnhanced() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Spending Analytics</h1>
-          <p className="text-slate-500 mt-1">AI-powered insights and tax optimization for your spending</p>
+          <h1 className="text-2xl font-bold tracking-tight">Spending Analytics</h1>
+          <p className="text-sm text-slate-500 mt-1">AI-powered insights and tax optimization for your spending</p>
         </div>
         <div className="flex gap-3">
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Select range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1m">Last Month</SelectItem>
-              <SelectItem value="3m">Last 3 Months</SelectItem>
-              <SelectItem value="6m">Last 6 Months</SelectItem>
-              <SelectItem value="ytd">Year to Date</SelectItem>
-              <SelectItem value="1y">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200 hover:bg-slate-50">
-            <Download className="mr-2 h-4 w-4" /> Export Report
+          <Button variant="outline" className="h-8 text-xs bg-transparent">
+            Export Report
+          </Button>
+          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white h-8 text-xs">
+            <Plus className="mr-2 h-4 w-4" /> Add Expense
           </Button>
         </div>
       </div>

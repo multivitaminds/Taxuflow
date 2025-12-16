@@ -3,14 +3,40 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TrendingUp, DollarSign, PieChart, ShoppingCart, Bitcoin, Target, Zap } from "lucide-react"
+import { FinancialTrendGraph } from "@/components/financial-trend-graph"
 
 export function InvestingDashboard({ user, profile }: { user: any; profile: any }) {
   return (
-    <div className="p-8 pt-6">
+    <div className="p-8 pt-3.5">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Investing Overview</h1>
         <p className="text-slate-600">Manage your portfolio with tax-optimized strategies</p>
+      </div>
+
+      {/* Financial Trend Graph */}
+      <div className="mb-6">
+        <FinancialTrendGraph
+          title="Portfolio Value Trends"
+          metrics={[
+            { label: "Total Value", value: 0, change: "+0% this month", color: "#22c55e" },
+            { label: "Total Gain/Loss", value: 0, change: "0% return", color: "#3b82f6" },
+            { label: "Cash Available", value: 0, change: "Ready to invest", color: "#f59e0b" },
+          ]}
+          graphData={[
+            { name: "Dec 1", portfolio: 0, gains: 0 },
+            { name: "Dec 3", portfolio: 0, gains: 0 },
+            { name: "Dec 5", portfolio: 0, gains: 0 },
+            { name: "Dec 7", portfolio: 0, gains: 0 },
+            { name: "Dec 9", portfolio: 0, gains: 0 },
+            { name: "Dec 11", portfolio: 0, gains: 0 },
+            { name: "Dec 13", portfolio: 0, gains: 0 },
+          ]}
+          graphKeys={[
+            { key: "portfolio", color: "#22c55e", label: "Portfolio Value" },
+            { key: "gains", color: "#3b82f6", label: "Gains/Losses" },
+          ]}
+        />
       </div>
 
       {/* Stats Cards */}

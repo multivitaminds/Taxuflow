@@ -1,14 +1,65 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { FileText, DollarSign, Calendar, Repeat, CheckCircle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { FileText, DollarSign, Calendar, Repeat, CheckCircle, Plus } from "lucide-react"
+import { createBillPayment } from "@/app/actions/neobank/create-bill-payment"
+import { useToast } from "@/hooks/use-toast"
 
 export default function BillPayClient() {
   const [activeTab, setActiveTab] = useState("upcoming")
+  const [isPayDialogOpen, setIsPayDialogOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const { toast } = useToast()
+
+  const [formData, setFormData] = useState({
+    payee_name: "",
+    account_id: "",
+    amount: "",
+    scheduled_date: new Date().toISOString().split("T")[0],
+    memo: "",
+  })
+
+  const handlePayBill = () => {
+    if (!formData.payee_name || !formData.amount) {
+      toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" })
+      return
+    }
+
+    startTransition(async () => {
+      const result = await createBillPayment({
+        ...formData,
+        amount: Number.parseFloat(formData.amount),
+      })
+
+      if (result.error) {
+        toast({ title: "Error", description: result.error, variant: "destructive" })
+      } else {
+        toast({ title: "Success", description: "Bill payment scheduled successfully" })
+        setIsPayDialogOpen(false)
+        setFormData({
+          payee_name: "",
+          account_id: "",
+          amount: "",
+          scheduled_date: new Date().toISOString().split("T")[0],
+          memo: "",
+        })
+      }
+    })
+  }
 
   const billStats = [
     { label: "Total Due This Month", value: "$2,456.78", change: "8 bills", trend: "neutral", icon: DollarSign },
@@ -96,8 +147,11 @@ export default function BillPayClient() {
           <p className="text-muted-foreground mt-1">Manage bills, set up automatic payments, and track expenses</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">Add Payee</Button>
-          <Button>Pay Bill</Button>
+          <Button variant="outline">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Payee
+          </Button>
+          <Button onClick={() => setIsPayDialogOpen(true)}>Pay Bill</Button>
         </div>
       </div>
 
@@ -255,6 +309,62 @@ export default function BillPayClient() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={isPayDialogOpen} onOpenChange={setIsPayDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Bill Payment</DialogTitle>
+            <DialogDescription>Create a new bill payment</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="payee">Payee Name *</Label>
+              <Input
+                id="payee"
+                value={formData.payee_name}
+                onChange={(e) => setFormData({ ...formData, payee_name: e.target.value })}
+                placeholder="Enter payee name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="amount">Amount *</Label>
+              <Input
+                id="amount"
+                type="number"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <Label htmlFor="date">Payment Date</Label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.scheduled_date}
+                onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="memo">Memo</Label>
+              <Input
+                id="memo"
+                value={formData.memo}
+                onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
+                placeholder="Optional note"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPayDialogOpen(false)} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button onClick={handlePayBill} disabled={isPending}>
+              {isPending ? "Processing..." : "Schedule Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

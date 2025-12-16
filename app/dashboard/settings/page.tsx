@@ -1,10 +1,14 @@
 "use client"
 
-import { useDashboard } from "@/components/dashboard-provider"
-import { SettingsClient } from "@/components/settings-client"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export default function SettingsPage() {
-  const { user, profile } = useDashboard()
+  const router = useRouter()
 
-  return <SettingsClient user={user} profile={profile} />
+  useEffect(() => {
+    router.replace("/dashboard/settings/profile")
+  }, [router])
+
+  return null
 }

@@ -8,7 +8,7 @@ Add these to your Vercel project environment variables:
 
 ### QuickBooks OAuth Credentials
 
-\`\`\`env
+```env
 # QuickBooks Client ID (from Intuit Developer Portal)
 QBO_CLIENT_ID=ABX0LRq0T2Kqc6VdFrWxOC22YKnqxF1YTLjCWxvqZpzGKCQZoV
 
@@ -20,14 +20,14 @@ QBO_REDIRECT_URI=https://taxu.io/integrations/quickbooks/callback
 
 # QuickBooks Environment (sandbox or production)
 QBO_ENVIRONMENT=sandbox
-\`\`\`
+```
 
 ### Application Base URL
 
-\`\`\`env
+```env
 # Base URL for your application (used for OAuth redirects)
 NEXT_PUBLIC_APP_URL=https://taxu.io
-\`\`\`
+```
 
 ## QuickBooks Developer Portal Configuration
 
@@ -57,7 +57,7 @@ NEXT_PUBLIC_APP_URL=https://taxu.io
 
 The `qbo_connections` table stores encrypted QuickBooks tokens:
 
-\`\`\`sql
+```sql
 CREATE TABLE qbo_connections (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE qbo_connections (
   connected_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, realm_id)
 );
-\`\`\`
+```
 
 ## Testing in Sandbox
 

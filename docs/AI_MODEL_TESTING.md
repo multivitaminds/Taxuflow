@@ -31,26 +31,26 @@ Taxu now supports multiple AI models for document extraction, with easy switchin
 
 Add this environment variable to your project:
 
-\`\`\`bash
+```bash
 EXTRACTION_MODEL=gemini-3-pro
-\`\`\`
+```
 
 That's it! Your document extraction will now use Gemini 3 Pro.
 
 ### Switch Back to GPT-4o
 
-\`\`\`bash
+```bash
 EXTRACTION_MODEL=gpt-4o
-\`\`\`
+```
 
 ### A/B Testing Mode
 
 To compare both models side-by-side (useful for evaluating accuracy):
 
-\`\`\`bash
+```bash
 ENABLE_MODEL_COMPARISON=true
 COMPARISON_MODEL=gemini-3-pro
-\`\`\`
+```
 
 This will:
 1. Run extraction with BOTH models simultaneously
@@ -69,32 +69,32 @@ Start by testing Gemini 3 Pro on documents that have caused issues:
 ### Phase 2: Side-by-Side Comparison
 Enable comparison mode and process 20-30 real documents:
 
-\`\`\`bash
+```bash
 ENABLE_MODEL_COMPARISON=true
 COMPARISON_MODEL=gemini-3-pro
-\`\`\`
+```
 
 Check your logs to compare extraction quality.
 
 ### Phase 3: Production Test
 Once you're confident, switch your production environment:
 
-\`\`\`bash
+```bash
 EXTRACTION_MODEL=gemini-3-pro
 ENABLE_MODEL_COMPARISON=false
-\`\`\`
+```
 
 ## Monitoring Extraction Quality
 
 Check your debug logs for model performance:
 
-\`\`\`typescript
+```typescript
 // You'll see logs like this:
 [v0] Using AI model: Gemini 3 Pro Preview (Google)
 [v0] AI extraction successful
 [v0] Document type: w2
 [v0] Extracted city: Springfield // Check accuracy here!
-\`\`\`
+```
 
 ## Cost Considerations
 

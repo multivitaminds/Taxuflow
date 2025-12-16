@@ -132,14 +132,16 @@ export default function InvestmentsClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-balance">Investment Portfolio</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold text-balance">Investment Portfolio</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Track and manage your investments across stocks, ETFs, and crypto
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline">Add Investment</Button>
-          <Button>Make Trade</Button>
+          <Button variant="outline" className="h-8 text-xs bg-transparent">
+            Add Investment
+          </Button>
+          <Button className="h-8 text-xs">Make Trade</Button>
         </div>
       </div>
 
@@ -150,16 +152,16 @@ export default function InvestmentsClient() {
           return (
             <Card key={stat.label} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{stat.label}</CardTitle>
+                <CardTitle className="text-xs font-medium text-muted-foreground">{stat.label}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-xl font-bold">{stat.value}</div>
                 <div className="flex items-center gap-1 mt-1">
                   {stat.trend === "up" && <ArrowUpRight className="h-4 w-4 text-green-500" />}
                   {stat.trend === "down" && <ArrowDownRight className="h-4 w-4 text-red-500" />}
                   <span
-                    className={`text-xs font-medium ${stat.trend === "up" ? "text-green-500" : stat.trend === "down" ? "text-red-500" : "text-muted-foreground"}`}
+                    className={`text-[10px] font-medium ${stat.trend === "up" ? "text-green-500" : stat.trend === "down" ? "text-red-500" : "text-muted-foreground"}`}
                   >
                     {stat.change}
                   </span>
@@ -173,10 +175,18 @@ export default function InvestmentsClient() {
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="holdings">Holdings</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="insights">AI Insights</TabsTrigger>
+          <TabsTrigger value="overview" className="text-xs">
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="holdings" className="text-xs">
+            Holdings
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs">
+            Performance
+          </TabsTrigger>
+          <TabsTrigger value="insights" className="text-xs">
+            AI Insights
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -185,13 +195,13 @@ export default function InvestmentsClient() {
             {/* Asset Allocation */}
             <Card>
               <CardHeader>
-                <CardTitle>Asset Allocation</CardTitle>
-                <CardDescription>Diversification across asset types</CardDescription>
+                <CardTitle className="text-base">Asset Allocation</CardTitle>
+                <CardDescription className="text-xs">Diversification across asset types</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-xs mb-1">
                       <span>Stocks (35.6%)</span>
                       <span className="font-medium">$101,196.70</span>
                     </div>
@@ -200,7 +210,7 @@ export default function InvestmentsClient() {
                     </div>
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-xs mb-1">
                       <span>ETFs (46.6%)</span>
                       <span className="font-medium">$132,645.00</span>
                     </div>
@@ -209,7 +219,7 @@ export default function InvestmentsClient() {
                     </div>
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
+                    <div className="flex justify-between text-xs mb-1">
                       <span>Crypto (17.8%)</span>
                       <span className="font-medium">$50,725.90</span>
                     </div>

@@ -86,7 +86,7 @@ export function DeadlineDetailsClient({ user, profile }: DeadlineDetailsClientPr
     daysUntilDeadline > 60 ? "low" : daysUntilDeadline > 30 ? "medium" : daysUntilDeadline > 7 ? "high" : "critical"
 
   return (
-    <div className="min-h-screen bg-background pt-8">
+    <div className="min-h-screen bg-background pt-3.5">
       <div className="container mx-auto px-4 py-6">
         <Button onClick={() => router.push("/dashboard")} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />

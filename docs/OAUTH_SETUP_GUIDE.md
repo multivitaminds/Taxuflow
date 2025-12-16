@@ -27,12 +27,12 @@ This guide will help you configure Google OAuth authentication for your Taxu app
 3. Navigate to **Authentication** → **URL Configuration**
 4. Set **Site URL** to: `https://taxu.io`
 5. Add the following **Redirect URLs**:
-   \`\`\`
+   ```
    https://taxu.io/auth/callback
    https://admin.taxu.io/auth/callback
    https://developer.taxu.io/auth/callback
    http://localhost:3000/auth/callback
-   \`\`\`
+   ```
 6. Click **Save**
 
 ## Step 3: Set Up Google Cloud Project
@@ -55,16 +55,16 @@ This guide will help you configure Google OAuth authentication for your Taxu app
 3. Select **Application type**: Web application
 4. **Name**: Taxu Production
 5. Add **Authorized JavaScript origins**:
-   \`\`\`
+   ```
    https://taxu.io
    https://admin.taxu.io
    https://developer.taxu.io
    http://localhost:3000
-   \`\`\`
+   ```
 6. Add **Authorized redirect URIs**:
-   \`\`\`
+   ```
    https://[YOUR-SUPABASE-PROJECT-REF].supabase.co/auth/v1/callback
-   \`\`\`
+   ```
    Replace `[YOUR-SUPABASE-PROJECT-REF]` with your actual Supabase project reference (found in your Supabase project URL)
 7. Click **Create**
 8. Copy the **Client ID** and **Client Secret**

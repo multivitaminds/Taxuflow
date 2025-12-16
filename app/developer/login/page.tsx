@@ -9,16 +9,71 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Code2, Github, Mail, Lock } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function DeveloperLoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const supabase = createClient()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Developer login attempt:", { email })
-    // TODO: Implement actual authentication
+    setLoading(true)
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        toast.error("Login failed", {
+          description: error.message,
+        })
+        return
+      }
+
+      if (data.user) {
+        toast.success("Welcome back!", {
+          description: "Redirecting to developer portal...",
+        })
+        router.push("/developer/portal")
+      }
+    } catch (error) {
+      toast.error("Login failed", {
+        description: "An unexpected error occurred",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const handleGithubLogin = async () => {
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "github",
+        options: {
+          redirectTo: `${window.location.origin}/developer/portal`,
+        },
+      })
+
+      if (error) {
+        toast.error("GitHub login failed", {
+          description: error.message,
+        })
+      }
+    } catch (error) {
+      toast.error("GitHub login failed")
+    } finally {
+      setLoading(false)
+    }
+  }
+  // </CHANGE>
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-6">
@@ -46,6 +101,7 @@ export default function DeveloperLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -67,6 +123,7 @@ export default function DeveloperLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -74,8 +131,9 @@ export default function DeveloperLoginPage() {
           <Button
             type="submit"
             className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg"
+            disabled={loading}
           >
-            Sign In to Developer Portal
+            {loading ? "Signing in..." : "Sign In to Developer Portal"}
           </Button>
         </form>
 
@@ -91,7 +149,13 @@ export default function DeveloperLoginPage() {
 
         {/* OAuth Options */}
         <div className="space-y-3">
-          <Button variant="outline" className="w-full bg-transparent" type="button">
+          <Button
+            variant="outline"
+            className="w-full bg-transparent"
+            type="button"
+            onClick={handleGithubLogin}
+            disabled={loading}
+          >
             <Github className="w-4 h-4 mr-2" />
             GitHub
           </Button>

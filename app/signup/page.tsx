@@ -108,21 +108,27 @@ export default function SignupPage() {
     try {
       const supabase = createClient()
 
+      const redirectUrl = `${window.location.origin}/auth/callback`
+      console.log("[v0] OAuth redirect URL:", redirectUrl)
+
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
         },
       })
 
       if (oauthError) {
-        console.error(`[v0] ${provider} OAuth error:`, oauthError.message)
+        console.error(`[v0] ${provider} OAuth error:`, oauthError)
         setError(`Failed to sign up with ${provider}. Please try again.`)
         setLoading(false)
         return
       }
 
-      // OAuth redirect will happen automatically
       console.log(`[v0] Redirecting to ${provider} for authentication`)
     } catch (err: any) {
       console.error(`[v0] ${provider} OAuth error:`, err)

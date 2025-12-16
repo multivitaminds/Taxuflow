@@ -128,7 +128,7 @@
 
 All pages are fully connected and clickable:
 
-\`\`\`
+```
 /neobank (Dashboard)
 ├── /accounts (Wallet & Account Management)
 ├── /cards (Virtual & Physical Cards)
@@ -138,7 +138,7 @@ All pages are fully connected and clickable:
 ├── /crypto (Digital Assets)
 │   └── /settings (Crypto Configuration)
 └── /atms (ATM Locator)
-\`\`\`
+```
 
 ---
 

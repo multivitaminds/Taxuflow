@@ -29,7 +29,7 @@ Since your Supabase integration is already connected in v0, you can run scripts 
 
 ### Option 3: Command Line
 
-\`\`\`bash
+```bash
 # Install Supabase CLI
 npm install -g supabase
 
@@ -40,7 +40,7 @@ supabase link --project-ref your-project-ref
 psql $POSTGRES_URL < scripts/production/001_core_user_org_schema.sql
 psql $POSTGRES_URL < scripts/production/002_accounting_schema.sql
 # ... continue for all scripts
-\`\`\`
+```
 
 ## What Gets Created
 
@@ -86,18 +86,18 @@ psql $POSTGRES_URL < scripts/production/002_accounting_schema.sql
 
 Make sure these are set in your Vercel project:
 
-\`\`\`
+```
 SUPABASE_URL=your-project-url
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 POSTGRES_URL=your-direct-connection-string
-\`\`\`
+```
 
 ## Verification
 
 After running all scripts, verify with:
 
-\`\`\`sql
+```sql
 -- Check table count
 SELECT COUNT(*) FROM information_schema.tables 
 WHERE table_schema = 'public';
@@ -111,7 +111,7 @@ WHERE schemaname = 'public';
 SELECT tablename, indexname 
 FROM pg_indexes 
 WHERE schemaname = 'public';
-\`\`\`
+```
 
 ## Support
 

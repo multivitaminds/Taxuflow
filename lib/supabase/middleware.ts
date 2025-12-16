@@ -47,6 +47,15 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError) {
+      console.error("[v0] Middleware: Session error:", sessionError.message)
+    }
+
     if (!isPublicPath) {
       const {
         data: { user },

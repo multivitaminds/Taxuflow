@@ -22,12 +22,16 @@ export default async function NeobankLayout({ children }: { children: React.Reac
 
   return (
     <DashboardProvider initialUser={user} initialProfile={profile}>
-      <div className="min-h-screen bg-[#f7f9fc]">
+      <div className="min-h-screen bg-white">
+        {/* </CHANGE> */}
         <AppHeader userName={userName} isDemoMode={isDemoMode} />
 
         <div className="flex">
           <NeobankSidebar />
-          <main className="flex-1 ml-64 pr-12 pt-6 transition-all duration-300 ease-in-out">{children}</main>
+          <main className="flex-1 ml-64 pr-12 pt-6 bg-[#f7f9fc] min-h-[calc(100vh-36px)] transition-all duration-300 ease-in-out">
+            {children}
+          </main>
+          {/* </CHANGE> */}
         </div>
       </div>
     </DashboardProvider>

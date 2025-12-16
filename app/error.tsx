@@ -12,7 +12,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error("[v0] Application error:", error)
+    console.log("[v0] Application error:", error?.message || "Unknown error")
   }, [error])
 
   return (
@@ -31,7 +31,7 @@ export default function Error({
           </p>
         </div>
 
-        {error.message && (
+        {error?.message && (
           <div className="rounded-lg bg-muted p-4 text-left">
             <p className="text-sm font-mono text-muted-foreground">{error.message}</p>
           </div>
