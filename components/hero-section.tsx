@@ -17,8 +17,8 @@ export function HeroSection() {
 
   return (
     <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-      <div className="absolute top-20 left-10 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse delay-1000" />
+      <div className="absolute top-20 left-10 w-96 h-96 bg-accent/10 rounded-full blur-[100px] animate-pulse" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-[100px] animate-pulse delay-1000" />
 
       <div className="container mx-auto max-w-6xl relative z-10">
         <div className="text-center space-y-8">
@@ -67,7 +67,7 @@ export function HeroSection() {
           </div>
 
           <div className="pt-16">
-            <div className="relative rounded-2xl border border-border bg-card/50 backdrop-blur-sm p-4 sm:p-8 shadow-2xl glow-neon">
+            <div className="relative rounded-2xl border border-border bg-card/50 p-4 sm:p-8 shadow-2xl glow-neon">
               <div className="aspect-video rounded-lg bg-muted flex items-center justify-center overflow-hidden">
                 <img
                   src="/modern-ai-tax-filing-dashboard-interface-with-chat.jpg"

@@ -1,30 +1,31 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2 } from "lucide-react"
+import Image from "next/image"
 
 export default function PartnersPage() {
   const partners = [
     {
       name: "Gusto",
-      logo: "G",
+      logo: "/images/partners/gusto.png",
       description: "Seamless payroll integration for small businesses",
       features: ["Auto-import W-2s", "Quarterly tax estimates", "Year-end tax forms"],
     },
     {
       name: "Uber",
-      logo: "U",
+      logo: "/images/partners/uber.png",
       description: "Automatic 1099 import for rideshare drivers",
       features: ["Mileage tracking", "Expense categorization", "Quarterly filing reminders"],
     },
     {
       name: "Plaid",
-      logo: "P",
+      logo: "/images/partners/plaid.png",
       description: "Secure bank account verification and income tracking",
       features: ["Income verification", "Refund direct deposit", "Bank-level security"],
     },
     {
       name: "Stripe",
-      logo: "S",
+      logo: "/images/partners/stripe.png",
       description: "Business income tracking for online sellers",
       features: ["Revenue reporting", "Expense tracking", "1099-K integration"],
     },
@@ -46,15 +47,21 @@ export default function PartnersPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {partners.map((partner) => (
               <Card key={partner.name} className="p-8 border-neon/20 bg-card/50 backdrop-blur">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-neon to-blue-500 flex items-center justify-center text-white font-bold text-2xl">
-                    {partner.logo}
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="w-20 h-20 rounded-xl bg-white flex items-center justify-center p-3 overflow-hidden border border-gray-100 flex-shrink-0">
+                    <Image
+                      src={partner.logo || "/placeholder.svg"}
+                      alt={`${partner.name} logo`}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold">{partner.name}</h3>
-                    <p className="text-sm text-muted-foreground">{partner.description}</p>
+                  <div className="pt-2">
+                    <p className="text-base text-muted-foreground">{partner.description}</p>
                   </div>
                 </div>
+                {/* </CHANGE> */}
                 <div className="space-y-3 mb-6">
                   {partner.features.map((feature, idx) => (
                     <div key={idx} className="flex items-center gap-3">
@@ -63,7 +70,8 @@ export default function PartnersPage() {
                     </div>
                   ))}
                 </div>
-                <Button className="w-full bg-neon hover:bg-neon/90 text-background">Connect {partner.name}</Button>
+                <Button className="w-full bg-neon hover:bg-neon/90 text-background">Connect</Button>
+                {/* </CHANGE> */}
               </Card>
             ))}
           </div>

@@ -1,23 +1,11 @@
-import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
+import type { Metadata } from "next"
+import ReactNativeSDKPageClient from "./page.client"
+
+export const metadata: Metadata = {
+  title: "React Native SDK - Taxu Developer Docs",
+  description: "Official React Native library for the Taxu API for iOS and Android apps.",
+}
 
 export default function ReactNativeSDKPage() {
-  return (
-    <main className="min-h-screen bg-background">
-      <Navigation />
-
-      <div className="pt-24 pb-16">
-        <div className="container mx-auto px-6 max-w-5xl">
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold mb-4">React Native SDK</h1>
-            <p className="text-lg text-muted-foreground">
-              Coming soon. React Native SDK documentation will be available here.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-    </main>
-  )
+  return <ReactNativeSDKPageClient />
 }

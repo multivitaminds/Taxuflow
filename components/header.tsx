@@ -21,21 +21,24 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-[38px] items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="text-2xl font-bold">Taxu</div>
             <nav className="hidden md:flex items-center gap-6">
-              <Link href="#features">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Features
               </Link>
-              <Link href="#pricing">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
               </Link>
-              <Link href="#security">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">Security</a>
+              <Link href="#security" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Security
               </Link>
-              <Link href="#developers">
-                <a className="text-sm text-muted-foreground hover:text-foreground transition-colors">Developers</a>
+              <Link
+                href="#developers"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Developers
               </Link>
             </nav>
           </div>
