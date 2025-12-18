@@ -1,11 +1,13 @@
+/* eslint-disable @next/next/no-typed-route-handler */
+
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
-export const runtime = "nodejs";
 
-// Prevent Next.js from generating a GET signature
+// Disable GET so Next.js won't auto-type it.
 export const GET = undefined;
 
 export async function POST(
@@ -29,16 +31,18 @@ export async function POST(
 
     if (error) {
       console.error("Supabase insert error:", error);
-      return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to create request" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(
-      { collectionRequest: data },
-      { status: 201 }
-    );
-
+    return NextResponse.json({ collectionRequest: data }, { status: 201 });
   } catch (err) {
     console.error("Route POST handler error:", err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
