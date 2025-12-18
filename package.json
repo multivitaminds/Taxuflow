@@ -51,7 +51,6 @@
     "@react-email/render": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
-    "@taxu/react-native": "latest",
     "@testing-library/dom": "latest",
     "@tiptap/core": "latest",
     "@tiptap/pm": "latest",
