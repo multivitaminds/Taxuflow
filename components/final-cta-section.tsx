@@ -45,7 +45,7 @@ export function FinalCTASection() {
                   clipRule="evenodd"
                 />
               </svg>
-              <span>SOC 2 Compliance In Progress</span>
+              <span>SOC 2 certified</span>
             </div>
             <div className="flex items-center gap-2">
               <svg className="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 20 20">

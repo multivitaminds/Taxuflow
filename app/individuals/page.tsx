@@ -66,16 +66,16 @@ export default function IndividualsPage() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="gradient-stripe-hero pt-32 pb-20 px-4 sm:px-6 lg:px-8 clip-diagonal">
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1] text-white">
-            Built for <span className="text-[#00d4ff]">Your Life</span>
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 text-balance leading-[1.1]">
+            Built for <span className="text-glow">Your Life</span>
           </h1>
-          <p className="text-xl sm:text-2xl text-white/80 text-balance mb-8">
+          <p className="text-xl sm:text-2xl text-muted-foreground text-balance mb-8">
             Whether you're a W-2 employee, student, gig worker, or side hustler — Taxu handles it all.
           </p>
           <Link href="/get-started">
-            <Button size="lg" className="bg-white text-[#0a2540] hover:bg-white/90 shadow-lg">
+            <Button size="lg" className="glow-neon-strong">
               Start Filing Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
@@ -183,11 +183,11 @@ export default function IndividualsPage() {
               </Link>
             </div>
             <div className="rounded-2xl border border-border bg-card p-8 glow-neon">
-              <div className="rounded-lg bg-white flex items-center justify-center overflow-hidden shadow-inner">
+              <div className="aspect-square rounded-lg bg-muted flex items-center justify-center">
                 <img
-                  src="/images/w2-form-2024.png"
-                  alt="2024 W-2 Wage and Tax Statement Form"
-                  className="w-full h-auto object-contain"
+                  src="/placeholder.svg?height=500&width=500"
+                  alt="Upload interface"
+                  className="rounded-lg w-full h-full object-cover"
                 />
               </div>
             </div>
