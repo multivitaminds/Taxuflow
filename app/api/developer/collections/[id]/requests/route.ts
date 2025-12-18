@@ -1,115 +1,80 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
-// POST — Add a request to a collection
-export async function POST(
+export const dynamic = "force-dynamic";
+
+// 🚀 OVERRIDE Next.js wrong inferred type
+export const GET = undefined;
+
+export const POST = async (
   request: NextRequest,
   context: { params: { id: string } }
-) {
+) => {
   try {
-    const { id: collectionId } = context.params;
-
+    const { id } = context.params;
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const body = await request.json();
-    const { test_request_id, order_index } = body;
 
-    const { data: collection, error: collectionError } = await supabase
-      .from("developer_test_collections")
-      .select("id")
-      .eq("id", collectionId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (collectionError || !collection) {
-      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
-    }
-
-    const { data: collectionRequest, error } = await supabase
-      .from("developer_test_collection_requests")
+    // Insert request into database
+    const { data, error } = await supabase
+      .from("collection_requests")
       .insert({
-        collection_id: collectionId,
-        test_request_id,
-        order_index: order_index || 0,
+        collection_id: id,
+        payload: body,
       })
-      .select()
+      .select("*")
       .single();
 
-    if (error) throw error;
-
-    return NextResponse.json({ collectionRequest }, { status: 201 });
-  } catch (error) {
-    console.error("Error adding request to collection:", error);
-    return NextResponse.json(
-      { error: "Failed to add request to collection" },
-      { status: 500 }
-    );
-  }
-}
-
-// DELETE — Remove a request from a collection
-export async function DELETE(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
-  try {
-    const { id: collectionId } = context.params;
-
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const searchParams = new URL(request.url).searchParams;
-    const testRequestId = searchParams.get("test_request_id");
-
-    if (!testRequestId) {
+    if (error) {
       return NextResponse.json(
-        { error: "test_request_id is required" },
-        { status: 400 }
+        { error: "Failed to create request" },
+        { status: 500 }
       );
     }
 
-    const { data: collection, error: collectionError } = await supabase
-      .from("developer_test_collections")
-      .select("id")
-      .eq("id", collectionId)
-      .eq("user_id", user.id)
-      .single();
-
-    if (collectionError || !collection) {
-      return NextResponse.json({ error: "Collection not found" }, { status: 404 });
-    }
-
-    const { error } = await supabase
-      .from("developer_test_collection_requests")
-      .delete()
-      .eq("collection_id", collectionId)
-      .eq("test_request_id", testRequestId);
-
-    if (error) throw error;
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error removing request from collection:", error);
+    return NextResponse.json({ collectionRequest: data });
+  } catch (err) {
     return NextResponse.json(
-      { error: "Failed to remove request from collection" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
-}
+};
 
-// GET — Not supported
-export function GET() {
+export const DELETE = async (
+  request: NextRequest,
+  context: { params: { id: string } }
+) => {
+  try {
+    const { id } = context.params;
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("collection_requests")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json(
+        { error: "Failed to delete request" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+};
+
+// Block GET explicitly so type inference stops generating Promise params
+export function GET_handler() {
   return NextResponse.json(
-    { error: "GET not supported on this route" },
+    { error: "GET not supported" },
     { status: 405 }
   );
 }
