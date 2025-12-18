@@ -65,6 +65,7 @@ const navigationStructure = [
         { href: "/developer/sdks", label: "Libraries and SDKs", icon: FileText },
         { href: "/developer/examples", label: "Code samples", icon: Terminal },
         { href: "/developer/cli", label: "Taxu CLI", icon: Zap },
+        { href: "/developer/shell", label: "Taxu Shell", icon: Terminal },
       ],
       guides: [
         { href: "/developer/quickstart", label: "Quick start guide" },

@@ -1,5 +1,11 @@
-import { createBrowserClient } from "@supabase/ssr"
+import { createClient } from "./client"
+
+let booksClient: any | null = null
 
 export function getSupabaseBooksClient() {
-  return createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  // Reuse the same singleton instance from client.ts
+  if (!booksClient) {
+    booksClient = createClient()
+  }
+  return booksClient
 }
