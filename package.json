@@ -72,7 +72,7 @@
     "jsonwebtoken": "latest",
     "jspdf": "latest",
     "lucide-react": "^0.454.0",
-    "next": "16.0.10",
+    "next": "16.1.0",
     "next-themes": "latest",
     "node-notifier": "latest",
     "papaparse": "latest",
@@ -112,6 +112,6 @@
     "tailwindcss": "^4.1.9",
     "tsx": "^4.7.0",
     "tw-animate-css": "1.3.3",
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   }
 }
