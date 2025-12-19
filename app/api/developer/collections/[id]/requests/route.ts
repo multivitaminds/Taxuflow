@@ -1,51 +1,94 @@
-import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server"
+import { type NextRequest, NextResponse } from "next/server"
 
-/**
- * Next.js 15 Breaking Change: 
- * 'params' is now a Promise and must be defined as such in the type.
- */
-type RouteContext = {
-  params: Promise<{
-    id: string;
-  }>;
-};
-
-export async function POST(request: NextRequest, context: RouteContext) {
+// POST - Add a request to a collection
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    // 1. Await the params to get the 'id' from the URL [id]
-    const { id } = await context.params;
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    // 2. Parse the incoming request body
-    const body = await request.json();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-    // --- YOUR LOGIC START ---
-    // Example: Save 'body' to your database using the 'id'
-    console.log(`Processing POST for collection: ${id}`, body);
-    
-    // Replace the line below with your actual data logic:
-    // const result = await yourDatabaseClient.collectionRequest.create({ data: { ...body, id } });
-    // --- YOUR LOGIC END ---
+    const collectionId = params.id
+    const body = await request.json()
+    const { test_request_id, order_index } = body
 
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: "Request handled successfully",
-        collectionId: id 
-      }, 
-      { status: 200 }
-    );
+    const { data: collection } = await supabase
+      .from("developer_test_collections")
+      .select("id")
+      .eq("id", collectionId)
+      .eq("user_id", user.id)
+      .single()
 
+    if (!collection) {
+      return NextResponse.json({ error: "Collection not found" }, { status: 404 })
+    }
+
+    const { data: collectionRequest, error } = await supabase
+      .from("developer_test_collection_requests")
+      .insert({
+        collection_id: collectionId,
+        test_request_id,
+        order_index: order_index || 0,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    return NextResponse.json({ collectionRequest }, { status: 201 })
   } catch (error) {
-    console.error("Route Error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" }, 
-      { status: 500 }
-    );
+    console.error("[v0] Error adding request to collection:", error)
+    return NextResponse.json({ error: "Failed to add request to collection" }, { status: 500 })
   }
 }
 
-/**
- * NOTE: If you have a GET, PATCH, or DELETE method in this file, 
- * you must apply the same 'Promise' type and 'await context.params' 
- * to those functions as well.
- */
+// DELETE - Remove a request from a collection
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const collectionId = params.id
+    const { searchParams } = new URL(request.url)
+    const testRequestId = searchParams.get("test_request_id")
+
+    if (!testRequestId) {
+      return NextResponse.json({ error: "Test request ID is required" }, { status: 400 })
+    }
+
+    const { data: collection } = await supabase
+      .from("developer_test_collections")
+      .select("id")
+      .eq("id", collectionId)
+      .eq("user_id", user.id)
+      .single()
+
+    if (!collection) {
+      return NextResponse.json({ error: "Collection not found" }, { status: 404 })
+    }
+
+    const { error } = await supabase
+      .from("developer_test_collection_requests")
+      .delete()
+      .eq("collection_id", collectionId)
+      .eq("test_request_id", testRequestId)
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("[v0] Error removing request from collection:", error)
+    return NextResponse.json({ error: "Failed to remove request from collection" }, { status: 500 })
+  }
+}
