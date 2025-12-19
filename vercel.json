@@ -1,4 +1,10 @@
 {
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "outputDirectory": ".next",
+  "env": {
+    "NEXT_PUBLIC_SITE_URL": "https://taxu.io"
+  },
   "crons": [
     {
       "path": "/api/cron/check-filing-status",
