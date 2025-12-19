@@ -1,10 +1,22 @@
 {
-  "buildCommand": "pnpm run build",
+  "buildCommand": "bash vercel-build.sh",
   "installCommand": "pnpm install",
   "outputDirectory": ".next",
+  "skipValidateOnPreview": true,
   "env": {
     "NEXT_PUBLIC_SITE_URL": "https://taxu.io"
   },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Vercel-Protected-By-Basic-Auth",
+          "value": "false"
+        }
+      ]
+    }
+  ],
   "crons": [
     {
       "path": "/api/cron/check-filing-status",
