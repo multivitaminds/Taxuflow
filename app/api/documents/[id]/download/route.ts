@@ -1,8 +1,18 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+// 1. Define the context with params as a Promise for Next.js 16
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function GET(request: NextRequest, context: RouteContext) {
   try {
+    // 2. Await the params promise to get the document id
+    const { id } = await context.params;
+
     const supabase = await createClient()
 
     const {
@@ -13,11 +23,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get document from database
+    // 3. Get document from database using the awaited 'id'
     const { data: document, error: docError } = await supabase
       .from("documents")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id) // Updated from params.id to id
       .eq("user_id", user.id)
       .single()
 
