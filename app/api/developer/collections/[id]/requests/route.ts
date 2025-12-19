@@ -2,10 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 // POST - Add a request to a collection
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } | Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
@@ -51,10 +48,7 @@ export async function POST(
 }
 
 // DELETE - Remove a request from a collection
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } | Promise<{ id: string }> },
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
