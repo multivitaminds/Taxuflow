@@ -19,6 +19,7 @@ const customJestConfig = {
     "!**/node_modules/**",
     "!**/.next/**",
   ],
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/__tests__/e2e/", "<rootDir>/__tests__/performance/"],
   testMatch: ["**/__tests__/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[jt]s?(x)"],
 }
 

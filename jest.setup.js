@@ -1,10 +1,8 @@
-"use client"
-
 // Learn more: https://github.com/testing-library/jest-dom
 import "@testing-library/jest-dom"
-import jest from "jest"
 
 // Mock Next.js router
+// `jest` is available as a global in the Jest environment
 jest.mock("next/navigation", () => ({
   useRouter() {
     return {

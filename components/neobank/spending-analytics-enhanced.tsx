@@ -269,7 +269,7 @@ export function SpendingAnalyticsEnhanced() {
                       />
                       <Tooltip
                         contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                        formatter={(val: number) => [`$${val.toLocaleString()}`, "Amount"]}
+                        formatter={(val?: number) => [`$${(val ?? 0).toLocaleString()}`, "Amount"]}
                       />
                       <Area
                         type="monotone"
@@ -572,7 +572,7 @@ export function SpendingAnalyticsEnhanced() {
                     <YAxis axisLine={false} tickLine={false} tickFormatter={(val) => `$${val / 1000}k`} />
                     <Tooltip
                       contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
-                      formatter={(val: number) => [`$${val.toLocaleString()}`, ""]}
+                      formatter={(val?: number) => [`$${(val ?? 0).toLocaleString()}`, ""]}
                     />
                     <Legend />
                     <Bar dataKey="current" fill="#635bff" name="This Year" radius={[8, 8, 0, 0]} />

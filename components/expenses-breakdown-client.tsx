@@ -90,20 +90,23 @@ export function ExpensesBreakdownClient({ expenses }: { expenses: any[] }) {
               Expenses by Category
             </h2>
             <div className="space-y-4">
-              {topCategories.map(([category, amount]) => (
-                <div key={category} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{category}</span>
-                    <span className="text-lg font-bold text-red-600">${amount.toLocaleString()}</span>
+              {topCategories.map(([category, amount]) => {
+                const amt = Number(amount || 0)
+                return (
+                  <div key={category} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{category}</span>
+                      <span className="text-lg font-bold text-red-600">${amt.toLocaleString()}</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div
+                        className="bg-red-500 h-2 rounded-full"
+                        style={{ width: `${(amt / (totalExpenses || 1)) * 100}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-red-500 h-2 rounded-full"
-                      style={{ width: `${(amount / totalExpenses) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </Card>
 
@@ -113,12 +116,15 @@ export function ExpensesBreakdownClient({ expenses }: { expenses: any[] }) {
               Monthly Expenses
             </h2>
             <div className="space-y-4">
-              {Object.entries(monthlyExpenses).map(([month, amount]) => (
-                <div key={month} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="font-medium">{month}</span>
-                  <span className="text-lg font-bold text-red-600">${amount.toLocaleString()}</span>
-                </div>
-              ))}
+              {Object.entries(monthlyExpenses).map(([month, amount]) => {
+                const amt = Number(amount || 0)
+                return (
+                  <div key={month} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <span className="font-medium">{month}</span>
+                    <span className="text-lg font-bold text-red-600">${amt.toLocaleString()}</span>
+                  </div>
+                )
+              })}
             </div>
           </Card>
         </div>

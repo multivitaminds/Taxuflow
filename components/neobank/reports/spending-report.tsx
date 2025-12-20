@@ -149,7 +149,7 @@ export function SpendingReport() {
                     <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <RePieChart>
-                          <Pie
+                            <Pie
                             data={categoryData}
                             cx="50%"
                             cy="50%"
@@ -157,7 +157,7 @@ export function SpendingReport() {
                             outerRadius={120}
                             paddingAngle={2}
                             dataKey="value"
-                            label={({ name, percentage }) => `${name} (${percentage}%)`}
+                            label={({ name, percent }) => `${name} (${Math.round((percent ?? 0) * 100)}%)`}
                           >
                             {categoryData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
@@ -179,7 +179,7 @@ export function SpendingReport() {
                           <YAxis stroke="#64748b" fontSize={12} tickFormatter={(val) => `$${val / 1000}k`} />
                           <Tooltip
                             contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}
-                            formatter={(val: number) => [`$${val.toLocaleString()}`, "Spending"]}
+                            formatter={(val?: number) => [`$${(val ?? 0).toLocaleString()}`, "Spending"]}
                           />
                           <Bar dataKey="amount" fill="#ef4444" radius={[8, 8, 0, 0]} />
                         </BarChart>
@@ -292,7 +292,7 @@ export function SpendingReport() {
                       <YAxis stroke="#64748b" tickFormatter={(val) => `$${val / 1000}k`} />
                       <Tooltip
                         contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0" }}
-                        formatter={(val: number) => [`$${val.toLocaleString()}`, "Spending"]}
+                        formatter={(val?: number) => [`$${(val ?? 0).toLocaleString()}`, "Spending"]}
                       />
                       <Area
                         type="monotone"

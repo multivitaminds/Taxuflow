@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
+import { createServerClient as _createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
 function isV0Preview() {
@@ -8,7 +8,7 @@ function isV0Preview() {
   )
 }
 
-export async function createClient() {
+export async function createClient(): Promise<any> {
   const cookieStore = await cookies()
 
   // Direct access to env vars - v0 runtime handles this specially
@@ -25,10 +25,10 @@ export async function createClient() {
       getAll() {
         return cookieStore.getAll()
       },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        } catch {
+      setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          } catch {
           // The "setAll" method was called from a Server Component.
           // This can be ignored if you have middleware refreshing user sessions.
         }
@@ -37,13 +37,21 @@ export async function createClient() {
   })
 }
 
-export { createServerClient }
+// Backwards-compatible wrapper: allow calling `createServerClient()` with
+// no args (uses env and cookies) or with explicit args.
+export async function createServerClient(supabaseUrl?: string, supabaseKey?: string, options?: any): Promise<any> {
+  if (!supabaseUrl || !supabaseKey) {
+    return await createClient()
+  }
 
-export async function getSupabaseServerClient() {
+  return _createServerClient(supabaseUrl, supabaseKey, options)
+}
+
+export async function getSupabaseServerClient(): Promise<any> {
   return createClient()
 }
 
-export async function createServiceRoleClient() {
+export async function createServiceRoleClient(): Promise<any> {
   const cookieStore = await cookies()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
@@ -62,18 +70,18 @@ export async function createServiceRoleClient() {
       getAll() {
         return cookieStore.getAll()
       },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-        } catch {
-          // Ignore
-        }
-      },
+      setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          } catch {
+            // Ignore
+          }
+        },
     },
   })
 }
 
-export async function createClientSafe() {
+export async function createClientSafe(): Promise<any> {
   try {
     return await createClient()
   } catch (error) {
