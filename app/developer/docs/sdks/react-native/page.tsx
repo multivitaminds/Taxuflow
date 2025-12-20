@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import ReactNativeSDKPageClient from "./page.client"
+import ReactNativeSDKPageClient from "./page.client.tsx"
 
 export const metadata: Metadata = {
   title: "React Native SDK - Taxu Developer Docs",
