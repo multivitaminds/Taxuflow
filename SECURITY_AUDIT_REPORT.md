@@ -19,7 +19,7 @@ Taxu platform has **enterprise-grade security** with comprehensive Row Level Sec
 - **Admin System:** Separate admin authentication with bcrypt password hashing
 
 ### Implementation:
-```typescript
+\`\`\`typescript
 // middleware.ts validates every request
 export async function middleware(request: NextRequest) {
   return await updateSession(request)
@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
 // Protected routes check authentication
 const { data: { user } } = await supabase.auth.getUser()
 if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-```
+\`\`\`
 
 ### Recommendations:
 - ✅ Already implemented: Rate limiting on login endpoints (5 attempts, 15min lockout)
@@ -46,7 +46,7 @@ if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 - **Cross-table policies:** Proper JOIN-based policies for related data
 
 ### Example Policies:
-```sql
+\`\`\`sql
 -- User-owned data
 CREATE POLICY "Users can manage their own filings"
   ON public.w2_filings FOR ALL
@@ -61,7 +61,7 @@ CREATE POLICY "Users can view own neobank transactions"
       WHERE id = neobank_transactions.account_id AND user_id = auth.uid()
     )
   );
-```
+\`\`\`
 
 ### Security Score: 100/100
 Every sensitive table is protected. No data leakage possible through database queries.
@@ -77,7 +77,7 @@ Every sensitive table is protected. No data leakage possible through database qu
 - **Permission system:** Role-based access control (RBAC) for admin routes
 
 ### Example:
-```typescript
+\`\`\`typescript
 // lib/api/route-wrapper.ts
 export function createRoute(handler, config) {
   return async (req) => {
@@ -91,7 +91,7 @@ export function createRoute(handler, config) {
     return await handler({ req, userId: user.id, user })
   }
 }
-```
+\`\`\`
 
 ### Recommendations:
 - ✅ Already implemented: Rate limiting with Map-based store
@@ -108,7 +108,7 @@ export function createRoute(handler, config) {
 - **SQL injection prevention:** Parameterized queries (Supabase client handles this)
 
 ### Example:
-```typescript
+\`\`\`typescript
 const invoiceSchema = z.object({
   invoice_number: z.string().min(1),
   customer_id: z.string().uuid(),
@@ -117,7 +117,7 @@ const invoiceSchema = z.object({
 })
 
 const validated = invoiceSchema.parse(data)
-```
+\`\`\`
 
 ### Security Score: 100/100
 
@@ -126,7 +126,7 @@ const validated = invoiceSchema.parse(data)
 ## 5. Webhook Security ✅ EXCELLENT
 
 ### TaxBandits Webhooks:
-```typescript
+\`\`\`typescript
 function verifyTaxBanditsSignature(payload: string, signature: string, secret: string) {
   const hmac = crypto.createHmac("sha256", secret)
   hmac.update(payload)
@@ -137,10 +137,10 @@ function verifyTaxBanditsSignature(payload: string, signature: string, secret: s
     Buffer.from(expectedSignature)
   )
 }
-```
+\`\`\`
 
 ### Xero Webhooks:
-```typescript
+\`\`\`typescript
 // app/api/books/xero/webhook/route.ts
 const signature = request.headers.get("x-xero-signature")
 const webhookKey = process.env.XERO_WEBHOOK_KEY
@@ -148,7 +148,7 @@ const webhookKey = process.env.XERO_WEBHOOK_KEY
 if (!verifyWebhookSignature(rawBody, signature, webhookKey)) {
   return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
 }
-```
+\`\`\`
 
 ### Security Features:
 - ✅ HMAC SHA-256 signature verification
@@ -161,7 +161,7 @@ if (!verifyWebhookSignature(rawBody, signature, webhookKey)) {
 ## 6. Data Encryption ✅ EXCELLENT
 
 ### Implementation:
-```typescript
+\`\`\`typescript
 // lib/encryption.ts
 export async function encryptTIN(tin: string): Promise<string> {
   const { data } = await supabase.rpc('encrypt_tin', {
@@ -174,7 +174,7 @@ export async function encryptTIN(tin: string): Promise<string> {
 export function maskSSN(ssn: string): string {
   return `***-**-${ssn.slice(-4)}`
 }
-```
+\`\`\`
 
 ### Encryption Coverage:
 - ✅ SSN/EIN encryption using database-level AES-256
@@ -187,7 +187,7 @@ export function maskSSN(ssn: string): string {
 ## 7. File Upload Security ✅ VERY GOOD
 
 ### Implementation:
-```typescript
+\`\`\`typescript
 // Filename sanitization
 const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
 
@@ -201,7 +201,7 @@ const blob = await put(`tax-documents/${userId}/${filename}`, file, {
 if (userId !== user.id) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 }
-```
+\`\`\`
 
 ### Security Features:
 - ✅ Filename sanitization (removes malicious characters)
@@ -223,10 +223,10 @@ if (userId !== user.id) {
 - **Storage:** In-memory Map (works for single-server)
 
 ### Current Limits:
-```typescript
+\`\`\`typescript
 const MAX_ATTEMPTS = 5
 const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes
-```
+\`\`\`
 
 ### Recommendations:
 - ✅ Works great for current scale
@@ -237,7 +237,7 @@ const LOCKOUT_DURATION = 15 * 60 * 1000 // 15 minutes
 ## 9. Error Handling & Logging ✅ EXCELLENT
 
 ### Implementation:
-```typescript
+\`\`\`typescript
 // lib/supabase/error-handler.ts
 export function handleSupabaseError(error, context) {
   // User-friendly messages (no technical details leaked)
@@ -253,7 +253,7 @@ export function handleSupabaseError(error, context) {
   
   return NextResponse.json({ error: userMessage }, { status })
 }
-```
+\`\`\`
 
 ### Security Features:
 - ✅ No stack traces or sensitive data in production responses
@@ -266,7 +266,7 @@ export function handleSupabaseError(error, context) {
 ## 10. Environment Variables ✅ EXCELLENT
 
 ### Validation:
-```typescript
+\`\`\`typescript
 // lib/env-validation.ts
 const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
@@ -274,7 +274,7 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().startsWith("sk_"),
   // ... 30+ validated env vars
 })
-```
+\`\`\`
 
 ### Security:
 - ✅ Zod validation on startup (fails fast if misconfigured)
@@ -293,7 +293,7 @@ const envSchema = z.object({
 - **Database function:** `verify_admin_password()` with SECURITY DEFINER
 
 ### Implementation:
-```sql
+\`\`\`sql
 CREATE FUNCTION verify_admin_password(admin_email TEXT, admin_password TEXT)
 RETURNS TABLE (...) AS $$
 BEGIN
@@ -304,7 +304,7 @@ BEGIN
     AND is_active = true;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-```
+\`\`\`
 
 ---
 
@@ -316,14 +316,14 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ### Recommendations:
 Add security headers in `next.config.js`:
-```javascript
+\`\`\`javascript
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
 ]
-```
+\`\`\`
 
 ---
 

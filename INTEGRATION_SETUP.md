@@ -8,11 +8,11 @@ This document provides instructions for setting up QuickBooks and Xero integrati
 
 Add the following environment variables to your Vercel project or `.env.local` file:
 
-```bash
+\`\`\`bash
 QBO_CLIENT_ID=your_quickbooks_client_id
 QBO_CLIENT_SECRET=your_quickbooks_client_secret
 QBO_REDIRECT_URI=https://yourdomain.com/api/books/qbo/callback
-```
+\`\`\`
 
 ### Setup Steps
 
@@ -49,11 +49,11 @@ QBO_REDIRECT_URI=https://yourdomain.com/api/books/qbo/callback
 
 Add the following environment variables to your Vercel project or `.env.local` file:
 
-```bash
+\`\`\`bash
 XERO_CLIENT_ID=your_xero_client_id
 XERO_CLIENT_SECRET=your_xero_client_secret
 XERO_REDIRECT_URI=https://yourdomain.com/api/books/xero/callback
-```
+\`\`\`
 
 ### Setup Steps
 
@@ -97,9 +97,9 @@ The integration requires database tables to store OAuth credentials:
 
 ### Xero Table (New)
 Run the SQL script to create the Xero connections table:
-```bash
+\`\`\`bash
 # The script is located at: scripts/create-xero-connections-table.sql
-```
+\`\`\`
 
 ---
 

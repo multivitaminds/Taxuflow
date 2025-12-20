@@ -24,18 +24,18 @@ Taxu supports both **personal data** (public schema) and **organization data** (
 
 Users are assigned to organizations through the `books.org_members` table:
 
-```sql
+\`\`\`sql
 -- books.org_members structure
 user_id   | org_id    | role      | created_at
 ----------|-----------|-----------|------------
 uuid      | uuid      | text      | timestamp
-```
+\`\`\`
 
 ## Usage
 
 ### Getting Organization Context
 
-```typescript
+\`\`\`typescript
 import { getOrganizationContext } from "@/lib/organization"
 
 const orgContext = await getOrganizationContext()
@@ -46,11 +46,11 @@ if (orgContext) {
   console.log("All Orgs:", orgContext.organizationIds)
   console.log("Has Org Access:", orgContext.hasOrganizationAccess)
 }
-```
+\`\`\`
 
 ### Fetching Books Schema Data
 
-```typescript
+\`\`\`typescript
 import { fetchBooksData } from "@/lib/organization"
 
 // Fetch invoices from books schema
@@ -63,11 +63,11 @@ const { data: invoices, error } = await fetchBooksData(
     limit: 50
   }
 )
-```
+\`\`\`
 
 ### Combining Personal & Organization Data
 
-```typescript
+\`\`\`typescript
 import { fetchCombinedData } from "@/lib/organization"
 
 // Fetch both personal customers and org contacts
@@ -82,7 +82,7 @@ const { personalData, orgData, combined, error } = await fetchCombinedData({
 console.log("Personal customers:", personalData?.length)
 console.log("Org contacts:", orgData?.length)
 console.log("Combined total:", combined.length)
-```
+\`\`\`
 
 ## Current Implementation Status
 
@@ -104,13 +104,13 @@ console.log("Combined total:", combined.length)
 ### For Existing API Routes
 
 **Before (Books schema only):**
-```typescript
+\`\`\`typescript
 const supabase = await createBooksServerClient()
 const { data } = await supabase.from("contacts").select("*")
-```
+\`\`\`
 
 **After (Combined approach):**
-```typescript
+\`\`\`typescript
 const orgContext = await getOrganizationContext()
 
 if (!orgContext) {
@@ -131,13 +131,13 @@ return NextResponse.json({
     organizationCount: orgContext.organizationIds.length
   }
 })
-```
+\`\`\`
 
 ## Database Schema
 
 ### Key Tables
 
-```sql
+\`\`\`sql
 -- Organization membership
 books.org_members (
   user_id uuid REFERENCES auth.users,
@@ -165,13 +165,13 @@ books.invoices (
   total numeric,
   status text
 )
-```
+\`\`\`
 
 ### RLS Policies
 
 All books schema tables have RLS policies that check membership:
 
-```sql
+\`\`\`sql
 CREATE POLICY "Users can view org invoices"
 ON books.invoices
 FOR SELECT
@@ -179,7 +179,7 @@ TO authenticated
 USING (org_id IN (
   SELECT org_id FROM books.org_members WHERE user_id = auth.uid()
 ));
-```
+\`\`\`
 
 ## Next Steps
 

@@ -81,11 +81,11 @@
 ### Critical (Do Before Launch) 🔴
 
 1. **Add Xero Environment Variables** ⚠️ **REQUIRED**
-   ```bash
+   \`\`\`bash
    XERO_CLIENT_ID=B7504703EDF84E2590543F3180480B90
    XERO_CLIENT_SECRET=ljxvn6Wu3zaz9-cBk-2gFMwx-9zCaq3i8A3l
    XERO_REDIRECT_URI=https://taxu.io/api/books/xero/callback
-   ```
+   \`\`\`
 
 2. **Test Critical Flows** ✅ **DONE**
    - [x] User authentication (fixed developer login)

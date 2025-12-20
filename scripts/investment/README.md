@@ -39,11 +39,11 @@ World-class enterprise investment platform with comprehensive analytics, AI reco
 
 Run scripts in numerical order:
 
-```bash
+\`\`\`bash
 1. 001_investment_analytics_enhancement.sql
 2. 002_investment_ai_recommendations.sql
 3. 003_investment_interactive_features.sql
-```
+\`\`\`
 
 ## Features Included
 

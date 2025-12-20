@@ -52,16 +52,16 @@ A comprehensive business operating system combining AI-powered tax filing with f
 
 1. Clone the repository
 2. Install dependencies:
-   ```bash
+   \`\`\`bash
    npm install
-   ```
+   \`\`\`
 
 3. Environment variables are already configured in v0
 
 4. Run the development server:
-   ```bash
+   \`\`\`bash
    npm run dev
-   ```
+   \`\`\`
 
 5. Open [http://localhost:3000](http://localhost:3000)
 
@@ -92,7 +92,7 @@ Run the production setup script to enable security and optimize performance:
 
 ## Project Structure
 
-```
+\`\`\`
 taxu/
 ├── app/                    # Next.js app directory
 │   ├── dashboard/         # User dashboard
@@ -107,13 +107,13 @@ taxu/
 │   └── utils.ts          # Helper functions
 ├── scripts/              # Database migration scripts
 └── public/               # Static assets
-```
+\`\`\`
 
 ## Environment Variables
 
 Required environment variables (already configured in v0):
 
-```bash
+\`\`\`bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
@@ -126,7 +126,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 
 # App
 NEXT_PUBLIC_APP_URL=
-```
+\`\`\`
 
 ## Database Schema
 
