@@ -1,0 +1,3 @@
+module.exports=[193695,(a,b,c)=>{b.exports=a.x("next/dist/shared/lib/no-fallback-error.external.js",()=>require("next/dist/shared/lib/no-fallback-error.external.js"))},994367,a=>{a.n(a.i(216893))},70864,a=>{a.n(a.i(233290))},565897,a=>{a.n(a.i(396647))},655617,a=>{a.n(a.i(149727))},852490,a=>{a.n(a.i(20038))},233171,a=>{a.n(a.i(14676))},818265,a=>{a.n(a.i(969388))},546085,a=>{"use strict";var b=a.i(527155);a.s(["default",0,function(){return(0,b.jsx)("h1",{children:"Bank Account Detail"})}])}];
+
+//# sourceMappingURL=%5Broot-of-the-server%5D__a11a3186._.js.map

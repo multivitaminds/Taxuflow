@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
 // POST - Add a request to a collection
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createClient()
     const {
@@ -13,7 +13,8 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const collectionId = params.id
+    const { id } = await params
+    const collectionId = id
     const body = await request.json()
     const { test_request_id, order_index } = body
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 }
 
 // DELETE - Remove a request from a collection
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const supabase = await createClient()
     const {
@@ -59,7 +60,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const collectionId = params.id
+    const { id } = await params
+    const collectionId = id
     const { searchParams } = new URL(request.url)
     const testRequestId = searchParams.get("test_request_id")
 

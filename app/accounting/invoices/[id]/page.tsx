@@ -1,5 +1,6 @@
 import { InvoiceDetailClient } from "@/components/invoice-detail-enhanced-client"
 
-export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
-  return <InvoiceDetailClient invoiceId={params.id} />
+export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  return <InvoiceDetailClient invoiceId={resolvedParams.id} />
 }

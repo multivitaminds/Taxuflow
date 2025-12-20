@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../app/accounting/banking/accounts/page.tsx"],"sourcesContent":["export default function BankAccountsPage() {\n  return <h1>Bank Accounts</h1>\n}\n"],"names":[],"mappings":"2aAAe,SAAS,EACtB,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,KAAA,UAAG,iBACb"}

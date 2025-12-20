@@ -1,0 +1,50 @@
+{
+  "node": {
+    "00b4e5982374ff027d3c9db80af0059fe8abad476a": {
+      "workers": {
+        "app/dashboard/documents/[id]/edit/page": {
+          "moduleId": 768866,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/documents/[id]/edit/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "app/actions/get-user.ts"
+    },
+    "40d983bdc873a2f33f08198e581ae6b3a6175ca29e": {
+      "workers": {
+        "app/dashboard/documents/[id]/edit/page": {
+          "moduleId": 768866,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/documents/[id]/edit/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "app/actions/get-user-profile.ts"
+    },
+    "60e7a7b44dd335ad56ab8b080879a8b1ead71b0e45": {
+      "workers": {
+        "app/dashboard/documents/[id]/edit/page": {
+          "moduleId": 768866,
+          "async": false,
+          "exportedName": "updateDocumentData",
+          "filename": "app/actions/update-document-data.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/documents/[id]/edit/page": "action-browser"
+      },
+      "exportedName": "updateDocumentData",
+      "filename": "app/actions/update-document-data.ts"
+    }
+  },
+  "edge": {}
+}

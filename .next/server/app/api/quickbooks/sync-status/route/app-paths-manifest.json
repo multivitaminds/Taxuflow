@@ -1,0 +1,3 @@
+{
+  "/api/quickbooks/sync-status/route": "app/api/quickbooks/sync-status/route.js"
+}

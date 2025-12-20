@@ -1,5 +1,6 @@
 import BudgetDetailClient from "./BudgetDetailClient"
 
-export default function BudgetDetailPage({ params }: { params: { id: string } }) {
-  return <BudgetDetailClient budgetId={params.id} />
+export default async function BudgetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  return <BudgetDetailClient budgetId={resolvedParams.id} />
 }

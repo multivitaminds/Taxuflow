@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase/server"
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerClient()
 
   const {
@@ -12,6 +12,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
+  const { id } = await params
   const body = await req.json()
   const { url, description, status, events } = body
 
@@ -23,7 +24,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   const { data: endpoint, error } = await supabase
     .from("webhook_endpoints")
     .update(updates)
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("user_id", user.id)
     .select()
     .single()
@@ -35,11 +36,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   // Update subscriptions if events provided
   if (events && Array.isArray(events)) {
     // Delete existing subscriptions
-    await supabase.from("webhook_subscriptions").delete().eq("webhook_endpoint_id", params.id)
+    await supabase.from("webhook_subscriptions").delete().eq("webhook_endpoint_id", id)
 
     // Create new subscriptions
     const subscriptions = events.map((event_type: string) => ({
-      webhook_endpoint_id: params.id,
+      webhook_endpoint_id: id,
       event_type,
       enabled: true,
     }))
@@ -50,7 +51,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return NextResponse.json({ endpoint })
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerClient()
 
   const {
@@ -61,7 +62,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { error } = await supabase.from("webhook_endpoints").delete().eq("id", params.id).eq("user_id", user.id)
+  const { id } = await params
+  const { error } = await supabase.from("webhook_endpoints").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
