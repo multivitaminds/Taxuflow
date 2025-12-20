@@ -137,7 +137,7 @@ export function CashflowReport() {
                         <YAxis stroke="#64748b" fontSize={12} tickFormatter={(val) => `$${val / 1000}k`} />
                         <Tooltip
                           contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "white" }}
-                          formatter={(val?: number) => [`$${(val ?? 0).toLocaleString()}`, ""]}
+                          formatter={(val: number) => [`$${val.toLocaleString()}`, ""]}
                         />
                         <Legend />
                         <Bar dataKey="inflow" fill="#10b981" radius={[8, 8, 0, 0]} name="Inflow" />

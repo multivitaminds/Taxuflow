@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable v0.app fork validation
-  skipValidateOnPreview: false,
   typescript: {
     ignoreBuildErrors: false,
   },
