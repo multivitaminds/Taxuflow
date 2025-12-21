@@ -151,7 +151,7 @@ export function NeobankSidebar() {
   }
 
   return (
-    <div className="fixed left-0 top-11 h-[calc(100vh-44px)] bg-white border-r border-slate-200/60 transition-all duration-300 z-40 w-64 shadow-[0_0_40px_rgba(0,0,0,0.04)]">
+    <div className="fixed left-0 top-[62px] h-[calc(100vh-62px)] bg-white border-r border-slate-200/60 transition-all duration-300 z-40 w-64 shadow-[0_0_40px_rgba(0,0,0,0.04)]">
       <nav className="p-3 space-y-0.5 overflow-y-auto h-[calc(100vh-120px)] custom-scrollbar">
         {navigationGroups.map((item) => {
           if (item.type === "single") {

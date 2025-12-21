@@ -13,8 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const collectionId = id
+    const { id: collectionId } = await params
     const body = await request.json()
     const { test_request_id, order_index } = body
 
@@ -60,8 +59,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-    const collectionId = id
+    const { id: collectionId } = await params
     const { searchParams } = new URL(request.url)
     const testRequestId = searchParams.get("test_request_id")
 

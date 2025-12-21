@@ -7,6 +7,9 @@ import { TaxuChatWidget } from "@/components/taxu-chat-widget"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { MobileNavigation } from "@/components/mobile-navigation"
+import { DemoEnvironmentBanner } from "@/components/demo-environment-banner"
+import { DemoModeProvider } from "@/lib/demo/context"
+import { DemoDataInitializer } from "@/components/demo-data-initializer"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -58,11 +61,15 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ErrorBoundary>
-          <ConditionalNavigation />
-          {children}
-          <TaxuChatWidget />
-          <MobileNavigation />
-          <PWAInstallPrompt />
+          <DemoModeProvider>
+            <DemoEnvironmentBanner />
+            <ConditionalNavigation />
+            <DemoDataInitializer />
+            {children}
+            <TaxuChatWidget />
+            <MobileNavigation />
+            <PWAInstallPrompt />
+          </DemoModeProvider>
         </ErrorBoundary>
         <Analytics />
       </body>

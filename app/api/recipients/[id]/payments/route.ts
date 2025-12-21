@@ -13,6 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params
+
     const { data: payments, error } = await supabase
       .from("recipient_payments")
       .select("*")

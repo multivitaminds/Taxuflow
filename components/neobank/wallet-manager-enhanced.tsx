@@ -7,6 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import {
   Building2,
   ArrowDownRight,
   CheckCircle2,
@@ -21,6 +31,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { getNeobankAccounts } from "@/app/actions/neobank/get-accounts"
 import { getNeobankTransactions } from "@/app/actions/neobank/get-transactions"
+import { createNeobankAccount } from "@/app/actions/neobank/create-account"
 
 const aiInsights = [
   {
@@ -47,6 +58,10 @@ export function WalletManagerEnhanced() {
   const [showBalance, setShowBalance] = useState(true)
   const [showAccountNumbers, setShowAccountNumbers] = useState(false)
   const [selectedTab, setSelectedTab] = useState("overview")
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [selectedAccountType, setSelectedAccountType] = useState<"checking" | "savings">("checking")
+  const [accountNickname, setAccountNickname] = useState("")
   const { toast: toastHook } = useToast()
 
   useEffect(() => {
@@ -67,6 +82,33 @@ export function WalletManagerEnhanced() {
     }
 
     setLoading(false)
+  }
+
+  const handleCreateAccount = async () => {
+    setIsCreating(true)
+
+    const result = await createNeobankAccount(selectedAccountType)
+
+    if (result.error) {
+      toastHook({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      })
+    } else {
+      toastHook({
+        title: "Account created",
+        description: `Your ${selectedAccountType} account has been created successfully.`,
+      })
+
+      setIsDialogOpen(false)
+      setAccountNickname("")
+
+      // Reload data to show the new account
+      await loadData()
+    }
+
+    setIsCreating(false)
   }
 
   const totalBalance = accounts.reduce((sum, acc) => sum + (Number(acc.balance) || 0), 0)
@@ -91,9 +133,47 @@ export function WalletManagerEnhanced() {
           <Building2 className="h-16 w-16 text-slate-300" />
           <h3 className="text-xl font-semibold text-slate-600">No Accounts Yet</h3>
           <p className="text-slate-500">Create your first account to get started</p>
-          <Button className="bg-[#635bff] hover:bg-[#5851e1]">
-            <Plus className="mr-2 h-4 w-4" /> Create Account
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#635bff] hover:bg-[#5851e1]">
+                <Plus className="mr-2 h-4 w-4" /> Create Account
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Open New Account</DialogTitle>
+                <DialogDescription>Create a new checking or savings account instantly.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Account Type</Label>
+                  <select
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md"
+                    value={selectedAccountType}
+                    onChange={(e) => setSelectedAccountType(e.target.value as "checking" | "savings")}
+                  >
+                    <option value="checking">Checking Account</option>
+                    <option value="savings">Savings Account</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Account Nickname (Optional)</Label>
+                  <Input
+                    placeholder="e.g., Travel Fund, Payroll Account"
+                    value={accountNickname}
+                    onChange={(e) => setAccountNickname(e.target.value)}
+                  />
+                </div>
+                <Button
+                  className="w-full bg-[#635bff] hover:bg-[#5851e1] text-white"
+                  onClick={handleCreateAccount}
+                  disabled={isCreating}
+                >
+                  {isCreating ? "Creating Account..." : "Create Account"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     )

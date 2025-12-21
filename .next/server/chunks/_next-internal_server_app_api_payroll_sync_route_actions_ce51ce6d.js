@@ -1,3 +1,0 @@
-module.exports=[856859,(e,o,d)=>{}];
-
-//# sourceMappingURL=_next-internal_server_app_api_payroll_sync_route_actions_ce51ce6d.js.map

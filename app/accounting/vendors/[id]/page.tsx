@@ -1,11 +1,10 @@
 import { Suspense } from "react"
 import { VendorDetailClient } from "@/components/vendor-detail-client"
 
-export default async function VendorDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params
+export default function VendorDetailPage({ params }: { params: { id: string } }) {
   return (
     <Suspense fallback={<div className="p-8">Loading vendor details...</div>}>
-      <VendorDetailClient vendorId={resolvedParams.id} />
+      <VendorDetailClient vendorId={params.id} />
     </Suspense>
   )
 }

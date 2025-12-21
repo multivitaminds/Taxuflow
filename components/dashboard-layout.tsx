@@ -11,7 +11,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
-export function DashboardLayout({ children, demoBanner }: { children: React.ReactNode; demoBanner?: React.ReactNode }) {
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, profile } = useDashboard()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
@@ -24,9 +24,7 @@ export function DashboardLayout({ children, demoBanner }: { children: React.Reac
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {demoBanner}
-
-      <header className="sticky top-0 left-0 right-0 z-40 bg-white border-b border-slate-200 h-9">
+      <header className="sticky top-14 left-0 right-0 z-40 bg-white border-b border-slate-200 h-9">
         <div className="flex items-center justify-between h-full px-4 pr-8">
           <div className="flex items-center gap-3">
             <Button
@@ -69,7 +67,7 @@ export function DashboardLayout({ children, demoBanner }: { children: React.Reac
       </header>
 
       <aside
-        className={`fixed left-0 top-9 bottom-0 w-64 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
+        className={`fixed left-0 top-[92px] bottom-0 w-64 bg-white border-r border-slate-200 transition-transform duration-300 z-30 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >

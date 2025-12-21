@@ -20,12 +20,13 @@ export default async function AccountingLayout({ children }: { children: React.R
   const userName = user.email?.split("@")[0] || "User"
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pt-20">
+      {" "}
+      {/* Changed pt-14 spacing for demo banner */}
       <AppHeader userName={userName} isDemoMode={false} />
-
       <div className="flex">
         <AccountingSidebar />
-        <main className="flex-1 ml-64 pr-12 pt-[48px]">{children}</main>
+        <main className="flex-1 ml-64 pr-12 pt-[64px]">{children}</main> {/* Adjusted AppHeader top position */}
       </div>
     </div>
   )

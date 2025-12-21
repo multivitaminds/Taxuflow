@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export async function createNeobankAccount(accountType: "checking" | "savings") {
   const supabase = await createClient()
@@ -11,6 +12,29 @@ export async function createNeobankAccount(accountType: "checking" | "savings") 
 
   if (!user) {
     return { data: null, error: "Not authenticated" }
+  }
+
+  const { data: existingUser } = await supabase.from("users").select("id").eq("id", user.id).single()
+
+  if (!existingUser) {
+    const adminClient = createAdminClient()
+
+    if (!adminClient) {
+      console.error("[v0] Failed to create admin client")
+      return { data: null, error: "Service configuration error" }
+    }
+
+    const { error: userError } = await adminClient.from("users").insert({
+      id: user.id,
+      email: user.email,
+      email_verified: user.email_confirmed_at ? true : false,
+      is_active: true,
+    })
+
+    if (userError) {
+      console.error("[v0] Error creating user record:", userError)
+      return { data: null, error: "Failed to create user record" }
+    }
   }
 
   const accountNumber = `${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)} ${Math.floor(1000 + Math.random() * 9000)}`

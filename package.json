@@ -72,7 +72,7 @@
     "jsonwebtoken": "latest",
     "jspdf": "latest",
     "lucide-react": "^0.454.0",
-    "next": "16.1.1-canary.1",
+    "next": "16.0.10",
     "next-themes": "latest",
     "node-notifier": "latest",
     "papaparse": "latest",

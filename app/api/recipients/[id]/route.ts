@@ -14,6 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params
+
     const { data: recipient, error } = await supabase
       .from("recipients")
       .select("*")
@@ -107,6 +108,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     const { id } = await params
+
     const { error } = await supabase.from("recipients").delete().eq("id", id).eq("user_id", user.id)
 
     if (error) throw error

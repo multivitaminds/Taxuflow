@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { NotificationBell } from "@/components/notification-bell"
 import { CompanySwitcher } from "@/components/company-switcher"
+import { useDemoMode } from "@/lib/demo/context"
 
 interface AppHeaderProps {
   userName?: string
@@ -16,6 +17,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ userName, isDemoMode }: AppHeaderProps) {
   const router = useRouter()
+  const { isAuthenticated } = useDemoMode()
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -24,7 +26,9 @@ export function AppHeader({ userName, isDemoMode }: AppHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b-2 border-slate-200">
+    <header
+      className={`sticky ${isAuthenticated ? "top-14" : "top-0"} z-50 w-full bg-white border-b-2 border-slate-200`}
+    >
       <div className="flex h-11 items-center justify-between px-4">
         {/* Logo and Demo Mode Badge */}
         <div className="flex items-center gap-3">

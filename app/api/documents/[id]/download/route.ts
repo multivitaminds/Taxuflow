@@ -14,6 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const { id } = await params
+
     // Get document from database
     const { data: document, error: docError } = await supabase
       .from("documents")

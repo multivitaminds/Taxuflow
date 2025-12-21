@@ -854,7 +854,7 @@ export function DashboardClient({ user: initialUser, profile: initialProfile }: 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="space-y-8 pb-6">
           {/* Welcome Section */}
-          <div>
+          <div className="mt-2">
             <h1 className="text-3xl font-bold tracking-tight text-balance">Welcome back, {userName}</h1>
             <p className="text-muted-foreground">
               Your 2024 tax filing is {completionPercentage()}% complete • Sam is monitoring your progress

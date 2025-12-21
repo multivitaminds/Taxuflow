@@ -63,6 +63,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   }
 
   const { id } = await params
+
   const { error } = await supabase.from("webhook_endpoints").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) {

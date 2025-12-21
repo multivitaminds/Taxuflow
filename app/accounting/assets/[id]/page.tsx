@@ -1,6 +1,5 @@
 import AssetDetailClient from "./AssetDetailClient"
 
-export default async function AssetDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params
-  return <AssetDetailClient assetId={resolvedParams.id} />
+export default function AssetDetailPage({ params }: { params: { id: string } }) {
+  return <AssetDetailClient assetId={params.id} />
 }

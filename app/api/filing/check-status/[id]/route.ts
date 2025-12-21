@@ -3,12 +3,12 @@ import { createClient } from "@/lib/supabase/server"
 
 export const dynamic = "force-dynamic"
 
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, props: { params: { id: string } }) {
   const startTime = Date.now()
   console.log("[v0] check-status: API called at", new Date().toISOString())
 
   try {
-    const params = await props.params
+    const params = props.params
     const { id } = params
 
     if (!id) {
