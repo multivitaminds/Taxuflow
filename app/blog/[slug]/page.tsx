@@ -184,8 +184,9 @@ const articles = {
   },
 }
 
-export default function BlogPostPage({ params }: { params: { slug: string } }) {
-  const article = articles[params.slug as keyof typeof articles]
+export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params
+  const article = articles[resolvedParams.slug as keyof typeof articles]
 
   if (!article) {
     return (

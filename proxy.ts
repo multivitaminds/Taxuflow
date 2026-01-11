@@ -1,7 +1,14 @@
 import { updateSession } from "@/lib/supabase/middleware"
-import type { NextRequest } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
 export async function proxy(request: NextRequest) {
+  // v0 Preview Mode: Skip auth if no Supabase config
+  // This prevents the page from hanging on v0.dev preview
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    console.log("[v0] Proxy: Running in preview mode without Supabase")
+    return NextResponse.next({ request })
+  }
+
   const response = await updateSession(request)
 
   // Add security headers

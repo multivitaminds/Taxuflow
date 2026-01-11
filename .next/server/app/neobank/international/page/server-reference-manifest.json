@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40d983bdc873a2f33f08198e581ae6b3a6175ca29e": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 632944,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "app/actions/get-user-profile.ts"
+    },
+    "00b4e5982374ff027d3c9db80af0059fe8abad476a": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 632944,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "app/actions/get-user.ts"
+    },
+    "4090f52813cb329dd4176f7de7aee0d6c4488b0fe5": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 632944,
+          "async": false,
+          "exportedName": "createNeobankTransfer",
+          "filename": "app/actions/neobank/create-transfer.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "action-browser"
+      },
+      "exportedName": "createNeobankTransfer",
+      "filename": "app/actions/neobank/create-transfer.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,65 @@
+{
+  "node": {
+    "40d983bdc873a2f33f08198e581ae6b3a6175ca29e": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 85504,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "app/actions/get-user-profile.ts"
+    },
+    "00b4e5982374ff027d3c9db80af0059fe8abad476a": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 85504,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "app/actions/get-user.ts"
+    },
+    "00ac4ca27e4e68db97496d421ded6c8c31a33cbefd": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 85504,
+          "async": false,
+          "exportedName": "getNeobankAccounts",
+          "filename": "app/actions/neobank/get-accounts.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "action-browser"
+      },
+      "exportedName": "getNeobankAccounts",
+      "filename": "app/actions/neobank/get-accounts.ts"
+    },
+    "40640aa4312c4e06e8d99779c9bf0183f519b5c9da": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 85504,
+          "async": false,
+          "exportedName": "getNeobankTransactions",
+          "filename": "app/actions/neobank/get-transactions.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "action-browser"
+      },
+      "exportedName": "getNeobankTransactions",
+      "filename": "app/actions/neobank/get-transactions.ts"
+    }
+  },
+  "edge": {}
+}

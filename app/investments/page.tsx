@@ -4,7 +4,7 @@ import { InvestmentDashboard } from "@/components/investments/investment-dashboa
 export default function InvestmentsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-indigo-50">
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <InvestmentDashboard />
     </div>
   )

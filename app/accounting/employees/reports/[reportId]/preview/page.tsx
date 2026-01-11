@@ -6,12 +6,14 @@ export const metadata: Metadata = {
   description: "Preview and download employee report",
 }
 
-export default function ReportPreviewPage({
+export default async function ReportPreviewPage({
   params,
   searchParams,
 }: {
-  params: { reportId: string }
-  searchParams: { format?: string }
+  params: Promise<{ reportId: string }>
+  searchParams: Promise<{ format?: string }>
 }) {
-  return <ReportPreviewClient reportId={params.reportId} format={searchParams.format || "pdf"} />
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
+  return <ReportPreviewClient reportId={resolvedParams.reportId} format={resolvedSearchParams.format || "pdf"} />
 }

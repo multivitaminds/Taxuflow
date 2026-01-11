@@ -8,8 +8,9 @@ export function generateStaticParams() {
   }))
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const pageData = marketingPages[params.slug as keyof typeof marketingPages]
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = await params
+  const pageData = marketingPages[resolvedParams.slug as keyof typeof marketingPages]
 
   if (!pageData) {
     notFound()

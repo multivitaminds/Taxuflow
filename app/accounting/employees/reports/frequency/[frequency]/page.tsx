@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   description: "View reports filtered by frequency",
 }
 
-export default function FrequencyReportsPage({ params }: { params: { frequency: string } }) {
-  return <FrequencyReportsClient frequency={params.frequency} />
+export default async function FrequencyReportsPage({ params }: { params: Promise<{ frequency: string }> }) {
+  const resolvedParams = await params
+  return <FrequencyReportsClient frequency={resolvedParams.frequency} />
 }

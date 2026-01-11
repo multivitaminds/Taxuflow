@@ -5,7 +5,7 @@ import { VendorsClient } from "@/components/vendors-client"
 export default function VendorsPage() {
   return (
     <>
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <Suspense fallback={<div className="p-8">Loading vendors...</div>}>
         <VendorsClient />
       </Suspense>

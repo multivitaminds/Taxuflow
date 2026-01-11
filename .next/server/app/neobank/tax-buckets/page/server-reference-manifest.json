@@ -1,0 +1,65 @@
+{
+  "node": {
+    "40d983bdc873a2f33f08198e581ae6b3a6175ca29e": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 911652,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "app/actions/get-user-profile.ts"
+    },
+    "00b4e5982374ff027d3c9db80af0059fe8abad476a": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 911652,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "app/actions/get-user.ts"
+    },
+    "408cf28d7d148a704623e89cc19de83fcb59c93fc4": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 911652,
+          "async": false,
+          "exportedName": "createTaxBucket",
+          "filename": "app/actions/neobank/create-tax-bucket.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "action-browser"
+      },
+      "exportedName": "createTaxBucket",
+      "filename": "app/actions/neobank/create-tax-bucket.ts"
+    },
+    "00aae53e7c2008ec0c64e024c8e2606a7d68b4e145": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 911652,
+          "async": false,
+          "exportedName": "getTaxBuckets",
+          "filename": "app/actions/neobank/get-tax-buckets.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "action-browser"
+      },
+      "exportedName": "getTaxBuckets",
+      "filename": "app/actions/neobank/get-tax-buckets.ts"
+    }
+  },
+  "edge": {}
+}

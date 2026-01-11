@@ -8,7 +8,7 @@ export const metadata = {
 export default function BudgetsPage() {
   return (
     <>
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <BudgetsClient />
     </>
   )

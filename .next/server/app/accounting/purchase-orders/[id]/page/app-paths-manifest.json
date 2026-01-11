@@ -1,0 +1,3 @@
+{
+  "/accounting/purchase-orders/[id]/page": "app/accounting/purchase-orders/[id]/page.js"
+}

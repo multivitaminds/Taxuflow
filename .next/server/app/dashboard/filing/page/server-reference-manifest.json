@@ -1,0 +1,35 @@
+{
+  "node": {
+    "00b4e5982374ff027d3c9db80af0059fe8abad476a": {
+      "workers": {
+        "app/dashboard/filing/page": {
+          "moduleId": 197551,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/filing/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "app/actions/get-user.ts"
+    },
+    "40d983bdc873a2f33f08198e581ae6b3a6175ca29e": {
+      "workers": {
+        "app/dashboard/filing/page": {
+          "moduleId": 197551,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/filing/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "app/actions/get-user-profile.ts"
+    }
+  },
+  "edge": {}
+}

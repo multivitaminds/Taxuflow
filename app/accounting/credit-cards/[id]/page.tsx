@@ -1,5 +1,6 @@
 import CreditCardDetailClient from "./CreditCardDetailClient"
 
-export default function CreditCardDetailPage({ params }: { params: { id: string } }) {
-  return <CreditCardDetailClient cardId={params.id} />
+export default async function CreditCardDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  return <CreditCardDetailClient cardId={resolvedParams.id} />
 }

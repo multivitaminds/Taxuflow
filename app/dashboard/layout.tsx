@@ -19,7 +19,7 @@ export default async function DashboardRootLayout({ children }: { children: Reac
 
   return (
     <DashboardProvider initialUser={user} initialProfile={profile}>
-      <DashboardLayout demoBanner={<DemoModeBanner isDemoMode={isDemoMode} userName={user.email} />}>
+      <DashboardLayout demoBanner={<DemoModeBanner />}>
         {children}
       </DashboardLayout>
     </DashboardProvider>

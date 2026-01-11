@@ -1,0 +1,3 @@
+{
+  "/api/ml/cash-flow-forecast/route": "app/api/ml/cash-flow-forecast/route.js"
+}

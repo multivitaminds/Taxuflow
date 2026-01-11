@@ -1,0 +1,3 @@
+{
+  "/api/ml/fraud-check/route": "app/api/ml/fraud-check/route.js"
+}

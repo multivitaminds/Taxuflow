@@ -5,7 +5,7 @@ import { WalletManagerEnhanced } from "@/components/neobank/wallet-manager-enhan
 export default function AccountsPage() {
   return (
     <>
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <div className="mt-3.5">
         <Suspense fallback={<div className="p-8 text-[#0a2540]">Loading accounts...</div>}>
           <WalletManagerEnhanced />

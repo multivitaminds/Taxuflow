@@ -25,7 +25,7 @@ export async function createUserWithBankAccount(userId: string, email: string, f
     console.log("[v0] User profile created for:", email)
 
     // 2. Create default checking account for tax refunds
-    const accountResult = await createNeobankAccount("checking", "Tax Refund Account")
+    const accountResult = await createNeobankAccount("checking")
 
     if (accountResult.error) {
       console.error("[v0] Checking account creation error:", accountResult.error)
@@ -35,7 +35,7 @@ export async function createUserWithBankAccount(userId: string, email: string, f
 
     // 3. If business user, create business checking account
     if (userType === "business") {
-      const businessAccountResult = await createNeobankAccount("checking", "Business Account")
+      const businessAccountResult = await createNeobankAccount("checking")
 
       if (businessAccountResult.error) {
         console.error("[v0] Business account creation error:", businessAccountResult.error)

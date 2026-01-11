@@ -1,0 +1,3 @@
+{
+  "/api/ml/categorize/route": "app/api/ml/categorize/route.js"
+}

@@ -1,0 +1,3 @@
+{
+  "/api/filing/generate-paper-package/route": "app/api/filing/generate-paper-package/route.js"
+}

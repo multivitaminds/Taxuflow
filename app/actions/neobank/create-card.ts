@@ -51,29 +51,3 @@ export async function createNeobankCard(formData: {
   revalidatePath("/neobank/cards")
   return { success: true, data }
 }
-
-export async function updateCardStatus(cardId: string, status: "active" | "frozen" | "cancelled") {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { success: false, error: "Not authenticated" }
-  }
-
-  const { error } = await supabase
-    .from("neobank_cards")
-    .update({ status, updated_at: new Date().toISOString() })
-    .eq("id", cardId)
-    .eq("user_id", user.id)
-
-  if (error) {
-    console.error("[v0] Error updating card status:", error)
-    return { success: false, error: error.message }
-  }
-
-  revalidatePath("/neobank/cards")
-  return { success: true }
-}

@@ -23,7 +23,7 @@ export default async function Filing1099Page() {
 
   return (
     <>
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <div className="min-h-screen bg-background pt-3.5">
         <div className="container mx-auto px-4 py-12 max-w-6xl">
           <Link href="/dashboard">

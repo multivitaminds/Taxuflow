@@ -5,7 +5,7 @@ import { UnifiedBankingPortal } from "@/components/unified-banking-portal"
 export default function NeobankPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50">
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <Suspense fallback={<div className="p-8">Loading banking dashboard...</div>}>
         <UnifiedBankingPortal />
       </Suspense>

@@ -40,7 +40,7 @@ export default function AccountingDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <div className="px-24 py-12">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

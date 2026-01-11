@@ -8,7 +8,7 @@ export const metadata = {
 export default function GoalsPage() {
   return (
     <>
-      <DemoModeBanner isDemoMode={true} />
+      <DemoModeBanner />
       <GoalsClient />
     </>
   )
