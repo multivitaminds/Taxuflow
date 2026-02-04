@@ -35,7 +35,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { getNeobankCards } from "@/app/actions/neobank/get-cards"
-import { createNeobankCard, updateCardStatus } from "@/app/actions/neobank/create-card"
+import { createNeobankCard } from "@/app/actions/neobank/create-card"
+import { updateCardStatus } from "@/app/actions/neobank/update-card-status"
 
 type CardStatus = "active" | "frozen" | "cancelled"
 
