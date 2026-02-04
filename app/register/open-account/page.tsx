@@ -1105,18 +1105,21 @@ export default function MercuryRegistrationPage() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="formationDoc">Formation documents (Articles of Incorporation, etc.)</Label>
-                  <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
+                  <label
+                    htmlFor="formationDoc"
+                    className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer block"
+                  >
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
                     <p className="text-xs text-gray-500">PDF, PNG, or JPG (max 10MB)</p>
-                    <input
-                      id="formationDoc"
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => updateField("formationDoc", e.target.files?.[0] || null)}
-                    />
-                  </div>
+                  </label>
+                  <input
+                    id="formationDoc"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => updateField("formationDoc", e.target.files?.[0] || null)}
+                  />
                   {formData.formationDoc && (
                     <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
                       <CheckCircle className="w-4 h-4" />
@@ -1127,18 +1130,21 @@ export default function MercuryRegistrationPage() {
 
                 <div>
                   <Label htmlFor="einDoc">EIN verification letter</Label>
-                  <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors">
+                  <label
+                    htmlFor="einDoc"
+                    className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors cursor-pointer block"
+                  >
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
                     <p className="text-xs text-gray-500">PDF, PNG, or JPG (max 10MB)</p>
-                    <input
-                      id="einDoc"
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      onChange={(e) => updateField("einDoc", e.target.files?.[0] || null)}
-                    />
-                  </div>
+                  </label>
+                  <input
+                    id="einDoc"
+                    type="file"
+                    className="hidden"
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => updateField("einDoc", e.target.files?.[0] || null)}
+                  />
                   {formData.einDoc && (
                     <p className="text-sm text-green-600 mt-2 flex items-center gap-1">
                       <CheckCircle className="w-4 h-4" />
