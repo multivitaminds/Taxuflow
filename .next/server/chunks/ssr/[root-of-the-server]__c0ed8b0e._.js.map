@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../../../app/accounting/banking/transfers/page.tsx"],"sourcesContent":["export default function TransfersPage() {\n  return <h1>Transfers</h1>\n}\n"],"names":[],"mappings":"2aAAe,SAAS,EACtB,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,KAAA,UAAG,aACb"}
