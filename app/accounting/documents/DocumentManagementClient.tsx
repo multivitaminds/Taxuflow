@@ -110,6 +110,7 @@ export default function DocumentManagementClient() {
   })
 
   const getFileIcon = (type: string) => {
+    if (!type) return File
     if (type.startsWith("image/")) return ImageIcon
     if (type === "application/pdf") return FileText
     return File

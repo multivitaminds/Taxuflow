@@ -5,7 +5,7 @@ import { InvoicesClient } from "@/components/invoices-client"
 export default function InvoicesPage() {
   return (
     <>
-      <DemoModeBanner />
+      <DemoModeBanner isDemoMode={true} />
       <Suspense
         fallback={
           <div className="min-h-screen bg-background p-8">

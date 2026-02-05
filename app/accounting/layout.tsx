@@ -1,6 +1,7 @@
 import type React from "react"
 import { AccountingSidebar } from "@/components/accounting-sidebar"
 import { AppHeader } from "@/components/app-header"
+import { EnvironmentBanner } from "@/components/environment-banner"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
@@ -20,14 +21,15 @@ export default async function AccountingLayout({ children }: { children: React.R
   const userName = user.email?.split("@")[0] || "User"
 
   return (
-    <div className="min-h-screen bg-white pt-20">
-      {" "}
-      {/* Changed pt-14 spacing for demo banner */}
-      <AppHeader userName={userName} isDemoMode={false} />
-      <div className="flex">
-        <AccountingSidebar />
-        <main className="flex-1 ml-64 pr-12 pt-[64px]">{children}</main> {/* Adjusted AppHeader top position */}
+    <>
+      <EnvironmentBanner />
+      <div className="min-h-screen bg-white">
+        <AppHeader userName={userName} isDemoMode={false} />
+        <div className="flex">
+          <AccountingSidebar />
+          <main className="flex-1 ml-64 pr-8 pt-6 pb-8">{children}</main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

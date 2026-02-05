@@ -5,7 +5,7 @@ import { CustomersClient } from "@/components/customers-client"
 export default function CustomersPage() {
   return (
     <>
-      <DemoModeBanner />
+      <DemoModeBanner isDemoMode={true} />
       <Suspense
         fallback={
           <div className="min-h-screen bg-background p-8">

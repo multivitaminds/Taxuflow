@@ -1,27 +1,10 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceRoleClient } from "@supabase/supabase-js"
-import { cookies } from "next/headers"
 
 // GET /api/organizations - List user's organizations
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const demoMode = cookieStore.get("demo_mode")?.value === "true"
-
-    if (demoMode) {
-      return NextResponse.json({
-        organizations: [
-          {
-            id: "demo-org-1",
-            name: "Demo Company LLC",
-            role: "owner",
-          },
-        ],
-        count: 1,
-      })
-    }
-
     const supabase = await createClient()
 
     if (!supabase) {
@@ -126,13 +109,6 @@ export async function GET() {
 // POST /api/organizations - Create new organization
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const demoMode = cookieStore.get("demo_mode")?.value === "true"
-
-    if (demoMode) {
-      return NextResponse.json({ error: "Cannot create organizations in demo mode" }, { status: 403 })
-    }
-
     const supabase = await createClient()
 
     if (!supabase) {

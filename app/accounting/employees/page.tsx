@@ -5,7 +5,7 @@ import { EmployeesClient } from "@/components/employees-client"
 export default function EmployeesPage() {
   return (
     <>
-      <DemoModeBanner />
+      <DemoModeBanner isDemoMode={true} />
       <Suspense
         fallback={
           <div className="min-h-screen bg-background p-8">

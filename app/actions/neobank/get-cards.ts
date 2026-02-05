@@ -14,7 +14,7 @@ export async function getNeobankCards() {
   }
 
   const { data, error } = await supabase
-    .from("neobank_cards")
+    .from("cards")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -26,3 +26,5 @@ export async function getNeobankCards() {
 
   return { data, error: null }
 }
+
+export const getCards = getNeobankCards

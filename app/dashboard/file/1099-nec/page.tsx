@@ -3,15 +3,23 @@
 import { useState } from "react"
 import { Form1099NEC } from "@/components/forms/form-1099-nec"
 import { DocumentUpload } from "@/components/forms/document-upload"
+import { DocumentChecklist } from "@/components/document-checklist"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
 import { PayrollIntegration } from "@/components/payroll-integration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
 import { useDashboard } from "@/components/dashboard-provider"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { InfoIcon } from "lucide-react"
 
 export default function File1099NECPage() {
   const [extractedData, setExtractedData] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("upload")
+  const [uploadedDocuments, setUploadedDocuments] = useState<
+    Array<{ documentType: string; status: string; fileName: string; data: any }>
+  >([])
+  const [targetDocType, setTargetDocType] = useState<string | undefined>(undefined)
+
   const { user } = useDashboard()
   const userId = user?.id || ""
 
@@ -45,6 +53,18 @@ export default function File1099NECPage() {
       setExtractedData({ contractors: validContractors })
       setActiveTab("manual")
 
+      validContractors.forEach((contractor: any, index: number) => {
+        setUploadedDocuments((prev) => [
+          ...prev,
+          {
+            documentType: "1099-nec",
+            status: "complete",
+            fileName: contractor.fileName || `contractor-${index + 1}.pdf`,
+            data: contractor,
+          },
+        ])
+      })
+
       toast({
         title: "✅ Multiple Contractors Loaded",
         description: `${validContractors.length} contractor document${validContractors.length > 1 ? "s" : ""} ready for review`,
@@ -72,6 +92,16 @@ export default function File1099NECPage() {
       })
       setExtractedData(data)
       setActiveTab("manual")
+
+      setUploadedDocuments((prev) => [
+        ...prev,
+        {
+          documentType: "1099-nec",
+          status: "complete",
+          fileName: metadata?.fileName || "uploaded-1099-nec.pdf",
+          data: data,
+        },
+      ])
       return
     }
 
@@ -100,15 +130,54 @@ export default function File1099NECPage() {
       })
       setExtractedData(data)
       setActiveTab("manual")
+
+      setUploadedDocuments((prev) => [
+        ...prev,
+        {
+          documentType: "1099-nec",
+          status: "complete",
+          fileName: metadata?.fileName || "uploaded-1099-nec.pdf",
+          data: data,
+        },
+      ])
       return
     }
 
     setExtractedData(data)
     setActiveTab("manual")
 
+    setUploadedDocuments((prev) => [
+      ...prev,
+      {
+        documentType: "1099-nec",
+        status: "complete",
+        fileName: metadata?.fileName || "uploaded-1099-nec.pdf",
+        data: data,
+      },
+    ])
+
     toast({
       title: "✅ Extraction Successful",
       description: `Data extracted for ${data.recipient?.name || "contractor"}. Review and complete any missing fields before submitting.`,
+    })
+
+    setTargetDocType(undefined)
+  }
+
+  const handleUploadRequired = (docType: string) => {
+    console.log("[v0] Upload required for document type:", docType)
+    setTargetDocType(docType)
+    setActiveTab("upload")
+
+    const docLabels: Record<string, string> = {
+      "1099-nec": "1099-NEC Form",
+      w9: "W-9 Contractor Information Form",
+      contract: "Independent Contractor Agreement",
+    }
+
+    toast({
+      title: "Upload Document",
+      description: `Please upload ${docLabels[docType] || docType.toUpperCase()}`,
     })
   }
 
@@ -126,6 +195,34 @@ export default function File1099NECPage() {
           </div>
         </div>
 
+        <DocumentChecklist
+          filingType="1099-nec"
+          uploadedDocuments={uploadedDocuments}
+          onUploadRequired={handleUploadRequired}
+        />
+
+        <Alert>
+          <InfoIcon className="h-4 w-4" />
+          <AlertDescription>
+            <p className="font-medium mb-1">Required for 1099-NEC E-Filing:</p>
+            <ul className="list-disc list-inside text-sm space-y-1">
+              <li>
+                <strong>1099-NEC Form</strong> - Nonemployee compensation statement (Required)
+              </li>
+              <li>
+                <strong>W-9 Form</strong> - Contractor's taxpayer identification information (Required)
+              </li>
+              <li>
+                <strong>Contractor Agreement</strong> - Independent contractor agreement or contract (Optional but
+                recommended)
+              </li>
+            </ul>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Upload all documents using the tabs below. AI will automatically extract data from tax forms.
+            </p>
+          </AlertDescription>
+        </Alert>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-background/50 backdrop-blur-sm">
             <TabsTrigger value="upload">📄 Upload 1099-NEC</TabsTrigger>
@@ -140,6 +237,22 @@ export default function File1099NECPage() {
               onExtractComplete={handleExtractComplete}
               formType="1099-NEC"
               expectedDocType="1099-nec"
+              targetDocumentType={targetDocType}
+              allowMultiple={!targetDocType || targetDocType === "1099-nec"}
+              title={
+                targetDocType === "w9"
+                  ? "Upload W-9 Form"
+                  : targetDocType === "contract"
+                    ? "Upload Contractor Agreement"
+                    : "Upload 1099-NEC Documents"
+              }
+              description={
+                targetDocType === "w9"
+                  ? "Upload the W-9 form with contractor taxpayer information"
+                  : targetDocType === "contract"
+                    ? "Upload independent contractor agreement or service contract"
+                    : "Upload 1099-NEC forms and supporting documents (W-9, contracts)"
+              }
             />
           </TabsContent>
 

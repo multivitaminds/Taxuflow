@@ -1,22 +1,8 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase/server"
-import { checkDemoMode } from "@/lib/demo-mode"
 
 export async function POST(request: Request) {
   try {
-    const { isDemoMode } = await checkDemoMode()
-
-    if (isDemoMode) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Filing is not available in demo mode. Please create a free account to file tax forms.",
-          isDemoMode: true,
-        },
-        { status: 403 },
-      )
-    }
-
     const supabase = await getSupabaseServerClient()
 
     if (!supabase) {

@@ -148,3 +148,46 @@ export async function createVendor(data: {
   revalidatePath("/accounting/vendors")
   return { success: true }
 }
+
+export async function createBill(data: {
+  vendor_id: string
+  bill_number: string
+  bill_date: string
+  due_date: string
+  total_amount: number
+  status: "draft" | "open"
+  items: Array<{ description: string; quantity: number; rate: number; amount: number }>
+  notes?: string
+}) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+  if (authError || !user) {
+    return { success: false, error: "Unauthorized" }
+  }
+
+  const { error } = await supabase.from("bills").insert({
+    user_id: user.id,
+    vendor_id: data.vendor_id,
+    bill_number: data.bill_number,
+    bill_date: data.bill_date,
+    due_date: data.due_date,
+    total_amount: data.total_amount,
+    amount_paid: 0,
+    status: data.status,
+    items: data.items,
+    notes: data.notes,
+    created_at: new Date().toISOString(),
+  })
+
+  if (error) {
+    console.error("[v0] Error creating bill:", error)
+    return { success: false, error: error.message }
+  }
+
+  revalidatePath("/accounting/bills")
+  return { success: true }
+}

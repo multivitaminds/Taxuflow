@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { FileSelectionClient } from "@/components/file-selection-client"
+import { TaxFilingHubClient } from "@/components/tax-filing-hub-client"
 
-export default async function FilePage() {
+export default async function TaxFilingPage() {
   const supabase = await createClient()
   const {
     data: { user },
@@ -12,5 +12,5 @@ export default async function FilePage() {
     redirect("/login")
   }
 
-  return <FileSelectionClient />
+  return <TaxFilingHubClient />
 }

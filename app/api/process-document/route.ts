@@ -1,37 +1,10 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { generateText } from "ai"
-import { checkDemoMode } from "@/lib/demo-mode"
 import { sendDocumentProcessedEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
-    const { isDemoMode } = await checkDemoMode()
-
-    if (isDemoMode) {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      return NextResponse.json({
-        success: true,
-        documentType: "w2",
-        analysis: {
-          documentType: "w2",
-          confidence: 98,
-          summary: "W-2 Wage and Tax Statement (Demo Mode)",
-          description: "W-2 form for Demo User - tax year 2024",
-          extractedData: {
-            employer_name: "Demo Corporation Inc.",
-            employee_name: "Demo User",
-            wages: 85000.0,
-            federal_tax_withheld: 12500.0,
-            tax_year: 2024,
-          },
-          deductions: [],
-        },
-        message: "Document processed successfully (Demo Mode)",
-      })
-    }
-
     console.log("[v0] Starting intelligent document processing")
 
     const supabase = await createClient()

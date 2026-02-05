@@ -1,10 +1,10 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function getTaxBuckets() {
   try {
-    const supabase = await createServerClient()
+    const supabase = await createClient()
 
     const {
       data: { user },

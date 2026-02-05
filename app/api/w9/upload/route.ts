@@ -3,12 +3,11 @@ import { put } from "@vercel/blob"
 import { NextResponse } from "next/server"
 import { generateText } from "ai"
 import { validateFile, sanitizeFilename } from "@/lib/file-validation"
-// </CHANGE>
 
 async function extractW9Data(dataUrl: string) {
   try {
     const { text } = await generateText({
-      model: "anthropic/claude-sonnet-4",
+      model: "openai/gpt-4o-mini",
       messages: [
         {
           role: "user",
@@ -81,7 +80,6 @@ export async function POST(request: Request) {
     }
 
     const sanitizedFilename = sanitizeFilename(file.name)
-    // </CHANGE>
 
     // Upload to Vercel Blob
     const blob = await put(`w9/${user.id}/${Date.now()}-${sanitizedFilename}`, file, {

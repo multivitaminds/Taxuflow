@@ -41,8 +41,6 @@ export async function POST(request: NextRequest) {
 
       if (!authUser) {
         console.log("[v0] Paper package: No authenticated user, checking for demo mode")
-        // If we have supabase but no user, it might be a session issue, but let's treat as unauthorized unless we want to allow public generation?
-        // For now, if supabase exists but no user, return 401.
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       }
       user = authUser
@@ -58,7 +56,6 @@ export async function POST(request: NextRequest) {
       doc = new jsPDF()
     } catch (pdfError: any) {
       console.error("[v0] jsPDF instantiation failed:", pdfError)
-      // Try to re-import or handle error specific to environment
       return NextResponse.json(
         {
           success: false,
@@ -210,10 +207,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Real Mode: Upload to S3 or Blob
-    // Generate PDF as ArrayBuffer for Node.js compatibility
     const pdfArrayBuffer = doc.output("arraybuffer")
     const pdfBuffer = Buffer.from(pdfArrayBuffer)
-    // </CHANGE>
 
     let url: string
 
@@ -221,25 +216,14 @@ export async function POST(request: NextRequest) {
       console.log("[v0] Using AWS S3 for PDF storage (TaxBandits)")
       const s3Key = `tax-forms/${user.id}/${formType.toLowerCase()}-paper-package-${taxYear}-${Date.now()}.pdf`
 
-      // uploadToS3 expects a Blob or Buffer? The interface usually takes BodyInit.
-      // Let's assume it handles Buffer or we convert to Blob if needed.
-      // Since we are in Node, Buffer is better.
-      // But wait, the original code used `doc.output("blob")`.
-      // If that worked before (or was intended to), we should check `uploadToS3`.
-      // For safety, we'll use the buffer.
-
-      // We need to check what uploadToS3 expects.
-      // Assuming it takes { file: Buffer | Blob, ... }
-      // We'll pass the buffer.
       url = await uploadToS3({
-        file: pdfBuffer as any, // Casting to any to avoid type conflicts if it expects Blob
+        file: pdfBuffer as any,
         key: s3Key,
         contentType: "application/pdf",
       })
 
       console.log("[v0] PDF uploaded to TaxBandits S3 bucket:", url)
     } else {
-      // Fallback to Vercel Blob or just return Data URI if upload fails
       console.log("[v0] AWS S3 not configured, returning Data URI as fallback")
       const dataUri = doc.output("datauristring")
       return NextResponse.json({
@@ -267,7 +251,6 @@ export async function POST(request: NextRequest) {
       success: true,
       packageUrl: url,
     })
-    // </CHANGE>
   } catch (error: any) {
     console.error("[v0] Paper package generation error:", error)
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })

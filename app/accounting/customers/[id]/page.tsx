@@ -1,6 +1,5 @@
 import { CustomerDetailClient } from "@/components/customer-detail-client"
 
-export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params
-  return <CustomerDetailClient customerId={resolvedParams.id} />
+export default function CustomerDetailPage({ params }: { params: { id: string } }) {
+  return <CustomerDetailClient customerId={params.id} />
 }

@@ -9,6 +9,8 @@ function getMockProfile() {
     full_name: "Demo User",
     user_type: "demo",
     subscription_tier: "free",
+    account_type: "demo",
+    is_demo_seeded: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }

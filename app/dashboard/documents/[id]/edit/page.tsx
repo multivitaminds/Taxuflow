@@ -2,8 +2,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DocumentEditClient } from "@/components/document-edit-client"
 
-export default async function DocumentEditPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = await params
+export default async function DocumentEditPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
 
   const {
@@ -18,7 +17,7 @@ export default async function DocumentEditPage({ params }: { params: Promise<{ i
   const { data: document, error } = await supabase
     .from("documents")
     .select("*")
-    .eq("id", resolvedParams.id)
+    .eq("id", params.id)
     .eq("user_id", user.id)
     .single()
 

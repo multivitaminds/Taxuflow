@@ -15,20 +15,27 @@ export async function POST() {
 
     console.log("[v0] Activating account for user:", user.id)
 
-    // Update user profile to live mode
-    const { error: profileError } = await supabase
-      .from("user_profiles")
-      .update({
-        user_type: "regular",
-        subscription_tier: "starter",
+    const { error: profileError } = await supabase.from("user_profiles").upsert(
+      {
+        id: user.id,
+        email: user.email,
+        account_type: "live",
+        account_status: "active",
+        registration_completed: true,
+        live_account_activated_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
-      .eq("id", user.id)
+      },
+      {
+        onConflict: "id",
+      },
+    )
 
     if (profileError) {
-      console.error("[v0] Error updating profile:", profileError)
+      console.error("[v0] Error upserting profile:", profileError)
       return NextResponse.json({ error: "Failed to update profile" }, { status: 500 })
     }
+
+    console.log("[v0] Profile updated successfully, account_type set to 'live'")
 
     // Clear demo data from various tables
     const tables = [

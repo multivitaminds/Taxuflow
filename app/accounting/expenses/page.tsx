@@ -5,7 +5,7 @@ import { ExpensesClient } from "@/components/expenses-client"
 export default function ExpensesPage() {
   return (
     <>
-      <DemoModeBanner />
+      <DemoModeBanner isDemoMode={true} />
       <Suspense
         fallback={
           <div className="min-h-screen bg-background p-8">

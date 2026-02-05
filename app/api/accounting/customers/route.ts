@@ -102,13 +102,13 @@ export async function POST(request: NextRequest) {
     const targetOrgId = body.org_id || orgContext.organizationId || null
 
     const customerData = {
-      contact_name: body.contact_name,
-      company_name: body.company_name || null,
+      name: body.company_name || body.contact_name, // Primary name field in contacts table
+      display_name: body.contact_name, // Individual contact name
       email: body.email,
       phone: body.phone || null,
       tax_id: body.tax_id || null,
-      contact_type: body.contact_type || "customer",
-      org_id: targetOrgId, // Can be null for personal customers
+      kind: "customer", // Contacts table uses 'kind' field
+      org_id: targetOrgId,
       user_id: orgContext.userId,
     }
 
