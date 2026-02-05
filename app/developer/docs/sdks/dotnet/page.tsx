@@ -124,7 +124,6 @@ export default function DotNetSDKPage() {
                   </div>
                 </div>
               </div>
-              {/* </CHANGE> */}
 
               <div className="flex items-center gap-4">
                 <div className="px-4 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-medium">
@@ -215,8 +214,8 @@ var result = await client.Tax.CalculateAsync(new CalculateParams
     State = "CA"
 });
 
-Console.WriteLine($"Federal tax: ${result.FederalTax}");
-Console.WriteLine($"State tax: ${result.StateTax}");`}
+Console.WriteLine($"Federal tax: \${result.FederalTax}");
+Console.WriteLine($"State tax: \${result.StateTax}");`}
                       </pre>
                     </div>
                   </div>
