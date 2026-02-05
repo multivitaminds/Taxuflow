@@ -1,0 +1,20 @@
+{
+  "node": {
+    "407c4667d7d5d37cc7511f2924b2db5e0744da057a": {
+      "workers": {
+        "app/accounting/bills/new/page": {
+          "moduleId": 882106,
+          "async": false,
+          "exportedName": "createBill",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/accounting.ts"
+        }
+      },
+      "layer": {
+        "app/accounting/bills/new/page": "action-browser"
+      },
+      "exportedName": "createBill",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/accounting.ts"
+    }
+  },
+  "edge": {}
+}

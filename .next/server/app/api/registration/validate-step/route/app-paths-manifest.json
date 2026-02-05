@@ -1,0 +1,3 @@
+{
+  "/api/registration/validate-step/route": "app/api/registration/validate-step/route.js"
+}

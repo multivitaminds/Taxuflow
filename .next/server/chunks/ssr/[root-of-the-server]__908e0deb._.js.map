@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../../../../taxu-platform/v0-taxu-landing-page/app/accounting/banking/transfers/new/page.tsx"],"sourcesContent":["export default function NewTransferPage() {\n  return <h1>New Transfer</h1>\n}\n"],"names":[],"mappings":"oXAAe,SAAS,EACtB,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,KAAA,UAAG,gBACb"}

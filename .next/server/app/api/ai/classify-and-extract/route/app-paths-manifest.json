@@ -1,0 +1,3 @@
+{
+  "/api/ai/classify-and-extract/route": "app/api/ai/classify-and-extract/route.js"
+}
