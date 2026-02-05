@@ -1,22 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
-import { jsPDF } from "jspdf"
 import { uploadToS3, isS3Configured } from "@/lib/aws-s3"
 
-if (typeof window === "undefined") {
-  const globalAny = global as any
-  globalAny.window = {
-    document: {
-      createElementNS: () => {
-        return {}
-      },
-    },
+export const dynamic = 'force-dynamic'
+
+let jsPDF: any = null
+
+async function getJsPDF() {
+  if (jsPDF) return jsPDF
+  if (typeof window === "undefined") {
+    const globalAny = global as any
+    if (!globalAny.window) globalAny.window = { document: { createElementNS: () => ({}) } }
+    if (!globalAny.navigator) globalAny.navigator = {}
+    if (!globalAny.btoa) globalAny.btoa = (str: string) => Buffer.from(str, "binary").toString("base64")
+    if (!globalAny.atob) globalAny.atob = (b64: string) => Buffer.from(b64, "base64").toString("binary")
   }
-  globalAny.navigator = {}
-  globalAny.btoa = (str: string) => Buffer.from(str, "binary").toString("base64")
-  globalAny.atob = (b64: string) => Buffer.from(b64, "base64").toString("binary")
+  const module = await import("jspdf")
+  jsPDF = module.jsPDF
+  return jsPDF
 }
-// </CHANGE>
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,7 +51,8 @@ export async function POST(request: NextRequest) {
 
     let doc
     try {
-      doc = new jsPDF()
+      const PDF = await getJsPDF()
+      doc = new PDF()
     } catch (pdfError: any) {
       console.error("[v0] jsPDF instantiation failed:", pdfError)
       // Try to re-import or handle error specific to environment
