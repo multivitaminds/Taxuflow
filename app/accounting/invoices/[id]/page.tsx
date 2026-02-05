@@ -1,4 +1,4 @@
-import { InvoiceDetailClient } from "@/components/invoice-detail-enhanced-client"
+import { InvoiceDetailClient } from "@/components/invoice-detail-client"
 
 export default function InvoiceDetailPage({ params }: { params: { id: string } }) {
   return <InvoiceDetailClient invoiceId={params.id} />

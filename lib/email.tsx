@@ -2,8 +2,6 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM_EMAIL = process.env.NODE_ENV === "production" ? "Taxu <noreply@taxu.io>" : "Taxu <onboarding@resend.dev>"
-
 /**
  * Send email notification when a document has been processed
  * Fails gracefully if email service is unavailable
@@ -25,7 +23,7 @@ export async function sendDocumentProcessedEmail(
     }
 
     const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
+      from: "Taxu <noreply@taxu.io>",
       to: [to],
       subject: `Your ${documentType.toUpperCase()} has been processed`,
       html: `
@@ -56,13 +54,7 @@ export async function sendDocumentProcessedEmail(
  * Send email notification when a tax filing has been accepted by the IRS
  * Fails gracefully if email service is unavailable
  */
-export async function sendFilingAcceptedEmail(
-  to: string,
-  userName: string,
-  taxYear: number,
-  refundOrOwed: number,
-  submissionId: string,
-) {
+export async function sendFilingAcceptedEmail(to: string, userName: string, formType: string, submissionId: string) {
   try {
     console.log("[v0] Attempting to send filing accepted email to:", to)
 
@@ -71,22 +63,16 @@ export async function sendFilingAcceptedEmail(
       return { success: false, reason: "API key not configured" }
     }
 
-    const refundText =
-      refundOrOwed > 0
-        ? `You're getting a refund of $${Math.abs(refundOrOwed).toFixed(2)}!`
-        : `You owe $${Math.abs(refundOrOwed).toFixed(2)} to the IRS.`
-
     const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
+      from: "Taxu <noreply@taxu.io>",
       to: [to],
-      subject: `Your ${taxYear} Tax Return has been accepted by the IRS`,
+      subject: `Your ${formType} has been accepted by the IRS`,
       html: `
         <h2>Hi ${userName},</h2>
-        <p>Excellent news! Your <strong>${taxYear} Tax Return</strong> filing has been accepted by the IRS.</p>
+        <p>Excellent news! Your <strong>${formType}</strong> filing has been accepted by the IRS.</p>
         <p><strong>Submission ID:</strong> ${submissionId}</p>
-        <p><strong>Result:</strong> ${refundText}</p>
         <p>Your tax return has been successfully processed and is now complete.</p>
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/filing">View Filing Details</a></p>
+        <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/filings">View Filing Details</a></p>
         <p>Best regards,<br>The Taxu Team</p>
       `,
     })
@@ -124,7 +110,7 @@ export async function sendFilingRejectedEmail(
     }
 
     const { data, error } = await resend.emails.send({
-      from: FROM_EMAIL,
+      from: "Taxu <noreply@taxu.io>",
       to: [to],
       subject: `Action Required: Your ${formType} filing needs attention`,
       html: `
@@ -133,7 +119,7 @@ export async function sendFilingRejectedEmail(
         <p><strong>Submission ID:</strong> ${submissionId}</p>
         <p><strong>Reason:</strong> ${rejectionReason}</p>
         <p>Please review the rejection details and resubmit your corrected filing.</p>
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/filing/${submissionId}">View Details & Resubmit</a></p>
+        <p><a href="${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/filings/${submissionId}">View Details & Resubmit</a></p>
         <p>If you need assistance, please contact our support team.</p>
         <p>Best regards,<br>The Taxu Team</p>
       `,

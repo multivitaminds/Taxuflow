@@ -69,21 +69,21 @@ export function AuthButton() {
       if (typeof window !== "undefined") {
         localStorage.clear()
         sessionStorage.clear()
+
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`)
+        })
       }
 
-      const response = await fetch("/api/auth/signout", {
+      await fetch("/api/auth/signout", {
         method: "POST",
         credentials: "include",
       })
 
-      if (!response.ok) {
-        console.error("[v0] Sign out failed:", await response.text())
-      }
-
-      window.location.href = "/"
+      window.location.replace("/")
     } catch (error) {
       console.error("[v0] Sign out error:", error)
-      window.location.href = "/"
+      window.location.replace("/")
     }
   }
 

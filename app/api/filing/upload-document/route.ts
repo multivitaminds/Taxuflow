@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { put } from "@vercel/blob"
 import { createClient } from "@/lib/supabase/server"
-import { validateFile, sanitizeFilename } from "@/lib/file-validation"
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,17 +26,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 })
     }
 
-    const validation = await validateFile(file)
-    if (!validation.valid) {
-      return NextResponse.json({ success: false, error: validation.error }, { status: 400 })
-    }
-
-    const sanitizedFilename = sanitizeFilename(file.name)
+    const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_")
     const timestamp = Date.now()
     const filename = `${timestamp}-${sanitizedFilename}`
 
     const blob = await put(`tax-documents/${userId}/${filename}`, file, {
-      access: "private",
+      access: "private", // Changed from "public" to "private"
       addRandomSuffix: true,
     })
 

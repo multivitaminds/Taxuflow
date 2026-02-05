@@ -3,23 +3,15 @@
 import { useState } from "react"
 import FormW2 from "@/components/forms/form-w2"
 import { DocumentUpload } from "@/components/forms/document-upload"
-import { DocumentChecklist } from "@/components/document-checklist"
 import { QuickBooksSync } from "@/components/forms/quickbooks-sync"
 import { PayrollIntegration } from "@/components/payroll-integration"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/use-toast"
 import { useDashboard } from "@/components/dashboard-provider"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { InfoIcon } from "lucide-react"
 
 export default function FileW2Page() {
   const [extractedData, setExtractedData] = useState<any>(null)
   const [activeTab, setActiveTab] = useState("upload")
-  const [uploadedDocuments, setUploadedDocuments] = useState<
-    Array<{ documentType: string; status: string; fileName: string; data: any }>
-  >([])
-  const [targetDocType, setTargetDocType] = useState<string | undefined>(undefined)
-
   const { user } = useDashboard()
   const userId = user?.id || ""
 
@@ -28,7 +20,7 @@ export default function FileW2Page() {
 
     // The extraction API returns flat structure: { employer_name, employer_ein, employee_name, wages, ... }
     // Not nested structure: { employer: { name }, income: { wages } }
-
+    
     if (!data) {
       console.error("[v0] No data received from extraction")
       toast({
@@ -50,25 +42,14 @@ export default function FileW2Page() {
       })
       setExtractedData(data)
       setActiveTab("manual")
-
-      setUploadedDocuments((prev) => [
-        ...prev,
-        {
-          documentType: data.documentType || "w2",
-          status: "complete",
-          fileName: metadata?.fileName || "uploaded-document.pdf",
-          data: data,
-        },
-      ])
       return
     }
 
     // Check for minimum required data using flat structure
     const hasMinimumData =
-      data.employer_name &&
-      (data.employee_name || (data.employee_name?.first && data.employee_name?.last)) &&
-      data.wages !== undefined &&
-      data.wages !== null
+      data.employer_name && 
+      (data.employee_name || (data.employee_name?.first && data.employee_name?.last)) && 
+      (data.wages !== undefined && data.wages !== null)
 
     if (!hasMinimumData) {
       console.log("[v0] Partial extraction - some fields missing, but allowing user to complete")
@@ -78,53 +59,19 @@ export default function FileW2Page() {
       })
       setExtractedData(data)
       setActiveTab("manual")
-
-      setUploadedDocuments((prev) => [
-        ...prev,
-        {
-          documentType: data.documentType || "w2",
-          status: "complete",
-          fileName: metadata?.fileName || "uploaded-document.pdf",
-          data: data,
-        },
-      ])
       return
     }
 
     setExtractedData(data)
     setActiveTab("manual")
 
-    setUploadedDocuments((prev) => [
-      ...prev,
-      {
-        documentType: data.documentType || "w2",
-        status: "complete",
-        fileName: metadata?.fileName || "uploaded-document.pdf",
-        data: data,
-      },
-    ])
-
-    const employeeName =
-      typeof data.employee_name === "string"
-        ? data.employee_name
-        : `${data.employee_name?.first || ""} ${data.employee_name?.last || ""}`.trim()
+    const employeeName = typeof data.employee_name === 'string' 
+      ? data.employee_name 
+      : `${data.employee_name?.first || ''} ${data.employee_name?.last || ''}`.trim()
 
     toast({
       title: "✅ Extraction Successful",
       description: `Data extracted for ${employeeName || "employee"}. Review and submit to IRS.`,
-    })
-
-    setTargetDocType(undefined)
-  }
-
-  const handleUploadRequired = (docType: string) => {
-    console.log("[v0] Upload required for document type:", docType)
-    setTargetDocType(docType)
-    setActiveTab("upload")
-
-    toast({
-      title: "Upload Document",
-      description: `Please upload ${docType.toUpperCase()} document`,
     })
   }
 
@@ -142,31 +89,6 @@ export default function FileW2Page() {
           </div>
         </div>
 
-        <DocumentChecklist
-          filingType="w2"
-          uploadedDocuments={uploadedDocuments}
-          onUploadRequired={handleUploadRequired}
-        />
-
-        <Alert>
-          <InfoIcon className="h-4 w-4" />
-          <AlertDescription>
-            <p className="font-medium mb-1">Required for W-2 E-Filing:</p>
-            <ul className="list-disc list-inside text-sm space-y-1">
-              <li>
-                <strong>W-2 Form</strong> - The actual wage and tax statement (Required)
-              </li>
-              <li>
-                <strong>Employee ID</strong> - Verification documents like passport or driver's license (Optional but
-                recommended)
-              </li>
-            </ul>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Upload all documents using the tabs below. AI will automatically extract data from tax forms.
-            </p>
-          </AlertDescription>
-        </Alert>
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-background/50 backdrop-blur-sm">
             <TabsTrigger value="upload">📄 Upload W-2</TabsTrigger>
@@ -176,20 +98,7 @@ export default function FileW2Page() {
           </TabsList>
 
           <TabsContent value="upload" className="mt-6">
-            <DocumentUpload
-              userId={userId}
-              onExtractComplete={handleExtractComplete}
-              targetDocumentType={targetDocType}
-              allowMultiple={true}
-              title={targetDocType ? `Upload ${targetDocType.toUpperCase()}` : "Upload W-2 Documents"}
-              description={
-                targetDocType === "w2"
-                  ? "Upload W-2 forms for yourself and spouse (if filing jointly)"
-                  : targetDocType === "identification"
-                    ? "Upload employee ID verification (passport, driver's license, etc.)"
-                    : "Upload W-2 and supporting documents for all household members"
-              }
-            />
+            <DocumentUpload userId={userId} onExtractComplete={handleExtractComplete} />
           </TabsContent>
 
           <TabsContent value="payroll" className="mt-6">

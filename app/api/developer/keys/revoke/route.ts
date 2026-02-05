@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     // Revoke the API key
     const { error: updateError } = await supabase
       .from("api_keys")
-      .update({ is_active: false })
+      .update({ status: "revoked" })
       .eq("id", keyId)
       .eq("user_id", user.id) // Ensure user owns this key
 

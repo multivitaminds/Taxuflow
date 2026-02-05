@@ -1,3 +1,0 @@
-module.exports=[301755,a=>{"use strict";let b=(0,a.i(540567).default)("FileText",[["path",{d:"M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",key:"1rqfz7"}],["path",{d:"M14 2v4a2 2 0 0 0 2 2h4",key:"tnqrlb"}],["path",{d:"M10 9H8",key:"b1mrlr"}],["path",{d:"M16 13H8",key:"t4e002"}],["path",{d:"M16 17H8",key:"z1uh3a"}]]);a.s(["FileText",0,b],301755)},526608,a=>{"use strict";let b=(0,a.i(540567).default)("TrendingUp",[["polyline",{points:"22 7 13.5 15.5 8.5 10.5 2 17",key:"126l90"}],["polyline",{points:"16 7 22 7 22 13",key:"kwv8wd"}]]);a.s(["TrendingUp",0,b],526608)}];
-
-//# sourceMappingURL=9f3ab_lucide-react_dist_esm_icons_02c164a4._.js.map

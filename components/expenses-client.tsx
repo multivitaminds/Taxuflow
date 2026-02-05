@@ -101,24 +101,10 @@ export function ExpensesClient() {
               <p className="text-muted-foreground">Track and categorize your business expenses</p>
             </div>
             <div className="flex gap-2">
-              <Link href="/accounting/expenses/receipts">
-                <Button variant="outline" size="lg" className="gap-2 bg-transparent">
-                  <Upload className="h-5 w-5" />
-                  Scan Receipt
-                </Button>
-              </Link>
-              <Link href="/accounting/expenses/mileage">
-                <Button variant="outline" size="lg" className="gap-2 bg-transparent">
-                  <Calendar className="h-5 w-5" />
-                  Log Mileage
-                </Button>
-              </Link>
-              <Link href="/accounting/expenses/reimbursements">
-                <Button variant="outline" size="lg" className="gap-2 bg-transparent">
-                  <DollarSign className="h-5 w-5" />
-                  Reimbursements
-                </Button>
-              </Link>
+              <Button variant="outline" size="lg" className="gap-2 bg-transparent">
+                <Upload className="h-5 w-5" />
+                Upload Receipt
+              </Button>
               <Link href="/accounting/expenses/new">
                 <Button size="lg" className="gap-2">
                   <Plus className="h-5 w-5" />

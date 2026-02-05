@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { encrypt, decrypt } from "@/lib/crypto"
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
@@ -13,12 +13,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-
     const { data: recipient, error } = await supabase
       .from("recipients")
       .select("*")
-      .eq("id", id)
+      .eq("id", params.id)
       .eq("user_id", user.id)
       .single()
 
@@ -40,7 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
@@ -51,7 +49,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
     const body = await request.json()
     const updates: any = { updated_at: new Date().toISOString() }
 
@@ -82,7 +79,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { data: recipient, error } = await supabase
       .from("recipients")
       .update(updates)
-      .eq("id", id)
+      .eq("id", params.id)
       .eq("user_id", user.id)
       .select()
       .single()
@@ -96,7 +93,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
@@ -107,9 +104,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-
-    const { error } = await supabase.from("recipients").delete().eq("id", id).eq("user_id", user.id)
+    const { error } = await supabase.from("recipients").delete().eq("id", params.id).eq("user_id", user.id)
 
     if (error) throw error
 

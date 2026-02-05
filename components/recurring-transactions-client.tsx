@@ -25,7 +25,7 @@ interface RecurringTransaction {
   created_at: string
 }
 
-function RecurringTransactionsClient() {
+export function RecurringTransactionsClient() {
   const router = useRouter()
   const [transactions, setTransactions] = useState<RecurringTransaction[]>([])
   const [loading, setLoading] = useState(true)
@@ -230,5 +230,3 @@ function RecurringTransactionsClient() {
     </div>
   )
 }
-
-export default RecurringTransactionsClient

@@ -20,8 +20,8 @@ interface DocumentsClientProps {
 
 export function DocumentsClient({ documents }: DocumentsClientProps) {
   return (
-    <div className="min-h-screen bg-background pt-8">
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold mb-8">Your Documents</h1>
 
         <div className="grid gap-4">

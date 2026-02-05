@@ -1,51 +1,26 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { stripe } from "@/lib/stripe"
-import { createClientSafe } from "@/lib/supabase/server"
-import { getPlanById, getAddOnById } from "@/lib/subscription-plans"
+import { createServerClient } from "@/lib/supabase/server"
+import { getPlanById } from "@/lib/subscription-plans"
 
 export async function POST(request: NextRequest) {
   try {
     console.log("[v0] Checkout API called")
-    const { planId, addOnId } = await request.json()
-    console.log("[v0] Plan ID:", planId, "Add-on ID:", addOnId)
+    const { planId } = await request.json()
+    console.log("[v0] Plan ID:", planId)
 
-    if (!planId && !addOnId) {
-      return NextResponse.json({ error: "Plan ID or Add-on ID is required" }, { status: 400 })
+    if (!planId) {
+      return NextResponse.json({ error: "Plan ID is required" }, { status: 400 })
     }
 
-    let itemDetails: { name: string; description: string; price: number; interval: string | null } | null = null
-
-    if (planId) {
-      const plan = getPlanById(planId)
-      if (!plan) {
-        console.log("[v0] Invalid plan ID:", planId)
-        return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
-      }
-      itemDetails = {
-        name: plan.name,
-        description: plan.description,
-        price: plan.price,
-        interval: plan.interval,
-      }
-      console.log("[v0] Plan found:", plan.name, plan.price)
-    } else if (addOnId) {
-      const addOn = getAddOnById(addOnId)
-      if (!addOn) {
-        console.log("[v0] Invalid add-on ID:", addOnId)
-        return NextResponse.json({ error: "Invalid add-on" }, { status: 400 })
-      }
-      itemDetails = {
-        name: addOn.name,
-        description: addOn.description,
-        price: addOn.price,
-        interval: null, // Add-ons are one-time purchases
-      }
-      console.log("[v0] Add-on found:", addOn.name, addOn.price)
+    // Get plan details
+    const plan = getPlanById(planId)
+    if (!plan) {
+      console.log("[v0] Invalid plan ID:", planId)
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 })
     }
 
-    if (!itemDetails) {
-      return NextResponse.json({ error: "Invalid item" }, { status: 400 })
-    }
+    console.log("[v0] Plan found:", plan.name, plan.price)
 
     const hasSupabaseKeys = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     const hasStripeKey = process.env.STRIPE_SECRET_KEY
@@ -53,36 +28,35 @@ export async function POST(request: NextRequest) {
     if (!hasSupabaseKeys || !hasStripeKey) {
       console.log("[v0] Missing API keys, defaulting to demo mode immediately")
       return NextResponse.json({
-        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&${planId ? `plan=${planId}` : `addon=${addOnId}`}&demo=true`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&plan=${planId}&demo=true`,
       })
     }
 
-    if (itemDetails.price === 0) {
-      return NextResponse.json({ error: "Free items don't require checkout" }, { status: 400 })
+    if (plan.price === 0) {
+      return NextResponse.json({ error: "Free plan doesn't require checkout" }, { status: 400 })
     }
 
-    const supabase = await createClientSafe()
-
-    if (!supabase) {
-      console.log("[v0] Supabase client failed to initialize, returning demo mode")
-      return NextResponse.json({
-        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&${planId ? `plan=${planId}` : `addon=${addOnId}`}&demo=true`,
-      })
+    // Get user
+    let supabase
+    let user
+    try {
+      supabase = await createServerClient()
+      const { data } = await supabase.auth.getUser()
+      user = data.user
+    } catch (error) {
+      console.log("[v0] Supabase initialization failed, assuming demo mode:", error)
     }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
 
     if (!user) {
       console.log("[v0] No user found, returning mock success")
       return NextResponse.json({
-        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&${planId ? `plan=${planId}` : `addon=${addOnId}`}&demo=true`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&plan=${planId}&demo=true`,
       })
     }
 
     console.log("[v0] User authenticated:", user.id)
 
+    // Get or create Stripe customer
     const { data: profile } = await supabase
       .from("user_profiles")
       .select("stripe_customer_id, email, full_name")
@@ -105,10 +79,11 @@ export async function POST(request: NextRequest) {
       customerId = customer.id
       console.log("[v0] Created customer:", customerId)
 
+      // Save customer ID
       await supabase.from("user_profiles").update({ stripe_customer_id: customerId }).eq("id", user.id)
     }
 
-    const isSubscription = itemDetails.interval && itemDetails.interval !== "one-time"
+    const isSubscription = plan.interval && plan.interval !== "one-time"
 
     console.log("[v0] Creating checkout session, mode:", isSubscription ? "subscription" : "payment")
 
@@ -120,14 +95,14 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: itemDetails.name,
-              description: itemDetails.description,
+              name: plan.name,
+              description: plan.description,
             },
-            unit_amount: Math.round(itemDetails.price * 100), // Convert to cents
+            unit_amount: Math.round(plan.price * 100), // Convert to cents
             ...(isSubscription
               ? {
                   recurring: {
-                    interval: itemDetails.interval as "month" | "year",
+                    interval: plan.interval as "month" | "year",
                   },
                 }
               : {}),
@@ -135,12 +110,12 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&${planId ? `plan=${planId}` : `addon=${addOnId}`}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?success=true&plan=${planId}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "https://taxu.io"}/dashboard/subscription?canceled=true`,
       metadata: {
         supabase_user_id: user.id,
-        ...(planId ? { plan_id: planId, planId: planId } : {}),
-        ...(addOnId ? { addon_id: addOnId, addOnId: addOnId } : {}),
+        plan_id: planId,
+        planId: planId, // Added for webhook compatibility
       },
     })
 

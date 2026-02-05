@@ -51,13 +51,9 @@ export function CustomerFormClient() {
       })
 
       const data = await response.json()
-      console.log("[v0] API response status:", response.status)
-      console.log("[v0] API response data:", data)
+      console.log("[v0] API response:", data)
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error("You must be signed in to create customers. Please refresh the page and try again.")
-        }
         throw new Error(data.error || "Failed to create customer")
       }
 
@@ -74,11 +70,13 @@ export function CustomerFormClient() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhoneNumber(e.target.value)
+    console.log("[v0] Phone formatted:", e.target.value, "->", formatted)
     setFormData({ ...formData, phone: formatted })
   }
 
   const handleTaxIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatEIN(e.target.value)
+    console.log("[v0] Tax ID formatted:", e.target.value, "->", formatted)
     setFormData({ ...formData, tax_id: formatted })
   }
 

@@ -13,12 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Trash2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { getSupabaseBooksClient } from "@/lib/supabase/books-client"
-import { createClient } from "@/lib/supabase/client"
 
 export function InvoiceFormClient() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [loadingCustomers, setLoadingCustomers] = useState(true)
   const [customers, setCustomers] = useState<any[]>([])
   const [formData, setFormData] = useState({
     customer_id: "",
@@ -35,85 +33,11 @@ export function InvoiceFormClient() {
   }, [])
 
   async function loadCustomers() {
-    console.log("[v0] Loading customers...")
-    setLoadingCustomers(true)
+    const supabase = getSupabaseBooksClient()
+    if (!supabase) return
 
-    try {
-      const supabaseBooks = getSupabaseBooksClient()
-      const supabasePublic = createClient()
-
-      let allCustomers: any[] = []
-
-      // Try books schema first
-      if (supabaseBooks) {
-        const { data: booksContacts, error: booksError } = await supabaseBooks
-          .from("contacts")
-          .select("*")
-          .eq("kind", "customer")
-          .order("display_name")
-
-        if (!booksError && booksContacts) {
-          console.log("[v0] Loaded", booksContacts.length, "customers from books.contacts")
-          allCustomers = [
-            ...allCustomers,
-            ...booksContacts.map((c) => ({
-              ...c,
-              source: "books",
-            })),
-          ]
-        } else if (booksError) {
-          console.error("[v0] Error loading from books.contacts:", booksError)
-        }
-      }
-
-      // Try public schema
-      const { data: publicCustomers, error: publicError } = await supabasePublic
-        .from("customers")
-        .select("*")
-        .eq("is_active", true)
-        .order("company_name")
-
-      if (!publicError && publicCustomers) {
-        console.log("[v0] Loaded", publicCustomers.length, "customers from public.customers")
-        allCustomers = [
-          ...allCustomers,
-          ...publicCustomers.map((c) => ({
-            id: c.id,
-            display_name: c.company_name || c.contact_name || "Unnamed Customer",
-            email: c.email,
-            source: "public",
-          })),
-        ]
-      } else if (publicError) {
-        console.error("[v0] Error loading from public.customers:", publicError)
-      }
-
-      // Try public contacts as fallback
-      if (allCustomers.length === 0) {
-        const { data: publicContacts, error: contactsError } = await supabasePublic
-          .from("contacts")
-          .select("*")
-          .eq("contact_type", "customer")
-          .order("name")
-
-        if (!contactsError && publicContacts) {
-          console.log("[v0] Loaded", publicContacts.length, "customers from public.contacts")
-          allCustomers = publicContacts.map((c) => ({
-            id: c.id,
-            display_name: c.display_name || c.name || c.company_name || "Unnamed Customer",
-            email: c.email,
-            source: "contacts",
-          }))
-        }
-      }
-
-      console.log("[v0] Total customers loaded:", allCustomers.length)
-      setCustomers(allCustomers)
-    } catch (error) {
-      console.error("[v0] Error loading customers:", error)
-    } finally {
-      setLoadingCustomers(false)
-    }
+    const { data } = await supabase.from("contacts").select("*").eq("kind", "customer")
+    setCustomers(data || [])
   }
 
   function addLineItem() {
@@ -145,34 +69,21 @@ export function InvoiceFormClient() {
     setLoading(true)
 
     try {
-      console.log("[v0] Creating invoice with data:", { ...formData, items: lineItems })
-
       const response = await fetch("/api/accounting/invoices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer_id: formData.customer_id,
-          invoice_number: formData.invoice_number,
-          invoice_date: formData.invoice_date,
-          due_date: formData.due_date,
-          notes: formData.notes,
-          terms: formData.terms,
+          ...formData,
           items: lineItems,
         }),
       })
 
-      const result = await response.json()
+      if (!response.ok) throw new Error("Failed to create invoice")
 
-      if (!response.ok) {
-        console.error("[v0] Invoice creation failed:", result)
-        throw new Error(result.error || "Failed to create invoice")
-      }
-
-      console.log("[v0] Invoice created successfully:", result)
       router.push("/accounting/invoices")
     } catch (error) {
-      console.error("[v0] Error creating invoice:", error)
-      alert(error instanceof Error ? error.message : "Failed to create invoice")
+      console.error("Error creating invoice:", error)
+      alert("Failed to create invoice")
     } finally {
       setLoading(false)
     }
@@ -186,36 +97,15 @@ export function InvoiceFormClient() {
             <Label htmlFor="customer">Customer *</Label>
             <Select
               value={formData.customer_id}
-              onValueChange={(value) => {
-                console.log("[v0] Selected customer:", value)
-                setFormData({ ...formData, customer_id: value })
-              }}
-              disabled={loadingCustomers}
+              onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
             >
               <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    loadingCustomers
-                      ? "Loading customers..."
-                      : customers.length === 0
-                        ? "No customers found"
-                        : "Select customer"
-                  }
-                />
+                <SelectValue placeholder="Select customer" />
               </SelectTrigger>
               <SelectContent>
-                {customers.length === 0 && !loadingCustomers && (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    No customers available.{" "}
-                    <Link href="/accounting/customers" className="text-primary underline">
-                      Add a customer
-                    </Link>{" "}
-                    first.
-                  </div>
-                )}
                 {customers.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id}>
-                    {customer.display_name} {customer.email && `(${customer.email})`}
+                    {customer.display_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -367,13 +257,7 @@ export function InvoiceFormClient() {
               Cancel
             </Button>
           </Link>
-          <Button
-            type="submit"
-            disabled={
-              loading || !formData.customer_id || lineItems.length === 0 || lineItems.some((item) => !item.description)
-            }
-            className="bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-700 hover:to-orange-600"
-          >
+          <Button type="submit" disabled={loading || !formData.customer_id}>
             {loading ? "Creating..." : "Create Invoice"}
           </Button>
         </div>

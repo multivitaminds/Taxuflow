@@ -52,8 +52,8 @@ export default async function ActivityPage({ params }: ActivityPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-8">
-      <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         <Link href="/dashboard">
           <Button variant="ghost" className="mb-6 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-4 h-4 mr-2" />

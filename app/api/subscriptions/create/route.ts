@@ -2,20 +2,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-11-20.acacia",
-    })
-  : null
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-11-20.acacia",
+})
 
 export async function POST(req: NextRequest) {
-  if (!stripe) {
-    console.warn("[v0] Stripe not configured, returning demo checkout URL")
-    return NextResponse.json({
-      url: `${req.nextUrl.origin}/dashboard/subscription?success=true&demo=true`,
-    })
-  }
-
   try {
     const { priceId, planId } = await req.json()
 

@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../../../../../taxu-platform/v0-taxu-landing-page/app/accounting/banking/accounts/page.tsx"],"sourcesContent":["export default function BankAccountsPage() {\n  return <h1>Bank Accounts</h1>\n}\n"],"names":[],"mappings":"6aAAe,SAAS,EACtB,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,KAAA,UAAG,iBACb"}

@@ -15,7 +15,7 @@ interface AuditRiskDetailsClientProps {
 
 export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClientProps) {
   const router = useRouter()
-  const [w2Filings, setW2Filings] = useState<any[]>([])
+  const [taxCalc, setTaxCalc] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   console.log("[v0] AuditRiskDetailsClient rendering", { user: !!user, profile: !!profile })
@@ -26,14 +26,16 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
     const fetchAuditData = async () => {
       console.log("[v0] Fetching audit data for user", user.id)
       const { data, error } = await supabase
-        .from("w2_filings")
+        .from("tax_calculations")
         .select("*")
         .eq("user_id", user.id)
-        .eq("irs_status", "Accepted")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
       console.log("[v0] Audit data fetched", { hasData: !!data, error })
       if (data) {
-        setW2Filings(data)
+        setTaxCalc(data)
       }
       setLoading(false)
     }
@@ -43,7 +45,7 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pt-8 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-20 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-neon border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading audit risk analysis...</p>
@@ -52,23 +54,9 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
     )
   }
 
-  const totalRefund = w2Filings.reduce((sum, filing) => sum + (filing.refund_amount || 0), 0)
-  const totalIncome = w2Filings.reduce((sum, filing) => sum + (filing.wages || 0), 0)
-
-  // Audit risk increases with higher refunds and income
-  let auditRisk = "LOW"
-  let confidence = 95
-  let riskLevel = "low"
-
-  if (totalRefund > 100000) {
-    auditRisk = "MEDIUM"
-    confidence = 75
-    riskLevel = "medium"
-  } else if (totalRefund > 50000) {
-    auditRisk = "LOW-MEDIUM"
-    confidence = 85
-    riskLevel = "low"
-  }
+  const auditRisk = taxCalc?.audit_risk_score || "N/A"
+  const confidence = taxCalc?.confidence_percentage || 0
+  const riskLevel = auditRisk === "LOW" ? "low" : auditRisk === "MEDIUM" ? "medium" : "high"
 
   const riskFactors = [
     {
@@ -99,8 +87,8 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
   ]
 
   return (
-    <div className="min-h-screen bg-background pt-3.5">
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 py-12">
         <Button onClick={() => router.push("/dashboard")} variant="ghost" className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
@@ -206,10 +194,7 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => router.push("/dashboard")}
-          >
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
             <div className="flex items-center gap-3 mb-3">
               <TrendingDown className="w-5 h-5 text-green-500" />
               <h4 className="font-semibold">National Audit Rate</h4>
@@ -218,10 +203,7 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
             <p className="text-sm text-muted-foreground">Average IRS audit rate for individual returns</p>
           </Card>
 
-          <Card
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => router.push("/dashboard/refund")}
-          >
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
             <div className="flex items-center gap-3 mb-3">
               <Shield className="w-5 h-5 text-blue-500" />
               <h4 className="font-semibold">Your Risk Score</h4>
@@ -230,10 +212,7 @@ export function AuditRiskDetailsClient({ user, profile }: AuditRiskDetailsClient
             <p className="text-sm text-muted-foreground">Confidence in low audit risk assessment</p>
           </Card>
 
-          <Card
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => router.push("/settings")}
-          >
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
             <div className="flex items-center gap-3 mb-3">
               <Info className="w-5 h-5 text-purple-500" />
               <h4 className="font-semibold">Protection Status</h4>

@@ -1,22 +1,50 @@
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Check, TrendingDown } from "lucide-react"
+import { Check } from "lucide-react"
 import Link from "next/link"
-import { getIndividualPlans } from "@/lib/subscription-plans"
+
+const plans = [
+  {
+    name: "Free Tier",
+    price: "$0",
+    description: "Perfect for simple returns",
+    features: ["Simple W‑2 return", "Standard deduction", "No dependents", "Federal filing only", "Email support"],
+  },
+  {
+    name: "Premium",
+    price: "$29",
+    description: "For most filers",
+    features: [
+      "Everything in Free",
+      "Add dependents",
+      "Itemized deductions",
+      "Tax credits",
+      "State returns included",
+      "Priority support",
+    ],
+    popular: true,
+  },
+  {
+    name: "AI Co-Pilot",
+    price: "$5",
+    period: "/mo",
+    description: "Year-round tax help",
+    features: [
+      "Everything in Premium",
+      "Year-round chat support",
+      "Tax planning advice",
+      "Quarterly estimates",
+      "Audit assistance",
+      "Dedicated tax expert",
+    ],
+  },
+]
 
 export function PricingSection() {
-  const plans = getIndividualPlans().slice(0, 3)
-
   return (
     <section id="pricing" className="py-24 px-4 sm:px-6 lg:px-8 bg-background-alt">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center space-y-4 mb-16">
-          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-200">
-            <TrendingDown className="w-4 h-4 mr-1" />
-            20-40% cheaper than TurboTax
-          </Badge>
           <h2 className="text-4xl sm:text-5xl font-bold tracking-tight">Simple, Transparent Pricing</h2>
-          <p className="text-xl text-muted-foreground">AI-powered automation at better value</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
@@ -32,28 +60,16 @@ export function PricingSection() {
                   Most Popular
                 </div>
               )}
-              {plan.comparePrice && (
-                <div className="flex items-center gap-2 mb-4 text-xs">
-                  <span className="line-through text-muted-foreground">${plan.comparePrice}</span>
-                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
-                    Save ${plan.comparePrice - plan.price}
-                  </span>
-                </div>
-              )}
               <div className="space-y-4 mb-6">
                 <h3 className="text-2xl font-bold">{plan.name}</h3>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-orange-600 bg-clip-text text-transparent">
-                    ${plan.price}
-                  </span>
-                  {plan.interval && plan.interval !== "one-time" && (
-                    <span className="text-muted-foreground">/ {plan.interval}</span>
-                  )}
+                  <span className="text-5xl font-bold">{plan.price}</span>
+                  {plan.period && <span className="text-muted-foreground">{plan.period}</span>}
                 </div>
                 <p className="text-muted-foreground">{plan.description}</p>
               </div>
               <ul className="space-y-3 mb-8">
-                {plan.features.slice(0, 5).map((feature, i) => (
+                {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <Check className="h-5 w-5 text-accent flex-shrink-0 mt-0.5" />
                     <span className="text-sm leading-relaxed">{feature}</span>
@@ -67,14 +83,6 @@ export function PricingSection() {
               </Link>
             </div>
           ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link href="/pricing">
-            <Button variant="outline" size="lg">
-              View All Plans & Business Options
-            </Button>
-          </Link>
         </div>
       </div>
     </section>

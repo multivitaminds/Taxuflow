@@ -6,7 +6,7 @@ import { getOrganizationContext } from "@/lib/organization/context"
 export async function GET(request: NextRequest) {
   try {
     const orgContext = await getOrganizationContext()
-
+    
     if (!orgContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -14,16 +14,24 @@ export async function GET(request: NextRequest) {
     const supabase = await createBooksServerClient()
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get("status")
-    const customerId = searchParams.get("customer_id") || searchParams.get("contact_id")
+    const customerId = searchParams.get("customer_id")
 
     let query = supabase
       .from("invoices")
       .select(`
         *,
-        contact:contacts!contact_id (
+        customers:contacts!customer_id (
           id,
-          display_name,
+          company_name,
+          contact_name,
           email
+        ),
+        invoice_lines:invoice_lines (
+          id,
+          description,
+          quantity,
+          unit_price,
+          amount
         )
       `)
       .order("created_at", { ascending: false })
@@ -37,7 +45,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (customerId) {
-      query = query.eq("contact_id", customerId)
+      query = query.eq("customer_id", customerId)
     }
 
     const { data, error } = await query
@@ -54,12 +62,12 @@ export async function GET(request: NextRequest) {
       is_organization: !!invoice.org_id,
     }))
 
-    return NextResponse.json({
+    return NextResponse.json({ 
       invoices: invoicesWithContext,
       context: {
         hasOrganizations: orgContext.hasOrganizationAccess,
         organizationCount: orgContext.organizationIds.length,
-      },
+      }
     })
   } catch (error: any) {
     console.error("[v0] Error fetching invoices:", error)
@@ -70,7 +78,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const orgContext = await getOrganizationContext()
-
+    
     if (!orgContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -78,93 +86,57 @@ export async function POST(request: NextRequest) {
     const supabase = await createBooksServerClient()
     const body = await request.json()
 
-    console.log("[v0] Received invoice creation request:", body)
-
-    const contactId = body.customer_id || body.contact_id
-    const { invoice_number, invoice_date, due_date, items, notes, terms } = body
-
-    if (!contactId) {
-      return NextResponse.json(
-        {
-          error: "Customer/Contact ID is required",
-        },
-        { status: 400 },
-      )
-    }
-
-    if (!items || items.length === 0) {
-      return NextResponse.json(
-        {
-          error: "At least one line item is required",
-        },
-        { status: 400 },
-      )
-    }
+    const { customer_id, invoice_number, invoice_date, due_date, items, notes, terms } = body
 
     const targetOrgId = body.org_id || orgContext.organizationId
 
     if (!targetOrgId) {
-      return NextResponse.json(
-        {
-          error: "No organization context. Please create or join an organization first.",
-        },
-        { status: 400 },
-      )
+      return NextResponse.json({ 
+        error: "No organization context. Please create or join an organization first." 
+      }, { status: 400 })
     }
 
     // Calculate totals
-    const subtotal = items.reduce((sum: number, item: any) => sum + (item.amount || 0), 0)
-    const tax = subtotal * 0.1 // 10% tax
-    const total = subtotal + tax
-
-    const finalInvoiceNumber = invoice_number || `INV-${Date.now()}`
-
-    console.log("[v0] Creating invoice with totals:", { subtotal, tax, total })
+    const subtotal = items.reduce((sum: number, item: any) => sum + item.amount, 0)
+    const tax_amount = subtotal * 0.1 // 10% tax for example
+    const total = subtotal + tax_amount
 
     const { data: invoice, error: invoiceError } = await supabase
       .from("invoices")
       .insert({
-        contact_id: contactId,
-        number: finalInvoiceNumber,
-        issue_date: invoice_date,
+        customer_id,
+        invoice_number,
+        invoice_date,
         due_date,
-        subtotal,
-        tax,
-        total,
-        balance: total,
+        subtotal_amount: subtotal,
+        tax_amount,
+        total_amount: total,
+        balance_due: total,
         status: "draft",
-        currency: "USD",
+        notes,
+        terms,
         org_id: targetOrgId,
       })
       .select()
       .single()
 
     if (invoiceError) {
-      console.error("[v0] Error creating invoice:", invoiceError)
       return handleSupabaseError(invoiceError, {
         operation: "create invoice",
         resource: "invoice",
-        details: { contact_id: contactId, invoice_number: finalInvoiceNumber, org_id: targetOrgId },
+        details: { customer_id, invoice_number, org_id: targetOrgId },
       })
     }
 
-    console.log("[v0] Invoice created:", invoice)
-
+    // Create invoice items
     const itemsWithInvoiceId = items.map((item: any) => ({
+      ...item,
       invoice_id: invoice.id,
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      amount: item.amount,
     }))
 
     const { error: itemsError } = await supabase.from("invoice_lines").insert(itemsWithInvoiceId)
 
     if (itemsError) {
-      console.error("[v0] Error creating invoice items:", itemsError)
-      // Rollback: delete the invoice
-      await supabase.from("invoices").delete().eq("id", invoice.id)
-
       return handleSupabaseError(itemsError, {
         operation: "add invoice items",
         resource: "invoice item",
@@ -172,11 +144,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log("[v0] Invoice line items created successfully")
-
-    return NextResponse.json({ invoice, success: true })
+    return NextResponse.json({ invoice })
   } catch (error: any) {
     console.error("[v0] Error creating invoice:", error)
-    return NextResponse.json({ error: error.message || "Failed to create invoice" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 })
   }
 }

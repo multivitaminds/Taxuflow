@@ -1,22 +1,26 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-function isV0Preview() {
-  return (
-    typeof window === "undefined" &&
-    (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  )
-}
-
+/**
+ * Especially important if using Fluid compute: Don't put this client in a
+ * global variable. Always create a new client within each function when using it.
+ */
 export async function createClient() {
   const cookieStore = await cookies()
 
-  // Direct access to env vars - v0 runtime handles this specially
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+  const supabaseUrl = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim()
+  const supabaseAnonKey = (process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)?.trim()
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.log("[v0] Running in preview mode without Supabase configuration")
+    console.log("[v0] Supabase config missing on server:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseAnonKey,
+      hasSupabaseUrl: !!process.env.SUPABASE_URL,
+      hasPublicUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
+      hasPublicKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    })
+    // Return a mock client that throws helpful errors
     return null as any
   }
 
@@ -46,8 +50,8 @@ export async function getSupabaseServerClient() {
 export async function createServiceRoleClient() {
   const cookieStore = await cookies()
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL)?.trim()
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error("[v0] Supabase service role config missing:", {
@@ -57,6 +61,7 @@ export async function createServiceRoleClient() {
     return null as any
   }
 
+  // Service role client bypasses RLS - use only for trusted operations
   return createServerClient(supabaseUrl, supabaseServiceKey, {
     cookies: {
       getAll() {
@@ -71,13 +76,4 @@ export async function createServiceRoleClient() {
       },
     },
   })
-}
-
-export async function createClientSafe() {
-  try {
-    return await createClient()
-  } catch (error) {
-    console.error("[v0] Failed to create Supabase client:", error)
-    return null
-  }
 }

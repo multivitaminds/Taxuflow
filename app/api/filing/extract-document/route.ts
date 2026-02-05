@@ -272,18 +272,12 @@ CRITICAL ADDRESS EXTRACTION RULES:
 - ALWAYS preserve complete addresses including apartment/unit/suite numbers
 - Example: "480 Cedar Lane, Apt 2B, Springfield, IL 62704" should extract:
   * street: "480 Cedar Lane, Apt 2B"
-  * city: "Springfield" (extract ONLY the city name, NOT the full address)
+  * city: "Springfield" (extract the ACTUAL city from the document)
   * state: "IL"
   * zipCode: "62704"
-- DO NOT copy the entire address into the city field
 - DO NOT invent city names - extract exactly what's written in the document
 - DO NOT use generic cities like "San Francisco" unless that's what the document actually says
-- Parse carefully: Look for distinct fields labeled "Street Address" | "City" | "State" | "ZIP"
-- If the address is on one line like "480 Cedar Lane, Apt 2B, Springfield, IL 62704":
-  * Everything before the LAST comma-separated location is the street
-  * The last location component before the state abbreviation is the city
-  * Extract state as the 2-letter code
-  * Extract ZIP as the 5 or 9-digit number
+- Parse carefully: Street Address | City | State | ZIP
 
 Identify the document type:
 - "w2" for W-2 Wage and Tax Statement
@@ -310,14 +304,14 @@ For W-2:
 - state, state_wages, state_tax_withheld
 
 For 1099-NEC:
-- payer_name, payer_ein, payer_address (break down into street, city, state, zipCode)
-- recipient_name, recipient_tin, recipient_address (break down into street, city, state, zipCode)
+- payer_name, payer_ein, payer_address
+- recipient_name, recipient_tin, recipient_address  
 - tax_year
-- compensation (Box 1) - REQUIRED, this is the nonemployee compensation amount - extract as a NUMBER
-- federal_tax_withheld (Box 4) - extract as a NUMBER
-- state_tax_withheld (Box 5) - extract as a NUMBER
+- compensation (Box 1) - REQUIRED, this is the nonemployee compensation amount
+- federal_tax_withheld (Box 4)
+- state_tax_withheld (Box 5)
 - state_payers_state_no (Box 6)
-- state_income (Box 7) - extract as a NUMBER
+- state_income (Box 7)
 
 CRITICAL EXTRACTION RULES:
 - For recipient/contractor on 1099-NEC: Extract as "ssn" if it's an individual SSN, extract as "ein" if it's a business EIN
@@ -327,8 +321,6 @@ CRITICAL EXTRACTION RULES:
 - Never mask/hide the actual numbers - extract them exactly as shown
 - If numbers are already masked (XX-XXXXXXX), note this in confidence score
 - EXTRACT THE ACTUAL CITY NAME from the document - do not substitute or guess
-- For addresses in format "Street, City, State ZIP": Extract city as ONLY the city name
-- For compensation and tax amounts: Extract as pure numbers without dollar signs or commas
 
 Rules:
 - Set "isTemplateData": true if the document contains placeholder/sample values
@@ -337,7 +329,7 @@ Rules:
 - If you can't read a field clearly, omit it
 - Be accurate with numbers - these are used for tax filing
 - Always include documentType, taxYear, isTemplateData, and confidence
-- For 1099-NEC: ALWAYS include "compensation" field at root level (Box 1) as a number
+- For 1099-NEC: ALWAYS include "compensation" field at root level (Box 1)
 - Return ONLY the JSON object, nothing else
 - DO NOT wrap in markdown code blocks
 - DO NOT add any explanatory text`
@@ -415,42 +407,6 @@ Rules:
       }
 
       throw aiError
-    }
-
-    // AI returns flat structure (payer_name, payer_ein, etc.) but validation expects nested objects
-    if (extractedData.documentType === "1099-nec" || extractedData.documentType === "1099-misc") {
-      // Check if data is in flat format and needs restructuring
-      if (!extractedData.payer && (extractedData.payer_name || extractedData.payer_ein)) {
-        console.log("[v0] Restructuring 1099 data from flat to nested format")
-
-        // Build payer object from flat fields
-        extractedData.payer = {
-          name: extractedData.payer_name,
-          ein: extractedData.payer_ein,
-          address: extractedData.payer_address,
-          street: extractedData.payer_address?.street,
-          city: extractedData.payer_address?.city,
-          state: extractedData.payer_address?.state,
-          zipCode: extractedData.payer_address?.zipCode || extractedData.payer_address?.zip,
-        }
-      }
-
-      if (!extractedData.recipient && (extractedData.recipient_name || extractedData.recipient_tin)) {
-        // Build recipient object from flat fields
-        extractedData.recipient = {
-          name: extractedData.recipient_name,
-          ssn: extractedData.recipient_ssn || extractedData.recipient_tin,
-          ein: extractedData.recipient_ein,
-          address: extractedData.recipient_address,
-          street: extractedData.recipient_address?.street,
-          city: extractedData.recipient_address?.city,
-          state: extractedData.recipient_address?.state,
-          zipCode: extractedData.recipient_address?.zipCode || extractedData.recipient_address?.zip,
-        }
-      }
-
-      console.log("[v0] Restructured payer:", extractedData.payer?.name)
-      console.log("[v0] Restructured recipient:", extractedData.recipient?.name)
     }
 
     if (extractedData.documentType === "w2") {

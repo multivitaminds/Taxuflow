@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
@@ -12,12 +12,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
-
     const { data: payments, error } = await supabase
       .from("recipient_payments")
       .select("*")
-      .eq("recipient_id", id)
+      .eq("recipient_id", params.id)
       .eq("user_id", user.id)
       .order("payment_date", { ascending: false })
 
@@ -30,7 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const supabase = await createClient()
     const {
@@ -41,7 +39,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { id } = await params
     const body = await request.json()
     const { amount, paymentDate, description, category } = body
 
@@ -53,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { data: payment, error: paymentError } = await supabase
       .from("recipient_payments")
       .insert({
-        recipient_id: id,
+        recipient_id: params.id,
         user_id: user.id,
         amount,
         payment_date: paymentDate,
@@ -69,7 +66,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const { data: recipient } = await supabase
       .from("recipients")
       .select("total_payments, payment_count")
-      .eq("id", id)
+      .eq("id", params.id)
       .single()
 
     if (recipient) {
@@ -80,7 +77,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           payment_count: (recipient.payment_count || 0) + 1,
           last_payment_date: paymentDate,
         })
-        .eq("id", id)
+        .eq("id", params.id)
     }
 
     return NextResponse.json({ payment, success: true })

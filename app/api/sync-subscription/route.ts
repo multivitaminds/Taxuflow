@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-import { createClient } from "@/lib/supabase/server"
+import { createServerClient } from "@/lib/supabase/server"
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -12,9 +12,10 @@ export async function POST() {
   try {
     let supabase
     try {
-      supabase = await createClient()
+      supabase = await createServerClient()
     } catch (error) {
       console.warn("[v0] Supabase client creation failed (likely missing env vars):", error)
+      // Return a mock success for demo mode/missing config to prevent UI errors
       return NextResponse.json({
         success: true,
         message: "Demo mode: Subscription sync simulated",
@@ -46,12 +47,7 @@ export async function POST() {
       .single()
 
     if (!profile?.stripe_customer_id) {
-      console.log("[v0] No Stripe customer found, user is on free tier")
-      return NextResponse.json({
-        success: true,
-        message: "No subscription found - using free tier",
-        subscription: { tier: "free", status: "active" },
-      })
+      return NextResponse.json({ error: "No Stripe customer found" }, { status: 404 })
     }
 
     console.log("[v0] Syncing subscription for customer:", profile.stripe_customer_id)
@@ -64,8 +60,6 @@ export async function POST() {
     })
 
     if (subscriptions.data.length === 0) {
-      console.log("[v0] No active subscription found - checking for one-time payments")
-
       // Check for successful payments without subscription (one-time payments)
       const paymentIntents = await stripe.paymentIntents.list({
         customer: profile.stripe_customer_id,
@@ -74,10 +68,11 @@ export async function POST() {
 
       if (paymentIntents.data.length > 0 && paymentIntents.data[0].status === "succeeded") {
         const payment = paymentIntents.data[0]
-        const planId = payment.metadata?.planId || "pro-monthly"
+        const planId = payment.metadata?.planId || "premium"
 
         console.log("[v0] Found successful one-time payment, updating to:", planId)
 
+        // Update to premium for one-time payment
         const { error: updateError } = await supabase
           .from("user_profiles")
           .update({
@@ -100,16 +95,11 @@ export async function POST() {
         })
       }
 
-      console.log("[v0] No subscription or payment found, defaulting to free tier")
-      return NextResponse.json({
-        success: true,
-        message: "No active subscription - using free tier",
-        subscription: { tier: "free", status: "active" },
-      })
+      return NextResponse.json({ error: "No subscription found" }, { status: 404 })
     }
 
     const subscription = subscriptions.data[0]
-    const planId = subscription.metadata?.planId || subscription.items.data[0]?.price.metadata?.tier || "pro-monthly"
+    const planId = subscription.metadata?.planId || "premium"
 
     console.log("[v0] Found subscription:", subscription.id, "Status:", subscription.status, "Plan:", planId)
 

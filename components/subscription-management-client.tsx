@@ -27,41 +27,18 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true)
 
   const isSuccess = searchParams.get("success") === "true"
-  const isCanceled = searchParams.get("canceled") === "true"
-  const isDemo = searchParams.get("demo") === "true"
   const successPlan = searchParams.get("plan")
-  const successAddOn = searchParams.get("addon")
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setInitialLoading(false)
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    if (isSuccess && !isDemo) {
+    if (isSuccess) {
       const timer = setTimeout(() => {
         router.refresh()
       }, 2000)
       return () => clearTimeout(timer)
     }
-  }, [isSuccess, isDemo, router])
-
-  if (initialLoading && isSuccess) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Processing your subscription...</h2>
-          <p className="text-muted-foreground">Please wait while we activate your account.</p>
-        </div>
-      </div>
-    )
-  }
+  }, [isSuccess, router])
 
   const currentPlanId = profile?.subscription_tier?.toLowerCase() || "free"
   const currentPlan = getPlanById(currentPlanId)
@@ -186,45 +163,16 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
           <p className="text-muted-foreground">Upgrade, downgrade, or cancel your subscription</p>
         </div>
 
-        {isCanceled && (
-          <Card className="mb-6 border-amber-500 bg-amber-50 dark:bg-amber-950">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4">
-                <ArrowRight className="w-6 h-6 text-amber-600 flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100 mb-2">Checkout Canceled</h3>
-                  <p className="text-amber-800 dark:text-amber-200 mb-4">
-                    You canceled the checkout process. No charges were made. Feel free to try again when you're ready.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {isSuccess && (
           <Card className="mb-6 border-green-500 bg-green-50 dark:bg-green-950">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4">
                 <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
-                    {isDemo ? "Demo Mode Active" : "Payment Successful!"}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">Payment Successful!</h3>
                   <p className="text-green-800 dark:text-green-200 mb-4">
-                    {isDemo ? (
-                      <>
-                        You're viewing a demo of the{" "}
-                        {successPlan ? getPlanById(successPlan)?.name : successAddOn ? successAddOn : "subscription"}{" "}
-                        features. To activate real billing, connect your Stripe account.
-                      </>
-                    ) : (
-                      <>
-                        Your subscription to{" "}
-                        {successPlan ? getPlanById(successPlan)?.name : successAddOn ? successAddOn : "the plan"} has
-                        been activated. Your account will be updated shortly.
-                      </>
-                    )}
+                    Your subscription to {successPlan ? getPlanById(successPlan)?.name : "the plan"} has been activated.
+                    Your account will be updated shortly.
                   </p>
                   <div className="flex gap-3">
                     <Button asChild variant="default">
@@ -239,21 +187,19 @@ export function SubscriptionManagementClient({ profile }: SubscriptionManagement
                         View Profile
                       </Link>
                     </Button>
-                    {!isDemo && (
-                      <Button onClick={handleSyncSubscription} variant="outline" disabled={syncing}>
-                        {syncing ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Syncing...
-                          </>
-                        ) : (
-                          <>
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Sync Now
-                          </>
-                        )}
-                      </Button>
-                    )}
+                    <Button onClick={handleSyncSubscription} variant="outline" disabled={syncing}>
+                      {syncing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Syncing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Sync Now
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>

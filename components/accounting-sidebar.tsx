@@ -18,52 +18,24 @@ import {
   Clock,
   TrendingUp,
   BookOpen,
-  UserCog,
-  Calculator,
-  FolderOpen,
-  Warehouse,
-  Wallet,
-  FolderClosed,
-  Activity,
-  Mail,
-  Import,
-  Target,
-  Database,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 
 const navigation = [
   { name: "Dashboard", href: "/accounting", icon: LayoutDashboard },
-  { name: "Features Directory", href: "/accounting/directory", icon: FolderOpen },
-  { name: "Activity Feed", href: "/accounting/activity", icon: Activity },
   { name: "Books", href: "/books", icon: BookOpen },
   { name: "Invoices", href: "/accounting/invoices", icon: FileText },
-  { name: "Estimates", href: "/accounting/estimates", icon: FileText },
-  { name: "Sales Orders", href: "/accounting/sales-orders", icon: FileText },
   { name: "Bills", href: "/accounting/bills", icon: Receipt },
   { name: "Expenses", href: "/accounting/expenses", icon: Receipt },
   { name: "Customers", href: "/accounting/customers", icon: Users },
   { name: "Vendors", href: "/accounting/vendors", icon: Building2 },
-  { name: "Employees", href: "/accounting/employees", icon: UserCog },
   { name: "Chart of Accounts", href: "/accounting/chart-of-accounts", icon: TrendingUp },
   { name: "Bank Feeds", href: "/accounting/bank-feeds", icon: Landmark },
-  { name: "Credit Cards", href: "/accounting/credit-cards", icon: CreditCard },
-  { name: "Budget & Forecasting", href: "/accounting/budget", icon: Wallet },
-  { name: "Financial Ratios", href: "/accounting/ratios", icon: Calculator },
-  { name: "Performance Metrics", href: "/accounting/performance", icon: Target },
   { name: "Reports", href: "/accounting/reports", icon: PieChart },
   { name: "Products", href: "/accounting/products", icon: Package },
-  { name: "Inventory", href: "/accounting/inventory", icon: Warehouse },
-  { name: "Fixed Assets", href: "/accounting/assets", icon: Package },
-  { name: "Purchase Orders", href: "/accounting/purchase-orders", icon: FileText },
-  { name: "Documents", href: "/accounting/documents", icon: FolderClosed },
-  { name: "Email Templates", href: "/accounting/email-templates", icon: Mail },
-  { name: "Import/Export", href: "/accounting/import-export", icon: Import },
-  { name: "Backup & Restore", href: "/accounting/backup", icon: Database },
   { name: "Time Tracking", href: "/accounting/time", icon: Clock },
   { name: "Payments", href: "/accounting/payments", icon: CreditCard },
-  { name: "Tax Management", href: "/accounting/tax", icon: Calculator },
   { name: "Settings", href: "/accounting/settings", icon: Settings },
 ]
 
@@ -74,7 +46,7 @@ export function AccountingSidebar() {
   return (
     <div
       className={cn(
-        "fixed left-0 top-[104px] h-[calc(100vh-104px)] bg-[#f7f9fc] border-r border-slate-200 transition-all duration-300 z-40",
+        "fixed left-0 top-0 h-screen bg-[#f7f9fc] border-r border-slate-200 transition-all duration-300 z-40",
         collapsed ? "w-16" : "w-64",
       )}
     >
@@ -96,7 +68,7 @@ export function AccountingSidebar() {
         </Button>
       </div>
 
-      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-228px)]">
+      <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-140px)]">
         {navigation.map((item) => {
           const isActive = pathname === item.href || pathname?.startsWith(item.href + "/")
           return (

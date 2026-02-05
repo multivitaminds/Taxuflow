@@ -13,7 +13,6 @@ import { Loader2, ArrowLeft, Save, Send, Lock, ArrowRight } from "lucide-react"
 import { ProgressStepper } from "@/components/ui/progress-stepper"
 import { FilingReviewSection } from "@/components/filing-review-section"
 import { FilingProgressDialog } from "@/components/filing-progress-dialog"
-import { formatEIN } from "@/lib/format-utils"
 
 export default function Form941() {
   const router = useRouter()
@@ -309,11 +308,7 @@ export default function Form941() {
                     required
                     placeholder="XX-XXXXXXX"
                     value={formData.ein}
-                    onChange={(e) => {
-                      const formatted = formatEIN(e.target.value)
-                      setFormData({ ...formData, ein: formatted })
-                    }}
-                    maxLength={10}
+                    onChange={(e) => setFormData({ ...formData, ein: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <Lock className="h-3 w-3" />

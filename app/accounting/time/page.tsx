@@ -1,25 +1,12 @@
-import { Suspense } from "react"
-import { TimeTrackingClient } from "@/components/time-tracking-client"
-
 export default function TimeTrackingPage() {
+  return <TimeTrackingClient />
+}
+
+function TimeTrackingClient() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background p-8">
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 bg-muted rounded w-48"></div>
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="h-32 bg-muted rounded"></div>
-              <div className="h-32 bg-muted rounded"></div>
-              <div className="h-32 bg-muted rounded"></div>
-              <div className="h-32 bg-muted rounded"></div>
-            </div>
-            <div className="h-96 bg-muted rounded"></div>
-          </div>
-        </div>
-      }
-    >
-      <TimeTrackingClient />
-    </Suspense>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold">Time Tracking</h1>
+      <p className="text-muted-foreground mt-2">Track billable hours and project time</p>
+    </div>
   )
 }

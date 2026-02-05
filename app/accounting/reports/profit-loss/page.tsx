@@ -22,13 +22,6 @@ export default function ProfitLossReport() {
         </div>
       </div>
       <Card className="p-6">
-        <div className="flex gap-4 mb-6 border-b">
-          <button className="pb-2 px-4 border-b-2 border-primary font-medium">Summary</button>
-          <button className="pb-2 px-4 text-muted-foreground hover:text-foreground">Detailed</button>
-          <button className="pb-2 px-4 text-muted-foreground hover:text-foreground">Compare</button>
-          <button className="pb-2 px-4 text-muted-foreground hover:text-foreground">Chart</button>
-        </div>
-
         <div className="space-y-4">
           <div className="border-b pb-4">
             <h2 className="text-xl font-semibold mb-4">Revenue</h2>
@@ -72,24 +65,6 @@ export default function ProfitLossReport() {
           </div>
         </div>
       </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-        <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-          <h3 className="font-semibold mb-2">Revenue Breakdown</h3>
-          <div className="text-2xl font-bold text-green-600">$170,540</div>
-          <p className="text-sm text-muted-foreground mt-1">View details →</p>
-        </Card>
-        <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-          <h3 className="font-semibold mb-2">Expense Analysis</h3>
-          <div className="text-2xl font-bold text-red-600">$77,180</div>
-          <p className="text-sm text-muted-foreground mt-1">View details →</p>
-        </Card>
-        <Card className="p-4 hover:shadow-lg transition-shadow cursor-pointer">
-          <h3 className="font-semibold mb-2">Profit Margin</h3>
-          <div className="text-2xl font-bold text-blue-600">54.7%</div>
-          <p className="text-sm text-muted-foreground mt-1">View trends →</p>
-        </Card>
-      </div>
     </div>
   )
 }

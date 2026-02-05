@@ -4,8 +4,7 @@ import { FilingStatusEmail } from "./templates/filing-status"
 import { DocumentProcessedEmail } from "./templates/document-processed"
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const FROM_EMAIL =
-  process.env.NODE_ENV === "production" ? "Taxu <notifications@taxu.io>" : "Taxu <onboarding@resend.dev>"
+const FROM_EMAIL = "Taxu <notifications@taxu.io>"
 
 interface SendEmailOptions {
   to: string

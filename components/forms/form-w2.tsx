@@ -29,7 +29,6 @@ import { parseName, parseLastNameWithMiddleInitial } from "@/lib/name-parser"
 import { ProgressStepper } from "@/components/ui/progress-stepper"
 import { FilingReviewSection } from "@/components/filing-review-section"
 import { FilingProgressDialog } from "@/components/filing-progress-dialog"
-import { formatEIN, formatSSN } from "@/lib/format-utils"
 
 interface FormW2Props {
   extractedData?: any
@@ -1154,11 +1153,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
                     required
                     placeholder="XX-XXXXXXX"
                     value={formData.employerEIN}
-                    onChange={(e) => {
-                      const formatted = formatEIN(e.target.value)
-                      setFormData({ ...formData, employerEIN: formatted })
-                    }}
-                    maxLength={10}
+                    onChange={(e) => setFormData({ ...formData, employerEIN: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <Lock className="h-3 w-3" />
@@ -1269,11 +1264,7 @@ export default function FormW2({ extractedData }: FormW2Props) {
                     required
                     placeholder="XXX-XX-XXXX"
                     value={formData.employeeSSN}
-                    onChange={(e) => {
-                      // Apply automatic SSN formatting (XXX-XX-XXXX)
-                      const formatted = formatSSN(e.target.value)
-                      setFormData({ ...formData, employeeSSN: formatted })
-                    }}
+                    onChange={(e) => setFormData({ ...formData, employeeSSN: e.target.value })}
                   />
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                     <Lock className="h-3 w-3" />

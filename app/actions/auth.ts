@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+import { redirect } from 'next/navigation'
 
 export async function signInWithPassword(email: string, password: string) {
   const supabase = await createClient()
@@ -19,7 +19,6 @@ export async function signInWithPassword(email: string, password: string) {
   })
 
   if (error) {
-    console.error("[v0] Sign in error:", error)
     if (error.message === "Invalid login credentials") {
       return {
         error:
@@ -40,33 +39,4 @@ export async function signInWithPassword(email: string, password: string) {
 
   // Redirect on successful login
   redirect("/dashboard")
-}
-
-export async function signInWithOAuth(provider: "google" | "github") {
-  const supabase = await createClient()
-
-  if (!supabase) {
-    return {
-      error: "Authentication service is not available.",
-    }
-  }
-
-  const redirectUrl =
-    process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ||
-    `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/callback`
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider,
-    options: {
-      redirectTo: redirectUrl,
-      skipBrowserRedirect: false,
-    },
-  })
-
-  if (error) {
-    console.error(`[v0] ${provider} OAuth error:`, error)
-    return { error: error.message }
-  }
-
-  return { url: data.url }
 }

@@ -5,19 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import {
-  Plus,
-  RefreshCw,
-  CheckCircle2,
-  AlertCircle,
-  Building2,
-  CreditCard,
-  Search,
-  Download,
-  Settings,
-  TrendingUp,
-} from "lucide-react"
+import { Plus, RefreshCw, CheckCircle2, AlertCircle, Building2, CreditCard, Search, Download } from "lucide-react"
 
 const connectedAccounts = [
   {
@@ -102,118 +90,55 @@ export default function BankFeedsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Link href="/accounting/bank-feeds/reconciliation">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Unreconciled</p>
-                <p className="text-2xl font-bold">17</p>
-              </div>
-              <div className="p-3 rounded-lg bg-orange-500/10">
-                <AlertCircle className="h-5 w-5 text-orange-600" />
-              </div>
-            </div>
-          </Card>
-        </Link>
-        <Link href="/accounting/bank-feeds/rules">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Rules</p>
-                <p className="text-2xl font-bold">24</p>
-              </div>
-              <div className="p-3 rounded-lg bg-blue-500/10">
-                <Settings className="h-5 w-5 text-blue-600" />
-              </div>
-            </div>
-          </Card>
-        </Link>
-        <Link href="/accounting/bank-feeds/analytics">
-          <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Auto-Matched</p>
-                <p className="text-2xl font-bold">89%</p>
-              </div>
-              <div className="p-3 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-              </div>
-            </div>
-          </Card>
-        </Link>
-        <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">This Month</p>
-              <p className="text-2xl font-bold">342</p>
-            </div>
-            <div className="p-3 rounded-lg bg-purple-500/10">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-            </div>
-          </div>
-        </Card>
-      </div>
-
       {/* Connected Accounts */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Connected Accounts</h2>
-          <div className="flex gap-2">
-            <Link href="/accounting/bank-feeds/rules">
-              <Button variant="outline">
-                <Settings className="h-4 w-4 mr-2" />
-                Manage Rules
-              </Button>
-            </Link>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Connect Bank Account
-            </Button>
-          </div>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Connect Bank Account
+          </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {connectedAccounts.map((account) => (
-            <Link key={account.id} href={`/accounting/bank-feeds/${account.id}/reconcile`}>
-              <Card className="p-6 hover:shadow-lg transition-shadow cursor-pointer">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      {account.accountNumber.includes("****") && account.bank.includes("Express") ? (
-                        <CreditCard className="h-5 w-5 text-primary" />
-                      ) : (
-                        <Building2 className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{account.bank}</p>
-                      <p className="text-sm text-muted-foreground">{account.accountNumber}</p>
-                    </div>
-                  </div>
-                  <Badge variant={account.status === "connected" ? "default" : "secondary"}>{account.status}</Badge>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Current Balance</p>
-                    <p className="text-2xl font-bold">
-                      ${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Last synced {account.lastSync}</span>
-                    {account.unreviewed > 0 && (
-                      <Badge variant="outline" className="text-orange-600">
-                        {account.unreviewed} to review
-                      </Badge>
+            <Card key={account.id} className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    {account.accountNumber.includes("****") && account.bank.includes("Express") ? (
+                      <CreditCard className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Building2 className="h-5 w-5 text-primary" />
                     )}
                   </div>
-                  <Button variant="outline" size="sm" className="w-full bg-transparent">
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Sync Now
-                  </Button>
+                  <div>
+                    <p className="font-medium">{account.bank}</p>
+                    <p className="text-sm text-muted-foreground">{account.accountNumber}</p>
+                  </div>
                 </div>
-              </Card>
-            </Link>
+                <Badge variant={account.status === "connected" ? "default" : "secondary"}>{account.status}</Badge>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Current Balance</p>
+                  <p className="text-2xl font-bold">
+                    ${Math.abs(account.balance).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Last synced {account.lastSync}</span>
+                  {account.unreviewed > 0 && (
+                    <Badge variant="outline" className="text-orange-600">
+                      {account.unreviewed} to review
+                    </Badge>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" className="w-full bg-transparent">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sync Now
+                </Button>
+              </div>
+            </Card>
           ))}
         </div>
       </div>
@@ -286,9 +211,7 @@ export default function BankFeedsClient() {
                     </td>
                     <td className="p-4 text-right">
                       {txn.status === "needs-review" ? (
-                        <Link href={`/accounting/bank-feeds/transaction/${txn.id}`}>
-                          <Button size="sm">Review</Button>
-                        </Link>
+                        <Button size="sm">Review</Button>
                       ) : (
                         <Button variant="ghost" size="sm">
                           Edit

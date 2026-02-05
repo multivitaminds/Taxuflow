@@ -6,19 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Loader2,
-  Trash2,
-  CheckCircle2,
-  AlertCircle,
-  Lock,
-  Sparkles,
-  FileText,
-  ArrowLeft,
-  ArrowRight,
-  Send,
-} from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Loader2, Trash2, CheckCircle2, AlertCircle, Lock, Sparkles, FileText, ArrowLeft, ArrowRight, Send } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { parseAddress } from "@/lib/address-parser"
 import { parseName } from "@/lib/name-parser"
@@ -272,10 +261,10 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
 
       if (data.success && data.validation) {
         setValidationResults(data.validation)
-
+        
         const systemWarning = data.validation.warnings?.find((w: any) => w.field === "system")
         const isAIUnavailable = systemWarning && systemWarning.message.includes("temporarily unavailable")
-
+        
         toast({
           title: isAIUnavailable ? "Basic Validation Complete" : "AI Validation Complete",
           description: `Found ${data.validation.errors.length} errors, ${data.validation.warnings.length} warnings, ${data.validation.suggestions.length} suggestions`,
@@ -506,15 +495,12 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
     console.log("[v0] Starting IRS submission...")
 
     try {
-      console.log("[v0] Step 1/3: Authenticating with IRS e-filing system")
       await new Promise((resolve) => setTimeout(resolve, 1500))
       setFilingProgress(2)
 
-      console.log("[v0] Step 2/3: Verifying business entity with IRS")
       await new Promise((resolve) => setTimeout(resolve, 1500))
       setFilingProgress(3)
 
-      console.log("[v0] Step 3/3: Submitting 1099-NEC forms to IRS")
       console.log("[v0] Calling /api/filing/submit-1099...")
       const response = await fetch("/api/filing/submit-1099", {
         method: "POST",
@@ -569,8 +555,6 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
       }
 
       if (data.success) {
-        console.log("[v0] ✅ 1099-NEC SUBMITTED SUCCESSFULLY!")
-
         setFilingProgress(4)
 
         toast({
@@ -579,23 +563,18 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
           duration: 5000,
         })
 
-        localStorage.removeItem("1099_draft")
-
         setTimeout(() => {
-          router.push(data.filingId ? `/dashboard/filing/${data.filingId}` : "/dashboard/filing")
+          setShowProgressDialog(false)
+          setFilingProgress(0)
+          router.push("/dashboard/filing")
         }, 3000)
       } else {
-        setFilingProgress(0)
-        setShowProgressDialog(false)
-
         throw new Error(data.error || "Failed to submit filing")
       }
     } catch (error) {
-      console.error("[v0] SUBMISSION ERROR:", error)
-
+      console.error("[v0] Submission error:", error)
       setShowProgressDialog(false)
       setFilingProgress(0)
-
       toast({
         title: "Submission Failed",
         description: error instanceof Error ? error.message : "An error occurred",
@@ -1089,20 +1068,12 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
               ))}
 
               {validationResults.warnings?.map((warning: any, index: number) => (
-                <Alert
-                  key={`warning-${index}`}
-                  className={
-                    warning.field === "system"
-                      ? "bg-blue-500/10 border-blue-500/20"
-                      : "bg-orange-500/10 border-orange-500/20"
-                  }
+                <Alert 
+                  key={`warning-${index}`} 
+                  className={warning.field === "system" ? "bg-blue-500/10 border-blue-500/20" : "bg-orange-500/10 border-orange-500/20"}
                 >
-                  <AlertCircle
-                    className={`h-4 w-4 ${warning.field === "system" ? "text-blue-600" : "text-orange-600"}`}
-                  />
-                  <AlertTitle
-                    className={`${warning.field === "system" ? "text-blue-600" : "text-orange-600"} font-semibold`}
-                  >
+                  <AlertCircle className={`h-4 w-4 ${warning.field === "system" ? "text-blue-600" : "text-orange-600"}`} />
+                  <AlertTitle className={`${warning.field === "system" ? "text-blue-600" : "text-orange-600"} font-semibold`}>
                     {warning.field === "system" ? "Information" : "Warning"}
                   </AlertTitle>
                   <AlertDescription className="text-sm">
@@ -1621,9 +1592,6 @@ export function Form1099NEC({ userId, extractedData }: Form1099NECProps) {
         onClose={() => {
           setShowProgressDialog(false)
           setFilingProgress(0)
-          if (filingProgress === 4) {
-            router.push("/dashboard/filing")
-          }
         }}
       />
 

@@ -1,1 +1,0 @@
-{"version":3,"sources":["../../../../../../taxu-platform/v0-taxu-landing-page/app/dashboard/file/start/page.tsx"],"sourcesContent":["import { TaxFilingConversationFlow } from \"@/components/tax-filing-conversation-flow\"\n\nexport default function StartFilingPage() {\n  return <TaxFilingConversationFlow />\n}\n"],"names":[],"mappings":""}

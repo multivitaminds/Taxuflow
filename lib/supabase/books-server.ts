@@ -8,8 +8,7 @@ export async function createBooksServerClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("[v0] Books server: Missing Supabase environment variables")
-    return null as any
+    throw new Error("Missing Supabase environment variables")
   }
 
   return createSupabaseServerClient(supabaseUrl, supabaseAnonKey, {

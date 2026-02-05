@@ -62,9 +62,8 @@ export async function POST(req: Request) {
     let validation: ValidationResponse
 
     try {
-      const validationPrompt =
-        formType === "1099-nec"
-          ? `You are a tax form validation expert. Review this 1099-NEC form data for errors and inconsistencies.
+      const validationPrompt = formType === "1099-nec" 
+        ? `You are a tax form validation expert. Review this 1099-NEC form data for errors and inconsistencies.
 
 Form Data:
 ${JSON.stringify(formData, null, 2)}
@@ -75,9 +74,7 @@ VALIDATION RULES FOR 1099-NEC:
 1. Each contractor must have EITHER SSN or EIN (not necessarily both)
 2. SSN format: XXX-XX-XXXX (9 digits with dashes)
 3. EIN format: XX-XXXXXXX (9 digits with dash)
-4. Nonemployee compensation (Box 1) must be at least $600 for IRS filing requirement
-   - IMPORTANT: If the value is already $600 or more, this is VALID and should NOT be flagged as an error
-   - Only flag if compensation is LESS THAN $600
+4. Nonemployee compensation (Box 1) must be at least $600
 5. Federal income tax withheld (Box 4) is OPTIONAL and typically 0
 6. If federal tax withheld is present, it should be reasonable (0-37% of compensation)
 7. 1099-NEC does NOT have Social Security wages or Medicare wages
@@ -87,13 +84,11 @@ DO NOT FLAG AS ERROR:
 - Missing EIN if SSN is provided (or vice versa)
 - Zero federal tax withheld (this is normal for 1099-NEC)
 - Lack of Social Security or Medicare withholding (1099-NEC doesn't have these)
-- Compensation of $600 or MORE (this meets the IRS requirement)
-- Compensation of $2500, $5000, $10000, or any amount >= $600 is VALID
 
 ONLY FLAG AS ERROR IF:
 - Both SSN and EIN are missing
 - SSN or EIN has invalid format (wrong number of digits)
-- Compensation is LESS THAN $600 (e.g., $599, $500, $200)
+- Compensation is less than $600
 - Negative amounts
 - Missing required address fields
 - Federal tax withheld exceeds 37% of compensation (if present)
@@ -109,7 +104,7 @@ Return ONLY valid JSON in this exact format:
   ],
   "suggestions": ["suggestion 1", "suggestion 2"]
 }`
-          : `You are a tax form validation expert. Review this ${formType.toUpperCase()} form data for errors and inconsistencies.
+        : `You are a tax form validation expert. Review this ${formType.toUpperCase()} form data for errors and inconsistencies.
 
 Form Data:
 ${JSON.stringify(formData, null, 2)}
@@ -287,8 +282,7 @@ Return ONLY valid JSON in this exact format:
       // Add info message that AI validation was unavailable
       warnings.push({
         field: "system",
-        message:
-          "Advanced AI validation is temporarily unavailable. Comprehensive IRS rule-based validation has been performed.",
+        message: "Advanced AI validation is temporarily unavailable. Comprehensive IRS rule-based validation has been performed.",
         severity: "warning",
       })
     }

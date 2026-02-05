@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -34,9 +32,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { getNeobankCards } from "@/app/actions/neobank/get-cards"
-import { createNeobankCard } from "@/app/actions/neobank/create-card"
-import { updateCardStatus } from "@/app/actions/neobank/update-card-status"
 
 type CardStatus = "active" | "frozen" | "cancelled"
 
@@ -93,79 +88,24 @@ const initialCards: BankingCard[] = [
 ]
 
 export function CardsManager() {
-  const [cards, setCards] = useState<BankingCard[]>([])
-  const [loading, setLoading] = useState(true)
+  const [cards, setCards] = useState<BankingCard[]>(initialCards)
   const [showDetails, setShowDetails] = useState<Record<string, boolean>>({})
-  const [selectedCardId, setSelectedCardId] = useState<string>("")
+  const [selectedCardId, setSelectedCardId] = useState<string>(initialCards[0].id)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  useEffect(() => {
-    loadCards()
-  }, [])
-
-  async function loadCards() {
-    setLoading(true)
-    const { data, error } = await getNeobankCards()
-
-    if (error) {
-      toast.error("Failed to load cards")
-      setCards(initialCards)
-      setSelectedCardId(initialCards[0]?.id)
-    } else if (data && data.length > 0) {
-      const formattedCards: BankingCard[] = data.map((card: any) => ({
-        id: card.id,
-        last4: card.last_four,
-        expiry: card.expiry_date,
-        cvv: card.cvv,
-        holder: card.cardholder_name,
-        type: card.card_type,
-        status: card.status,
-        limit: card.monthly_limit,
-        spent: card.spent_amount,
-        name: card.card_name,
-      }))
-      setCards(formattedCards)
-      setSelectedCardId(formattedCards[0]?.id)
-    } else {
-      setCards(initialCards)
-      setSelectedCardId(initialCards[0]?.id)
-    }
-    setLoading(false)
-  }
 
   const selectedCard = cards.find((c) => c.id === selectedCardId) || cards[0]
 
-  const toggleCardStatus = async (id: string) => {
-    const card = cards.find((c) => c.id === id)
-    if (!card) return
-
-    const newStatus = card.status === "active" ? "frozen" : "active"
-
+  const toggleCardStatus = (id: string) => {
     setCards(
-      cards.map((c) => {
-        if (c.id === id) {
-          return { ...c, status: newStatus }
+      cards.map((card) => {
+        if (card.id === id) {
+          const newStatus = card.status === "active" ? "frozen" : "active"
+          toast.success(`Card ${newStatus === "active" ? "unfrozen" : "frozen"} successfully`)
+          return { ...card, status: newStatus }
         }
-        return c
+        return card
       }),
     )
-
-    const result = await updateCardStatus(id, newStatus)
-
-    if (result.success) {
-      toast.success(`Card ${newStatus === "active" ? "unfrozen" : "frozen"} successfully`)
-    } else {
-      setCards(
-        cards.map((c) => {
-          if (c.id === id) {
-            return { ...c, status: card.status }
-          }
-          return c
-        }),
-      )
-      toast.error(result.error || "Failed to update card status")
-    }
   }
 
   const toggleDetails = (id: string) => {
@@ -177,123 +117,73 @@ export function CardsManager() {
     toast.success("Copied to clipboard")
   }
 
-  const handleCreateCard = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    const formData = new FormData(e.currentTarget)
-    const cardType = formData.get("card-type") as "virtual" | "physical"
-    const cardName = formData.get("name") as string
-    const monthlyLimit = Number(formData.get("limit"))
-    const cardholder = formData.get("holder") as string
-
-    if (!cardName || !monthlyLimit || !cardholder) {
-      toast.error("Please fill in all fields")
-      setIsSubmitting(false)
-      return
-    }
-
-    const result = await createNeobankCard({
-      cardType,
-      cardName,
-      monthlyLimit,
-      cardholder,
-    })
-
-    if (result.success) {
-      toast.success("Card issued successfully!")
-      setIsCreateDialogOpen(false)
-      loadCards()
-    } else {
-      toast.error(result.error || "Failed to create card")
-    }
-
-    setIsSubmitting(false)
-  }
-
-  if (loading) {
-    return (
-      <div className="p-8 max-w-7xl mx-auto">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-slate-500">Loading cards...</div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Card Management</h1>
-          <p className="text-sm text-slate-500 mt-1">Issue and manage physical and virtual cards for your team.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Card Management</h1>
+          <p className="text-slate-500 mt-1">Issue and manage physical and virtual cards for your team.</p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm h-8 text-xs">
+            <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm">
               <Plus className="mr-2 h-4 w-4" /> Issue New Card
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
-            <form onSubmit={handleCreateCard}>
-              <DialogHeader>
-                <DialogTitle className="text-base">Issue New Card</DialogTitle>
-                <DialogDescription className="text-xs">
-                  Create a new virtual or physical card for business expenses.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="card-type" className="text-xs">
-                    Card Type
-                  </Label>
-                  <Select name="card-type" defaultValue="virtual">
-                    <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Select card type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="virtual" className="text-xs">
-                        Virtual (Instant)
-                      </SelectItem>
-                      <SelectItem value="physical" className="text-xs">
-                        Physical (Mail)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="name" className="text-xs">
-                    Card Name (e.g. Marketing)
-                  </Label>
-                  <Input id="name" name="name" placeholder="Marketing Expenses" required className="h-8 text-xs" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="limit" className="text-xs">
-                    Monthly Limit
-                  </Label>
-                  <Input id="limit" name="limit" type="number" placeholder="5000" required className="h-8 text-xs" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="holder" className="text-xs">
-                    Cardholder Name
-                  </Label>
-                  <Input id="holder" name="holder" placeholder="John Doe" required className="h-8 text-xs" />
-                </div>
+            <DialogHeader>
+              <DialogTitle>Issue New Card</DialogTitle>
+              <DialogDescription>Create a new virtual or physical card for business expenses.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="card-type">Card Type</Label>
+                <Select defaultValue="virtual">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select card type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="virtual">Virtual (Instant)</SelectItem>
+                    <SelectItem value="physical">Physical (Mail)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  type="button"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  className="h-8 text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-[#635bff] h-8 text-xs" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Issue Card"}
-                </Button>
-              </DialogFooter>
-            </form>
+              <div className="grid gap-2">
+                <Label htmlFor="name">Card Name (e.g. Marketing)</Label>
+                <Input id="name" placeholder="Marketing Expenses" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="limit">Monthly Limit</Label>
+                <Input id="limit" type="number" placeholder="5000" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="holder">Cardholder</Label>
+                <Select defaultValue="alex">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="alex">Alexander Smith</SelectItem>
+                    <SelectItem value="sarah">Sarah Jones</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#635bff]"
+                onClick={() => {
+                  toast.success("Card issued successfully!")
+                  setIsCreateDialogOpen(false)
+                }}
+              >
+                Issue Card
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -303,7 +193,7 @@ export function CardsManager() {
         <div className="lg:col-span-1 space-y-4">
           <Card className="border-slate-200 shadow-sm overflow-hidden">
             <CardHeader className="bg-slate-50 border-b border-slate-200 py-3 px-4">
-              <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Your Cards</h3>
+              <h3 className="text-sm font-semibold text-slate-600 uppercase tracking-wider">Your Cards</h3>
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-slate-100">
@@ -328,8 +218,8 @@ export function CardsManager() {
                         <CreditCard className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="font-medium text-xs">{card.name}</p>
-                        <p className="text-[10px] text-slate-500">•••• {card.last4}</p>
+                        <p className="font-medium text-sm">{card.name}</p>
+                        <p className="text-xs text-slate-500">•••• {card.last4}</p>
                       </div>
                     </div>
                     <div className="text-right">
@@ -353,8 +243,8 @@ export function CardsManager() {
             <CardContent className="p-4 flex items-start gap-3">
               <ShieldAlert className="h-5 w-5 text-[#635bff] mt-0.5" />
               <div>
-                <h4 className="text-xs font-semibold text-[#0a2540]">Security Tip</h4>
-                <p className="text-[10px] text-slate-500 mt-1">
+                <h4 className="text-sm font-semibold text-[#0a2540]">Security Tip</h4>
+                <p className="text-xs text-slate-500 mt-1">
                   Freeze your card immediately if you notice any suspicious activity. You can unfreeze it anytime.
                 </p>
               </div>
@@ -378,7 +268,7 @@ export function CardsManager() {
 
               <div className="flex justify-between items-start relative z-10">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-base tracking-tight">Taxu</span>
+                  <span className="font-bold text-xl tracking-tight">Taxu</span>
                   <Badge className="bg-white/20 text-white border-none hover:bg-white/30 backdrop-blur-sm uppercase text-[10px] tracking-wider">
                     {selectedCard.type}
                   </Badge>
@@ -388,7 +278,7 @@ export function CardsManager() {
 
               <div className="space-y-4 relative z-10 mt-4">
                 <div className="flex items-center gap-2">
-                  <div className="text-lg font-mono tracking-wider opacity-90">
+                  <div className="text-2xl font-mono tracking-wider opacity-90">
                     {showDetails[selectedCard.id]
                       ? `4532 1234 5678 ${selectedCard.last4}`
                       : `•••• •••• •••• ${selectedCard.last4}`}
@@ -405,16 +295,16 @@ export function CardsManager() {
                 <div className="flex justify-between items-end">
                   <div className="space-y-1">
                     <p className="text-[10px] opacity-70 uppercase tracking-widest">Card Holder</p>
-                    <p className="font-medium tracking-wide text-xs">{selectedCard.holder}</p>
+                    <p className="font-medium tracking-wide">{selectedCard.holder}</p>
                   </div>
                   <div className="flex gap-6">
                     <div className="space-y-1">
                       <p className="text-[10px] opacity-70 uppercase tracking-widest">Expires</p>
-                      <p className="font-medium tracking-wide text-xs">{selectedCard.expiry}</p>
+                      <p className="font-medium tracking-wide">{selectedCard.expiry}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-[10px] opacity-70 uppercase tracking-widest">CVC</p>
-                      <p className="font-medium tracking-wide text-xs">
+                      <p className="font-medium tracking-wide">
                         {showDetails[selectedCard.id] ? selectedCard.cvv : "•••"}
                       </p>
                     </div>
@@ -438,8 +328,8 @@ export function CardsManager() {
                     />
                   </div>
                   <div>
-                    <p className="text-xs font-medium">Card Status</p>
-                    <p className="text-[10px] text-slate-500">
+                    <p className="text-sm font-medium">Card Status</p>
+                    <p className="text-xs text-slate-500">
                       {selectedCard.status === "active" ? "Active & Secure" : "Frozen & Locked"}
                     </p>
                   </div>
@@ -454,25 +344,25 @@ export function CardsManager() {
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="outline"
-                  className="bg-white h-8 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff] text-xs"
+                  className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
                 >
                   <Settings className="mr-2 h-4 w-4" /> Limits
                 </Button>
                 <Button
                   variant="outline"
-                  className="bg-white h-8 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff] text-xs"
+                  className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Replace
                 </Button>
                 <Button
                   variant="outline"
-                  className="bg-white h-8 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff] text-xs"
+                  className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
                 >
                   <Wallet className="mr-2 h-4 w-4" /> Add to Wallet
                 </Button>
                 <Button
                   variant="outline"
-                  className="bg-white h-8 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff] text-xs"
+                  className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
                 >
                   <Smartphone className="mr-2 h-4 w-4" /> Pin
                 </Button>
@@ -486,12 +376,12 @@ export function CardsManager() {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-base font-semibold">Card Details</CardTitle>
-                  <CardDescription className="text-xs">Billing address and limits</CardDescription>
+                  <CardDescription>Billing address and limits</CardDescription>
                 </div>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-[#635bff] h-8 text-xs"
+                  className="text-[#635bff]"
                   onClick={() => copyToClipboard("4532 1234 5678 " + selectedCard.last4)}
                 >
                   <Copy className="h-4 w-4 mr-2" /> Copy Number
@@ -500,16 +390,16 @@ export function CardsManager() {
             </CardHeader>
             <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1">
-                <p className="text-[10px] font-medium text-slate-500 uppercase">Billing Address</p>
-                <p className="text-xs font-medium">123 Innovation Dr</p>
-                <p className="text-xs text-slate-600">Suite 400</p>
-                <p className="text-xs text-slate-600">San Francisco, CA 94103</p>
+                <p className="text-xs font-medium text-slate-500 uppercase">Billing Address</p>
+                <p className="text-sm font-medium">123 Innovation Dr</p>
+                <p className="text-sm text-slate-600">Suite 400</p>
+                <p className="text-sm text-slate-600">San Francisco, CA 94103</p>
               </div>
               <div className="space-y-1">
-                <p className="text-[10px] font-medium text-slate-500 uppercase">Spending Limit</p>
-                <p className="text-xs font-medium">${selectedCard.limit.toLocaleString()} / month</p>
+                <p className="text-xs font-medium text-slate-500 uppercase">Spending Limit</p>
+                <p className="text-sm font-medium">${selectedCard.limit.toLocaleString()} / month</p>
                 <div className="mt-2">
-                  <div className="flex justify-between text-[10px] mb-1">
+                  <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-600">Spent: ${selectedCard.spent.toLocaleString()}</span>
                     <span className="text-[#635bff]">
                       {Math.round((selectedCard.spent / selectedCard.limit) * 100)}%

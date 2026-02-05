@@ -15,7 +15,7 @@ interface TaxRateDetailsClientProps {
 
 export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProps) {
   const router = useRouter()
-  const [w2Filings, setW2Filings] = useState<any[]>([])
+  const [taxCalc, setTaxCalc] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   const supabase = createClient()
@@ -23,12 +23,14 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
   useEffect(() => {
     const fetchData = async () => {
       const { data, error } = await supabase
-        .from("w2_filings")
+        .from("tax_calculations")
         .select("*")
         .eq("user_id", user.id)
-        .eq("irs_status", "Accepted")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
-      if (data) setW2Filings(data)
+      if (data) setTaxCalc(data)
       setLoading(false)
     }
 
@@ -46,50 +48,27 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
     )
   }
 
-  const totalIncome = w2Filings.reduce((sum, filing) => sum + (filing.wages || 0), 0)
-  const federalWithholding = w2Filings.reduce((sum, filing) => sum + (filing.federal_tax_withheld || 0), 0)
-  const socialSecurityTax = w2Filings.reduce((sum, filing) => sum + (filing.social_security_tax || 0), 0)
-  const medicareTax = w2Filings.reduce((sum, filing) => sum + (filing.medicare_tax || 0), 0)
-
-  const standardDeduction = 14600 // 2025 standard deduction for single filer
-  const totalDeductions = standardDeduction
-  const taxableIncome = Math.max(0, totalIncome - totalDeductions)
-
-  let taxOwed = 0
-  if (taxableIncome > 0) {
-    if (taxableIncome <= 11925) {
-      taxOwed = taxableIncome * 0.1
-    } else if (taxableIncome <= 48475) {
-      taxOwed = 1192.5 + (taxableIncome - 11925) * 0.12
-    } else if (taxableIncome <= 103350) {
-      taxOwed = 5578.5 + (taxableIncome - 48475) * 0.22
-    } else if (taxableIncome <= 197300) {
-      taxOwed = 17651 + (taxableIncome - 103350) * 0.24
-    } else if (taxableIncome <= 250525) {
-      taxOwed = 40179 + (taxableIncome - 197300) * 0.32
-    } else if (taxableIncome <= 626350) {
-      taxOwed = 57231 + (taxableIncome - 250525) * 0.35
-    } else {
-      taxOwed = 188769.75 + (taxableIncome - 626350) * 0.37
-    }
-  }
-
+  const totalIncome = taxCalc?.total_income || 0
+  const taxOwed = taxCalc?.tax_owed || 0
   const effectiveRate = totalIncome > 0 ? (taxOwed / totalIncome) * 100 : 0
+  const totalDeductions = taxCalc?.total_deductions || 0
+  const taxableIncome = totalIncome - totalDeductions
 
+  // Tax bracket calculations (2024 single filer)
   const taxBrackets = [
-    { rate: 10, min: 0, max: 11925 },
-    { rate: 12, min: 11925, max: 48475 },
-    { rate: 22, min: 48475, max: 103350 },
-    { rate: 24, min: 103350, max: 197300 },
-    { rate: 32, min: 197300, max: 250525 },
-    { rate: 35, min: 250525, max: 626350 },
-    { rate: 37, min: 626350, max: Number.POSITIVE_INFINITY },
+    { rate: 10, min: 0, max: 11600 },
+    { rate: 12, min: 11600, max: 47150 },
+    { rate: 22, min: 47150, max: 100525 },
+    { rate: 24, min: 100525, max: 191950 },
+    { rate: 32, min: 191950, max: 243725 },
+    { rate: 35, min: 243725, max: 609350 },
+    { rate: 37, min: 609350, max: Number.POSITIVE_INFINITY },
   ]
 
   const marginalRate =
-    taxBrackets.find((bracket) => taxableIncome >= bracket.min && taxableIncome < bracket.max)?.rate || 10
+    taxBrackets.find((bracket) => taxableIncome >= bracket.min && taxableIncome < bracket.max)?.rate || 0
 
-  const nationalAverage = 13.3
+  const nationalAverage = 13.3 // National average effective tax rate
 
   return (
     <div className="min-h-screen bg-background pt-20">
@@ -105,10 +84,7 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card
-            className="p-6 border-neon/20 bg-gradient-to-br from-green-500/10 to-green-500/5 cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => router.push("/dashboard/refund")}
-          >
+          <Card className="p-6 border-neon/20 bg-gradient-to-br from-green-500/10 to-green-500/5">
             <div className="flex items-center gap-3 mb-3">
               <TrendingUp className="w-6 h-6 text-green-500" />
               <h3 className="font-semibold">Your Effective Rate</h3>
@@ -117,10 +93,7 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
             <p className="text-sm text-muted-foreground">Of your total income paid in federal taxes</p>
           </Card>
 
-          <Card
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => router.push("/dashboard/filing")}
-          >
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
             <div className="flex items-center gap-3 mb-3">
               <BarChart3 className="w-6 h-6 text-blue-500" />
               <h3 className="font-semibold">Marginal Tax Bracket</h3>
@@ -129,10 +102,7 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
             <p className="text-sm text-muted-foreground">Your highest tax bracket rate</p>
           </Card>
 
-          <Card
-            className="p-6 border-neon/20 bg-card/50 backdrop-blur cursor-pointer hover:scale-105 transition-transform"
-            onClick={() => router.push("/dashboard")}
-          >
+          <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
             <div className="flex items-center gap-3 mb-3">
               <PieChart className="w-6 h-6 text-purple-500" />
               <h3 className="font-semibold">vs National Average</h3>
@@ -190,9 +160,7 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-muted-foreground">Tax Owed</span>
-                <span className="font-semibold text-lg text-red-500">
-                  ${taxOwed.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                </span>
+                <span className="font-semibold text-lg text-red-500">${taxOwed.toLocaleString()}</span>
               </div>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                 <div
@@ -230,7 +198,7 @@ export function TaxRateDetailsClient({ user, profile }: TaxRateDetailsClientProp
           </Card>
 
           <Card className="p-6 border-neon/20 bg-card/50 backdrop-blur">
-            <h2 className="text-xl font-bold mb-4">2025 Tax Brackets (Single)</h2>
+            <h2 className="text-xl font-bold mb-4">2024 Tax Brackets (Single)</h2>
             <div className="space-y-3">
               {taxBrackets.map((bracket, index) => (
                 <div

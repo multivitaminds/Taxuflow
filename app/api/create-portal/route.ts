@@ -1,20 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-12-18.acacia",
-    })
-  : null
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-12-18.acacia",
+})
 
 export async function POST(req: NextRequest) {
-  if (!stripe) {
-    console.warn("[v0] Stripe not configured, returning dashboard URL")
-    return NextResponse.json({
-      url: `${req.nextUrl.origin}/dashboard`,
-    })
-  }
-
   try {
     const { customerId } = await req.json()
 

@@ -6,7 +6,7 @@ import { getOrganizationContext } from "@/lib/organization/context"
 export async function GET() {
   try {
     const orgContext = await getOrganizationContext()
-
+    
     if (!orgContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -27,9 +27,7 @@ export async function GET() {
       .order("created_at", { ascending: false })
 
     if (orgContext.hasOrganizationAccess) {
-      query = query.or(`user_id.eq.${orgContext.userId},org_id.in.(${orgContext.organizationIds.join(",")})`)
-    } else {
-      query = query.eq("user_id", orgContext.userId)
+      query = query.in("org_id", orgContext.organizationIds)
     }
 
     const { data, error } = await query
@@ -56,12 +54,12 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({
+    return NextResponse.json({ 
       customers: customersWithStats,
       context: {
         hasOrganizations: orgContext.hasOrganizationAccess,
         organizationCount: orgContext.organizationIds.length,
-      },
+      }
     })
   } catch (error: any) {
     console.error("[v0] Error fetching customers:", error)
@@ -71,43 +69,37 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[v0] Customer creation request received")
-
     const orgContext = await getOrganizationContext()
-
+    
     if (!orgContext) {
-      console.error("[v0] Customer creation failed - No organization context (user not authenticated)")
-      return NextResponse.json(
-        {
-          error: "Authentication required",
-          message: "You must be signed in to create customers. Please refresh the page and try again.",
-        },
-        { status: 401 },
-      )
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-
-    console.log("[v0] Customer creation - Authenticated user:", {
-      userId: orgContext.userId,
-      hasOrgAccess: orgContext.hasOrganizationAccess,
-      orgCount: orgContext.organizationIds.length,
-    })
 
     const supabase = await createBooksServerClient()
     const body = await request.json()
+    
+    console.log("[v0] Creating customer - User:", orgContext.userId)
+    console.log("[v0] Customer data received:", body)
 
     if (!body.contact_name || !body.email) {
       return NextResponse.json({ error: "Customer name and email are required" }, { status: 400 })
     }
 
-    const targetOrgId = body.org_id || orgContext.organizationId || null
+    const targetOrgId = body.org_id || orgContext.organizationId
+
+    if (!targetOrgId) {
+      return NextResponse.json({ 
+        error: "No organization context. Please create or join an organization first." 
+      }, { status: 400 })
+    }
 
     const customerData = {
-      name: body.company_name || body.contact_name, // Primary name field in contacts table
-      display_name: body.contact_name, // Individual contact name
+      contact_name: body.contact_name,
+      company_name: body.company_name || null,
       email: body.email,
       phone: body.phone || null,
       tax_id: body.tax_id || null,
-      kind: "customer", // Contacts table uses 'kind' field
+      contact_type: body.contact_type || "customer",
       org_id: targetOrgId,
       user_id: orgContext.userId,
     }
@@ -117,7 +109,6 @@ export async function POST(request: NextRequest) {
     const { data: customer, error } = await supabase.from("contacts").insert(customerData).select().single()
 
     if (error) {
-      console.error("[v0] Supabase error creating customer:", error)
       return handleSupabaseError(error, {
         operation: "create customer",
         resource: "customer",
@@ -126,16 +117,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log("[v0] Customer created successfully:", customer.id)
+    console.log("[v0] Customer created successfully:", customer)
     return NextResponse.json({ customer }, { status: 201 })
   } catch (error: any) {
     console.error("[v0] Error creating customer:", error)
-    return NextResponse.json(
-      {
-        error: "Failed to create customer",
-        message: "An unexpected error occurred. Please try again or contact support if the issue persists.",
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: "Failed to create customer" }, { status: 500 })
   }
 }

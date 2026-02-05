@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ArrowRight, ArrowLeft, Building2, CheckCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { formatEIN } from "@/lib/format-utils"
 
 export default function BusinessGetStartedPage() {
   const router = useRouter()
@@ -59,16 +58,6 @@ export default function BusinessGetStartedPage() {
     setIsSubmitting(true)
 
     try {
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "taxu_business_onboarding",
-          JSON.stringify({
-            ...formData,
-            timestamp: new Date().toISOString(),
-          }),
-        )
-      }
-
       const response = await fetch("/api/business-onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,18 +74,7 @@ export default function BusinessGetStartedPage() {
       router.push(`/signup?business=true&orgId=${data.organizationId}`)
     } catch (error) {
       console.error("Error submitting business information:", error)
-
-      // This ensures the flow continues even if API fails
-      if (typeof window !== "undefined") {
-        localStorage.setItem(
-          "taxu_business_onboarding",
-          JSON.stringify({
-            ...formData,
-            timestamp: new Date().toISOString(),
-          }),
-        )
-      }
-      router.push(`/signup?business=true`)
+      alert("There was an error submitting your information. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -237,10 +215,7 @@ export default function BusinessGetStartedPage() {
                   <Input
                     id="ein"
                     value={formData.ein}
-                    onChange={(e) => {
-                      const formatted = formatEIN(e.target.value)
-                      handleInputChange("ein", formatted)
-                    }}
+                    onChange={(e) => handleInputChange("ein", e.target.value)}
                     placeholder="XX-XXXXXXX"
                     maxLength={10}
                   />

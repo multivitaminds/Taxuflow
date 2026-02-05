@@ -75,18 +75,12 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Tax liability:", taxLiability, "Refund/Owed:", refundOrOwed)
 
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("full_name, filing_status, ssn_encrypted")
-      .eq("id", user.id)
-      .single()
-
     const filingData = {
       taxYear,
-      filingStatus: profile?.filing_status || "single",
+      filingStatus: "single", // TODO: Get from user profile
       taxpayer: {
-        name: profile?.full_name || "N/A",
-        ssn: profile?.ssn_encrypted || "XXX-XX-XXXX",
+        name: "", // Placeholder for user profile data
+        ssn: "XXX-XX-XXXX", // TODO: Get from secure storage
         email: user.email,
       },
       income: {
@@ -128,6 +122,8 @@ export async function POST(request: NextRequest) {
       console.error("[v0] Failed to save filing:", filingError)
       return NextResponse.json({ error: "Failed to save filing record" }, { status: 500 })
     }
+
+    const { data: profile } = await supabase.from("user_profiles").select("full_name, email").eq("id", user.id).single()
 
     if (profile && user.email) {
       await sendFilingAcceptedEmail(
