@@ -1,0 +1,3 @@
+module.exports=[117148,a=>{"use strict";let b=(0,a.i(540567).default)("DollarSign",[["line",{x1:"12",x2:"12",y1:"2",y2:"22",key:"7eqyqh"}],["path",{d:"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6",key:"1b0p4s"}]]);a.s(["default",0,b])},181563,a=>{"use strict";var b=a.i(117148);a.s(["DollarSign",()=>b.default])}];
+
+//# sourceMappingURL=9f3ab_lucide-react_dist_esm_icons_dollar-sign_4bbe88a9.js.map

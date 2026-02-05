@@ -1,0 +1,12 @@
+var R=require("../../../chunks/[turbopack]_runtime.js")("server/app/api/chat/route.js")
+R.c("server/chunks/9f3ab_e7d9019d._.js")
+R.c("server/chunks/[root-of-the-server]__2f7deae1._.js")
+R.c("server/chunks/9f3ab_next_0dbab05b._.js")
+R.c("server/chunks/9f3ab_zod_v3_82402f3e._.js")
+R.c("server/chunks/[root-of-the-server]__dcede139._.js")
+R.c("server/chunks/9f3ab_next_dist_f2e9898a._.js")
+R.c("server/chunks/9f3ab_a1e3a47d._.js")
+R.c("server/chunks/9f3ab_@supabase_supabase-js_dist_index_mjs_4df2c648._.js")
+R.c("server/chunks/d0c27_v0-taxu-landing-page__next-internal_server_app_api_chat_route_actions_a6af8907.js")
+R.m(371231)
+module.exports=R.m(371231).exports

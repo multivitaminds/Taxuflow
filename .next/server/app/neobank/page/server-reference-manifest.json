@@ -1,0 +1,110 @@
+{
+  "node": {
+    "40591777f7b8407d936a63ee71ad659ec4540049c7": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+    },
+    "0090321b0baf47b1bcf225c9f120d0855fd316418b": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+    },
+    "0074f25571c96af820ec6fd4190489a6e93999a4aa": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getNeobankAccounts",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "action-browser"
+      },
+      "exportedName": "getNeobankAccounts",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+    },
+    "001cc78031566b8641d964d6b92712d4ac14398603": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getAccountBalance",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "action-browser"
+      },
+      "exportedName": "getAccountBalance",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+    },
+    "409463900f90e177febfa5047b97d9138425131583": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getNeobankTransactions",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-transactions.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "action-browser"
+      },
+      "exportedName": "getNeobankTransactions",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-transactions.ts"
+    },
+    "007f5df2dc6280d232b38e8ddad0b908309ed46261": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getNeobankCards",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-cards.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "action-browser"
+      },
+      "exportedName": "getNeobankCards",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-cards.ts"
+    },
+    "400686d4dea0a5d43689f25b381cb93e81c619512f": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "createNeobankAccount",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-account.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "action-browser"
+      },
+      "exportedName": "createNeobankAccount",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-account.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,3 @@
+{
+  "/api/generate-abatement-letter/route": "app/api/generate-abatement-letter/route.js"
+}

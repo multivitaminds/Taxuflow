@@ -1,0 +1,65 @@
+{
+  "node": {
+    "40591777f7b8407d936a63ee71ad659ec4540049c7": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+    },
+    "0090321b0baf47b1bcf225c9f120d0855fd316418b": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+    },
+    "404b7265850d12f93ac1914caa7b4e47f735f41695": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "createTaxBucket",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-tax-bucket.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "action-browser"
+      },
+      "exportedName": "createTaxBucket",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-tax-bucket.ts"
+    },
+    "001f00d8275799242cad62dadf581518b664e7abb7": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "getTaxBuckets",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-tax-buckets.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "action-browser"
+      },
+      "exportedName": "getTaxBuckets",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-tax-buckets.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,1622 @@
+{
+  "node": {
+    "0090321b0baf47b1bcf225c9f120d0855fd316418b": {
+      "workers": {
+        "app/dashboard/activate-account/page": {
+          "moduleId": 164705,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/activity/[id]/page": {
+          "moduleId": 561954,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/audit-risk/page": {
+          "moduleId": 815817,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/contractors/page": {
+          "moduleId": 793412,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/deadline/page": {
+          "moduleId": 255059,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/[id]/edit/page": {
+          "moduleId": 253517,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/all/page": {
+          "moduleId": 992390,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/page": {
+          "moduleId": 942196,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/processed/page": {
+          "moduleId": 615214,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/processing/page": {
+          "moduleId": 902585,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/storage/page": {
+          "moduleId": 258174,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/documents/upload/page": {
+          "moduleId": 80623,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/file/1099-nec/page": {
+          "moduleId": 876217,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/file/941/page": {
+          "moduleId": 820795,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/file/page": {
+          "moduleId": 234069,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/file/w2/page": {
+          "moduleId": 273828,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/filing/[id]/page": {
+          "moduleId": 130654,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/filing/new/page": {
+          "moduleId": 839547,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/filing/page": {
+          "moduleId": 712529,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/income/page": {
+          "moduleId": 832308,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/page": {
+          "moduleId": 682254,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/payment/page": {
+          "moduleId": 223972,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/personal-info/page": {
+          "moduleId": 9973,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/refund/confidence/page": {
+          "moduleId": 267951,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/refund/page": {
+          "moduleId": 62540,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/refund/tax-rate/page": {
+          "moduleId": 642763,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/refund/timeline/page": {
+          "moduleId": 753078,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/schedule/page": {
+          "moduleId": 832887,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/advisors/page": {
+          "moduleId": 712701,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/api-tokens/page": {
+          "moduleId": 146480,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/appearance/page": {
+          "moduleId": 264012,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/approvals/page": {
+          "moduleId": 985048,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/billing/page": {
+          "moduleId": 72149,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/categories/page": {
+          "moduleId": 134436,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/company-security/page": {
+          "moduleId": 707636,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/company/page": {
+          "moduleId": 254199,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/controls/page": {
+          "moduleId": 762447,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/departments/page": {
+          "moduleId": 408825,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/developer/page": {
+          "moduleId": 713784,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/integrations/page": {
+          "moduleId": 952239,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/notifications/page": {
+          "moduleId": 68887,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/page": {
+          "moduleId": 326465,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/policies/page": {
+          "moduleId": 869817,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/preferences/page": {
+          "moduleId": 355440,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/privacy/page": {
+          "moduleId": 821891,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/profile/page": {
+          "moduleId": 332306,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/referrals/page": {
+          "moduleId": 695363,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/security/page": {
+          "moduleId": 62379,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/team/page": {
+          "moduleId": 438061,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/users/page": {
+          "moduleId": 926393,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/settings/vault/page": {
+          "moduleId": 974142,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/subscription/page": {
+          "moduleId": 490821,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/dashboard/test-flows/page": {
+          "moduleId": 321158,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/investment/auto-invest/page": {
+          "moduleId": 452314,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/investment/markets/page": {
+          "moduleId": 170,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/investment/page": {
+          "moduleId": 122520,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/investment/performance/page": {
+          "moduleId": 445294,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/investment/portfolio/page": {
+          "moduleId": 501733,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/investment/tax-optimizer/page": {
+          "moduleId": 613727,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/accounts/page": {
+          "moduleId": 516830,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/atms/page": {
+          "moduleId": 456453,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/bill-pay/page": {
+          "moduleId": 354341,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/bill-pay/payees/page": {
+          "moduleId": 445465,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/budgets/page": {
+          "moduleId": 969129,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/business/page": {
+          "moduleId": 556431,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/cards/page": {
+          "moduleId": 748699,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/cash-flow/page": {
+          "moduleId": 618490,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/credit-score/page": {
+          "moduleId": 481154,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/crypto/page": {
+          "moduleId": 751065,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/crypto/settings/page": {
+          "moduleId": 479427,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/goals/page": {
+          "moduleId": 499729,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/insights/page": {
+          "moduleId": 613732,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/insurance/page": {
+          "moduleId": 448094,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/international/page": {
+          "moduleId": 828676,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/investments/page": {
+          "moduleId": 646449,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/loans/page": {
+          "moduleId": 144354,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/merchant/page": {
+          "moduleId": 604607,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/multi-currency/page": {
+          "moduleId": 786440,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/onboarding/mercury-style/page": {
+          "moduleId": 222324,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/onboarding/page": {
+          "moduleId": 714790,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/reports/cashflow/page": {
+          "moduleId": 690215,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/reports/custom/page": {
+          "moduleId": 444566,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/reports/income/page": {
+          "moduleId": 934872,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/reports/page": {
+          "moduleId": 72154,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/reports/spending/page": {
+          "moduleId": 144291,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/reports/transactions/page": {
+          "moduleId": 886836,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/robo-advisor/page": {
+          "moduleId": 857392,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/savings-automation/page": {
+          "moduleId": 967571,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/spending/page": {
+          "moduleId": 454365,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/subscriptions/page": {
+          "moduleId": 830663,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/tax-buckets/[id]/page": {
+          "moduleId": 433482,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/tax-buckets/recommendations/page": {
+          "moduleId": 133118,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/transactions/[id]/page": {
+          "moduleId": 352849,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/transactions/all/page": {
+          "moduleId": 495379,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/transactions/page": {
+          "moduleId": 265362,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/transfers/page": {
+          "moduleId": 161665,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/virtual-cards/page": {
+          "moduleId": 339104,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        },
+        "app/neobank/wealth/page": {
+          "moduleId": 884670,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/activate-account/page": "rsc",
+        "app/dashboard/activity/[id]/page": "rsc",
+        "app/dashboard/audit-risk/page": "rsc",
+        "app/dashboard/contractors/page": "rsc",
+        "app/dashboard/deadline/page": "rsc",
+        "app/dashboard/documents/[id]/edit/page": "rsc",
+        "app/dashboard/documents/all/page": "rsc",
+        "app/dashboard/documents/page": "rsc",
+        "app/dashboard/documents/processed/page": "rsc",
+        "app/dashboard/documents/processing/page": "rsc",
+        "app/dashboard/documents/storage/page": "rsc",
+        "app/dashboard/documents/upload/page": "rsc",
+        "app/dashboard/file/1099-nec/page": "rsc",
+        "app/dashboard/file/941/page": "rsc",
+        "app/dashboard/file/page": "rsc",
+        "app/dashboard/file/w2/page": "rsc",
+        "app/dashboard/filing/[id]/page": "rsc",
+        "app/dashboard/filing/new/page": "rsc",
+        "app/dashboard/filing/page": "rsc",
+        "app/dashboard/income/page": "rsc",
+        "app/dashboard/page": "rsc",
+        "app/dashboard/payment/page": "rsc",
+        "app/dashboard/personal-info/page": "rsc",
+        "app/dashboard/refund/confidence/page": "rsc",
+        "app/dashboard/refund/page": "rsc",
+        "app/dashboard/refund/tax-rate/page": "rsc",
+        "app/dashboard/refund/timeline/page": "rsc",
+        "app/dashboard/schedule/page": "rsc",
+        "app/dashboard/settings/advisors/page": "rsc",
+        "app/dashboard/settings/api-tokens/page": "rsc",
+        "app/dashboard/settings/appearance/page": "rsc",
+        "app/dashboard/settings/approvals/page": "rsc",
+        "app/dashboard/settings/billing/page": "rsc",
+        "app/dashboard/settings/categories/page": "rsc",
+        "app/dashboard/settings/company-security/page": "rsc",
+        "app/dashboard/settings/company/page": "rsc",
+        "app/dashboard/settings/controls/page": "rsc",
+        "app/dashboard/settings/departments/page": "rsc",
+        "app/dashboard/settings/developer/page": "rsc",
+        "app/dashboard/settings/integrations/page": "rsc",
+        "app/dashboard/settings/notifications/page": "rsc",
+        "app/dashboard/settings/page": "rsc",
+        "app/dashboard/settings/policies/page": "rsc",
+        "app/dashboard/settings/preferences/page": "rsc",
+        "app/dashboard/settings/privacy/page": "rsc",
+        "app/dashboard/settings/profile/page": "rsc",
+        "app/dashboard/settings/referrals/page": "rsc",
+        "app/dashboard/settings/security/page": "rsc",
+        "app/dashboard/settings/team/page": "rsc",
+        "app/dashboard/settings/users/page": "rsc",
+        "app/dashboard/settings/vault/page": "rsc",
+        "app/dashboard/subscription/page": "rsc",
+        "app/dashboard/test-flows/page": "rsc",
+        "app/investment/auto-invest/page": "rsc",
+        "app/investment/markets/page": "rsc",
+        "app/investment/page": "rsc",
+        "app/investment/performance/page": "rsc",
+        "app/investment/portfolio/page": "rsc",
+        "app/investment/tax-optimizer/page": "rsc",
+        "app/neobank/accounts/page": "rsc",
+        "app/neobank/atms/page": "rsc",
+        "app/neobank/bill-pay/page": "rsc",
+        "app/neobank/bill-pay/payees/page": "rsc",
+        "app/neobank/budgets/page": "rsc",
+        "app/neobank/business/page": "rsc",
+        "app/neobank/cards/page": "rsc",
+        "app/neobank/cash-flow/page": "rsc",
+        "app/neobank/credit-score/page": "rsc",
+        "app/neobank/crypto/page": "rsc",
+        "app/neobank/crypto/settings/page": "rsc",
+        "app/neobank/goals/page": "rsc",
+        "app/neobank/insights/page": "rsc",
+        "app/neobank/insurance/page": "rsc",
+        "app/neobank/international/page": "rsc",
+        "app/neobank/investments/page": "rsc",
+        "app/neobank/loans/page": "rsc",
+        "app/neobank/merchant/page": "rsc",
+        "app/neobank/multi-currency/page": "rsc",
+        "app/neobank/onboarding/mercury-style/page": "rsc",
+        "app/neobank/onboarding/page": "rsc",
+        "app/neobank/page": "rsc",
+        "app/neobank/reports/cashflow/page": "rsc",
+        "app/neobank/reports/custom/page": "rsc",
+        "app/neobank/reports/income/page": "rsc",
+        "app/neobank/reports/page": "rsc",
+        "app/neobank/reports/spending/page": "rsc",
+        "app/neobank/reports/transactions/page": "rsc",
+        "app/neobank/robo-advisor/page": "rsc",
+        "app/neobank/savings-automation/page": "rsc",
+        "app/neobank/spending/page": "rsc",
+        "app/neobank/subscriptions/page": "rsc",
+        "app/neobank/tax-buckets/[id]/page": "rsc",
+        "app/neobank/tax-buckets/page": "rsc",
+        "app/neobank/tax-buckets/recommendations/page": "rsc",
+        "app/neobank/transactions/[id]/page": "rsc",
+        "app/neobank/transactions/all/page": "rsc",
+        "app/neobank/transactions/page": "rsc",
+        "app/neobank/transfers/page": "rsc",
+        "app/neobank/virtual-cards/page": "rsc",
+        "app/neobank/wealth/page": "rsc"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts",
+      "exportedName": "getUser"
+    },
+    "40591777f7b8407d936a63ee71ad659ec4540049c7": {
+      "workers": {
+        "app/dashboard/activate-account/page": {
+          "moduleId": 164705,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/activity/[id]/page": {
+          "moduleId": 561954,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/audit-risk/page": {
+          "moduleId": 815817,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/contractors/page": {
+          "moduleId": 793412,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/deadline/page": {
+          "moduleId": 255059,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/[id]/edit/page": {
+          "moduleId": 253517,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/all/page": {
+          "moduleId": 992390,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/page": {
+          "moduleId": 942196,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/processed/page": {
+          "moduleId": 615214,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/processing/page": {
+          "moduleId": 902585,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/storage/page": {
+          "moduleId": 258174,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/documents/upload/page": {
+          "moduleId": 80623,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/file/1099-nec/page": {
+          "moduleId": 876217,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/file/941/page": {
+          "moduleId": 820795,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/file/page": {
+          "moduleId": 234069,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/file/w2/page": {
+          "moduleId": 273828,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/filing/[id]/page": {
+          "moduleId": 130654,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/filing/new/page": {
+          "moduleId": 839547,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/filing/page": {
+          "moduleId": 712529,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/income/page": {
+          "moduleId": 832308,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/page": {
+          "moduleId": 682254,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/payment/page": {
+          "moduleId": 223972,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/personal-info/page": {
+          "moduleId": 9973,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/refund/confidence/page": {
+          "moduleId": 267951,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/refund/page": {
+          "moduleId": 62540,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/refund/tax-rate/page": {
+          "moduleId": 642763,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/refund/timeline/page": {
+          "moduleId": 753078,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/schedule/page": {
+          "moduleId": 832887,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/advisors/page": {
+          "moduleId": 712701,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/api-tokens/page": {
+          "moduleId": 146480,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/appearance/page": {
+          "moduleId": 264012,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/approvals/page": {
+          "moduleId": 985048,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/billing/page": {
+          "moduleId": 72149,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/categories/page": {
+          "moduleId": 134436,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/company-security/page": {
+          "moduleId": 707636,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/company/page": {
+          "moduleId": 254199,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/controls/page": {
+          "moduleId": 762447,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/departments/page": {
+          "moduleId": 408825,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/developer/page": {
+          "moduleId": 713784,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/integrations/page": {
+          "moduleId": 952239,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/notifications/page": {
+          "moduleId": 68887,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/page": {
+          "moduleId": 326465,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/policies/page": {
+          "moduleId": 869817,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/preferences/page": {
+          "moduleId": 355440,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/privacy/page": {
+          "moduleId": 821891,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/profile/page": {
+          "moduleId": 332306,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/referrals/page": {
+          "moduleId": 695363,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/security/page": {
+          "moduleId": 62379,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/team/page": {
+          "moduleId": 438061,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/users/page": {
+          "moduleId": 926393,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/settings/vault/page": {
+          "moduleId": 974142,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/subscription/page": {
+          "moduleId": 490821,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/dashboard/test-flows/page": {
+          "moduleId": 321158,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/investment/auto-invest/page": {
+          "moduleId": 452314,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/investment/markets/page": {
+          "moduleId": 170,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/investment/page": {
+          "moduleId": 122520,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/investment/performance/page": {
+          "moduleId": 445294,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/investment/portfolio/page": {
+          "moduleId": 501733,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/investment/tax-optimizer/page": {
+          "moduleId": 613727,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/accounts/page": {
+          "moduleId": 516830,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/atms/page": {
+          "moduleId": 456453,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/bill-pay/page": {
+          "moduleId": 354341,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/bill-pay/payees/page": {
+          "moduleId": 445465,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/budgets/page": {
+          "moduleId": 969129,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/business/page": {
+          "moduleId": 556431,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/cards/page": {
+          "moduleId": 748699,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/cash-flow/page": {
+          "moduleId": 618490,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/credit-score/page": {
+          "moduleId": 481154,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/crypto/page": {
+          "moduleId": 751065,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/crypto/settings/page": {
+          "moduleId": 479427,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/goals/page": {
+          "moduleId": 499729,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/insights/page": {
+          "moduleId": 613732,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/insurance/page": {
+          "moduleId": 448094,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/international/page": {
+          "moduleId": 828676,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/investments/page": {
+          "moduleId": 646449,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/loans/page": {
+          "moduleId": 144354,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/merchant/page": {
+          "moduleId": 604607,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/multi-currency/page": {
+          "moduleId": 786440,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/onboarding/mercury-style/page": {
+          "moduleId": 222324,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/onboarding/page": {
+          "moduleId": 714790,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/reports/cashflow/page": {
+          "moduleId": 690215,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/reports/custom/page": {
+          "moduleId": 444566,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/reports/income/page": {
+          "moduleId": 934872,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/reports/page": {
+          "moduleId": 72154,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/reports/spending/page": {
+          "moduleId": 144291,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/reports/transactions/page": {
+          "moduleId": 886836,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/robo-advisor/page": {
+          "moduleId": 857392,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/savings-automation/page": {
+          "moduleId": 967571,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/spending/page": {
+          "moduleId": 454365,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/subscriptions/page": {
+          "moduleId": 830663,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/tax-buckets/[id]/page": {
+          "moduleId": 433482,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/tax-buckets/recommendations/page": {
+          "moduleId": 133118,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/transactions/[id]/page": {
+          "moduleId": 352849,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/transactions/all/page": {
+          "moduleId": 495379,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/transactions/page": {
+          "moduleId": 265362,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/transfers/page": {
+          "moduleId": 161665,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/virtual-cards/page": {
+          "moduleId": 339104,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        },
+        "app/neobank/wealth/page": {
+          "moduleId": 884670,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/activate-account/page": "rsc",
+        "app/dashboard/activity/[id]/page": "rsc",
+        "app/dashboard/audit-risk/page": "rsc",
+        "app/dashboard/contractors/page": "rsc",
+        "app/dashboard/deadline/page": "rsc",
+        "app/dashboard/documents/[id]/edit/page": "rsc",
+        "app/dashboard/documents/all/page": "rsc",
+        "app/dashboard/documents/page": "rsc",
+        "app/dashboard/documents/processed/page": "rsc",
+        "app/dashboard/documents/processing/page": "rsc",
+        "app/dashboard/documents/storage/page": "rsc",
+        "app/dashboard/documents/upload/page": "rsc",
+        "app/dashboard/file/1099-nec/page": "rsc",
+        "app/dashboard/file/941/page": "rsc",
+        "app/dashboard/file/page": "rsc",
+        "app/dashboard/file/w2/page": "rsc",
+        "app/dashboard/filing/[id]/page": "rsc",
+        "app/dashboard/filing/new/page": "rsc",
+        "app/dashboard/filing/page": "rsc",
+        "app/dashboard/income/page": "rsc",
+        "app/dashboard/page": "rsc",
+        "app/dashboard/payment/page": "rsc",
+        "app/dashboard/personal-info/page": "rsc",
+        "app/dashboard/refund/confidence/page": "rsc",
+        "app/dashboard/refund/page": "rsc",
+        "app/dashboard/refund/tax-rate/page": "rsc",
+        "app/dashboard/refund/timeline/page": "rsc",
+        "app/dashboard/schedule/page": "rsc",
+        "app/dashboard/settings/advisors/page": "rsc",
+        "app/dashboard/settings/api-tokens/page": "rsc",
+        "app/dashboard/settings/appearance/page": "rsc",
+        "app/dashboard/settings/approvals/page": "rsc",
+        "app/dashboard/settings/billing/page": "rsc",
+        "app/dashboard/settings/categories/page": "rsc",
+        "app/dashboard/settings/company-security/page": "rsc",
+        "app/dashboard/settings/company/page": "rsc",
+        "app/dashboard/settings/controls/page": "rsc",
+        "app/dashboard/settings/departments/page": "rsc",
+        "app/dashboard/settings/developer/page": "rsc",
+        "app/dashboard/settings/integrations/page": "rsc",
+        "app/dashboard/settings/notifications/page": "rsc",
+        "app/dashboard/settings/page": "rsc",
+        "app/dashboard/settings/policies/page": "rsc",
+        "app/dashboard/settings/preferences/page": "rsc",
+        "app/dashboard/settings/privacy/page": "rsc",
+        "app/dashboard/settings/profile/page": "rsc",
+        "app/dashboard/settings/referrals/page": "rsc",
+        "app/dashboard/settings/security/page": "rsc",
+        "app/dashboard/settings/team/page": "rsc",
+        "app/dashboard/settings/users/page": "rsc",
+        "app/dashboard/settings/vault/page": "rsc",
+        "app/dashboard/subscription/page": "rsc",
+        "app/dashboard/test-flows/page": "rsc",
+        "app/investment/auto-invest/page": "rsc",
+        "app/investment/markets/page": "rsc",
+        "app/investment/page": "rsc",
+        "app/investment/performance/page": "rsc",
+        "app/investment/portfolio/page": "rsc",
+        "app/investment/tax-optimizer/page": "rsc",
+        "app/neobank/accounts/page": "rsc",
+        "app/neobank/atms/page": "rsc",
+        "app/neobank/bill-pay/page": "rsc",
+        "app/neobank/bill-pay/payees/page": "rsc",
+        "app/neobank/budgets/page": "rsc",
+        "app/neobank/business/page": "rsc",
+        "app/neobank/cards/page": "rsc",
+        "app/neobank/cash-flow/page": "rsc",
+        "app/neobank/credit-score/page": "rsc",
+        "app/neobank/crypto/page": "rsc",
+        "app/neobank/crypto/settings/page": "rsc",
+        "app/neobank/goals/page": "rsc",
+        "app/neobank/insights/page": "rsc",
+        "app/neobank/insurance/page": "rsc",
+        "app/neobank/international/page": "rsc",
+        "app/neobank/investments/page": "rsc",
+        "app/neobank/loans/page": "rsc",
+        "app/neobank/merchant/page": "rsc",
+        "app/neobank/multi-currency/page": "rsc",
+        "app/neobank/onboarding/mercury-style/page": "rsc",
+        "app/neobank/onboarding/page": "rsc",
+        "app/neobank/page": "rsc",
+        "app/neobank/reports/cashflow/page": "rsc",
+        "app/neobank/reports/custom/page": "rsc",
+        "app/neobank/reports/income/page": "rsc",
+        "app/neobank/reports/page": "rsc",
+        "app/neobank/reports/spending/page": "rsc",
+        "app/neobank/reports/transactions/page": "rsc",
+        "app/neobank/robo-advisor/page": "rsc",
+        "app/neobank/savings-automation/page": "rsc",
+        "app/neobank/spending/page": "rsc",
+        "app/neobank/subscriptions/page": "rsc",
+        "app/neobank/tax-buckets/[id]/page": "rsc",
+        "app/neobank/tax-buckets/page": "rsc",
+        "app/neobank/tax-buckets/recommendations/page": "rsc",
+        "app/neobank/transactions/[id]/page": "rsc",
+        "app/neobank/transactions/all/page": "rsc",
+        "app/neobank/transactions/page": "rsc",
+        "app/neobank/transfers/page": "rsc",
+        "app/neobank/virtual-cards/page": "rsc",
+        "app/neobank/wealth/page": "rsc"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts",
+      "exportedName": "getUserProfile"
+    },
+    "60af83db50901a42a23f0f18a89a54580b52824bb7": {
+      "workers": {
+        "app/dashboard/documents/[id]/edit/page": {
+          "moduleId": 253517,
+          "async": false,
+          "exportedName": "updateDocumentData",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/update-document-data.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/documents/[id]/edit/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/update-document-data.ts",
+      "exportedName": "updateDocumentData"
+    },
+    "0074f25571c96af820ec6fd4190489a6e93999a4aa": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 516830,
+          "async": false,
+          "exportedName": "getNeobankAccounts",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+        },
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getNeobankAccounts",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "action-browser",
+        "app/neobank/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts",
+      "exportedName": "getNeobankAccounts"
+    },
+    "001cc78031566b8641d964d6b92712d4ac14398603": {
+      "workers": {
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getAccountBalance",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-accounts.ts",
+      "exportedName": "getAccountBalance"
+    },
+    "409463900f90e177febfa5047b97d9138425131583": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 516830,
+          "async": false,
+          "exportedName": "getNeobankTransactions",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-transactions.ts"
+        },
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getNeobankTransactions",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-transactions.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "action-browser",
+        "app/neobank/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-transactions.ts",
+      "exportedName": "getNeobankTransactions"
+    },
+    "007f5df2dc6280d232b38e8ddad0b908309ed46261": {
+      "workers": {
+        "app/neobank/cards/page": {
+          "moduleId": 748699,
+          "async": false,
+          "exportedName": "getNeobankCards",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-cards.ts"
+        },
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "getNeobankCards",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-cards.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/cards/page": "action-browser",
+        "app/neobank/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-cards.ts",
+      "exportedName": "getNeobankCards"
+    },
+    "400686d4dea0a5d43689f25b381cb93e81c619512f": {
+      "workers": {
+        "app/neobank/accounts/page": {
+          "moduleId": 516830,
+          "async": false,
+          "exportedName": "createNeobankAccount",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-account.ts"
+        },
+        "app/neobank/page": {
+          "moduleId": 299799,
+          "async": false,
+          "exportedName": "createNeobankAccount",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-account.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/accounts/page": "action-browser",
+        "app/neobank/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-account.ts",
+      "exportedName": "createNeobankAccount"
+    },
+    "40726681c8488753fff72e3d6dd34fbd229ac970c0": {
+      "workers": {
+        "app/neobank/cards/page": {
+          "moduleId": 748699,
+          "async": false,
+          "exportedName": "createNeobankCard",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-card.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/cards/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-card.ts",
+      "exportedName": "createNeobankCard"
+    },
+    "609b43a68dbbfd95cffef02655646bad1d45dcb469": {
+      "workers": {
+        "app/neobank/cards/page": {
+          "moduleId": 748699,
+          "async": false,
+          "exportedName": "updateCardStatus",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/update-card-status.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/cards/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/update-card-status.ts",
+      "exportedName": "updateCardStatus"
+    },
+    "40aae5a4b3a0b8a24abf2536d7fac508b9cd4b1ede": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 828676,
+          "async": false,
+          "exportedName": "createNeobankTransfer",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-transfer.ts"
+        },
+        "app/neobank/transfers/page": {
+          "moduleId": 161665,
+          "async": false,
+          "exportedName": "createNeobankTransfer",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-transfer.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "action-browser",
+        "app/neobank/transfers/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-transfer.ts",
+      "exportedName": "createNeobankTransfer"
+    },
+    "404b7265850d12f93ac1914caa7b4e47f735f41695": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "createTaxBucket",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-tax-bucket.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-tax-bucket.ts",
+      "exportedName": "createTaxBucket"
+    },
+    "001f00d8275799242cad62dadf581518b664e7abb7": {
+      "workers": {
+        "app/neobank/tax-buckets/page": {
+          "moduleId": 396402,
+          "async": false,
+          "exportedName": "getTaxBuckets",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-tax-buckets.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/tax-buckets/page": "action-browser"
+      },
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/get-tax-buckets.ts",
+      "exportedName": "getTaxBuckets"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "sbw4RP8uptMLCqUiHNB5FuL4CP7BrzzJhQjQyUbCoCc="
+}

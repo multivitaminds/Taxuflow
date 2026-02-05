@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createClient } from "@/lib/supabase/server"
-
-const stripe = process.env.STRIPE_SECRET_KEY
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-11-20.acacia",
-    })
-  : null
+import { stripe } from "@/lib/stripe"
 
 export async function POST() {
   try {
@@ -28,14 +23,6 @@ export async function POST() {
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    if (!stripe) {
-      console.warn("[v0] Stripe not configured")
-      return NextResponse.json({
-        success: true,
-        message: "Stripe not configured: Subscription sync simulated",
-      })
     }
 
     // Get user profile

@@ -2,10 +2,7 @@ import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { createServerClient } from "@/lib/supabase/server"
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-11-20.acacia",
-})
+import { stripe } from "@/lib/stripe"
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 

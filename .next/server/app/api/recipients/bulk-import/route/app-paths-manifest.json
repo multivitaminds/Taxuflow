@@ -1,0 +1,3 @@
+{
+  "/api/recipients/bulk-import/route": "app/api/recipients/bulk-import/route.js"
+}

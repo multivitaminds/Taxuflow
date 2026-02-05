@@ -1,0 +1,10 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/filing/validate-1099/route.js")
+R.c("server/chunks/[root-of-the-server]__a6919721._.js")
+R.c("server/chunks/9f3ab_next_cb793b6f._.js")
+R.c("server/chunks/9f3ab_next_dist_f2e9898a._.js")
+R.c("server/chunks/9f3ab_a1e3a47d._.js")
+R.c("server/chunks/[root-of-the-server]__dcede139._.js")
+R.c("server/chunks/9f3ab_zod_v3_82402f3e._.js")
+R.c("server/chunks/88275__next-internal_server_app_api_filing_validate-1099_route_actions_f3e23540.js")
+R.m(941563)
+module.exports=R.m(941563).exports

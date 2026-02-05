@@ -1,0 +1,3 @@
+{
+  "/neobank/transactions/[id]/page": "app/neobank/transactions/[id]/page.js"
+}

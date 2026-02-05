@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40591777f7b8407d936a63ee71ad659ec4540049c7": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 828676,
+          "async": false,
+          "exportedName": "getUserProfile",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "rsc"
+      },
+      "exportedName": "getUserProfile",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user-profile.ts"
+    },
+    "0090321b0baf47b1bcf225c9f120d0855fd316418b": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 828676,
+          "async": false,
+          "exportedName": "getUser",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "rsc"
+      },
+      "exportedName": "getUser",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/get-user.ts"
+    },
+    "40aae5a4b3a0b8a24abf2536d7fac508b9cd4b1ede": {
+      "workers": {
+        "app/neobank/international/page": {
+          "moduleId": 828676,
+          "async": false,
+          "exportedName": "createNeobankTransfer",
+          "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-transfer.ts"
+        }
+      },
+      "layer": {
+        "app/neobank/international/page": "action-browser"
+      },
+      "exportedName": "createNeobankTransfer",
+      "filename": "taxu-platform/v0-taxu-landing-page/app/actions/neobank/create-transfer.ts"
+    }
+  },
+  "edge": {}
+}
