@@ -191,7 +191,7 @@ function App() {
       <button onClick={handleCalculate} disabled={loading}>
         Calculate Tax
       </button>
-      {result && <p>Tax Owed: ${result.totalTax}</p>}
+      {result && <p>Tax Owed: \${result.totalTax}</p>}
     </div>
   );
 }`}
