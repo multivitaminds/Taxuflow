@@ -15,6 +15,7 @@ import {
   TrendingUp,
   MapPin,
   Bitcoin,
+  LineChart,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
@@ -27,7 +28,8 @@ const navigation = [
   { name: "Transfers", href: "/neobank/transfers", icon: ArrowLeftRight },
   { name: "Tax Buckets", href: "/neobank/tax-buckets", icon: PiggyBank },
   { name: "Spending", href: "/neobank/spending", icon: TrendingUp },
-  { name: "Crypto", href: "/neobank/crypto", icon: Bitcoin }, // Added Crypto link
+  { name: "Investments", href: "/neobank/investments/holdings", icon: LineChart },
+  { name: "Crypto", href: "/neobank/crypto", icon: Bitcoin },
   { name: "ATMs", href: "/neobank/atms", icon: MapPin },
 ]
 

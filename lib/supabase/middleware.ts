@@ -73,7 +73,8 @@ export async function updateSession(request: NextRequest) {
     }
 
     if (
-      request.nextUrl.pathname.startsWith("/dashboard") &&
+      (request.nextUrl.pathname.startsWith("/dashboard") ||
+        request.nextUrl.pathname.startsWith("/neobank/investments")) &&
       !user
     ) {
       const url = request.nextUrl.clone()
