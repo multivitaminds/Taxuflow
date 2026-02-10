@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, PieChart, Pie, Cell } from "recharts"
 import { TrendingUp, TrendingDown, AlertCircle, Download, Filter, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 const spendingData = [
   { month: "Jan", amount: 12500 },
@@ -56,7 +57,7 @@ export function SpendingAnalytics() {
               <SelectItem value="ytd">Year to Date</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200">
+          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200" onClick={() => toast.success("Exporting spending report...")}>
             <Download className="mr-2 h-4 w-4" /> Export Report
           </Button>
         </div>
@@ -198,7 +199,7 @@ export function SpendingAnalytics() {
             <CardTitle>Recent Expenses</CardTitle>
             <CardDescription>Verify auto-categorized tax deductions</CardDescription>
           </div>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={() => toast.info("Expense filtering coming soon")}>
             <Filter className="h-4 w-4 mr-2" /> Filter
           </Button>
         </CardHeader>

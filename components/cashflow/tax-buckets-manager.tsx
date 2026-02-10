@@ -88,7 +88,7 @@ export function TaxBucketsManager() {
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer Funds
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm">
+          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm" onClick={() => toast.info("New bucket creation coming soon")}>
             <Plus className="mr-2 h-4 w-4" /> New Bucket
           </Button>
         </div>
