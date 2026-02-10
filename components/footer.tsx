@@ -16,33 +16,40 @@ export function Footer() {
     Solutions: [
       { label: "Individuals", href: "/individuals" },
       { label: "Businesses", href: "/businesses" },
-      { label: "Developer", href: "/developers" },
-      { label: "Partners", href: "/partners" },
       { label: "Ecommerce", href: "/solutions/ecommerce" },
       { label: "SaaS", href: "/solutions/saas" },
       { label: "Marketplaces", href: "/solutions/marketplaces" },
       { label: "Platforms", href: "/solutions/platforms" },
+      { label: "Embedded Finance", href: "/solutions/embedded-finance" },
+      { label: "Creator Economy", href: "/solutions/creator-economy" },
+      { label: "Crypto", href: "/solutions/crypto" },
+      { label: "Global Businesses", href: "/solutions/global-businesses" },
     ],
     Resources: [
       { label: "Blog", href: "/blog" },
+      { label: "Guides", href: "/guides" },
+      { label: "Support", href: "/support" },
+      { label: "Developer", href: "/developer" },
       { label: "Referral Program", href: "/referral" },
       { label: "Security", href: "/security" },
       { label: "Get Started", href: "/get-started" },
-      { label: "Guides", href: "/guides" },
-      { label: "API Reference", href: "/docs" },
+      { label: "Partners", href: "/partners" },
     ],
     Company: [
       { label: "About", href: "/about" },
       { label: "Careers", href: "/careers" },
+      { label: "Jobs", href: "/jobs" },
+      { label: "Newsroom", href: "/newsroom" },
+      { label: "Press", href: "/press" },
       { label: "Contact", href: "/contact" },
       { label: "Status", href: "/developer-portal/status" },
-      { label: "Newsroom", href: "/newsroom" },
     ],
     Legal: [
       { label: "Terms", href: "/terms" },
       { label: "Privacy", href: "/privacy" },
       { label: "Data Usage", href: "/data-usage" },
       { label: "Compliance", href: "/compliance" },
+      { label: "Sitemap", href: "/sitemap-page" },
     ],
   }
 
@@ -73,7 +80,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://github.com/taxu-ai"
+                href="https://github.com/multivitaminds"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-slate-400 hover:text-white transition-colors"
@@ -109,7 +116,7 @@ export function Footer() {
         </div>
 
         <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-slate-400">© 2025 Taxu. All rights reserved.</div>
+          <div className="text-sm text-slate-400">&copy; {new Date().getFullYear()} Taxu. All rights reserved.</div>
           <div className="flex items-center gap-6 text-sm text-slate-400 font-medium">
             <span>IRS e-file Certified</span>
             <span>SOC 2 Compliance</span>

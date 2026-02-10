@@ -16,7 +16,15 @@ export function ConditionalNavigation() {
     pathname.startsWith("/chat") ||
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/accounting") ||
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/products/") ||
+    pathname.startsWith("/solutions/") ||
+    pathname === "/guides" ||
+    pathname === "/support" ||
+    pathname === "/newsroom" ||
+    pathname === "/jobs" ||
+    pathname === "/press" ||
+    pathname === "/sitemap-page"
 
   if (hideNavigation) {
     return null

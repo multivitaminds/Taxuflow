@@ -1,6 +1,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { ArrowRight, Check, ChevronRight, CreditCard, Globe, Layout, Zap, ShoppingBag, PieChart } from "lucide-react"
+import { Footer } from "@/components/footer"
 
 export default function Home() {
   return (
@@ -432,116 +433,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#f6f9fc] py-20 border-t border-gray-200">
-        <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-4 gap-12 mb-16">
-            <div>
-              <div className="font-bold text-[#0a2540] mb-6">Products</div>
-              <ul className="space-y-3">
-                {[
-                  { label: "Payments", href: "/products/payments" },
-                  { label: "Billing", href: "/products/billing" },
-                  { label: "Connect", href: "/products/connect" },
-                  { label: "Payouts", href: "/products/payouts" },
-                  { label: "Issuing", href: "/products/issuing" },
-                  { label: "Terminal", href: "/products/terminal" },
-                  { label: "Tax", href: "/products/tax" },
-                  { label: "Identity", href: "/products/identity" },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-[#425466] hover:text-[#0a2540] font-medium transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="font-bold text-[#0a2540] mb-6">Solutions</div>
-              <ul className="space-y-3">
-                {[
-                  { label: "Ecommerce", href: "/solutions/ecommerce" },
-                  { label: "SaaS", href: "/solutions/saas" },
-                  { label: "Marketplaces", href: "/solutions/marketplaces" },
-                  { label: "Embedded Finance", href: "/solutions/embedded-finance" },
-                  { label: "Platforms", href: "/solutions/platforms" },
-                  { label: "Creator Economy", href: "/solutions/creator-economy" },
-                  { label: "Crypto", href: "/solutions/crypto" },
-                  { label: "Global Businesses", href: "/solutions/global-businesses" },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-[#425466] hover:text-[#0a2540] font-medium transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="font-bold text-[#0a2540] mb-6">Resources</div>
-              <ul className="space-y-3">
-                {[
-                  { label: "Support", href: "/support" },
-                  { label: "Contact Sales", href: "/contact" },
-                  { label: "Blog", href: "/blog" },
-                  { label: "Guides", href: "/guides" },
-                  { label: "Customer Stories", href: "/customers" },
-                  { label: "Developers", href: "/developers" },
-                  { label: "API Reference", href: "/docs" },
-                  { label: "Partners", href: "/partners" },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-[#425466] hover:text-[#0a2540] font-medium transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <div className="font-bold text-[#0a2540] mb-6">Company</div>
-              <ul className="space-y-3">
-                {[
-                  { label: "Jobs", href: "/jobs" },
-                  { label: "Newsroom", href: "/newsroom" },
-                  { label: "Taxu Press", href: "/press" },
-                  { label: "Become a Partner", href: "/partners" },
-                  { label: "Privacy & Terms", href: "/privacy" },
-                  { label: "Sitemap", href: "/sitemap" },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link
-                      href={item.href}
-                      className="text-[#425466] hover:text-[#0a2540] font-medium transition-colors"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-gray-200">
-            <div className="text-[#425466] font-medium">© 2025 Taxu, Inc.</div>
-            <div className="flex gap-6 mt-4 md:mt-0">
-              <div className="flex items-center gap-2 text-[#0a2540] font-bold">
-                <div className="w-2 h-2 bg-[#0a2540] rounded-full" />
-                Taxu
-              </div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </main>
   )
 }

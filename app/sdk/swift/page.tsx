@@ -38,7 +38,7 @@ export default function SwiftSDKPage() {
               <div className="bg-card border border-border rounded-lg p-6">
                 <pre className="text-sm overflow-x-auto">
                   <code className="text-foreground">{`dependencies: [
-    .package(url: "https://github.com/taxu/taxu-swift", from: "1.0.0")
+    .package(url: "https://github.com/multivitaminds/taxu-swift", from: "1.0.0")
 ]`}</code>
                 </pre>
               </div>
@@ -323,7 +323,7 @@ taxu.enableLogging(level: .debug)`}</code>
           <h2 className="text-2xl font-bold mb-4">Resources</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <Link
-              href="https://github.com/taxu/taxu-swift"
+              href="https://github.com/multivitaminds/taxu-swift"
               className="bg-card border border-border rounded-lg p-6 hover:border-primary transition-colors"
             >
               <h3 className="font-semibold mb-2">GitHub Repository</h3>

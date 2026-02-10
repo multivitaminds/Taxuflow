@@ -46,7 +46,7 @@ export default function PHPSDKPage() {
               <div>
                 <p className="text-sm text-gray-400 mb-2">Manual Installation</p>
                 <pre className="bg-black p-4 rounded-lg overflow-x-auto">
-                  <code className="text-sm text-gray-300">{`git clone https://github.com/taxu/taxu-php.git
+                  <code className="text-sm text-gray-300">{`git clone https://github.com/multivitaminds/taxu-php.git
 cd taxu-php
 composer install`}</code>
                 </pre>

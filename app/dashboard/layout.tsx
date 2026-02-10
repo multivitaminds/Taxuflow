@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardProvider } from "@/components/dashboard-provider"
+import { DemoModeBanner } from "@/components/demo-mode-banner"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -34,6 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
     return (
       <DashboardProvider initialUser={demoUser as any} initialProfile={demoProfile}>
+        <DemoModeBanner isDemoMode />
         {children}
       </DashboardProvider>
     )
@@ -70,6 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
     return (
       <DashboardProvider initialUser={demoUser as any} initialProfile={demoProfile}>
+        <DemoModeBanner isDemoMode />
         {children}
       </DashboardProvider>
     )

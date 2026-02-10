@@ -503,7 +503,7 @@ export default function DevelopersPage() {
               ))}
             </div>
             <div className="flex items-center justify-center gap-4">
-              <Link href="https://github.com/taxu-io" target="_blank" rel="noopener noreferrer">
+              <Link href="https://github.com/multivitaminds" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline" className="bg-transparent">
                   <Github className="mr-2 h-5 w-5" />
                   View on GitHub

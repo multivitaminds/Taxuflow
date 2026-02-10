@@ -271,7 +271,7 @@ export function DeveloperPortalClient() {
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="https://github.com/taxu/examples">
+                <Link href="https://github.com/multivitaminds/examples">
                   <span>View Example Projects</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>

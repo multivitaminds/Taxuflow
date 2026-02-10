@@ -17,7 +17,7 @@ export default function SDKsPage() {
       description: "Official Node.js SDK for server-side JavaScript and TypeScript applications",
       install: "npm install @taxu/node",
       docs: "/developer/sdks/nodejs",
-      github: "https://github.com/taxu/taxu-node",
+      github: "https://github.com/multivitaminds/taxu-node",
       popular: true,
     },
     {
@@ -29,7 +29,7 @@ export default function SDKsPage() {
       description: "Official Python SDK for Django, Flask, and FastAPI applications",
       install: "pip install taxu",
       docs: "/developer/sdks/python",
-      github: "https://github.com/taxu/taxu-python",
+      github: "https://github.com/multivitaminds/taxu-python",
       popular: true,
     },
     {
@@ -39,7 +39,7 @@ export default function SDKsPage() {
       description: "Official Ruby SDK for Rails and Sinatra applications",
       install: "gem install taxu",
       docs: "/developer/sdks/ruby",
-      github: "https://github.com/taxu/taxu-ruby",
+      github: "https://github.com/multivitaminds/taxu-ruby",
       popular: false,
     },
     {
@@ -47,9 +47,9 @@ export default function SDKsPage() {
       icon: <Image src="/icons/go.png" alt="Go" width={40} height={40} className="w-full h-full object-contain" />,
       version: "v1.5.0",
       description: "Official Go SDK for high-performance backend services",
-      install: "go get github.com/taxu/taxu-go",
+      install: "go get github.com/multivitaminds/taxu-go",
       docs: "/developer/sdks/go",
-      github: "https://github.com/taxu/taxu-go",
+      github: "https://github.com/multivitaminds/taxu-go",
       popular: true,
     },
     {
@@ -59,7 +59,7 @@ export default function SDKsPage() {
       description: "Official PHP SDK for Laravel, Symfony, and WordPress",
       install: "composer require taxu/taxu-php",
       docs: "/developer/sdks/php",
-      github: "https://github.com/taxu/taxu-php",
+      github: "https://github.com/multivitaminds/taxu-php",
       popular: false,
     },
     {
@@ -69,7 +69,7 @@ export default function SDKsPage() {
       description: "Official Java SDK for Spring Boot and enterprise applications",
       install: 'implementation "com.taxu:taxu-java:1.7.3"',
       docs: "/developer/sdks/java",
-      github: "https://github.com/taxu/taxu-java",
+      github: "https://github.com/multivitaminds/taxu-java",
       popular: false,
     },
     {
@@ -91,7 +91,7 @@ export default function SDKsPage() {
       description: "Official .NET SDK for ASP.NET Core and C# applications",
       install: "dotnet add package Taxu.NET",
       docs: "/developer/sdks/dotnet",
-      github: "https://github.com/taxu/taxu-dotnet",
+      github: "https://github.com/multivitaminds/taxu-dotnet",
       popular: false,
     },
     {
@@ -103,7 +103,7 @@ export default function SDKsPage() {
       description: "Official React SDK with hooks and components for frontend integration",
       install: "npm install @taxu/react",
       docs: "/developer/sdks/react",
-      github: "https://github.com/taxu/taxu-react",
+      github: "https://github.com/multivitaminds/taxu-react",
       popular: true,
     },
   ]

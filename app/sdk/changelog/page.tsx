@@ -96,7 +96,7 @@ export default function ChangelogPage() {
             <h2 className="text-2xl font-bold mb-2">Stay Updated</h2>
             <p className="text-muted-foreground mb-6">Get notified about new SDK releases and features</p>
             <div className="flex items-center justify-center gap-4">
-              <Link href="https://github.com/taxu-io/taxu-js" target="_blank" rel="noopener noreferrer">
+              <Link href="https://github.com/multivitaminds/taxu-js" target="_blank" rel="noopener noreferrer">
                 <button className="px-6 py-3 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold transition-colors">
                   Watch on GitHub
                 </button>

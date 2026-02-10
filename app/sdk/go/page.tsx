@@ -33,7 +33,7 @@ export default function GoSDKPage() {
           <h2 className="text-2xl font-bold mb-4">Installation</h2>
           <div className="bg-card border border-border rounded-lg p-6">
             <pre className="text-sm overflow-x-auto">
-              <code className="text-foreground">go get github.com/taxu/taxu-go</code>
+              <code className="text-foreground">go get github.com/multivitaminds/taxu-go</code>
             </pre>
           </div>
         </section>
@@ -50,7 +50,7 @@ import (
     "fmt"
     "log"
     
-    "github.com/taxu/taxu-go"
+    "github.com/multivitaminds/taxu-go"
 )
 
 func main() {
@@ -271,7 +271,7 @@ client := taxu.NewClient(
           <h2 className="text-2xl font-bold mb-4">Resources</h2>
           <div className="grid md:grid-cols-2 gap-4">
             <Link
-              href="https://github.com/taxu/taxu-go"
+              href="https://github.com/multivitaminds/taxu-go"
               className="bg-card border border-border rounded-lg p-6 hover:border-primary transition-colors"
             >
               <h3 className="font-semibold mb-2">GitHub Repository</h3>
@@ -285,7 +285,7 @@ client := taxu.NewClient(
               <p className="text-sm text-muted-foreground">Complete API documentation</p>
             </Link>
             <Link
-              href="https://pkg.go.dev/github.com/taxu/taxu-go"
+              href="https://pkg.go.dev/github.com/multivitaminds/taxu-go"
               className="bg-card border border-border rounded-lg p-6 hover:border-primary transition-colors"
             >
               <h3 className="font-semibold mb-2">Go Package Docs</h3>

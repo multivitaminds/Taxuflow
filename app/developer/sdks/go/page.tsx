@@ -34,13 +34,13 @@ export default function GoSDKPage() {
           <h2 className="text-2xl font-bold text-white mb-4">Installation</h2>
           <div className="relative">
             <pre className="bg-black/50 rounded p-4 text-gray-300 font-mono text-sm overflow-x-auto">
-              go get github.com/taxu/taxu-go
+              go get github.com/multivitaminds/taxu-go
             </pre>
             <Button
               size="sm"
               variant="ghost"
               className="absolute top-2 right-2"
-              onClick={() => copyCode("go get github.com/taxu/taxu-go", 0)}
+              onClick={() => copyCode("go get github.com/multivitaminds/taxu-go", 0)}
             >
               {copiedIndex === 0 ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </Button>
@@ -59,7 +59,7 @@ export default function GoSDKPage() {
 
 import (
     "os"
-    "github.com/taxu/taxu-go"
+    "github.com/multivitaminds/taxu-go"
 )
 
 func main() {

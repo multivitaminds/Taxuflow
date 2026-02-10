@@ -60,7 +60,7 @@ export default function SupportPage() {
       icon: Github,
       title: "GitHub",
       description: "SDKs, samples, and open source tools",
-      link: "https://github.com/taxu",
+      link: "https://github.com/multivitaminds",
       color: "text-gray-400",
     },
   ]

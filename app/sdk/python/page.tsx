@@ -83,7 +83,7 @@ asyncio.run(main())`
               We're actively building the Python SDK. Star the repo on GitHub to get notified when it launches.
             </p>
             <div className="flex items-center justify-center gap-4">
-              <Link href="https://github.com/taxu-io/taxu-python" target="_blank" rel="noopener noreferrer">
+              <Link href="https://github.com/multivitaminds/taxu-python" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="glow-neon-strong">
                   <Github className="mr-2 h-5 w-5" />
                   Star on GitHub
@@ -118,7 +118,7 @@ asyncio.run(main())`
               <p className="text-sm text-amber-600 dark:text-amber-400">
                 <strong>Coming Soon:</strong> The taxu-python package will be available on PyPI.{" "}
                 <Link
-                  href="https://github.com/taxu-io/taxu-python"
+                  href="https://github.com/multivitaminds/taxu-python"
                   className="underline"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -200,7 +200,7 @@ asyncio.run(main())`
               <div className="rounded-xl border border-border bg-card p-6 hover:border-accent/50 transition-all">
                 <h3 className="text-xl font-bold mb-2">Example Apps</h3>
                 <p className="text-muted-foreground mb-4">Full working examples on GitHub</p>
-                <Link href="https://github.com/taxu/examples" target="_blank" rel="noopener noreferrer">
+                <Link href="https://github.com/multivitaminds/examples" target="_blank" rel="noopener noreferrer">
                   <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     Browse Examples
                     <ArrowRight className="ml-2 h-5 w-5" />

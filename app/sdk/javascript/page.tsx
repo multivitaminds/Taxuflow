@@ -25,7 +25,7 @@ export default function JavaScriptSDKPage() {
               coverage.
             </p>
             <div className="flex items-center justify-center gap-4">
-              <Link href="https://github.com/taxu-io/taxu-js" target="_blank" rel="noopener noreferrer">
+              <Link href="https://github.com/multivitaminds/taxu-js" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline" className="bg-transparent">
                   <Github className="mr-2 h-5 w-5" />
                   View on GitHub
@@ -225,7 +225,7 @@ const taxReturn: TaxReturn = await taxu.returns.create({
               <div className="rounded-xl border border-border bg-card p-6 hover:border-accent/50 transition-all">
                 <h3 className="text-xl font-bold mb-2">GitHub Repository</h3>
                 <p className="text-muted-foreground mb-4">Source code, issues, and contributions</p>
-                <Link href="https://github.com/taxu-io/taxu-js" target="_blank" rel="noopener noreferrer">
+                <Link href="https://github.com/multivitaminds/taxu-js" target="_blank" rel="noopener noreferrer">
                   <Button variant="outline" className="bg-transparent">
                     <Github className="mr-2 w-4 h-4" />
                     View on GitHub
@@ -237,7 +237,7 @@ const taxReturn: TaxReturn = await taxu.returns.create({
                 <h3 className="text-xl font-bold mb-2">Example Apps</h3>
                 <p className="text-muted-foreground mb-4">Full working examples and templates</p>
                 <Link
-                  href="https://github.com/taxu-io/taxu-js/tree/main/examples"
+                  href="https://github.com/multivitaminds/taxu-js/tree/main/examples"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

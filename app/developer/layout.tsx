@@ -270,7 +270,7 @@ export default function DeveloperLayout({ children }: { children: React.ReactNod
                 </svg>
               </a>
               <a
-                href="https://github.com/taxu-ai"
+                href="https://github.com/multivitaminds"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-slate-400 hover:text-[#0a2540] transition-colors"
