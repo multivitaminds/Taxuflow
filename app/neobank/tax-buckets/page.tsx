@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { TaxBucketsManager } from "@/components/neobank/tax-buckets-manager"
+import { TaxBucketsManager } from "@/components/cashflow/tax-buckets-manager"
 
 export default function TaxBucketsPage() {
   return (

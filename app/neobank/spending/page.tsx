@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { SpendingAnalytics } from "@/components/neobank/spending-analytics"
+import { SpendingAnalytics } from "@/components/cashflow/spending-analytics"
 
 export default function SpendingPage() {
   return (

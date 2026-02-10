@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { CardsManager } from "@/components/neobank/cards-manager"
+import { CardsManager } from "@/components/cashflow/cards-manager"
 
 export default function CardsPage() {
   return (

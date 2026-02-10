@@ -1,5 +1,5 @@
 import { Suspense } from "react"
-import { TransfersManager } from "@/components/neobank/transfers-manager"
+import { TransfersManager } from "@/components/cashflow/transfers-manager"
 
 export default function TransfersPage() {
   return (

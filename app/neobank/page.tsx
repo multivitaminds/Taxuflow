@@ -1,10 +1,10 @@
 import { Suspense } from "react"
-import { NeobankDashboard } from "@/components/neobank/neobank-dashboard"
+import { CashflowDashboard } from "@/components/cashflow/cashflow-dashboard"
 
-export default function NeobankPage() {
+export default function CashflowPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-[#0a2540]">Loading banking dashboard...</div>}>
-      <NeobankDashboard />
+    <Suspense fallback={<div className="p-8 text-[#0a2540]">Loading Cashflow dashboard...</div>}>
+      <CashflowDashboard />
     </Suspense>
   )
 }

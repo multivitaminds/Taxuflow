@@ -33,7 +33,7 @@ const navigation = [
   { name: "ATMs", href: "/neobank/atms", icon: MapPin },
 ]
 
-export function NeobankSidebar() {
+export function CashflowSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
 
@@ -49,7 +49,7 @@ export function NeobankSidebar() {
           <Link href="/neobank" className="text-xl font-bold flex items-center gap-2">
             <span className="text-[#0a2540]">Tax</span>
             <span className="text-[#635bff]">u</span>
-            <span className="text-slate-400 text-sm font-normal ml-1">Banking</span>
+            <span className="text-slate-400 text-sm font-normal ml-1">Cashflow</span>
           </Link>
         )}
         <Button

@@ -1,10 +1,10 @@
-import { NeobankSidebar } from "@/components/neobank-sidebar"
-import { CryptoDashboard } from "@/components/neobank/crypto-dashboard"
+import { CashflowSidebar } from "@/components/cashflow-sidebar"
+import { CryptoDashboard } from "@/components/cashflow/crypto-dashboard"
 
 export default function CryptoPage() {
   return (
     <div className="min-h-screen bg-[#f7f9fc]">
-      <NeobankSidebar />
+      <CashflowSidebar />
       <div className="ml-64 p-8">
         <CryptoDashboard />
       </div>
