@@ -45,7 +45,7 @@ export default async function AccountingPage() {
       />
     )
   } catch (error) {
-    console.error("Error fetching accounting data:", error)
+    console.error("[v0] Error fetching accounting data:", error)
     // Return empty dashboard instead of crashing
     return <AccountingDashboardClient user={user} invoices={[]} expenses={[]} customers={[]} allInvoices={[]} />
   }

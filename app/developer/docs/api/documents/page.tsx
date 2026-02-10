@@ -539,7 +539,7 @@ export default function DocumentsAPIPage() {
                   </div>
 
                   <Link
-                    href="/developer/webhooks"
+                    href="/developer/docs/webhooks"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-[#635bff] hover:text-[#5851df] transition-colors group"
                   >
                     Configure Webhooks
