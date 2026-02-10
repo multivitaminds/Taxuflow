@@ -59,7 +59,8 @@ export default function AccountsPage() {
         </div>
         <Button
           className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm"
-          onClick={() => toast.info("New account creation coming soon")}
+          disabled
+          title="Coming soon"
         >
           <Plus className="mr-2 h-4 w-4" /> Open New Account
         </Button>
@@ -123,14 +124,16 @@ export default function AccountsPage() {
                       size="sm"
                       variant="outline"
                       className="border-slate-200"
-                      onClick={() => toast.info("Transfer feature coming soon")}
+                      disabled
+                      title="Coming soon"
                     >
                       <ArrowUpRight className="h-4 w-4 mr-1" /> Send
                     </Button>
                     <Button
                       size="sm"
                       className="bg-[#635bff] hover:bg-[#5851e1] text-white"
-                      onClick={() => toast.info("Deposit feature coming soon")}
+                      disabled
+                      title="Coming soon"
                     >
                       <ArrowDownRight className="h-4 w-4 mr-1" /> Deposit
                     </Button>

@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Bitcoin, Coins, DollarSign, ArrowUpRight, ArrowDownLeft, RefreshCw, Wallet, TrendingUp } from "lucide-react"
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
-import { toast } from "sonner"
+
 
 const cryptoData = [
   { date: "Jan", btc: 42000, eth: 2200, portfolio: 45000 },
@@ -27,15 +27,15 @@ export function CryptoDashboard() {
           <p className="text-slate-600 mt-2">Manage your digital assets and tax refunds</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="bg-white" onClick={() => toast.info("Receive crypto coming soon")}>
+          <Button variant="outline" className="bg-white" disabled={true} title="Coming soon">
             <ArrowDownLeft className="h-4 w-4 mr-2" />
             Receive
           </Button>
-          <Button variant="outline" className="bg-white" onClick={() => toast.info("Send crypto coming soon")}>
+          <Button variant="outline" className="bg-white" disabled={true} title="Coming soon">
             <ArrowUpRight className="h-4 w-4 mr-2" />
             Send
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#4f46e5]" onClick={() => toast.info("Crypto swap coming soon")}>
+          <Button className="bg-[#635bff] hover:bg-[#4f46e5]" disabled={true} title="Coming soon">
             <RefreshCw className="h-4 w-4 mr-2" />
             Swap
           </Button>
@@ -231,7 +231,7 @@ export function CryptoDashboard() {
                   <span className="font-medium text-[#0a2540]">Est. Tax Liability</span>
                   <span className="font-bold text-red-500">$850.00</span>
                 </div>
-                <Button variant="outline" className="w-full mt-2 bg-transparent" onClick={() => toast.info("Crypto tax report coming soon")}>
+                <Button variant="outline" className="w-full mt-2 bg-transparent" disabled={true} title="Coming soon">
                   View Tax Report
                 </Button>
               </div>

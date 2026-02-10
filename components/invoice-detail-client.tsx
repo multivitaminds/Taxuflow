@@ -70,9 +70,6 @@ export function InvoiceDetailClient({ invoiceId }: { invoiceId: string }) {
     }
   }
 
-  async function handleSendEmail() {
-    alert("Email functionality coming soon!")
-  }
 
   if (loading) {
     return <div className="p-8 text-center">Loading invoice...</div>
@@ -104,7 +101,7 @@ export function InvoiceDetailClient({ invoiceId }: { invoiceId: string }) {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleSendEmail}>
+          <Button variant="outline" disabled title="Coming soon">
             <Mail className="h-4 w-4 mr-2" />
             Send Email
           </Button>

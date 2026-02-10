@@ -345,28 +345,32 @@ export function CardsManager() {
                 <Button
                   variant="outline"
                   className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
-                  onClick={() => toast.info("Card limits management coming soon")}
+                  disabled
+                  title="Coming soon"
                 >
                   <Settings className="mr-2 h-4 w-4" /> Limits
                 </Button>
                 <Button
                   variant="outline"
                   className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
-                  onClick={() => toast.info("Card replacement request coming soon")}
+                  disabled
+                  title="Coming soon"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Replace
                 </Button>
                 <Button
                   variant="outline"
                   className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
-                  onClick={() => toast.info("Add to digital wallet coming soon")}
+                  disabled
+                  title="Coming soon"
                 >
                   <Wallet className="mr-2 h-4 w-4" /> Add to Wallet
                 </Button>
                 <Button
                   variant="outline"
                   className="bg-white h-12 justify-start border-slate-200 text-slate-600 hover:text-[#635bff] hover:border-[#635bff]"
-                  onClick={() => toast.info("PIN management coming soon")}
+                  disabled
+                  title="Coming soon"
                 >
                   <Smartphone className="mr-2 h-4 w-4" /> Pin
                 </Button>

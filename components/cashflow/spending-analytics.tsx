@@ -199,7 +199,7 @@ export function SpendingAnalytics() {
             <CardTitle>Recent Expenses</CardTitle>
             <CardDescription>Verify auto-categorized tax deductions</CardDescription>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => toast.info("Expense filtering coming soon")}>
+          <Button variant="ghost" size="sm" disabled={true} title="Coming soon">
             <Filter className="h-4 w-4 mr-2" /> Filter
           </Button>
         </CardHeader>

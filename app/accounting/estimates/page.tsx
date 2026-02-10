@@ -1,5 +1,10 @@
-import EstimatesClient from "./EstimatesClient" // Assuming EstimatesClient is a component in the same directory
+import { Suspense } from "react"
+import EstimatesClient from "@/components/estimates-client"
 
 export default function EstimatesPage() {
-  return <EstimatesClient />
+  return (
+    <Suspense fallback={<div className="p-8">Loading estimates...</div>}>
+      <EstimatesClient />
+    </Suspense>
+  )
 }

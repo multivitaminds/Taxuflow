@@ -88,7 +88,7 @@ export function TaxBucketsManager() {
           >
             <ArrowLeftRight className="mr-2 h-4 w-4" /> Transfer Funds
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm" onClick={() => toast.info("New bucket creation coming soon")}>
+          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm" disabled={true} title="Coming soon">
             <Plus className="mr-2 h-4 w-4" /> New Bucket
           </Button>
         </div>
@@ -183,7 +183,7 @@ export function TaxBucketsManager() {
                       <TrendingUp className="h-4 w-4 text-green-500" />
                       <span>On track to meet Q4 deadline</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-[#635bff] hover:bg-[#635bff]/10" onClick={() => toast.info("Bucket configuration coming soon")}>
+                    <Button variant="ghost" size="sm" className="text-[#635bff] hover:bg-[#635bff]/10" disabled={true} title="Coming soon">
                       Configure
                     </Button>
                   </div>

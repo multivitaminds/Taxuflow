@@ -54,7 +54,7 @@ export function TransfersManager() {
                       <Label>To</Label>
                       <div className="flex gap-2">
                         <Input placeholder="Name, @handle, email, or account #" />
-                        <Button variant="outline" onClick={() => toast.info("Address book coming soon")}>
+                        <Button variant="outline" disabled={true} title="Coming soon">
                           <Users className="h-4 w-4" />
                         </Button>
                       </div>
@@ -225,7 +225,7 @@ export function TransfersManager() {
                     <p className="text-slate-500 max-w-xs mx-auto mt-2 mb-6">
                       Create a payment link or send an invoice directly to your client's email.
                     </p>
-                    <Button onClick={() => toast.info("Payment request feature coming soon")}>Create Payment Request</Button>
+                    <Button disabled={true} title="Coming soon">Create Payment Request</Button>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -264,7 +264,7 @@ export function TransfersManager() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="ghost" className="w-full text-[#635bff]" onClick={() => toast.info("Scheduled transfers view coming soon")}>
+              <Button variant="ghost" className="w-full text-[#635bff]" disabled={true} title="Coming soon">
                 View Schedule
               </Button>
             </CardFooter>

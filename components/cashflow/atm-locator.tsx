@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { toast } from "sonner"
 
 interface ATM {
   id: string
@@ -119,7 +118,7 @@ export function AtmLocator() {
                 <SelectItem value="MoneyPass">MoneyPass</SelectItem>
               </SelectContent>
             </Select>
-            <Button className="bg-[#635bff] hover:bg-[#4f46e5]" onClick={() => toast.info("Location services coming soon")}>
+            <Button className="bg-[#635bff] hover:bg-[#4f46e5]" disabled={true} title="Coming soon">
               <Navigation className="h-4 w-4 mr-2" />
               Use My Location
             </Button>
@@ -190,7 +189,7 @@ export function AtmLocator() {
                         {atm.fee}
                       </span>
                     </div>
-                    <Button size="sm" className="bg-[#635bff] hover:bg-[#4f46e5] mt-2" onClick={() => toast.info("Opening directions...")}>
+                    <Button size="sm" className="bg-[#635bff] hover:bg-[#4f46e5] mt-2" disabled={true} title="Coming soon">
                       <Navigation className="h-4 w-4 mr-2" />
                       Get Directions
                     </Button>

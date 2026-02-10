@@ -97,8 +97,7 @@ export default function ReviewPage() {
   }
 
   const handleDownloadPDF = () => {
-    console.log("[v0] Generating PDF...")
-    alert("PDF generation coming soon!")
+    // PDF generation not yet implemented
   }
 
   if (loading) {
@@ -322,7 +321,8 @@ export default function ReviewPage() {
                 variant="outline"
                 size="lg"
                 className="flex-1 border-neon/20 bg-transparent"
-                onClick={handleDownloadPDF}
+                disabled
+                title="Coming soon"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download PDF

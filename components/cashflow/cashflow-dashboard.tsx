@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ArrowUpRight, ArrowDownRight, CreditCard, Plus, PiggyBank, ShieldCheck, Download } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 // Mock data simulating database tables
 const accountData = {
@@ -118,6 +118,7 @@ function Building2({ className }: { className?: string }) {
 }
 
 export function CashflowDashboard() {
+  const router = useRouter()
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-[#0a2540]">
       {/* Header */}
@@ -127,10 +128,10 @@ export function CashflowDashboard() {
           <p className="text-slate-500 mt-1">Manage your business finances, cards, and tax savings.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200 hover:bg-slate-50" onClick={() => toast.info("Downloading account statements...")}>
+          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200 hover:bg-slate-50" disabled title="Statement downloads coming soon">
             <Download className="mr-2 h-4 w-4" /> Statements
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm" onClick={() => toast.info("Add Money feature coming soon")}>
+          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm" disabled title="Add Money feature coming soon">
             <Plus className="mr-2 h-4 w-4" /> Add Money
           </Button>
         </div>
@@ -204,7 +205,7 @@ export function CashflowDashboard() {
 
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/20">
               <span className="text-sm opacity-80">Visa Business</span>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-8" onClick={() => toast.info("Opening card management...")}>
+              <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-8" onClick={() => router.push("/neobank/cards")}>
                 Manage <ArrowUpRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
@@ -247,7 +248,7 @@ export function CashflowDashboard() {
             <CardHeader className="border-b border-slate-100 pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold">Transaction History</CardTitle>
-                <Button variant="ghost" size="sm" className="text-[#635bff]" onClick={() => toast.info("Navigating to full transaction history...")}>
+                <Button variant="ghost" size="sm" className="text-[#635bff]" onClick={() => router.push("/neobank/transactions")}>
                   View All
                 </Button>
               </div>
