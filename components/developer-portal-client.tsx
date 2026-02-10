@@ -259,13 +259,13 @@ export function DeveloperPortalClient() {
             </CardHeader>
             <CardContent className="space-y-2">
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/docs/introduction">
+                <Link href="/developer/docs/getting-started">
                   <span>Read the Documentation</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-between" asChild>
-                <Link href="/docs/api-reference">
+                <Link href="/api-docs">
                   <span>API Reference</span>
                   <ExternalLink className="w-4 h-4" />
                 </Link>
