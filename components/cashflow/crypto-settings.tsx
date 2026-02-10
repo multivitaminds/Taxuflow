@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Bitcoin, Coins, DollarSign, Shield, Wallet } from "lucide-react"
+import { toast } from "sonner"
 
 export function CryptoSettings() {
   const [cryptoRefunds, setCryptoRefunds] = useState(true)
@@ -128,8 +129,8 @@ export function CryptoSettings() {
         </Card>
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline">Discard Changes</Button>
-          <Button className="bg-[#635bff] hover:bg-[#4f46e5]">Save Settings</Button>
+          <Button variant="outline" onClick={() => { setCryptoRefunds(true); setAutoHarvesting(false); setDefaultCurrency("btc"); toast.info("Changes discarded") }}>Discard Changes</Button>
+          <Button className="bg-[#635bff] hover:bg-[#4f46e5]" onClick={() => toast.success("Crypto settings saved successfully")}>Save Settings</Button>
         </div>
       </div>
     </div>

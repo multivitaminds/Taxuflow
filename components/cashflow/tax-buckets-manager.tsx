@@ -183,7 +183,7 @@ export function TaxBucketsManager() {
                       <TrendingUp className="h-4 w-4 text-green-500" />
                       <span>On track to meet Q4 deadline</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-[#635bff] hover:bg-[#635bff]/10">
+                    <Button variant="ghost" size="sm" className="text-[#635bff] hover:bg-[#635bff]/10" onClick={() => toast.info("Bucket configuration coming soon")}>
                       Configure
                     </Button>
                   </div>
@@ -207,7 +207,7 @@ export function TaxBucketsManager() {
               </CardDescription>
             </CardHeader>
             <CardFooter>
-              <Button className="w-full bg-[#00d4ff] text-[#0a2540] hover:bg-[#00b0d4]">Apply Recommendation</Button>
+              <Button className="w-full bg-[#00d4ff] text-[#0a2540] hover:bg-[#00b0d4]" onClick={() => { updateBucketPercentage("fed", 18); toast.success("Federal Tax bucket updated to 18%") }}>Apply Recommendation</Button>
             </CardFooter>
           </Card>
 
@@ -253,7 +253,7 @@ export function TaxBucketsManager() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button variant="outline" className="w-full bg-transparent" disabled={!autoSaveEnabled}>
+              <Button variant="outline" className="w-full bg-transparent" disabled={!autoSaveEnabled} onClick={() => toast.success("Auto-save configuration saved")}>
                 Save Configuration
               </Button>
             </CardFooter>

@@ -54,7 +54,7 @@ export function TransfersManager() {
                       <Label>To</Label>
                       <div className="flex gap-2">
                         <Input placeholder="Name, @handle, email, or account #" />
-                        <Button variant="outline">
+                        <Button variant="outline" onClick={() => toast.info("Address book coming soon")}>
                           <Users className="h-4 w-4" />
                         </Button>
                       </div>
