@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ArrowUpRight, ArrowDownRight, CreditCard, Plus, PiggyBank, ShieldCheck, Download } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { toast } from "sonner"
 
 // Mock data simulating database tables
 const accountData = {
@@ -126,10 +127,10 @@ export function CashflowDashboard() {
           <p className="text-slate-500 mt-1">Manage your business finances, cards, and tax savings.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200 hover:bg-slate-50">
+          <Button variant="outline" className="bg-white text-[#0a2540] border-slate-200 hover:bg-slate-50" onClick={() => toast.info("Downloading account statements...")}>
             <Download className="mr-2 h-4 w-4" /> Statements
           </Button>
-          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm">
+          <Button className="bg-[#635bff] hover:bg-[#5851e1] text-white shadow-sm" onClick={() => toast.info("Add Money feature coming soon")}>
             <Plus className="mr-2 h-4 w-4" /> Add Money
           </Button>
         </div>
@@ -203,7 +204,7 @@ export function CashflowDashboard() {
 
             <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/20">
               <span className="text-sm opacity-80">Visa Business</span>
-              <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-8">
+              <Button size="sm" variant="ghost" className="text-white hover:bg-white/20 h-8" onClick={() => toast.info("Opening card management...")}>
                 Manage <ArrowUpRight className="ml-1 h-3 w-3" />
               </Button>
             </div>
@@ -246,7 +247,7 @@ export function CashflowDashboard() {
             <CardHeader className="border-b border-slate-100 pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold">Transaction History</CardTitle>
-                <Button variant="ghost" size="sm" className="text-[#635bff]">
+                <Button variant="ghost" size="sm" className="text-[#635bff]" onClick={() => toast.info("Navigating to full transaction history...")}>
                   View All
                 </Button>
               </div>
