@@ -1,8 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server"
+import { updateSession } from "./lib/supabase/middleware"
 
 export async function middleware(request: NextRequest) {
-  // Temporarily bypass Supabase auth to debug MIDDLEWARE_INVOCATION_FAILED
-  return NextResponse.next()
+  try {
+    return await updateSession(request)
+  } catch (error) {
+    console.error("[middleware] Error:", error)
+    return NextResponse.next()
+  }
 }
 
 export const config = {
